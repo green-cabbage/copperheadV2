@@ -1,0 +1,10 @@
+.ipynb_checkpoints/
+__pycache__/
+prestage_output/
+*.parquet
+voms_proxy.txt
+*.html
+.sites*.json
+*.root
+*.pdf
+*.png
