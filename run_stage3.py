@@ -15,6 +15,24 @@ import os
 import copy
 import pandas as pd
 
+def get_sigHist(mass, hist_name):
+    """
+    Extract extract hist name saved in ucsd_workspace and extract their signal datahist for
+    zH, wH and ttH, swapp the variable to the once we use, then return
+    """
+    ucsd_hist = rt.TFile("ucsd_workspace/sig_hists.root")[hist_name]
+    # # ucsd_var = ucsd_hist.getVariables()[0]
+    # ucsd_var = ucsd_hist.get().find("mh_ggh") # find the variable the ucsd histograme is constructed from
+    
+    # # replace the variable with our variable
+    # customizer = rt.RooCustomizer(ucsd_hist, "")
+    # customizer.replaceArg(ucsd_var, mass)
+    # sig_hist = customizer.build()
+    # sig_hist.SetName(hist_name)
+    # return sig_hist
+    return ucsd_hist
+
+
 def normalizeFlatHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHist :
     """
     Takes rootHistogram and returns a new copy with histogram values normalized to sum to one
@@ -24,8 +42,6 @@ def normalizeFlatHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHis
     THist = rooHist.createHistogram(x_name).Clone("clone") # clone it just in case
     THist.Reset()
     nEntries = 100000
-    # print(f"THist.GetXaxis().GetXmin(): {THist.GetXaxis().GetXmin()}")
-    # print(f"THist.GetXaxis().GetXmax(): {THist.GetXaxis().GetXmax()}")
     values = np.random.uniform(
         low=THist.GetXaxis().GetXmin(), 
         high=THist.GetXaxis().GetXmax(), 
@@ -45,7 +61,9 @@ def normalizeRooHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHist
     """
     x_name = x.GetName()
     THist = rooHist.createHistogram(x_name).Clone("clone") # clone it just in case
-    THist.Scale(1/THist.Integral())
+    abs_yield = THist.Integral()
+    if abs_yield > 0:
+        THist.Scale(1/abs_yield)
     print(f"THist.Integral(): {THist.Integral()}")
     normalizedHist_name = rooHist.GetName() + "_normalized"
     roo_hist_normalized = rt.RooDataHist(normalizedHist_name, normalizedHist_name, rt.RooArgSet(x), THist) 
@@ -357,6 +375,7 @@ if __name__ == "__main__":
     column_list = ["year", "category", "dataset", "yield"]
     yield_df = pd.DataFrame(columns=column_list)
 
+    do_binned_fit = True # if False, then do unbinned fitting
     
     device = "cpu"
     # device = "cuda"
@@ -386,11 +405,11 @@ if __name__ == "__main__":
     # # trying bigger range do that I don't get warning message from combine like: [WARNING] Found parameter BWZ_Redux_a_coeff at boundary (within ~1sigma)
     # # old start --------------------------------------------------
     name = f"bwzr_cat_ggh_coef1"
-    a_coeff = rt.RooRealVar(name,name, 0.0623102,-0.5,0.5)
+    a_coeff = rt.RooRealVar(name,name, 0.0623102,-0.1,0.1)
     name = f"bwzr_cat_ggh_coef2"
-    b_coeff = rt.RooRealVar(name,name, -0.000168432,-0.02,0.02)
+    b_coeff = rt.RooRealVar(name,name, -0.000168432,-0.1,0.1)
     name = f"bwzr_cat_ggh_coef3"
-    c_coeff = rt.RooRealVar(name,name, 2.14877, 0.0, 4.0)
+    c_coeff = rt.RooRealVar(name,name, 2.14877, 0.0, 5.0)
     # # old end --------------------------------------------------
 
     # # AN start --------------------------------------------------
@@ -401,29 +420,21 @@ if __name__ == "__main__":
     # name = f"BWZ_Redux_c_coeff"
     # c_coeff = rt.RooRealVar(name,name, 2.14876669663328,0,5.0)
     # # AN end --------------------------------------------------
-    # a_coeff.setConstant(True)
-    # b_coeff.setConstant(True)
-    # c_coeff.setConstant(True)
+
 
     # subCat 0
-    name = "subCat0_BWZ_Redux"
+    # name = "subCat0_BWZ_Redux"
+    name = "bwzr_cat_ggh_pdf"
     coreBWZRedux_SubCat0 = rt.RooModZPdf(name, name, mass, a_coeff, b_coeff, c_coeff) 
      
     # Construct background pdf
-    # old start --------------------------------------------------------------------
-    a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.01, -0.3, 0.3)
-    a1_subCat0 = rt.RooRealVar("a1_subCat0", "a1_subCat0", 0.5, -0.5, 0.5)
-    a2_subCat0 = rt.RooRealVar("a2_subCat0", "a2_subCat0", 0.5, -0.5, 0.5)
-    # old end --------------------------------------------------------------------
-    # a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.03756867559, -1, 1)
-    # a1_subCat0 = rt.RooRealVar("a1_subCat0", "a1_subCat0", -0.001975507853, -0.5, 0.5)
-    # a2_subCat0 = rt.RooRealVar("a2_subCat0", "a2_subCat0", -0.001975507853, -0.5, 0.5)
-    # a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.03756867559, -0.06, 0.06)
-    # a1_subCat0 = rt.RooRealVar("a1_subCat0", "a1_subCat0", -0.001975507853, -0.06, 0.06)
-    # a2_subCat0 = rt.RooRealVar("a2_subCat0", "a2_subCat0", -0.001975507853, -0.06, 0.06)
-    # a0_subCat0.setConstant(True)
-    # a1_subCat0.setConstant(True)
-    # a2_subCat0.setConstant(True)
+    # a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.01, -0.3, 0.3)
+    # a1_subCat0 = rt.RooRealVar("a1_subCat0", "a1_subCat0", 0.5, -0.5, 0.5)
+    # a2_subCat0 = rt.RooRealVar("a2_subCat0", "a2_subCat0", 0.5, -0.5, 0.5)
+    a0_subCat0 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order3_coef_1_cat0_ggh", "bwzr_cat_ggh_pdf_transfer_order3_coef_1_cat0_ggh", -3.76E-02, -1.5, 1.5)
+    a1_subCat0 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order3_coef_2_cat0_ggh", "bwzr_cat_ggh_pdf_transfer_order3_coef_2_cat0_ggh", -1.98E-03,  -1.5, 1.5)
+    a2_subCat0 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order3_coef_3_cat0_ggh", "bwzr_cat_ggh_pdf_transfer_order3_coef_3_cat0_ggh", 2.59E-03,  -1.5, 1.5)
+
     
 
     name = "subCat0_SMF"
@@ -432,8 +443,8 @@ if __name__ == "__main__":
 
     
     # Construct composite pdf
-    # name = "model_SubCat0_SMFxBWZRedux"
-    name = "bwzr_cat_ggh_pdf"
+    name = "model_SubCat0_SMFxBWZRedux"
+    # name = "bwzr_cat_ggh_pdf"
     model_subCat0_BWZRedux = rt.RooProdPdf(name, name, [coreBWZRedux_SubCat0, subCat0_SMF])
 
 
@@ -449,15 +460,11 @@ if __name__ == "__main__":
     https://gitlab.cern.ch/cms-analysis/hig/HIG-19-006/datacards/-/blob/master/ggH/ucsd/workspace_bkg_cat1_ggh.root?ref_type=heads
     doesn't have a third degree of freedom
     """
-    a0_subCat1 = rt.RooRealVar("a0_subCat1", "a0_subCat1", 0.1, -0.5, 0.5)
-    a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", 0.5, -0.5, 0.5)
-    # values from AN workspace
-    # a0_subCat1 = rt.RooRealVar("a0_subCat1", "a0_subCat1", 0.01949329222, -0.06, 0.06)
-    # a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", -0.001657932368, -0.06, 0.06)
-    # a0_subCat1 = rt.RooRealVar("a0_subCat1", "a0_subCat1", 0.01949329222, -0.1, 0.1)
-    # a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", -0.001657932368, -0.06, 0.06)
-    # a0_subCat1.setConstant(True)
-    # a1_subCat1.setConstant(True)
+    # a0_subCat1 = rt.RooRealVar("a0_subCat1", "a0_subCat1", 0.1, -0.5, 0.5)
+    # a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", 0.5, -0.5, 0.5)
+    a0_subCat1 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat1_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat1_ggh", 1.95E-02, -1.5, 1.5)
+    a1_subCat1 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat1_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat1_ggh", -1.66E-03, -1.5, 1.5)
+
     name =  "subCat1_SMF"
     subCat1_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat1, 
@@ -475,14 +482,12 @@ if __name__ == "__main__":
     coreBWZRedux_SubCat2 = coreBWZRedux_SubCat0
     
     # Construct the background pdf
-    a0_subCat2 = rt.RooRealVar("a0_subCat2", "a0_subCat2", 0.1, -0.3, 0.3)
-    a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", 0.5, -0.5, 0.5)
-    # a0_subCat2 = rt.RooRealVar("a0_subCat2", "a0_subCat2", 0.04460447882, -0.001, 0.06)
-    # a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", -3.46E-05, -0.001, 0.06)
-    # a0_subCat2 = rt.RooRealVar("a0_subCat2", "a0_subCat2", 0.04460447882, -0.1, 0.1)
-    # a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", -3.46E-05, -0.1, 0.1)
-    # a0_subCat2.setConstant(True)
-    # a1_subCat2.setConstant(True)
+    # a0_subCat2 = rt.RooRealVar("a0_subCat2", "a0_subCat2", 0.1, -0.3, 0.3)
+    # a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", 0.5, -0.5, 0.5)
+    a0_subCat2 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat2_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat2_ggh", 4.46E-02, -1.5, 1.5)
+    a1_subCat2 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat2_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat2_ggh", -3.46E-05, -1.5, 1.5)
+
+    
     name = "subCat2_SMF"
     subCat2_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat2, 
@@ -497,14 +502,11 @@ if __name__ == "__main__":
     coreBWZRedux_SubCat3 = coreBWZRedux_SubCat0
     
     # Construct the background pdf
-    a0_subCat3 = rt.RooRealVar("a0_subCat3", "a0_subCat3", -0.1, -0.3, 0.3)
-    a1_subCat3 = rt.RooRealVar("a1_subCat3", "a1_subCat3", 0.5, -0.5, 0.5)
-    # a0_subCat3 = rt.RooRealVar("a0_subCat3", "a0_subCat3", 0.07374242573, 0.05, 0.5)
-    # a1_subCat3 = rt.RooRealVar("a1_subCat3", "a1_subCat3", -8.79E-06, -0.5, 0.5)
-    # a0_subCat3 = rt.RooRealVar("a0_subCat3", "a0_subCat3", 0.07374242573, -0.06, 0.2)
-    # a1_subCat3 = rt.RooRealVar("a1_subCat3", "a1_subCat3", -8.79E-06, -0.06, 0.06)
-    # a0_subCat3.setConstant(True)
-    # a1_subCat3.setConstant(True)
+    # a0_subCat3 = rt.RooRealVar("a0_subCat3", "a0_subCat3", -0.1, -0.3, 0.3)
+    # a1_subCat3 = rt.RooRealVar("a1_subCat3", "a1_subCat3", 0.5, -0.5, 0.5)
+    a0_subCat3 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat3_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat3_ggh", 7.37E-02, -1.5, 1.5)
+    a1_subCat3 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat3_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat3_ggh", -8.79E-06, -1.5, 1.5)
+    
     name = "subCat3_SMF"
     subCat3_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat3, 
@@ -519,10 +521,13 @@ if __name__ == "__main__":
     coreBWZRedux_SubCat4 = coreBWZRedux_SubCat0
     
     # Construct the background pdf
-    a0_subCat4 = rt.RooRealVar("a0_subCat4", "a0_subCat4", 0.227473, 0.0, 0.5)
-    a1_subCat4 = rt.RooRealVar("a1_subCat4", "a1_subCat4", -0.00064818, -0.4, 0.0)
-    # a0_subCat4 = rt.RooRealVar("a0_subCat4", "a0_subCat4", -0.1, -0.4, 0.5)
-    # a1_subCat4 = rt.RooRealVar("a1_subCat4", "a1_subCat4", 0.5, -0.4, 0.4)
+    # a0_subCat4 = rt.RooRealVar("a0_subCat4", "a0_subCat4", 0.227473, 0.0, 0.5)
+    # a1_subCat4 = rt.RooRealVar("a1_subCat4", "a1_subCat4", -0.00064818, -0.4, 0.0)
+    a0_subCat4 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat4_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_1_cat4_ggh", 0.227473, -1.5, 1.5)
+    a1_subCat4 = rt.RooRealVar("bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat4_ggh", "bwzr_cat_ggh_pdf_transfer_order2_coef_2_cat4_ggh", -0.00064818, -1.5, 1.5)
+
+
+    
     name = "subCat4_SMF"
     subCat4_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat4, 
@@ -540,41 +545,46 @@ if __name__ == "__main__":
     subCat_filter = (processed_eventsData[subCatIdx_name] == 0)
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
-    roo_datasetData_subCat0 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat0 = rt.RooDataHist("subCat0_rooHist_BWZRedux","subCat0_rooHist_BWZRedux", rt.RooArgSet(mass), roo_datasetData_subCat0)
-    data_subCat0_BWZRedux = roo_datasetData_subCat0
+    roo_histData_subCat0 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
+    if do_binned_fit:
+        roo_histData_subCat0 = rt.RooDataHist("subCat0_rooHist_BWZRedux","subCat0_rooHist_BWZRedux", rt.RooArgSet(mass), roo_histData_subCat0)
+    data_subCat0_BWZRedux = roo_histData_subCat0
 
     # do for cat idx 1
     subCat_filter = (processed_eventsData[subCatIdx_name] == 1)
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
-    roo_datasetData_subCat1 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat1 = rt.RooDataHist("subCat1_rooHist_BWZRedux","subCat1_rooHist_BWZRedux", rt.RooArgSet(mass), roo_datasetData_subCat1)
-    data_subCat1_BWZRedux = roo_datasetData_subCat1
+    roo_histData_subCat1 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
+    if do_binned_fit:
+        roo_histData_subCat1 = rt.RooDataHist("subCat1_rooHist_BWZRedux","subCat1_rooHist_BWZRedux", rt.RooArgSet(mass), roo_histData_subCat1)
+    data_subCat1_BWZRedux = roo_histData_subCat1
 
     # do for cat idx 2
     subCat_filter = (processed_eventsData[subCatIdx_name] == 2)
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
-    roo_datasetData_subCat2 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat2 = rt.RooDataHist("subCat2_rooHist_BWZRedux","subCat2_rooHist_BWZRedux", rt.RooArgSet(mass), roo_datasetData_subCat2)
-    data_subCat2_BWZRedux = roo_datasetData_subCat2
+    roo_histData_subCat2 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
+    if do_binned_fit:
+        roo_histData_subCat2 = rt.RooDataHist("subCat2_rooHist_BWZRedux","subCat2_rooHist_BWZRedux", rt.RooArgSet(mass), roo_histData_subCat2)
+    data_subCat2_BWZRedux = roo_histData_subCat2
 
     # do for cat idx 3
     subCat_filter = (processed_eventsData[subCatIdx_name] == 3)
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
-    roo_datasetData_subCat3 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat3 = rt.RooDataHist("subCat3_rooHist_BWZRedux","subCat3_rooHist_BWZRedux", rt.RooArgSet(mass), roo_datasetData_subCat3)
-    data_subCat3_BWZRedux = roo_datasetData_subCat3
+    roo_histData_subCat3 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
+    if do_binned_fit:
+        roo_histData_subCat3 = rt.RooDataHist("subCat3_rooHist_BWZRedux","subCat3_rooHist_BWZRedux", rt.RooArgSet(mass), roo_histData_subCat3)
+    data_subCat3_BWZRedux = roo_histData_subCat3
 
     # do for cat idx 4
     subCat_filter = (processed_eventsData[subCatIdx_name] == 4)
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
-    roo_datasetData_subCat4 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat4 = rt.RooDataHist("subCat4_rooHist_BWZRedux","subCat4_rooHist_BWZRedux", rt.RooArgSet(mass), roo_datasetData_subCat4)
-    data_subCat4_BWZRedux = roo_datasetData_subCat4
+    roo_histData_subCat4 = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
+    if do_binned_fit:
+        roo_histData_subCat4 = rt.RooDataHist("subCat4_rooHist_BWZRedux","subCat4_rooHist_BWZRedux", rt.RooArgSet(mass), roo_histData_subCat4)
+    data_subCat4_BWZRedux = roo_histData_subCat4
 
 
 
@@ -595,11 +605,11 @@ if __name__ == "__main__":
     # trying bigger range do that I don't get warning message from combine like: [WARNING] Found parameter BWZ_Redux_a_coeff at boundary (within ~1sigma)
     # # new start --------------------------------------------------
     name = f"exp_order2_cat_ggh_coef1"
-    a1_coeff = rt.RooRealVar(name,name, -0.0348033, -0.05, 0.0)
+    a1_coeff = rt.RooRealVar(name,name, -0.0348033, -1.0, 0.0)
     name = f"exp_order2_cat_ggh_coef2"
-    a2_coeff = rt.RooRealVar(name,name, -0.149775, -0.5, 0.0)
+    a2_coeff = rt.RooRealVar(name,name, -0.149775, -1.0, 0.0)
     name = f"exp_order2_cat_ggh_frac1"
-    f_coeff = rt.RooRealVar(name,name, 0.754917, 0.0, 0.85)
+    f_coeff = rt.RooRealVar(name,name, 0.754917, 0.0, 1.0)
     # # new end --------------------------------------------------
 
 
@@ -615,17 +625,13 @@ if __name__ == "__main__":
     # a2_coeff.setConstant(True)
     # f_coeff.setConstant(True)
 
-    # sumexp subcat
-    a0_subCat0_sumExp = rt.RooRealVar("a0_subCat0_sumExp", "a0_subCat0_sumExp", -0.1, -1, 1)
-    a1_subCat0_sumExp = rt.RooRealVar("a1_subCat0_sumExp", "a1_subCat0_sumExp", 0.5, -0.5, 0.5)
-    a2_subCat0_sumExp = rt.RooRealVar("a2_subCat0_sumExp", "a2_subCat0_sumExp", 0.5, -0.5, 0.5)
-    
-    name = "subCat0_sumExp"
+
+    # name = "subCat0_sumExp"
+    name = "exp_cat_ggh_pdf"
     coreSumExp_SubCat0 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
      
     name = "subCat0_SMF_sumExp"
     subCat0_SumExp_SMF = rt.RooChebychev(name, name, mass, [a0_subCat0, a1_subCat0, a2_subCat0]) # original
-    # subCat0_SumExp_SMF = rt.RooChebychev(name, name, mass, [a0_subCat0_sumExp, a1_subCat0_sumExp, a2_subCat0_sumExp]) 
 
 
     
@@ -638,18 +644,14 @@ if __name__ == "__main__":
     # coreSumExp_SubCat1 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
     coreSumExp_SubCat1 = coreSumExp_SubCat0
     
-    a0_subCat1_sumExp = rt.RooRealVar("a0_subCat1_sumExp", "a0_subCat1_sumExp", -0.1, -1, 1)
-    a1_subCat1_sumExp = rt.RooRealVar("a1_subCat1_sumExp", "a1_subCat1_sumExp", 0.5, -0.5, 0.5)
+
     
     name = "subCat1_SMF_sumExp"
     subCat1_SumExp_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat1, 
                               a1_subCat1, 
                              ])
-    # subCat1_SumExp_SMF = rt.RooChebychev(name, name, mass, 
-    #                          [a0_subCat1_sumExp, 
-    #                           a1_subCat1_sumExp, 
-    #                          ])
+
      
     # Construct the composite model
     name = "model_SubCat1_SMFxSumExp"
@@ -660,18 +662,13 @@ if __name__ == "__main__":
     # coreSumExp_SubCat2 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
     coreSumExp_SubCat2 = coreSumExp_SubCat0
 
-    a0_subCat2_sumExp = rt.RooRealVar("a0_subCat2_sumExp", "a0_subCat2_sumExp", -0.1, -1, 1)
-    a1_subCat2_sumExp = rt.RooRealVar("a1_subCat2_sumExp", "a1_subCat2_sumExp", 0.5, -0.5, 0.5)
     
     name = "subCat2_SMF_sumExp"
     subCat2_SumExp_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat2, 
                               a1_subCat2, 
                              ])
-    # subCat2_SumExp_SMF = rt.RooChebychev(name, name, mass, 
-    #                          [a0_subCat2_sumExp, 
-    #                           a1_subCat2_sumExp, 
-    #                          ])
+
     name = "model_SubCat2_SMFxSumExp"
     model_subCat2_sumExp = rt.RooProdPdf(name, name, [coreSumExp_SubCat2, subCat2_SumExp_SMF])    
 
@@ -680,18 +677,13 @@ if __name__ == "__main__":
     # coreSumExp_SubCat3 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
     coreSumExp_SubCat3 = coreSumExp_SubCat0
 
-    a0_subCat3_sumExp = rt.RooRealVar("a0_subCat3_sumExp", "a0_subCat3_sumExp", -0.1, -1, 1)
-    a1_subCat3_sumExp = rt.RooRealVar("a1_subCat3_sumExp", "a1_subCat3_sumExp", 0.5, -0.5, 0.5)
     
     name = "subCat3_SMF_sumExp"
     subCat3_SumExp_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat3, 
                               a1_subCat3, 
                              ])
-    # subCat3_SumExp_SMF = rt.RooChebychev(name, name, mass, 
-    #                          [a0_subCat3_sumExp, 
-    #                           a1_subCat3_sumExp, 
-    #                          ])
+
     name = "model_SubCat3_SMFxSumExp"
     model_subCat3_sumExp = rt.RooProdPdf(name, name, [coreSumExp_SubCat3, subCat3_SumExp_SMF])    
 
@@ -700,18 +692,14 @@ if __name__ == "__main__":
     # coreSumExp_SubCat4 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
     coreSumExp_SubCat4 = coreSumExp_SubCat0
 
-    a0_subCat4_sumExp = rt.RooRealVar("a0_subCat4_sumExp", "a0_subCat4_sumExp", -0.1, -5, 5)
-    a1_subCat4_sumExp = rt.RooRealVar("a1_subCat4_sumExp", "a1_subCat4_sumExp", 0.5, -0.5, 0.5)
     
     name = "subCat4_SMF_sumExp"
     subCat4_SumExp_SMF = rt.RooChebychev(name, name, mass, 
                              [a0_subCat4, 
                               a1_subCat4, 
                              ])
-    # subCat4_SumExp_SMF = rt.RooChebychev(name, name, mass, 
-    #                          [a0_subCat4_sumExp, 
-    #                           a1_subCat4_sumExp, 
-    #                          ])
+
+    
     name = "model_SubCat4_SMFxSumExp"
     model_subCat4_sumExp = rt.RooProdPdf(name, name, [coreSumExp_SubCat4, subCat4_SumExp_SMF])    
      
@@ -723,7 +711,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat0_sumExp = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat0_sumExp = rt.RooDataHist("subCat0_rooHist_sumExp","subCat0_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat0_sumExp)
+    if do_binned_fit:
+        roo_datasetData_subCat0_sumExp = rt.RooDataHist("subCat0_rooHist_sumExp","subCat0_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat0_sumExp)
     data_subCat0_sumExp = roo_datasetData_subCat0_sumExp
 
     # do for cat idx 1
@@ -731,7 +720,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat1_sumExp = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat1_sumExp = rt.RooDataHist("subCat1_rooHist_sumExp","subCat1_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat1_sumExp)
+    if do_binned_fit:
+        roo_datasetData_subCat1_sumExp = rt.RooDataHist("subCat1_rooHist_sumExp","subCat1_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat1_sumExp)
     data_subCat1_sumExp = roo_datasetData_subCat1_sumExp
 
     # do for cat idx 2
@@ -739,7 +729,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat2_sumExp = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat2_sumExp = rt.RooDataHist("subCat2_rooHist_sumExp","subCat2_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat2_sumExp)
+    if do_binned_fit:
+        roo_datasetData_subCat2_sumExp = rt.RooDataHist("subCat2_rooHist_sumExp","subCat2_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat2_sumExp)
     data_subCat2_sumExp = roo_datasetData_subCat2_sumExp
 
     # do for cat idx 3
@@ -747,7 +738,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat3_sumExp = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat3_sumExp = rt.RooDataHist("subCat3_rooHist_sumExp","subCat3_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat3_sumExp)
+    if do_binned_fit:
+        roo_datasetData_subCat3_sumExp = rt.RooDataHist("subCat3_rooHist_sumExp","subCat3_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat3_sumExp)
     data_subCat3_sumExp = roo_datasetData_subCat3_sumExp
 
 
@@ -756,7 +748,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat4_sumExp = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat4_sumExp = rt.RooDataHist("subCat4_rooHist_sumExp","subCat4_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat4_sumExp)
+    if do_binned_fit:
+        roo_datasetData_subCat4_sumExp = rt.RooDataHist("subCat4_rooHist_sumExp","subCat4_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat4_sumExp)
     data_subCat4_sumExp = roo_datasetData_subCat4_sumExp
 
 
@@ -764,52 +757,14 @@ if __name__ == "__main__":
     # Initialize FEWZxBernstein
     # --------------------------------------------------------------
     
-
-    # # old start --------------------------------------------------
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef1"
-    # c1 = rt.RooRealVar(name,name, 0.2,-2,2)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef2"
-    # c2 = rt.RooRealVar(name,name, 1.0,-2,2)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef3"
-    # c3 = rt.RooRealVar(name,name, 0.1,-2,2)
-    # # old end --------------------------------------------------
-
-    # # an start --------------------------------------------------
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef1"
-    # c1 = rt.RooRealVar(name,name, 0.956483450832728,0.5,1.5)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef2"
-    # c2 = rt.RooRealVar(name,name, 0.9607652348517792,0.5,1.5)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef3"
-    # c3 = rt.RooRealVar(name,name, 0.9214633453188963,0.5,1.5)
-    # # an end --------------------------------------------------
-
-
-    # # new start --------------------------------------------------
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef1"
-    # c1 = rt.RooRealVar(name,name, 0.956483450832728,-10,10)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef2"
-    # c2 = rt.RooRealVar(name,name, 0.9607652348517792,-10,10)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef3"
-    # c3 = rt.RooRealVar(name,name, 0.9214633453188963,-10,10)
-    # # new end --------------------------------------------------
     
     # new start --------------------------------------------------
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef1"
-    # c1 = rt.RooRealVar(name,name, 0.25,-10,10)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef2"
-    # c2 = rt.RooRealVar(name,name, 0.25,-10,10)
-    # name = f"fewz_1j_spl_order3_bern_cat_ggh_coef3"
-    # c3 = rt.RooRealVar(name,name, 0.25,-10,10)
-    # name = f"FEWZxBern_c4"
-    # c4 = rt.RooRealVar(name,name, 0.25,-10,10)
     name = f"fewz_1j_spl_order3_bern_cat_ggh_coef1"
-    c1 = rt.RooRealVar(name,name, 0.956483, 0.5, 1.5)
+    c1 = rt.RooRealVar(name,name, 0.956483, -10, 10)
     name = f"fewz_1j_spl_order3_bern_cat_ggh_coef2"
-    c2 = rt.RooRealVar(name,name, 0.960765, 0.5, 1.5)
+    c2 = rt.RooRealVar(name,name, 0.960765, -10, 10)
     name = f"fewz_1j_spl_order3_bern_cat_ggh_coef3"
-    c3 = rt.RooRealVar(name,name, 0.921463, 0.5, 1.5)
-    # name = f"FEWZxBern_c4"
-    # c4 = rt.RooRealVar(name,name, 0.25,-10,10)
+    c3 = rt.RooRealVar(name,name, 0.921463, -10, 10)
     # new end --------------------------------------------------
     
     # BernCoeff_list = [c1, c2, c3, c4] # we use RooBernstein, which requires n+1 parameters https://root.cern.ch/doc/master/classRooBernstein.html
@@ -818,7 +773,8 @@ if __name__ == "__main__":
     # c2.setConstant(True)
     # c3.setConstant(True)
     
-    name = "subCat0_FEWZxBern"
+    # name = "subCat0_FEWZxBern"
+    name = "fewz_1j_spl_cat_ggh_pdf"
     coreFEWZxBern_SubCat0, params_FEWZxBern_SubCat0 = MakeFEWZxBernDof3(name, name, mass, BernCoeff_list) 
      
     name = "subCat0_SMF_FEWZxBern"
@@ -894,7 +850,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat0_FEWZxBern = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat0_FEWZxBern = rt.RooDataHist("subCat0_rooHist_FEWZxBern","subCat0_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat0_FEWZxBern)
+    if do_binned_fit:
+        roo_datasetData_subCat0_FEWZxBern = rt.RooDataHist("subCat0_rooHist_FEWZxBern","subCat0_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat0_FEWZxBern)
     data_subCat0_FEWZxBern = roo_datasetData_subCat0_FEWZxBern
 
     # do for cat idx 1
@@ -902,7 +859,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat1_FEWZxBern = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat1_FEWZxBern = rt.RooDataHist("subCat1_rooHist_FEWZxBern","subCat1_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat1_FEWZxBern)
+    if do_binned_fit:
+        roo_datasetData_subCat1_FEWZxBern = rt.RooDataHist("subCat1_rooHist_FEWZxBern","subCat1_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat1_FEWZxBern)
     data_subCat1_FEWZxBern = roo_datasetData_subCat1_FEWZxBern
 
     # do for cat idx 2
@@ -910,7 +868,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat2_FEWZxBern = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat2_FEWZxBern = rt.RooDataHist("subCat2_rooHist_FEWZxBern","subCat2_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat2_FEWZxBern)
+    if do_binned_fit:
+        roo_datasetData_subCat2_FEWZxBern = rt.RooDataHist("subCat2_rooHist_FEWZxBern","subCat2_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat2_FEWZxBern)
     data_subCat2_FEWZxBern = roo_datasetData_subCat2_FEWZxBern
 
     # do for cat idx 3
@@ -918,7 +877,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat3_FEWZxBern = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat3_FEWZxBern = rt.RooDataHist("subCat3_rooHist_FEWZxBern","subCat3_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat3_FEWZxBern)
+    if do_binned_fit:
+        roo_datasetData_subCat3_FEWZxBern = rt.RooDataHist("subCat3_rooHist_FEWZxBern","subCat3_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat3_FEWZxBern)
     data_subCat3_FEWZxBern = roo_datasetData_subCat3_FEWZxBern
 
 
@@ -927,7 +887,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass[subCat_filter]
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_datasetData_subCat4_FEWZxBern = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_datasetData_subCat4_FEWZxBern = rt.RooDataHist("subCat4_rooHist_FEWZxBern","subCat4_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat4_FEWZxBern)
+    if do_binned_fit:
+        roo_datasetData_subCat4_FEWZxBern = rt.RooDataHist("subCat4_rooHist_FEWZxBern","subCat4_rooHist_FEWZxBern", rt.RooArgSet(mass), roo_datasetData_subCat4_FEWZxBern)
     data_subCat4_FEWZxBern = roo_datasetData_subCat4_FEWZxBern
 
     #----------------------------------------------------------------------------
@@ -938,7 +899,8 @@ if __name__ == "__main__":
     subCat_mass_arr = processed_eventsData.dimuon_mass
     subCat_mass_arr  = ak.to_numpy(subCat_mass_arr) # convert to numpy for rt.RooDataSet
     roo_histData_allSubCat = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
-    # roo_histData_allSubCat = rt.RooDataHist("allSubCat_rooHist","allSubCat_rooHist", rt.RooArgSet(mass), roo_histData_allSubCat)
+    if do_binned_fit:
+        roo_histData_allSubCat = rt.RooDataHist("allSubCat_rooHist","allSubCat_rooHist", rt.RooArgSet(mass), roo_histData_allSubCat)
     data_allSubCat_BWZ = roo_histData_allSubCat
     data_allSubCat_sumExp = copy.deepcopy(roo_histData_allSubCat)
     data_allSubCat_FEWZxBern = copy.deepcopy(roo_histData_allSubCat)
@@ -988,6 +950,7 @@ if __name__ == "__main__":
     
     # fitResult.Print()
 
+
     # fit core functions separately
     _ = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
     fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
@@ -1012,13 +975,10 @@ if __name__ == "__main__":
     fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
     fitResult.Print()
 
-    # raise ValueError
-
     # FEWZxBern
     c1.setConstant(True)
     c2.setConstant(True)
     c3.setConstant(True)
-    # c4.setConstant(True)
     
     #----------------------------------------------------------------------------
     # Now do core-Pdf fitting with all SMF
@@ -1030,17 +990,17 @@ if __name__ == "__main__":
     sample.defineType("subCat1_BWZRedux")
     sample.defineType("subCat2_BWZRedux")
     sample.defineType("subCat3_BWZRedux")
-    # sample.defineType("subCat4_BWZRedux")
+    sample.defineType("subCat4_BWZRedux")
     sample.defineType("subCat0_sumExp")
     sample.defineType("subCat1_sumExp")
     sample.defineType("subCat2_sumExp")
     sample.defineType("subCat3_sumExp")
-    # sample.defineType("subCat4_sumExp")
+    sample.defineType("subCat4_sumExp")
     sample.defineType("subCat0_FEWZxBern")
     sample.defineType("subCat1_FEWZxBern")
     sample.defineType("subCat2_FEWZxBern")
     sample.defineType("subCat3_FEWZxBern")
-    # sample.defineType("subCat4_FEWZxBern")
+    sample.defineType("subCat4_FEWZxBern")
      
     # Construct combined dataset in (x,sample)
     combData = rt.RooDataSet(
@@ -1053,17 +1013,17 @@ if __name__ == "__main__":
             "subCat1_BWZRedux": data_subCat1_BWZRedux,
             "subCat2_BWZRedux": data_subCat2_BWZRedux,
             "subCat3_BWZRedux": data_subCat3_BWZRedux,
-            # "subCat4_BWZRedux": data_subCat4_BWZRedux,
+            "subCat4_BWZRedux": data_subCat4_BWZRedux,
             "subCat0_sumExp": data_subCat0_sumExp, 
             "subCat1_sumExp": data_subCat1_sumExp,
             "subCat2_sumExp": data_subCat2_sumExp,
             "subCat3_sumExp": data_subCat3_sumExp,
-            # "subCat4_sumExp": data_subCat4_sumExp,
+            "subCat4_sumExp": data_subCat4_sumExp,
             "subCat0_FEWZxBern": data_subCat0_FEWZxBern, 
             "subCat1_FEWZxBern": data_subCat1_FEWZxBern,
             "subCat2_FEWZxBern": data_subCat2_FEWZxBern,
             "subCat3_FEWZxBern": data_subCat3_FEWZxBern,
-            # "subCat4_FEWZxBern": data_subCat4_FEWZxBern,
+            "subCat4_FEWZxBern": data_subCat4_FEWZxBern,
         },
     )
     # ---------------------------------------------------
@@ -1078,97 +1038,16 @@ if __name__ == "__main__":
                                     "subCat1_BWZRedux": model_subCat1_BWZRedux,
                                     "subCat2_BWZRedux": model_subCat2_BWZRedux,
                                     "subCat3_BWZRedux": model_subCat3_BWZRedux,
-                                    # "subCat4_BWZRedux": model_subCat4_BWZRedux,
+                                    "subCat4_BWZRedux": model_subCat4_BWZRedux,
                                     "subCat0_sumExp": model_subCat0_sumExp, 
                                     "subCat1_sumExp": model_subCat1_sumExp,
                                     "subCat2_sumExp": model_subCat2_sumExp,
                                     "subCat3_sumExp": model_subCat3_sumExp,
-                                    # "subCat4_sumExp": model_subCat4_sumExp,
+                                    "subCat4_sumExp": model_subCat4_sumExp,
                                     "subCat0_FEWZxBern": model_subCat0_FEWZxBern, 
                                     "subCat1_FEWZxBern": model_subCat1_FEWZxBern,
                                     "subCat2_FEWZxBern": model_subCat2_FEWZxBern,
                                     "subCat3_FEWZxBern": model_subCat3_FEWZxBern,
-                                    # "subCat4_FEWZxBern": model_subCat4_FEWZxBern,
-                                }, 
-                                sample,
-    )
-    # ---------------------------------------------------
-    # Perform a simultaneous fit
-    # ---------------------------------------------------
-     
-    start = time.time()
-
-    _ = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0,SumW2Error=True)
-    fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    end = time.time()
-    
-    fitResult.Print()
-    
-    # subcat4 specific fit
-    # Define category to distinguish physics and control samples events
-    sample = rt.RooCategory("sample", "sample")
-    # sample.defineType("subCat0_BWZRedux")
-    # sample.defineType("subCat1_BWZRedux")
-    # sample.defineType("subCat2_BWZRedux")
-    # sample.defineType("subCat3_BWZRedux")
-    sample.defineType("subCat4_BWZRedux")
-    # sample.defineType("subCat0_sumExp")
-    # sample.defineType("subCat1_sumExp")
-    # sample.defineType("subCat2_sumExp")
-    # sample.defineType("subCat3_sumExp")
-    sample.defineType("subCat4_sumExp")
-    # sample.defineType("subCat0_FEWZxBern")
-    # sample.defineType("subCat1_FEWZxBern")
-    # sample.defineType("subCat2_FEWZxBern")
-    # sample.defineType("subCat3_FEWZxBern")
-    sample.defineType("subCat4_FEWZxBern")
-     
-    # Construct combined dataset in (x,sample)
-    combData = rt.RooDataSet(
-        "combData",
-        "combined data",
-        {mass},
-        Index=sample,
-        Import={
-            # "subCat0_BWZRedux": data_subCat0_BWZRedux, 
-            # "subCat1_BWZRedux": data_subCat1_BWZRedux,
-            # "subCat2_BWZRedux": data_subCat2_BWZRedux,
-            # "subCat3_BWZRedux": data_subCat3_BWZRedux,
-            "subCat4_BWZRedux": data_subCat4_BWZRedux,
-            # "subCat0_sumExp": data_subCat0_sumExp, 
-            # "subCat1_sumExp": data_subCat1_sumExp,
-            # "subCat2_sumExp": data_subCat2_sumExp,
-            # "subCat3_sumExp": data_subCat3_sumExp,
-            "subCat4_sumExp": data_subCat4_sumExp,
-            # "subCat0_FEWZxBern": data_subCat0_FEWZxBern, 
-            # "subCat1_FEWZxBern": data_subCat1_FEWZxBern,
-            # "subCat2_FEWZxBern": data_subCat2_FEWZxBern,
-            # "subCat3_FEWZxBern": data_subCat3_FEWZxBern,
-            "subCat4_FEWZxBern": data_subCat4_FEWZxBern,
-        },
-    )
-    # ---------------------------------------------------
-    # Construct a simultaneous pdf in (x, sample)
-    # -----------------------------------------------------------------------------------
-     
-    simPdf = rt.RooSimultaneous(
-                                "simPdf", 
-                                "simultaneous pdf", 
-                                {
-                                    # "subCat0_BWZRedux": model_subCat0_BWZRedux, 
-                                    # "subCat1_BWZRedux": model_subCat1_BWZRedux,
-                                    # "subCat2_BWZRedux": model_subCat2_BWZRedux,
-                                    # "subCat3_BWZRedux": model_subCat3_BWZRedux,
-                                    "subCat4_BWZRedux": model_subCat4_BWZRedux,
-                                    # "subCat0_sumExp": model_subCat0_sumExp, 
-                                    # "subCat1_sumExp": model_subCat1_sumExp,
-                                    # "subCat2_sumExp": model_subCat2_sumExp,
-                                    # "subCat3_sumExp": model_subCat3_sumExp,
-                                    "subCat4_sumExp": model_subCat4_sumExp,
-                                    # "subCat0_FEWZxBern": model_subCat0_FEWZxBern, 
-                                    # "subCat1_FEWZxBern": model_subCat1_FEWZxBern,
-                                    # "subCat2_FEWZxBern": model_subCat2_FEWZxBern,
-                                    # "subCat3_FEWZxBern": model_subCat3_FEWZxBern,
                                     "subCat4_FEWZxBern": model_subCat4_FEWZxBern,
                                 }, 
                                 sample,
@@ -1184,6 +1063,89 @@ if __name__ == "__main__":
     end = time.time()
     
     fitResult.Print()
+    # raise ValueError
+    
+    # # subcat4 specific fit
+    # # Define category to distinguish physics and control samples events
+    # sample = rt.RooCategory("sample", "sample")
+    # # sample.defineType("subCat0_BWZRedux")
+    # # sample.defineType("subCat1_BWZRedux")
+    # # sample.defineType("subCat2_BWZRedux")
+    # # sample.defineType("subCat3_BWZRedux")
+    # sample.defineType("subCat4_BWZRedux")
+    # # sample.defineType("subCat0_sumExp")
+    # # sample.defineType("subCat1_sumExp")
+    # # sample.defineType("subCat2_sumExp")
+    # # sample.defineType("subCat3_sumExp")
+    # sample.defineType("subCat4_sumExp")
+    # # sample.defineType("subCat0_FEWZxBern")
+    # # sample.defineType("subCat1_FEWZxBern")
+    # # sample.defineType("subCat2_FEWZxBern")
+    # # sample.defineType("subCat3_FEWZxBern")
+    # sample.defineType("subCat4_FEWZxBern")
+     
+    # # Construct combined dataset in (x,sample)
+    # combData = rt.RooDataSet(
+    #     "combData",
+    #     "combined data",
+    #     {mass},
+    #     Index=sample,
+    #     Import={
+    #         # "subCat0_BWZRedux": data_subCat0_BWZRedux, 
+    #         # "subCat1_BWZRedux": data_subCat1_BWZRedux,
+    #         # "subCat2_BWZRedux": data_subCat2_BWZRedux,
+    #         # "subCat3_BWZRedux": data_subCat3_BWZRedux,
+    #         "subCat4_BWZRedux": data_subCat4_BWZRedux,
+    #         # "subCat0_sumExp": data_subCat0_sumExp, 
+    #         # "subCat1_sumExp": data_subCat1_sumExp,
+    #         # "subCat2_sumExp": data_subCat2_sumExp,
+    #         # "subCat3_sumExp": data_subCat3_sumExp,
+    #         "subCat4_sumExp": data_subCat4_sumExp,
+    #         # "subCat0_FEWZxBern": data_subCat0_FEWZxBern, 
+    #         # "subCat1_FEWZxBern": data_subCat1_FEWZxBern,
+    #         # "subCat2_FEWZxBern": data_subCat2_FEWZxBern,
+    #         # "subCat3_FEWZxBern": data_subCat3_FEWZxBern,
+    #         "subCat4_FEWZxBern": data_subCat4_FEWZxBern,
+    #     },
+    # )
+    # # ---------------------------------------------------
+    # # Construct a simultaneous pdf in (x, sample)
+    # # -----------------------------------------------------------------------------------
+     
+    # simPdf = rt.RooSimultaneous(
+    #                             "simPdf", 
+    #                             "simultaneous pdf", 
+    #                             {
+    #                                 # "subCat0_BWZRedux": model_subCat0_BWZRedux, 
+    #                                 # "subCat1_BWZRedux": model_subCat1_BWZRedux,
+    #                                 # "subCat2_BWZRedux": model_subCat2_BWZRedux,
+    #                                 # "subCat3_BWZRedux": model_subCat3_BWZRedux,
+    #                                 "subCat4_BWZRedux": model_subCat4_BWZRedux,
+    #                                 # "subCat0_sumExp": model_subCat0_sumExp, 
+    #                                 # "subCat1_sumExp": model_subCat1_sumExp,
+    #                                 # "subCat2_sumExp": model_subCat2_sumExp,
+    #                                 # "subCat3_sumExp": model_subCat3_sumExp,
+    #                                 "subCat4_sumExp": model_subCat4_sumExp,
+    #                                 # "subCat0_FEWZxBern": model_subCat0_FEWZxBern, 
+    #                                 # "subCat1_FEWZxBern": model_subCat1_FEWZxBern,
+    #                                 # "subCat2_FEWZxBern": model_subCat2_FEWZxBern,
+    #                                 # "subCat3_FEWZxBern": model_subCat3_FEWZxBern,
+    #                                 "subCat4_FEWZxBern": model_subCat4_FEWZxBern,
+    #                             }, 
+    #                             sample,
+    # )
+    # # ---------------------------------------------------
+    # # Perform a simultaneous fit
+    # # ---------------------------------------------------
+     
+    # start = time.time()
+
+    # _ = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0,SumW2Error=True)
+    # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # end = time.time()
+    
+    # fitResult.Print()
+    # 
 
 
     
@@ -1201,7 +1163,6 @@ if __name__ == "__main__":
     c1.setConstant(False)
     c2.setConstant(False)
     c3.setConstant(False)
-    # c4.setConstant(False)
     
     print(f"runtime: {end-start} seconds")
 
@@ -1213,9 +1174,12 @@ if __name__ == "__main__":
     # sumExp
     
     # sumexp subcat 0
-    a0_subCat0_sumExp = rt.RooRealVar("a0_subCat0_sumExp", "a0_subCat0_sumExp", a0_subCat0.getVal(), a0_subCat0.getMin(), a0_subCat0.getMax())
-    a1_subCat0_sumExp = rt.RooRealVar("a1_subCat0_sumExp", "a1_subCat0_sumExp", a1_subCat0.getVal(), a1_subCat0.getMin(), a1_subCat0.getMax())
-    a2_subCat0_sumExp = rt.RooRealVar("a2_subCat0_sumExp", "a2_subCat0_sumExp", a2_subCat0.getVal(), a2_subCat0.getMin(), a2_subCat0.getMax())
+    # a0_subCat0_sumExp = rt.RooRealVar("a0_subCat0_sumExp", "a0_subCat0_sumExp", a0_subCat0.getVal(), a0_subCat0.getMin(), a0_subCat0.getMax())
+    # a1_subCat0_sumExp = rt.RooRealVar("a1_subCat0_sumExp", "a1_subCat0_sumExp", a1_subCat0.getVal(), a1_subCat0.getMin(), a1_subCat0.getMax())
+    # a2_subCat0_sumExp = rt.RooRealVar("a2_subCat0_sumExp", "a2_subCat0_sumExp", a2_subCat0.getVal(), a2_subCat0.getMin(), a2_subCat0.getMax())
+    a0_subCat0_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order3_coef_1_cat0_ggh", "exp_cat_ggh_pdf_transfer_order3_coef_1_cat0_ggh", a0_subCat0.getVal(), a0_subCat0.getMin(), a0_subCat0.getMax())
+    a1_subCat0_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order3_coef_2_cat0_ggh", "exp_cat_ggh_pdf_transfer_order3_coef_2_cat0_ggh", a1_subCat0.getVal(), a1_subCat0.getMin(), a1_subCat0.getMax())
+    a2_subCat0_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order3_coef_3_cat0_ggh", "exp_cat_ggh_pdf_transfer_order3_coef_3_cat0_ggh", a2_subCat0.getVal(), a2_subCat0.getMin(), a2_subCat0.getMax())
     
      
     name = "subCat0_SMF_sumExp"
@@ -1229,8 +1193,10 @@ if __name__ == "__main__":
     # subCat 1
     name = "subCat1_sumExp"
     
-    a0_subCat1_sumExp = rt.RooRealVar("a0_subCat1_sumExp", "a0_subCat1_sumExp", a0_subCat1.getVal(), a0_subCat1.getMin(), a0_subCat1.getMax())
-    a1_subCat1_sumExp = rt.RooRealVar("a1_subCat1_sumExp", "a1_subCat1_sumExp", a1_subCat1.getVal(), a1_subCat1.getMin(), a1_subCat1.getMax())
+    # a0_subCat1_sumExp = rt.RooRealVar("a0_subCat1_sumExp", "a0_subCat1_sumExp", a0_subCat1.getVal(), a0_subCat1.getMin(), a0_subCat1.getMax())
+    # a1_subCat1_sumExp = rt.RooRealVar("a1_subCat1_sumExp", "a1_subCat1_sumExp", a1_subCat1.getVal(), a1_subCat1.getMin(), a1_subCat1.getMax())
+    a0_subCat1_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_1_cat1_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_1_cat1_ggh", a0_subCat1.getVal(), a0_subCat1.getMin(), a0_subCat1.getMax())
+    a1_subCat1_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_2_cat1_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_2_cat1_ggh", a1_subCat1.getVal(), a1_subCat1.getMin(), a1_subCat1.getMax())
     
     name = "subCat1_SMF_sumExp"
     subCat1_SumExp_SMF = rt.RooChebychev(name, name, mass, 
@@ -1245,8 +1211,10 @@ if __name__ == "__main__":
     # subCat 2
     name = "subCat2_sumExp"
 
-    a0_subCat2_sumExp = rt.RooRealVar("a0_subCat2_sumExp", "a0_subCat2_sumExp", a0_subCat2.getVal(), a0_subCat2.getMin(), a0_subCat2.getMax())
-    a1_subCat2_sumExp = rt.RooRealVar("a1_subCat2_sumExp", "a1_subCat2_sumExp", a1_subCat2.getVal(), a1_subCat2.getMin(), a1_subCat2.getMax())
+    # a0_subCat2_sumExp = rt.RooRealVar("a0_subCat2_sumExp", "a0_subCat2_sumExp", a0_subCat2.getVal(), a0_subCat2.getMin(), a0_subCat2.getMax())
+    # a1_subCat2_sumExp = rt.RooRealVar("a1_subCat2_sumExp", "a1_subCat2_sumExp", a1_subCat2.getVal(), a1_subCat2.getMin(), a1_subCat2.getMax())
+    a0_subCat2_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_1_cat2_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_1_cat2_ggh", a0_subCat2.getVal(), a0_subCat2.getMin(), a0_subCat2.getMax())
+    a1_subCat2_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_2_cat2_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_2_cat2_ggh", a1_subCat2.getVal(), a1_subCat2.getMin(), a1_subCat2.getMax())
     
     name = "subCat2_SMF_sumExp"
     subCat2_SumExp_SMF = rt.RooChebychev(name, name, mass, 
@@ -1259,8 +1227,10 @@ if __name__ == "__main__":
     # subCat 3
     name = "subCat3_sumExp"
 
-    a0_subCat3_sumExp = rt.RooRealVar("a0_subCat3_sumExp", "a0_subCat3_sumExp", a0_subCat3.getVal(), a0_subCat3.getMin(), a0_subCat3.getMax())
-    a1_subCat3_sumExp = rt.RooRealVar("a1_subCat3_sumExp", "a1_subCat3_sumExp", a1_subCat3.getVal(), a1_subCat3.getMin(), a1_subCat3.getMax())
+    # a0_subCat3_sumExp = rt.RooRealVar("a0_subCat3_sumExp", "a0_subCat3_sumExp", a0_subCat3.getVal(), a0_subCat3.getMin(), a0_subCat3.getMax())
+    # a1_subCat3_sumExp = rt.RooRealVar("a1_subCat3_sumExp", "a1_subCat3_sumExp", a1_subCat3.getVal(), a1_subCat3.getMin(), a1_subCat3.getMax())
+    a0_subCat3_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_1_cat3_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_1_cat3_ggh", a0_subCat3.getVal(), a0_subCat3.getMin(), a0_subCat3.getMax())
+    a1_subCat3_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_2_cat3_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_2_cat3_ggh", a1_subCat3.getVal(), a1_subCat3.getMin(), a1_subCat3.getMax())
     
     name = "subCat3_SMF_sumExp"
     subCat3_SumExp_SMF = rt.RooChebychev(name, name, mass, 
@@ -1273,8 +1243,10 @@ if __name__ == "__main__":
     # subCat 4
     name = "subCat4_sumExp"
 
-    a0_subCat4_sumExp = rt.RooRealVar("a0_subCat4_sumExp", "a0_subCat4_sumExp", a0_subCat4.getVal(), a0_subCat4.getMin(), a0_subCat4.getMax())
-    a1_subCat4_sumExp = rt.RooRealVar("a1_subCat4_sumExp", "a1_subCat4_sumExp", a1_subCat4.getVal(), a1_subCat4.getMin(), a1_subCat4.getMax())
+    # a0_subCat4_sumExp = rt.RooRealVar("a0_subCat4_sumExp", "a0_subCat4_sumExp", a0_subCat4.getVal(), a0_subCat4.getMin(), a0_subCat4.getMax())
+    # a1_subCat4_sumExp = rt.RooRealVar("a1_subCat4_sumExp", "a1_subCat4_sumExp", a1_subCat4.getVal(), a1_subCat4.getMin(), a1_subCat4.getMax())
+    a0_subCat4_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_1_cat4_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_1_cat4_ggh", a0_subCat4.getVal(), a0_subCat4.getMin(), a0_subCat4.getMax())
+    a1_subCat4_sumExp = rt.RooRealVar("exp_cat_ggh_pdf_transfer_order2_coef_2_cat4_ggh", "exp_cat_ggh_pdf_transfer_order2_coef_2_cat4_ggh", a1_subCat4.getVal(), a1_subCat4.getMin(), a1_subCat4.getMax())
     
     name = "subCat4_SMF_sumExp"
     subCat4_SumExp_SMF = rt.RooChebychev(name, name, mass, 
@@ -1286,9 +1258,12 @@ if __name__ == "__main__":
 
     # FEWZxBern----------------------------------------------------------
     # subCat 0
-    a0_subCat0_FEWZxBern = rt.RooRealVar("a0_subCat0_FEWZxBern", "a0_subCat0_FEWZxBern", a0_subCat0.getVal(), a0_subCat0.getMin(), a0_subCat0.getMax())
-    a1_subCat0_FEWZxBern = rt.RooRealVar("a1_subCat0_FEWZxBern", "a1_subCat0_FEWZxBern", a1_subCat0.getVal(), a1_subCat0.getMin(), a1_subCat0.getMax())
-    a2_subCat0_FEWZxBern = rt.RooRealVar("a2_subCat0_FEWZxBern", "a2_subCat0_FEWZxBern", a2_subCat0.getVal(), a2_subCat0.getMin(), a2_subCat0.getMax())
+    # a0_subCat0_FEWZxBern = rt.RooRealVar("a0_subCat0_FEWZxBern", "a0_subCat0_FEWZxBern", a0_subCat0.getVal(), a0_subCat0.getMin(), a0_subCat0.getMax())
+    # a1_subCat0_FEWZxBern = rt.RooRealVar("a1_subCat0_FEWZxBern", "a1_subCat0_FEWZxBern", a1_subCat0.getVal(), a1_subCat0.getMin(), a1_subCat0.getMax())
+    # a2_subCat0_FEWZxBern = rt.RooRealVar("a2_subCat0_FEWZxBern", "a2_subCat0_FEWZxBern", a2_subCat0.getVal(), a2_subCat0.getMin(), a2_subCat0.getMax())
+    a0_subCat0_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order3_coef_1_cat0_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order3_coef_1_cat0_ggh", a0_subCat0.getVal(), a0_subCat0.getMin(), a0_subCat0.getMax())
+    a1_subCat0_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order3_coef_2_cat0_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order3_coef_2_cat0_ggh", a1_subCat0.getVal(), a1_subCat0.getMin(), a1_subCat0.getMax())
+    a2_subCat0_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order3_coef_3_cat0_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order3_coef_3_cat0_ggh", a2_subCat0.getVal(), a2_subCat0.getMin(), a2_subCat0.getMax())
      
     name = "subCat0_SMF_FEWZxBern"
     subCat0_FEWZxBern_SMF = rt.RooChebychev(name, name, mass, [a0_subCat0_FEWZxBern, a1_subCat0_FEWZxBern, a2_subCat0_FEWZxBern])
@@ -1303,8 +1278,10 @@ if __name__ == "__main__":
     name = "subCat1_FEWZxBern"
     coreFEWZxBern_SubCat1 = coreFEWZxBern_SubCat0
     
-    a0_subCat1_FEWZxBern = rt.RooRealVar("a0_subCat1_FEWZxBern", "a0_subCat1_FEWZxBern", a0_subCat1.getVal(), a0_subCat1.getMin(), a0_subCat1.getMax())
-    a1_subCat1_FEWZxBern = rt.RooRealVar("a1_subCat1_FEWZxBern", "a1_subCat1_FEWZxBern", a1_subCat1.getVal(), a1_subCat1.getMin(), a1_subCat1.getMax())
+    # a0_subCat1_FEWZxBern = rt.RooRealVar("a0_subCat1_FEWZxBern", "a0_subCat1_FEWZxBern", a0_subCat1.getVal(), a0_subCat1.getMin(), a0_subCat1.getMax())
+    # a1_subCat1_FEWZxBern = rt.RooRealVar("a1_subCat1_FEWZxBern", "a1_subCat1_FEWZxBern", a1_subCat1.getVal(), a1_subCat1.getMin(), a1_subCat1.getMax())
+    a0_subCat1_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat1_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat1_ggh", a0_subCat1.getVal(), a0_subCat1.getMin(), a0_subCat1.getMax())
+    a1_subCat1_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat1_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat1_ggh", a1_subCat1.getVal(), a1_subCat1.getMin(), a1_subCat1.getMax())
 
     name = "subCat1_SMF_FEWZxBern"
     subCat1_FEWZxBern_SMF = rt.RooChebychev(name, name, mass, 
@@ -1320,8 +1297,10 @@ if __name__ == "__main__":
     name = "subCat2_FEWZxBern"
     coreFEWZxBern_SubCat2 = coreFEWZxBern_SubCat0
     
-    a0_subCat2_FEWZxBern = rt.RooRealVar("a0_subCat2_FEWZxBern", "a0_subCat2_FEWZxBern", a0_subCat2.getVal(), a0_subCat2.getMin(), a0_subCat2.getMax())
-    a1_subCat2_FEWZxBern = rt.RooRealVar("a1_subCat2_FEWZxBern", "a1_subCat2_FEWZxBern", a1_subCat2.getVal(), a1_subCat2.getMin(), a1_subCat2.getMax())
+    # a0_subCat2_FEWZxBern = rt.RooRealVar("a0_subCat2_FEWZxBern", "a0_subCat2_FEWZxBern", a0_subCat2.getVal(), a0_subCat2.getMin(), a0_subCat2.getMax())
+    # a1_subCat2_FEWZxBern = rt.RooRealVar("a1_subCat2_FEWZxBern", "a1_subCat2_FEWZxBern", a1_subCat2.getVal(), a1_subCat2.getMin(), a1_subCat2.getMax())
+    a0_subCat2_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat2_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat2_ggh", a0_subCat2.getVal(), a0_subCat2.getMin(), a0_subCat2.getMax())
+    a1_subCat2_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat2_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat2_ggh", a1_subCat2.getVal(), a1_subCat2.getMin(), a1_subCat2.getMax())
 
     name = "subCat2_SMF_FEWZxBern"
     subCat2_FEWZxBern_SMF = rt.RooChebychev(name, name, mass, 
@@ -1335,8 +1314,10 @@ if __name__ == "__main__":
     name = "subCat3_FEWZxBern"
     coreFEWZxBern_SubCat3 = coreFEWZxBern_SubCat0
     
-    a0_subCat3_FEWZxBern = rt.RooRealVar("a0_subCat3_FEWZxBern", "a0_subCat3_FEWZxBern", a0_subCat3.getVal(), a0_subCat3.getMin(), a0_subCat3.getMax())
-    a1_subCat3_FEWZxBern = rt.RooRealVar("a1_subCat3_FEWZxBern", "a1_subCat3_FEWZxBern", a1_subCat3.getVal(), a1_subCat3.getMin(), a1_subCat3.getMax())
+    # a0_subCat3_FEWZxBern = rt.RooRealVar("a0_subCat3_FEWZxBern", "a0_subCat3_FEWZxBern", a0_subCat3.getVal(), a0_subCat3.getMin(), a0_subCat3.getMax())
+    # a1_subCat3_FEWZxBern = rt.RooRealVar("a1_subCat3_FEWZxBern", "a1_subCat3_FEWZxBern", a1_subCat3.getVal(), a1_subCat3.getMin(), a1_subCat3.getMax())
+    a0_subCat3_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat3_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat3_ggh", a0_subCat3.getVal(), a0_subCat3.getMin(), a0_subCat3.getMax())
+    a1_subCat3_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat3_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat3_ggh", a1_subCat3.getVal(), a1_subCat3.getMin(), a1_subCat3.getMax())
 
     name = "subCat3_SMF_FEWZxBern"
     subCat3_FEWZxBern_SMF = rt.RooChebychev(name, name, mass, 
@@ -1350,8 +1331,10 @@ if __name__ == "__main__":
     name = "subCat4_FEWZxBern"
     coreFEWZxBern_SubCat4 = coreFEWZxBern_SubCat0
     
-    a0_subCat4_FEWZxBern = rt.RooRealVar("a0_subCat4_FEWZxBern", "a0_subCat4_FEWZxBern", a0_subCat4.getVal(), a0_subCat4.getMin(), a0_subCat4.getMax())
-    a1_subCat4_FEWZxBern = rt.RooRealVar("a1_subCat4_FEWZxBern", "a1_subCat4_FEWZxBern", a1_subCat4.getVal(), a1_subCat4.getMin(), a1_subCat4.getMax())
+    # a0_subCat4_FEWZxBern = rt.RooRealVar("a0_subCat4_FEWZxBern", "a0_subCat4_FEWZxBern", a0_subCat4.getVal(), a0_subCat4.getMin(), a0_subCat4.getMax())
+    # a1_subCat4_FEWZxBern = rt.RooRealVar("a1_subCat4_FEWZxBern", "a1_subCat4_FEWZxBern", a1_subCat4.getVal(), a1_subCat4.getMin(), a1_subCat4.getMax())
+    a0_subCat4_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat4_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_1_cat4_ggh", a0_subCat4.getVal(), a0_subCat4.getMin(), a0_subCat4.getMax())
+    a1_subCat4_FEWZxBern = rt.RooRealVar("fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat4_ggh", "fewz_1j_spl_cat_ggh_pdf_transfer_order2_coef_2_cat4_ggh", a1_subCat4.getVal(), a1_subCat4.getMin(), a1_subCat4.getMax())
 
     name = "subCat4_SMF_FEWZxBern"
     subCat4_FEWZxBern_SMF = rt.RooChebychev(name, name, mass, 
@@ -1384,7 +1367,7 @@ if __name__ == "__main__":
     corePdf_subCat0 = rt.RooMultiPdf("CorePdf_subCat0","CorePdf_subCat0",cat_subCat0,pdf_list_subCat0)
     penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
     corePdf_subCat0.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat0.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
+    nevents = roo_histData_subCat0.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
     print(f"roo_datasetData_subCat0 sumentries: {nevents}")
     bkg_subCat0_norm = rt.RooRealVar(corePdf_subCat0.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
     
@@ -1418,7 +1401,7 @@ if __name__ == "__main__":
     corePdf_subCat1 = rt.RooMultiPdf("CorePdf_subCat1","CorePdf_subCat1",cat_subCat1,pdf_list_subCat1)
     penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
     corePdf_subCat1.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat1.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
+    nevents = roo_histData_subCat1.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
     print(f"roo_datasetData_subCat1 sumentries: {nevents}")
     bkg_subCat1_norm = rt.RooRealVar(corePdf_subCat1.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
     
@@ -1451,7 +1434,7 @@ if __name__ == "__main__":
     corePdf_subCat2 = rt.RooMultiPdf("CorePdf_subCat2","CorePdf_subCat2",cat_subCat2,pdf_list_subCat2)
     penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
     corePdf_subCat2.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat2.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
+    nevents = roo_histData_subCat2.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
     print(f"roo_datasetData_subCat2 sumentries: {nevents}")
     bkg_subCat2_norm = rt.RooRealVar(corePdf_subCat2.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
     # add yield
@@ -1483,7 +1466,7 @@ if __name__ == "__main__":
     corePdf_subCat3 = rt.RooMultiPdf("CorePdf_subCat3","CorePdf_subCat3",cat_subCat3,pdf_list_subCat3)
     penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
     corePdf_subCat3.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat3.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
+    nevents = roo_histData_subCat3.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
     print(f"roo_datasetData_subCat3 sumentries: {nevents}")
     bkg_subCat3_norm = rt.RooRealVar(corePdf_subCat3.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
     # add yield
@@ -1520,7 +1503,7 @@ if __name__ == "__main__":
     corePdf_subCat4 = rt.RooMultiPdf("CorePdf_subCat4","CorePdf_subCat4",cat_subCat4,pdf_list_subCat4)
     penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
     corePdf_subCat4.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat4.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
+    nevents = roo_histData_subCat4.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
     print(f"roo_datasetData_subCat4 sumentries: {nevents}")
     bkg_subCat4_norm = rt.RooRealVar(corePdf_subCat4.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
     # add yield
@@ -1570,13 +1553,9 @@ if __name__ == "__main__":
     # MH_subCat0 = rt.RooRealVar("MH" , "MH", 125, 115,135)
     # MH_subCat0.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
-    MH_subCat0 = rt.RooRealVar("MH" , "MH", 124.805, 120,130) # matching AN
+    MH_subCat0 = rt.RooRealVar("MH" , "MH", 124.80516052246094, 120,130) # matching AN
+    MH_subCat0.setConstant(True) 
     
-    # sigma_subCat0 = rt.RooRealVar("sigma_subCat0" , "sigma_subCat0", 2, .1, 4.0)
-    # alpha1_subCat0 = rt.RooRealVar("alpha1_subCat0" , "alpha1_subCat0", 2, 0.01, 65)
-    # n1_subCat0 = rt.RooRealVar("n1_subCat0" , "n1_subCat0", 10, 0.01, 100)
-    # alpha2_subCat0 = rt.RooRealVar("alpha2_subCat0" , "alpha2_subCat0", 2.0, 0.01, 65)
-    # n2_subCat0 = rt.RooRealVar("n2_subCat0" , "n2_subCat0", 25, 0.01, 100)
 
     # copying parameters from official AN workspace as starting params
     sigma_subCat0 = rt.RooRealVar("sigma_subCat0" , "sigma_subCat0", 1.8228, .1, 4.0)
@@ -1584,14 +1563,7 @@ if __name__ == "__main__":
     n1_subCat0 = rt.RooRealVar("n1_subCat0" , "n1_subCat0", 4.019960, 0.01, 100)
     alpha2_subCat0 = rt.RooRealVar("alpha2_subCat0" , "alpha2_subCat0", 1.3132, 0.01, 65)
     n2_subCat0 = rt.RooRealVar("n2_subCat0" , "n2_subCat0", 9.97411, 0.01, 100)
-
-    # # temporary test
-    # sigma_subCat0.setConstant(True)
-    # alpha1_subCat0.setConstant(True)
-    # n1_subCat0.setConstant(True)
-    # alpha2_subCat0.setConstant(True)
-    # n2_subCat0.setConstant(True)
-    
+  
     
     CMS_hmm_sigma_cat0_ggh = rt.RooRealVar("CMS_hmm_sigma_cat0_ggh" , "CMS_hmm_sigma_cat0_ggh", 0, -5 , 5 )
     CMS_hmm_sigma_cat0_ggh.setConstant(True) # this is going to be param in datacard
@@ -1603,20 +1575,17 @@ if __name__ == "__main__":
     # n1_subCat0.setConstant(True) # freeze for stability
     # n2_subCat0.setConstant(True) # freeze for stability
     name = "signal_subCat0"
-    signal_subCat0 = rt.RooCrystalBall(name,name,mass, ggH_cat0_ggh_fpeak, ggH_cat0_ggh_fsigma, alpha1_subCat0, n1_subCat0, alpha2_subCat0, n2_subCat0)
+    # signal_subCat0 = rt.RooCrystalBall(name,name,mass, ggH_cat0_ggh_fpeak, ggH_cat0_ggh_fsigma, alpha1_subCat0, n1_subCat0, alpha2_subCat0, n2_subCat0)
+    signal_subCat0 = rt.RooDoubleCBFast(name,name,mass, ggH_cat0_ggh_fpeak, ggH_cat0_ggh_fsigma, alpha1_subCat0, n1_subCat0, alpha2_subCat0, n2_subCat0)
 
     # subCat 1
     # original start ------------------------------------------------------
     # MH_subCat1 = rt.RooRealVar("MH" , "MH", 125, 115,135)
     # MH_subCat1.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
-    MH_subCat1 = MH_subCat0 
+    MH_subCat1 = rt.RooRealVar("MH" , "MH", 124.85295104980469, 120,130) # matching AN
+    MH_subCat1.setConstant(True) 
     
-    # sigma_subCat1 = rt.RooRealVar("sigma_subCat1" , "sigma_subCat1", 2, .1, 4.0)
-    # alpha1_subCat1 = rt.RooRealVar("alpha1_subCat1" , "alpha1_subCat1", 2, 0.01, 65)
-    # n1_subCat1 = rt.RooRealVar("n1_subCat1" , "n1_subCat1", 10, 0.01, 100)
-    # alpha2_subCat1 = rt.RooRealVar("alpha2_subCat1" , "alpha2_subCat1", 2.0, 0.01, 65)
-    # n2_subCat1 = rt.RooRealVar("n2_subCat1" , "n2_subCat1", 25, 0.01, 100)
 
     # copying parameters from official AN workspace as starting params
     sigma_subCat1 = rt.RooRealVar("sigma_subCat1" , "sigma_subCat1", 1.503280, .1, 4.0)
@@ -1642,14 +1611,16 @@ if __name__ == "__main__":
     # n1_subCat1.setConstant(True) # freeze for stability
     # n2_subCat1.setConstant(True) # freeze for stability
     name = "signal_subCat1"
-    signal_subCat1 = rt.RooCrystalBall(name,name,mass, ggH_cat1_ggh_fpeak, ggH_cat1_ggh_fsigma, alpha1_subCat1, n1_subCat1, alpha2_subCat1, n2_subCat1)
+    # signal_subCat1 = rt.RooCrystalBall(name,name,mass, ggH_cat1_ggh_fpeak, ggH_cat1_ggh_fsigma, alpha1_subCat1, n1_subCat1, alpha2_subCat1, n2_subCat1)
+    signal_subCat1 = rt.RooDoubleCBFast(name,name,mass, ggH_cat1_ggh_fpeak, ggH_cat1_ggh_fsigma, alpha1_subCat1, n1_subCat1, alpha2_subCat1, n2_subCat1)
 
     # subCat 2
     # original start ------------------------------------------------------
     # MH_subCat2 = rt.RooRealVar("MH" , "MH", 125, 115,135)
     # MH_subCat2.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
-    MH_subCat2 = MH_subCat0 
+    MH_subCat2 = rt.RooRealVar("MH" , "MH", 124.87848663330078, 120,130) # matching AN
+    MH_subCat2.setConstant(True) 
     
     # sigma_subCat2 = rt.RooRealVar("sigma_subCat2" , "sigma_subCat2", 2, .1, 4.0)
     # alpha1_subCat2 = rt.RooRealVar("alpha1_subCat2" , "alpha1_subCat2", 2, 0.01, 65)
@@ -1658,7 +1629,7 @@ if __name__ == "__main__":
     # n2_subCat2 = rt.RooRealVar("n2_subCat2" , "n2_subCat2", 25, 0.01, 100)
 
     # copying parameters from official AN workspace as starting params
-    sigma_subCat2 = rt.RooRealVar("sigma_subCat2" , "sigma_subCat2", 1.36025, .1, 4.0)
+    sigma_subCat2 = rt.RooRealVar("sigma_subCat2" , "sigma_subCat2", 1.3602590560913086, .1, 4.0)
     alpha1_subCat2 = rt.RooRealVar("alpha1_subCat2" , "alpha1_subCat2", 1.4173626, 0.01, 65)
     n1_subCat2 = rt.RooRealVar("n1_subCat2" , "n1_subCat2", 2.42748, 0.01, 100)
     alpha2_subCat2 = rt.RooRealVar("alpha2_subCat2" , "alpha2_subCat2", 1.629120, 0.01, 65)
@@ -1681,54 +1652,49 @@ if __name__ == "__main__":
     # n1_subCat2.setConstant(True) # freeze for stability
     # n2_subCat2.setConstant(True) # freeze for stability
     name = "signal_subCat2"
-    signal_subCat2 = rt.RooCrystalBall(name,name,mass, ggH_cat2_ggh_fpeak, ggH_cat2_ggh_fsigma, alpha1_subCat2, n1_subCat2, alpha2_subCat2, n2_subCat2)
+    # signal_subCat2 = rt.RooCrystalBall(name,name,mass, ggH_cat2_ggh_fpeak, ggH_cat2_ggh_fsigma, alpha1_subCat2, n1_subCat2, alpha2_subCat2, n2_subCat2)
+    signal_subCat2 = rt.RooDoubleCBFast(name,name,mass, ggH_cat2_ggh_fpeak, ggH_cat2_ggh_fsigma, alpha1_subCat2, n1_subCat2, alpha2_subCat2, n2_subCat2)
 
     # subCat 3
     # original start ------------------------------------------------------
     # MH_subCat3 = rt.RooRealVar("MH" , "MH", 125, 115,135)
     # MH_subCat3.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
-    MH_subCat3 = MH_subCat0
+    MH_subCat3 = rt.RooRealVar("MH" , "MH", 124.89420318603516, 120,130) # matching AN
+    MH_subCat3.setConstant(True) 
     
+    # copying parameters from official AN workspace as starting params
+    sigma_subCat3 = rt.RooRealVar("sigma_subCat3" , "sigma_subCat3", 1.253594994544983, .1, 10.0)
+    alpha1_subCat3 = rt.RooRealVar("alpha1_subCat3" , "alpha1_subCat3", 1.4199763536453247, 0.01, 200)
+    n1_subCat3 = rt.RooRealVar("n1_subCat3" , "n1_subCat3", 2.4099531173706055, 0.01, 200)
+    alpha2_subCat3 = rt.RooRealVar("alpha2_subCat3" , "alpha2_subCat3", 1.6467519998550415, 0.01, 65)
+    n2_subCat3 = rt.RooRealVar("n2_subCat3" , "n2_subCat3", 9.670221328735352, 0.01, 200)
 
-    sigma_subCat3 = rt.RooRealVar("sigma_subCat3" , "sigma_subCat3", 0.1, .1, 10.0)
-    alpha1_subCat3 = rt.RooRealVar("alpha1_subCat3" , "alpha1_subCat3", 2, 0.01, 200)
-    n1_subCat3 = rt.RooRealVar("n1_subCat3" , "n1_subCat3", 25, 0.01, 200)
-    alpha2_subCat3 = rt.RooRealVar("alpha2_subCat3" , "alpha2_subCat3", 2, 0.01, 65)
-    n2_subCat3 = rt.RooRealVar("n2_subCat3" , "n2_subCat3", 25, 0.01, 200)
-
-    # # copying parameters from official AN workspace as starting params
-    # sigma_subCat3 = rt.RooRealVar("sigma_subCat3" , "sigma_subCat3", 1.25359, .1, 10.0)
-    # alpha1_subCat3 = rt.RooRealVar("alpha1_subCat3" , "alpha1_subCat3", 1.4199, 0.01, 200)
-    # n1_subCat3 = rt.RooRealVar("n1_subCat3" , "n1_subCat3", 2.409953, 0.01, 200)
-    # alpha2_subCat3 = rt.RooRealVar("alpha2_subCat3" , "alpha2_subCat3", 1.64675, 0.01, 65)
-    # n2_subCat3 = rt.RooRealVar("n2_subCat3" , "n2_subCat3", 9.670221, 0.01, 200)
-
-    # # temporary test
-    # sigma_subCat3.setConstant(True)
-    # alpha1_subCat3.setConstant(True)
-    # n1_subCat3.setConstant(True)
-    # alpha2_subCat3.setConstant(True)
-    # n2_subCat3.setConstant(True)
 
     CMS_hmm_sigma_cat3_ggh = rt.RooRealVar("CMS_hmm_sigma_cat3_ggh" , "CMS_hmm_sigma_cat3_ggh", 0, -5 , 5 )
     CMS_hmm_sigma_cat3_ggh.setConstant(True) # this is going to be param in datacard
     ggH_cat3_ggh_fsigma = rt.RooFormulaVar("ggH_cat3_ggh_fsigma", "ggH_cat3_ggh_fsigma",'@0*(1+@1)',[sigma_subCat3, CMS_hmm_sigma_cat3_ggh])
+
+    
+    
     CMS_hmm_peak_cat3_ggh = rt.RooRealVar("CMS_hmm_peak_cat3_ggh" , "CMS_hmm_peak_cat3_ggh", 0, -5 , 5 )
     CMS_hmm_peak_cat3_ggh.setConstant(True) # this is going to be param in datacard
     ggH_cat3_ggh_fpeak = rt.RooFormulaVar("ggH_cat3_ggh_fpeak", "ggH_cat3_ggh_fpeak",'@0*(1+@1)',[MH_subCat3, CMS_hmm_peak_cat3_ggh])
+
     
     # n1_subCat3.setConstant(True) # freeze for stability
     # n2_subCat3.setConstant(True) # freeze for stability
     name = "signal_subCat3"
-    signal_subCat3 = rt.RooCrystalBall(name,name,mass, ggH_cat3_ggh_fpeak, ggH_cat3_ggh_fsigma, alpha1_subCat3, n1_subCat3, alpha2_subCat3, n2_subCat3)
+    # signal_subCat3 = rt.RooCrystalBall(name,name,mass, ggH_cat3_ggh_fpeak, ggH_cat3_ggh_fsigma, alpha1_subCat3, n1_subCat3, alpha2_subCat3, n2_subCat3)
+    signal_subCat3 = rt.RooDoubleCBFast(name,name,mass, ggH_cat3_ggh_fpeak, ggH_cat3_ggh_fsigma, alpha1_subCat3, n1_subCat3, alpha2_subCat3, n2_subCat3)
 
     # subCat 4
     # original start ------------------------------------------------------
     # MH_subCat4 = rt.RooRealVar("MH" , "MH", 125, 115,135)
     # MH_subCat4.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
-    MH_subCat4 = MH_subCat0
+    MH_subCat4 = rt.RooRealVar("MH" , "MH", 124.90092468261719, 120,130) # matching AN
+    MH_subCat4.setConstant(True) 
     
     # sigma_subCat4 = rt.RooRealVar("sigma_subCat4" , "sigma_subCat4", 2, .1, 4.0)
     # alpha1_subCat4 = rt.RooRealVar("alpha1_subCat4" , "alpha1_subCat4", 2, 0.01, 65)
@@ -1737,7 +1703,7 @@ if __name__ == "__main__":
     # n2_subCat4 = rt.RooRealVar("n2_subCat4" , "n2_subCat4", 25, 0.01, 100)
 
     # copying parameters from official AN workspace as starting params
-    sigma_subCat4 = rt.RooRealVar("sigma_subCat4" , "sigma_subCat4", 1.28250, .1, 4.0)
+    sigma_subCat4 = rt.RooRealVar("sigma_subCat4" , "sigma_subCat4", 1.2825090, .1, 4.0)
     alpha1_subCat4 = rt.RooRealVar("alpha1_subCat4" , "alpha1_subCat4", 1.47936, 0.01, 65)
     n1_subCat4 = rt.RooRealVar("n1_subCat4" , "n1_subCat4", 2.24104, 0.01, 100)
     alpha2_subCat4 = rt.RooRealVar("alpha2_subCat4" , "alpha2_subCat4", 1.67898, 0.01, 65)
@@ -1754,7 +1720,9 @@ if __name__ == "__main__":
     # n1_subCat4.setConstant(True) # freeze for stability
     # n2_subCat4.setConstant(True) # freeze for stability
     name = "signal_subCat4"
-    signal_subCat4 = rt.RooCrystalBall(name,name,mass, ggH_cat4_ggh_fpeak, ggH_cat4_ggh_fsigma, alpha1_subCat4, n1_subCat4, alpha2_subCat4, n2_subCat4)
+    # signal_subCat4 = rt.RooCrystalBall(name,name,mass, ggH_cat4_ggh_fpeak, ggH_cat4_ggh_fsigma, alpha1_subCat4, n1_subCat4, alpha2_subCat4, n2_subCat4)
+    signal_subCat4 = rt.RooDoubleCBFast(name,name,mass, ggH_cat4_ggh_fpeak, ggH_cat4_ggh_fsigma, alpha1_subCat4, n1_subCat4, alpha2_subCat4, n2_subCat4)
+
     
     
     # ---------------------------------------------------
@@ -1860,11 +1828,11 @@ if __name__ == "__main__":
     # define normalization value from signal MC event weights 
     
     norm_val = np.sum(wgt_subCat2_SigMC) * flat_MC_SF
-    # norm_val = 124.0364 # quick test
     sig_norm_subCat2 = rt.RooRealVar(signal_subCat2.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat2 norm_val: {norm_val}")
     sig_norm_subCat2.setConstant(True)
 
+    
     # subCat 3
     subCat_filter = (processed_eventsSignalMC[subCatIdx_name] == 3)
     subCat_mass_arr = ak.to_numpy(
@@ -1876,9 +1844,12 @@ if __name__ == "__main__":
     
     # generate a weighted histogram 
     roo_histData_subCat3_signal = rt.TH1F("subCat3_rooHist_signal", "subCat3_rooHist_signal", nbins, mass.getMin(), mass.getMax())
-       
-    roo_histData_subCat3_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat3_SigMC) # fill the histograms with mass and weights 
+
+    if len(subCat_mass_arr) > 0:
+        roo_histData_subCat3_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat3_SigMC) # fill the histograms with mass and weights 
+    
     roo_histData_subCat3_signal = rt.RooDataHist("subCat3_rooHist_signal", "subCat3_rooHist_signal", rt.RooArgSet(mass), roo_histData_subCat3_signal) # convert to RooDataHist with (picked same name, bc idk)
+    
     
     data_subCat3_signal = roo_histData_subCat3_signal
     # add yield
@@ -1894,7 +1865,7 @@ if __name__ == "__main__":
     # define normalization value from signal MC event weights 
     
     norm_val = np.sum(wgt_subCat3_SigMC)* flat_MC_SF
-    # norm_val = 116.4918 # quick test
+    
     sig_norm_subCat3 = rt.RooRealVar(signal_subCat3.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat3 norm_val: {norm_val}")
     sig_norm_subCat3.setConstant(True)
@@ -1910,8 +1881,9 @@ if __name__ == "__main__":
     
     # generate a weighted histogram 
     roo_histData_subCat4_signal = rt.TH1F("subCat4_rooHist_signal", "subCat4_rooHist_signal", nbins, mass.getMin(), mass.getMax())
-       
-    roo_histData_subCat4_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat4_SigMC) # fill the histograms with mass and weights 
+
+    if len(subCat_mass_arr) > 0:
+        roo_histData_subCat4_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat4_SigMC) # fill the histograms with mass and weights 
     roo_histData_subCat4_signal = rt.RooDataHist("subCat4_rooHist_signal", "subCat4_rooHist_signal", rt.RooArgSet(mass), roo_histData_subCat4_signal) # convert to RooDataHist with (picked same name, bc idk)
     
     data_subCat4_signal = roo_histData_subCat4_signal
@@ -1939,12 +1911,10 @@ if __name__ == "__main__":
     # ---------------------------------------------------
 
     # subCat 0
-    # _ = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True,)
-    # fit_result = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True,)
-    _ = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    fit_result = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    # if fit_result is not None:
-        # fit_result.Print()
+    # _ = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    # fit_result = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    _ = signal_subCat0.fitTo(data_subCat0_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
+    fit_result = signal_subCat0.fitTo(data_subCat0_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat0.setConstant(True)
@@ -1956,12 +1926,10 @@ if __name__ == "__main__":
     
 
     # subCat 1
-    # _ = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, )
-    _ = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    fit_result = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    # if fit_result is not None:
-        # fit_result.Print()
+    # _ = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    # fit_result = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    _ = signal_subCat1.fitTo(data_subCat1_signal, rt.RooFit.Range("full") , EvalBackend=device, Save=True, SumW2Error=True)
+    fit_result = signal_subCat1.fitTo(data_subCat1_signal, rt.RooFit.Range("full") , EvalBackend=device, Save=True, SumW2Error=True)
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat1.setConstant(True)
@@ -1973,12 +1941,10 @@ if __name__ == "__main__":
     
 
     # subCat 2
-    # _ = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, )
-    _ = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    fit_result = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    # if fit_result is not None:
-        # fit_result.Print()
+    # _ = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    # fit_result = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    _ = signal_subCat2.fitTo(data_subCat2_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
+    fit_result = signal_subCat2.fitTo(data_subCat2_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat2.setConstant(True)
@@ -1990,12 +1956,10 @@ if __name__ == "__main__":
     
     
     # subCat 3
-    # _ = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, )
-    _ = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    fit_result = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    # if fit_result is not None:
-        # fit_result.Print()
+    # _ = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    # fit_result = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    _ = signal_subCat3.fitTo(data_subCat3_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
+    fit_result = signal_subCat3.fitTo(data_subCat3_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat3.setConstant(True)
@@ -2011,12 +1975,11 @@ if __name__ == "__main__":
 
 
     # subCat 4
-    # _ = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, )
-    _ = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    fit_result = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
-    # if fit_result is not None:
-        # fit_result.Print()
+    # _ = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    # fit_result = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
+    _ = signal_subCat4.fitTo(data_subCat4_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
+    fit_result = signal_subCat4.fitTo(data_subCat4_signal,  rt.RooFit.Range("full"), EvalBackend=device, Save=True, SumW2Error=True)
+
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat4.setConstant(True)
@@ -2024,6 +1987,8 @@ if __name__ == "__main__":
     n1_subCat4.setConstant(True)
     alpha2_subCat4.setConstant(True)
     n2_subCat4.setConstant(True)
+
+    
 
     # ---------------------------------------------------
     # Obtain signal MC events for VBF
@@ -2102,18 +2067,11 @@ if __name__ == "__main__":
     alpha2_subCat2_vbf = rt.RooRealVar("alpha2_subCat2_vbf" , "alpha2_subCat2_vbf", 2.0, 0.01, 65)
     n2_subCat2_vbf = rt.RooRealVar("n2_subCat2_vbf" , "n2_subCat2_vbf", 25, 0.01, 100)
 
-    # # temporary test
-    # sigma_subCat2_vbf.setConstant(True)
-    # alpha1_subCat2_vbf.setConstant(True)
-    # n1_subCat2_vbf.setConstant(True)
-    # alpha2_subCat2_vbf.setConstant(True)
-    # n2_subCat2_vbf.setConstant(True)
 
     qqH_cat2_ggh_fsigma = rt.RooFormulaVar("qqH_cat2_ggh_fsigma", "qqH_cat2_ggh_fsigma",'@0*(1+@1)',[sigma_subCat2_vbf, CMS_hmm_sigma_cat2_ggh])
     qqH_cat2_ggh_fpeak = rt.RooFormulaVar("qqH_cat2_ggh_fpeak", "qqH_cat2_ggh_fpeak",'@0*(1+@1)',[MH_subCat2, CMS_hmm_peak_cat2_ggh])
     
-    # n1_subCat2_vbf.setConstant(True) # freeze for stability
-    # n2_subCat2_vbf.setConstant(True) # freeze for stability
+
     name = "signal_subCat2_vbf"
     signal_subCat2_vbf = rt.RooCrystalBall(name,name,mass, qqH_cat2_ggh_fpeak, qqH_cat2_ggh_fsigma, alpha1_subCat2_vbf, n1_subCat2_vbf, alpha2_subCat2_vbf, n2_subCat2_vbf)
 
@@ -2126,18 +2084,11 @@ if __name__ == "__main__":
     n2_subCat3_vbf = rt.RooRealVar("n2_subCat3_vbf" , "n2_subCat3_vbf", 25, 0.01, 200)
 
 
-    # # temporary test
-    # sigma_subCat3_vbf.setConstant(True)
-    # alpha1_subCat3_vbf.setConstant(True)
-    # n1_subCat3_vbf.setConstant(True)
-    # alpha2_subCat3_vbf.setConstant(True)
-    # n2_subCat3_vbf.setConstant(True)
 
     qqH_cat3_ggh_fsigma = rt.RooFormulaVar("qqH_cat3_ggh_fsigma", "qqH_cat3_ggh_fsigma",'@0*(1+@1)',[sigma_subCat3_vbf, CMS_hmm_sigma_cat3_ggh])
     qqH_cat3_ggh_fpeak = rt.RooFormulaVar("qqH_cat3_ggh_fpeak", "qqH_cat3_ggh_fpeak",'@0*(1+@1)',[MH_subCat3, CMS_hmm_peak_cat3_ggh])
     
-    # n1_subCat3_vbf.setConstant(True) # freeze for stability
-    # n2_subCat3_vbf.setConstant(True) # freeze for stability
+
     name = "signal_subCat3_vbf"
     signal_subCat3_vbf = rt.RooCrystalBall(name,name,mass, qqH_cat3_ggh_fpeak, qqH_cat3_ggh_fsigma, alpha1_subCat3_vbf, n1_subCat3_vbf, alpha2_subCat3_vbf, n2_subCat3_vbf)
 
@@ -2150,18 +2101,10 @@ if __name__ == "__main__":
     n2_subCat4_vbf = rt.RooRealVar("n2_subCat4_vbf" , "n2_subCat4_vbf", 25, 0.01, 100)
 
 
-    # # temporary test
-    # sigma_subCat4_vbf.setConstant(True)
-    # alpha1_subCat4_vbf.setConstant(True)
-    # n1_subCat4_vbf.setConstant(True)
-    # alpha2_subCat4_vbf.setConstant(True)
-    # n2_subCat4_vbf.setConstant(True)
 
     qqH_cat4_ggh_fsigma = rt.RooFormulaVar("qqH_cat4_ggh_fsigma", "qqH_cat4_ggh_fsigma",'@0*(1+@1)',[sigma_subCat4_vbf, CMS_hmm_sigma_cat4_ggh])
     qqH_cat4_ggh_fpeak = rt.RooFormulaVar("qqH_cat4_ggh_fpeak", "qqH_cat4_ggh_fpeak",'@0*(1+@1)',[MH_subCat4, CMS_hmm_peak_cat4_ggh])
     
-    # n1_subCat4_vbf.setConstant(True) # freeze for stability
-    # n2_subCat4_vbf.setConstant(True) # freeze for stability
     name = "signal_subCat4_vbf"
     signal_subCat4_vbf = rt.RooCrystalBall(name,name,mass, qqH_cat4_ggh_fpeak, qqH_cat4_ggh_fsigma, alpha1_subCat4_vbf, n1_subCat4_vbf, alpha2_subCat4_vbf, n2_subCat4_vbf)
     
@@ -2284,8 +2227,9 @@ if __name__ == "__main__":
     
     # generate a weighted histogram 
     roo_histData_subCat3_vbf_signal = rt.TH1F("subCat3_vbf_rooHist_signal", "subCat3_vbf_rooHist_signal", nbins, mass.getMin(), mass.getMax())
-       
-    roo_histData_subCat3_vbf_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat3_vbf_SigMC) # fill the histograms with mass and weights 
+
+    if len(subCat_mass_arr) > 0:
+        roo_histData_subCat3_vbf_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat3_vbf_SigMC) # fill the histograms with mass and weights 
     roo_histData_subCat3_vbf_signal = rt.RooDataHist("subCat3_vbf_rooHist_signal", "subCat3_vbf_rooHist_signal", rt.RooArgSet(mass), roo_histData_subCat3_vbf_signal) # convert to RooDataHist with (picked same name, bc idk)
     
     data_subCat3_vbf_signal = roo_histData_subCat3_vbf_signal
@@ -2319,7 +2263,8 @@ if __name__ == "__main__":
     # generate a weighted histogram 
     roo_histData_subCat4_vbf_signal = rt.TH1F("subCat4_vbf_rooHist_signal", "subCat4_vbf_rooHist_signal", nbins, mass.getMin(), mass.getMax())
        
-    roo_histData_subCat4_vbf_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat4_vbf_SigMC) # fill the histograms with mass and weights 
+    if len(subCat_mass_arr) > 0:
+        roo_histData_subCat4_vbf_signal.FillN(len(subCat_mass_arr), subCat_mass_arr, wgt_subCat4_vbf_SigMC) # fill the histograms with mass and weights 
     roo_histData_subCat4_vbf_signal = rt.RooDataHist("subCat4_vbf_rooHist_signal", "subCat4_vbf_rooHist_signal", rt.RooArgSet(mass), roo_histData_subCat4_vbf_signal) # convert to RooDataHist with (picked same name, bc idk)
     
     data_subCat4_vbf_signal = roo_histData_subCat4_vbf_signal
@@ -2672,6 +2617,739 @@ if __name__ == "__main__":
     canvas.Draw()
     canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4_vbf.pdf")
 
+
+
+
+
+    # ---------------------------------------------------
+    # Define ttH signal model's Doubcl Crystal Ball PDF
+    # ---------------------------------------------------
+    
+    # subCat 0
+    
+    sigma_subCat0_tth = rt.RooRealVar("sigma_subCat0_tth" , "sigma_subCat0_tth", 2, .1, 4.0)
+    alpha1_subCat0_tth = rt.RooRealVar("alpha1_subCat0_tth" , "alpha1_subCat0_tth", 2, 0.01, 65)
+    n1_subCat0_tth = rt.RooRealVar("n1_subCat0_tth" , "n1_subCat0_tth", 10, 0.01, 100)
+    alpha2_subCat0_tth = rt.RooRealVar("alpha2_subCat0_tth" , "alpha2_subCat0_tth", 2.0, 0.01, 65)
+    n2_subCat0_tth = rt.RooRealVar("n2_subCat0_tth" , "n2_subCat0_tth", 25, 0.01, 100)
+
+   
+
+    ttH_cat0_ggh_fsigma = rt.RooFormulaVar("ttH_cat0_ggh_fsigma", "ttH_cat0_ggh_fsigma",'@0*(1+@1)',[sigma_subCat0_tth, CMS_hmm_sigma_cat0_ggh])
+    ttH_cat0_ggh_fpeak = rt.RooFormulaVar("ttH_cat0_ttH_fpeak", "ttH_cat0_ggh_fpeak",'@0*(1+@1)',[MH_subCat0, CMS_hmm_peak_cat0_ggh])
+    
+    name = "signal_subCat0_tth"
+    signal_subCat0_tth = rt.RooCrystalBall(name,name,mass, ttH_cat0_ggh_fpeak, ttH_cat0_ggh_fsigma, alpha1_subCat0_tth, n1_subCat0_tth, alpha2_subCat0_tth, n2_subCat0_tth)
+
+    # subCat 1
+
+    
+    sigma_subCat1_tth = rt.RooRealVar("sigma_subCat1_tth" , "sigma_subCat1_tth", 2, .1, 4.0)
+    alpha1_subCat1_tth = rt.RooRealVar("alpha1_subCat1_tth" , "alpha1_subCat1_tth", 2, 0.01, 65)
+    n1_subCat1_tth = rt.RooRealVar("n1_subCat1_tth" , "n1_subCat1_tth", 10, 0.01, 100)
+    alpha2_subCat1_tth = rt.RooRealVar("alpha2_subCat1_tth" , "alpha2_subCat1_tth", 2.0, 0.01, 65)
+    n2_subCat1_tth = rt.RooRealVar("n2_subCat1_tth" , "n2_subCat1_tth", 25, 0.01, 100)
+
+
+    ttH_cat1_ggh_fsigma = rt.RooFormulaVar("ttH_cat1_ggh_fsigma", "ttH_cat1_ggh_fsigma",'@0*(1+@1)',[sigma_subCat1_tth, CMS_hmm_sigma_cat1_ggh])
+    ttH_cat1_ggh_fpeak = rt.RooFormulaVar("ttH_cat1_ggh_fpeak", "ttH_cat1_ggh_fpeak",'@0*(1+@1)',[MH_subCat1, CMS_hmm_peak_cat1_ggh])
+    
+    name = "signal_subCat1_tth"
+    signal_subCat1_tth = rt.RooCrystalBall(name,name,mass, ttH_cat1_ggh_fpeak, ttH_cat1_ggh_fsigma, alpha1_subCat1_tth, n1_subCat1_tth, alpha2_subCat1_tth, n2_subCat1_tth)
+
+    # subCat 2
+   
+    sigma_subCat2_tth = rt.RooRealVar("sigma_subCat2_tth" , "sigma_subCat2_tth", 2, .1, 4.0)
+    alpha1_subCat2_tth = rt.RooRealVar("alpha1_subCat2_tth" , "alpha1_subCat2_tth", 2, 0.01, 65)
+    n1_subCat2_tth = rt.RooRealVar("n1_subCat2_tth" , "n1_subCat2_tth", 10, 0.01, 100)
+    alpha2_subCat2_tth = rt.RooRealVar("alpha2_subCat2_tth" , "alpha2_subCat2_tth", 2.0, 0.01, 65)
+    n2_subCat2_tth = rt.RooRealVar("n2_subCat2_tth" , "n2_subCat2_tth", 25, 0.01, 100)
+
+
+    ttH_cat2_ggh_fsigma = rt.RooFormulaVar("ttH_cat2_ggh_fsigma", "ttH_cat2_ggh_fsigma",'@0*(1+@1)',[sigma_subCat2_tth, CMS_hmm_sigma_cat2_ggh])
+    ttH_cat2_ggh_fpeak = rt.RooFormulaVar("ttH_cat2_ggh_fpeak", "ttH_cat2_ggh_fpeak",'@0*(1+@1)',[MH_subCat2, CMS_hmm_peak_cat2_ggh])
+    
+
+    name = "signal_subCat2_tth"
+    signal_subCat2_tth = rt.RooCrystalBall(name,name,mass, ttH_cat2_ggh_fpeak, ttH_cat2_ggh_fsigma, alpha1_subCat2_tth, n1_subCat2_tth, alpha2_subCat2_tth, n2_subCat2_tth)
+
+    # subCat 3
+
+    sigma_subCat3_tth = rt.RooRealVar("sigma_subCat3_tth" , "sigma_subCat3_tth", 0.1, .1, 10.0)
+    alpha1_subCat3_tth = rt.RooRealVar("alpha1_subCat3_tth" , "alpha1_subCat3_tth", 2, 0.01, 200)
+    n1_subCat3_tth = rt.RooRealVar("n1_subCat3_tth" , "n1_subCat3_tth", 25, 0.01, 200)
+    alpha2_subCat3_tth = rt.RooRealVar("alpha2_subCat3_tth" , "alpha2_subCat3_tth", 2, 0.01, 65)
+    n2_subCat3_tth = rt.RooRealVar("n2_subCat3_tth" , "n2_subCat3_tth", 25, 0.01, 200)
+
+
+
+    ttH_cat3_ggh_fsigma = rt.RooFormulaVar("ttH_cat3_ggh_fsigma", "ttH_cat3_ggh_fsigma",'@0*(1+@1)',[sigma_subCat3_tth, CMS_hmm_sigma_cat3_ggh])
+    ttH_cat3_ggh_fpeak = rt.RooFormulaVar("ttH_cat3_ggh_fpeak", "ttH_cat3_ggh_fpeak",'@0*(1+@1)',[MH_subCat3, CMS_hmm_peak_cat3_ggh])
+    
+
+    name = "signal_subCat3_tth"
+    signal_subCat3_tth = rt.RooCrystalBall(name,name,mass, ttH_cat3_ggh_fpeak, ttH_cat3_ggh_fsigma, alpha1_subCat3_tth, n1_subCat3_tth, alpha2_subCat3_tth, n2_subCat3_tth)
+
+    # subCat 4
+    
+    sigma_subCat4_tth = rt.RooRealVar("sigma_subCat4_tth" , "sigma_subCat4_tth", 2, .1, 4.0)
+    alpha1_subCat4_tth = rt.RooRealVar("alpha1_subCat4_tth" , "alpha1_subCat4_tth", 2, 0.01, 65)
+    n1_subCat4_tth = rt.RooRealVar("n1_subCat4_tth" , "n1_subCat4_tth", 10, 0.01, 100)
+    alpha2_subCat4_tth = rt.RooRealVar("alpha2_subCat4_tth" , "alpha2_subCat4_tth", 2.0, 0.01, 65)
+    n2_subCat4_tth = rt.RooRealVar("n2_subCat4_tth" , "n2_subCat4_tth", 25, 0.01, 100)
+
+
+
+    ttH_cat4_ggh_fsigma = rt.RooFormulaVar("ttH_cat4_ggh_fsigma", "ttH_cat4_ggh_fsigma",'@0*(1+@1)',[sigma_subCat4_tth, CMS_hmm_sigma_cat4_ggh])
+    ttH_cat4_ggh_fpeak = rt.RooFormulaVar("ttH_cat4_ggh_fpeak", "ttH_cat4_ggh_fpeak",'@0*(1+@1)',[MH_subCat4, CMS_hmm_peak_cat4_ggh])
+    
+    name = "signal_subCat4_tth"
+    signal_subCat4_tth = rt.RooCrystalBall(name,name,mass, ttH_cat4_ggh_fpeak, ttH_cat4_ggh_fsigma, alpha1_subCat4_tth, n1_subCat4_tth, alpha2_subCat4_tth, n2_subCat4_tth)
+    
+    
+
+    # ---------------------------------------------------
+    # Define signal MC samples to fit to for ttH
+    # ---------------------------------------------------
+
+    # subCat 0
+    hist_name = "data_ttH_cat0_ggh_m125"
+    roo_histData_subCat0_tth_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat0_tth_signal = roo_histData_subCat0_tth_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat0"],
+        "dataset": ["ttH"], 
+        "yield": [data_subCat0_tth_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    norm_val = data_subCat0_tth_signal.sumEntries()
+    sig_norm_subCat0_tth = rt.RooRealVar(signal_subCat0_tth.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat0_tth norm_val: {norm_val}")
+    sig_norm_subCat0_tth.setConstant(True)
+
+    # subCat 1  
+
+    hist_name = "data_ttH_cat1_ggh_m125"
+    roo_histData_subCat1_tth_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat1_tth_signal = roo_histData_subCat1_tth_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat1"],
+        "dataset": ["ttH"], 
+        "yield": [data_subCat1_tth_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat1_tth_signal.sumEntries()
+    sig_norm_subCat1_tth = rt.RooRealVar(signal_subCat1_tth.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat1_tth norm_val: {norm_val}")
+    sig_norm_subCat1_tth.setConstant(True)
+
+    # subCat 2
+
+    hist_name = "data_ttH_cat2_ggh_m125"
+    roo_histData_subCat2_tth_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat2_tth_signal = roo_histData_subCat2_tth_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat2"],
+        "dataset": ["ttH"], 
+        "yield": [data_subCat2_tth_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat2_tth_signal.sumEntries()
+    sig_norm_subCat2_tth = rt.RooRealVar(signal_subCat2_tth.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat2_tth norm_val: {norm_val}")
+    sig_norm_subCat2_tth.setConstant(True)
+
+    # subCat 3
+
+    hist_name = "data_ttH_cat3_ggh_m125"
+    roo_histData_subCat3_tth_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat3_tth_signal = roo_histData_subCat3_tth_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat3"],
+        "dataset": ["ttH"], 
+        "yield": [data_subCat3_tth_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat3_tth_signal.sumEntries()
+    sig_norm_subCat3_tth = rt.RooRealVar(signal_subCat3_tth.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat3_tth norm_val: {norm_val}")
+    sig_norm_subCat3_tth.setConstant(True)
+    
+    # subCat 4
+
+    hist_name = "data_ttH_cat4_ggh_m125"
+    roo_histData_subCat4_tth_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat4_tth_signal = roo_histData_subCat4_tth_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat4"],
+        "dataset": ["ttH"], 
+        "yield": [data_subCat4_tth_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+    print(f"yield_df after ttH: \n {yield_df}")
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat4_tth_signal.sumEntries()
+    sig_norm_subCat4_tth = rt.RooRealVar(signal_subCat4_tth.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat4_tth norm_val: {norm_val}")
+    sig_norm_subCat4_tth.setConstant(True)
+
+
+    # -------------------------------------------------------------------------
+    # do signal ttH plotting with fit and data
+    # -------------------------------------------------------------------------
+    
+    # subCat 0
+    print(f"data_subCat0_tth_signal.sumEntries(): {data_subCat0_tth_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat0_tth_signal.GetName()
+    data_subCat0_tth_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat0_tth.GetName()
+    signal_subCat0_tth.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat0_tth.pdf")
+
+
+    # subCat 1
+    print(f"data_subCat1_tth_signal.sumEntries(): {data_subCat1_tth_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat1_tth_signal.GetName()
+    data_subCat1_tth_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat1_tth.GetName()
+    signal_subCat1_tth.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat1_tth.pdf")
+
+    # subCat 2
+    print(f"data_subCat2_tth_signal.sumEntries(): {data_subCat2_tth_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat2_tth_signal.GetName()
+    data_subCat2_tth_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat2_tth.GetName()
+    signal_subCat2_tth.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat2_tth.pdf")
+
+    # subCat 3
+    print(f"data_subCat3_tth_signal.sumEntries(): {data_subCat3_tth_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat3_tth_signal.GetName()
+    data_subCat3_tth_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat3_tth.GetName()
+    signal_subCat3_tth.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat3_tth.pdf")
+
+    # subCat 4
+    print(f"data_subCat4_tth_signal.sumEntries(): {data_subCat4_tth_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat4_tth_signal.GetName()
+    data_subCat4_tth_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat4_tth.GetName()
+    signal_subCat4_tth.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4_tth.pdf")
+
+
+    # raise ValueError
+
+    # ---------------------------------------------------
+    # Define zH signal model's Doubcl Crystal Ball PDF
+    # ---------------------------------------------------
+    
+    # subCat 0
+    
+    sigma_subCat0_zh = rt.RooRealVar("sigma_subCat0_zh" , "sigma_subCat0_zh", 2, .1, 4.0)
+    alpha1_subCat0_zh = rt.RooRealVar("alpha1_subCat0_zh" , "alpha1_subCat0_zh", 2, 0.01, 65)
+    n1_subCat0_zh = rt.RooRealVar("n1_subCat0_zh" , "n1_subCat0_zh", 10, 0.01, 100)
+    alpha2_subCat0_zh = rt.RooRealVar("alpha2_subCat0_zh" , "alpha2_subCat0_zh", 2.0, 0.01, 65)
+    n2_subCat0_zh = rt.RooRealVar("n2_subCat0_zh" , "n2_subCat0_zh", 25, 0.01, 100)
+
+   
+
+    zH_cat0_ggh_fsigma = rt.RooFormulaVar("zH_cat0_ggh_fsigma", "zH_cat0_ggh_fsigma",'@0*(1+@1)',[sigma_subCat0_zh, CMS_hmm_sigma_cat0_ggh])
+    zH_cat0_ggh_fpeak = rt.RooFormulaVar("zH_cat0_zh_fpeak", "zH_cat0_ggh_fpeak",'@0*(1+@1)',[MH_subCat0, CMS_hmm_peak_cat0_ggh])
+    
+    name = "signal_subCat0_zh"
+    signal_subCat0_zh = rt.RooCrystalBall(name,name,mass, zH_cat0_ggh_fpeak, zH_cat0_ggh_fsigma, alpha1_subCat0_zh, n1_subCat0_zh, alpha2_subCat0_zh, n2_subCat0_zh)
+
+    # subCat 1
+
+    
+    sigma_subCat1_zh = rt.RooRealVar("sigma_subCat1_zh" , "sigma_subCat1_zh", 2, .1, 4.0)
+    alpha1_subCat1_zh = rt.RooRealVar("alpha1_subCat1_zh" , "alpha1_subCat1_zh", 2, 0.01, 65)
+    n1_subCat1_zh = rt.RooRealVar("n1_subCat1_zh" , "n1_subCat1_zh", 10, 0.01, 100)
+    alpha2_subCat1_zh = rt.RooRealVar("alpha2_subCat1_zh" , "alpha2_subCat1_zh", 2.0, 0.01, 65)
+    n2_subCat1_zh = rt.RooRealVar("n2_subCat1_zh" , "n2_subCat1_zh", 25, 0.01, 100)
+
+
+    zH_cat1_ggh_fsigma = rt.RooFormulaVar("zH_cat1_ggh_fsigma", "zH_cat1_ggh_fsigma",'@0*(1+@1)',[sigma_subCat1_zh, CMS_hmm_sigma_cat1_ggh])
+    zH_cat1_ggh_fpeak = rt.RooFormulaVar("zH_cat1_ggh_fpeak", "zH_cat1_ggh_fpeak",'@0*(1+@1)',[MH_subCat1, CMS_hmm_peak_cat1_ggh])
+    
+    name = "signal_subCat1_zh"
+    signal_subCat1_zh = rt.RooCrystalBall(name,name,mass, zH_cat1_ggh_fpeak, zH_cat1_ggh_fsigma, alpha1_subCat1_zh, n1_subCat1_zh, alpha2_subCat1_zh, n2_subCat1_zh)
+
+    # subCat 2
+   
+    sigma_subCat2_zh = rt.RooRealVar("sigma_subCat2_zh" , "sigma_subCat2_zh", 2, .1, 4.0)
+    alpha1_subCat2_zh = rt.RooRealVar("alpha1_subCat2_zh" , "alpha1_subCat2_zh", 2, 0.01, 65)
+    n1_subCat2_zh = rt.RooRealVar("n1_subCat2_zh" , "n1_subCat2_zh", 10, 0.01, 100)
+    alpha2_subCat2_zh = rt.RooRealVar("alpha2_subCat2_zh" , "alpha2_subCat2_zh", 2.0, 0.01, 65)
+    n2_subCat2_zh = rt.RooRealVar("n2_subCat2_zh" , "n2_subCat2_zh", 25, 0.01, 100)
+
+
+    zH_cat2_ggh_fsigma = rt.RooFormulaVar("zH_cat2_ggh_fsigma", "zH_cat2_ggh_fsigma",'@0*(1+@1)',[sigma_subCat2_zh, CMS_hmm_sigma_cat2_ggh])
+    zH_cat2_ggh_fpeak = rt.RooFormulaVar("zH_cat2_ggh_fpeak", "zH_cat2_ggh_fpeak",'@0*(1+@1)',[MH_subCat2, CMS_hmm_peak_cat2_ggh])
+    
+
+    name = "signal_subCat2_zh"
+    signal_subCat2_zh = rt.RooCrystalBall(name,name,mass, zH_cat2_ggh_fpeak, zH_cat2_ggh_fsigma, alpha1_subCat2_zh, n1_subCat2_zh, alpha2_subCat2_zh, n2_subCat2_zh)
+
+    # subCat 3
+
+    sigma_subCat3_zh = rt.RooRealVar("sigma_subCat3_zh" , "sigma_subCat3_zh", 0.1, .1, 10.0)
+    alpha1_subCat3_zh = rt.RooRealVar("alpha1_subCat3_zh" , "alpha1_subCat3_zh", 2, 0.01, 200)
+    n1_subCat3_zh = rt.RooRealVar("n1_subCat3_zh" , "n1_subCat3_zh", 25, 0.01, 200)
+    alpha2_subCat3_zh = rt.RooRealVar("alpha2_subCat3_zh" , "alpha2_subCat3_zh", 2, 0.01, 65)
+    n2_subCat3_zh = rt.RooRealVar("n2_subCat3_zh" , "n2_subCat3_zh", 25, 0.01, 200)
+
+
+
+    zH_cat3_ggh_fsigma = rt.RooFormulaVar("zH_cat3_ggh_fsigma", "zH_cat3_ggh_fsigma",'@0*(1+@1)',[sigma_subCat3_zh, CMS_hmm_sigma_cat3_ggh])
+    zH_cat3_ggh_fpeak = rt.RooFormulaVar("zH_cat3_ggh_fpeak", "zH_cat3_ggh_fpeak",'@0*(1+@1)',[MH_subCat3, CMS_hmm_peak_cat3_ggh])
+    
+
+    name = "signal_subCat3_zh"
+    signal_subCat3_zh = rt.RooCrystalBall(name,name,mass, zH_cat3_ggh_fpeak, zH_cat3_ggh_fsigma, alpha1_subCat3_zh, n1_subCat3_zh, alpha2_subCat3_zh, n2_subCat3_zh)
+
+    # subCat 4
+    
+    sigma_subCat4_zh = rt.RooRealVar("sigma_subCat4_zh" , "sigma_subCat4_zh", 2, .1, 4.0)
+    alpha1_subCat4_zh = rt.RooRealVar("alpha1_subCat4_zh" , "alpha1_subCat4_zh", 2, 0.01, 65)
+    n1_subCat4_zh = rt.RooRealVar("n1_subCat4_zh" , "n1_subCat4_zh", 10, 0.01, 100)
+    alpha2_subCat4_zh = rt.RooRealVar("alpha2_subCat4_zh" , "alpha2_subCat4_zh", 2.0, 0.01, 65)
+    n2_subCat4_zh = rt.RooRealVar("n2_subCat4_zh" , "n2_subCat4_zh", 25, 0.01, 100)
+
+
+
+    zH_cat4_ggh_fsigma = rt.RooFormulaVar("zH_cat4_ggh_fsigma", "zH_cat4_ggh_fsigma",'@0*(1+@1)',[sigma_subCat4_zh, CMS_hmm_sigma_cat4_ggh])
+    zH_cat4_ggh_fpeak = rt.RooFormulaVar("zH_cat4_ggh_fpeak", "zH_cat4_ggh_fpeak",'@0*(1+@1)',[MH_subCat4, CMS_hmm_peak_cat4_ggh])
+    
+    name = "signal_subCat4_zh"
+    signal_subCat4_zh = rt.RooCrystalBall(name,name,mass, zH_cat4_ggh_fpeak, zH_cat4_ggh_fsigma, alpha1_subCat4_zh, n1_subCat4_zh, alpha2_subCat4_zh, n2_subCat4_zh)
+    
+    
+
+    # ---------------------------------------------------
+    # Define zH signal model's Doubcl Crystal Ball PDF
+    # ---------------------------------------------------
+    
+    # subCat 0
+    
+    sigma_subCat0_zh = rt.RooRealVar("sigma_subCat0_zh" , "sigma_subCat0_zh", 2, .1, 4.0)
+    alpha1_subCat0_zh = rt.RooRealVar("alpha1_subCat0_zh" , "alpha1_subCat0_zh", 2, 0.01, 65)
+    n1_subCat0_zh = rt.RooRealVar("n1_subCat0_zh" , "n1_subCat0_zh", 10, 0.01, 100)
+    alpha2_subCat0_zh = rt.RooRealVar("alpha2_subCat0_zh" , "alpha2_subCat0_zh", 2.0, 0.01, 65)
+    n2_subCat0_zh = rt.RooRealVar("n2_subCat0_zh" , "n2_subCat0_zh", 25, 0.01, 100)
+
+   
+
+    zH_cat0_ggh_fsigma = rt.RooFormulaVar("zH_cat0_ggh_fsigma", "zH_cat0_ggh_fsigma",'@0*(1+@1)',[sigma_subCat0_zh, CMS_hmm_sigma_cat0_ggh])
+    zH_cat0_ggh_fpeak = rt.RooFormulaVar("zH_cat0_zh_fpeak", "zH_cat0_ggh_fpeak",'@0*(1+@1)',[MH_subCat0, CMS_hmm_peak_cat0_ggh])
+    
+    name = "signal_subCat0_zh"
+    signal_subCat0_zh = rt.RooCrystalBall(name,name,mass, zH_cat0_ggh_fpeak, zH_cat0_ggh_fsigma, alpha1_subCat0_zh, n1_subCat0_zh, alpha2_subCat0_zh, n2_subCat0_zh)
+
+    # subCat 1
+
+    
+    sigma_subCat1_zh = rt.RooRealVar("sigma_subCat1_zh" , "sigma_subCat1_zh", 2, .1, 4.0)
+    alpha1_subCat1_zh = rt.RooRealVar("alpha1_subCat1_zh" , "alpha1_subCat1_zh", 2, 0.01, 65)
+    n1_subCat1_zh = rt.RooRealVar("n1_subCat1_zh" , "n1_subCat1_zh", 10, 0.01, 100)
+    alpha2_subCat1_zh = rt.RooRealVar("alpha2_subCat1_zh" , "alpha2_subCat1_zh", 2.0, 0.01, 65)
+    n2_subCat1_zh = rt.RooRealVar("n2_subCat1_zh" , "n2_subCat1_zh", 25, 0.01, 100)
+
+
+    zH_cat1_ggh_fsigma = rt.RooFormulaVar("zH_cat1_ggh_fsigma", "zH_cat1_ggh_fsigma",'@0*(1+@1)',[sigma_subCat1_zh, CMS_hmm_sigma_cat1_ggh])
+    zH_cat1_ggh_fpeak = rt.RooFormulaVar("zH_cat1_ggh_fpeak", "zH_cat1_ggh_fpeak",'@0*(1+@1)',[MH_subCat1, CMS_hmm_peak_cat1_ggh])
+    
+    name = "signal_subCat1_zh"
+    signal_subCat1_zh = rt.RooCrystalBall(name,name,mass, zH_cat1_ggh_fpeak, zH_cat1_ggh_fsigma, alpha1_subCat1_zh, n1_subCat1_zh, alpha2_subCat1_zh, n2_subCat1_zh)
+
+    # subCat 2
+   
+    sigma_subCat2_zh = rt.RooRealVar("sigma_subCat2_zh" , "sigma_subCat2_zh", 2, .1, 4.0)
+    alpha1_subCat2_zh = rt.RooRealVar("alpha1_subCat2_zh" , "alpha1_subCat2_zh", 2, 0.01, 65)
+    n1_subCat2_zh = rt.RooRealVar("n1_subCat2_zh" , "n1_subCat2_zh", 10, 0.01, 100)
+    alpha2_subCat2_zh = rt.RooRealVar("alpha2_subCat2_zh" , "alpha2_subCat2_zh", 2.0, 0.01, 65)
+    n2_subCat2_zh = rt.RooRealVar("n2_subCat2_zh" , "n2_subCat2_zh", 25, 0.01, 100)
+
+
+    zH_cat2_ggh_fsigma = rt.RooFormulaVar("zH_cat2_ggh_fsigma", "zH_cat2_ggh_fsigma",'@0*(1+@1)',[sigma_subCat2_zh, CMS_hmm_sigma_cat2_ggh])
+    zH_cat2_ggh_fpeak = rt.RooFormulaVar("zH_cat2_ggh_fpeak", "zH_cat2_ggh_fpeak",'@0*(1+@1)',[MH_subCat2, CMS_hmm_peak_cat2_ggh])
+    
+
+    name = "signal_subCat2_zh"
+    signal_subCat2_zh = rt.RooCrystalBall(name,name,mass, zH_cat2_ggh_fpeak, zH_cat2_ggh_fsigma, alpha1_subCat2_zh, n1_subCat2_zh, alpha2_subCat2_zh, n2_subCat2_zh)
+
+    # subCat 3
+
+    sigma_subCat3_zh = rt.RooRealVar("sigma_subCat3_zh" , "sigma_subCat3_zh", 0.1, .1, 10.0)
+    alpha1_subCat3_zh = rt.RooRealVar("alpha1_subCat3_zh" , "alpha1_subCat3_zh", 2, 0.01, 200)
+    n1_subCat3_zh = rt.RooRealVar("n1_subCat3_zh" , "n1_subCat3_zh", 25, 0.01, 200)
+    alpha2_subCat3_zh = rt.RooRealVar("alpha2_subCat3_zh" , "alpha2_subCat3_zh", 2, 0.01, 65)
+    n2_subCat3_zh = rt.RooRealVar("n2_subCat3_zh" , "n2_subCat3_zh", 25, 0.01, 200)
+
+
+
+    zH_cat3_ggh_fsigma = rt.RooFormulaVar("zH_cat3_ggh_fsigma", "zH_cat3_ggh_fsigma",'@0*(1+@1)',[sigma_subCat3_zh, CMS_hmm_sigma_cat3_ggh])
+    zH_cat3_ggh_fpeak = rt.RooFormulaVar("zH_cat3_ggh_fpeak", "zH_cat3_ggh_fpeak",'@0*(1+@1)',[MH_subCat3, CMS_hmm_peak_cat3_ggh])
+    
+
+    name = "signal_subCat3_zh"
+    signal_subCat3_zh = rt.RooCrystalBall(name,name,mass, zH_cat3_ggh_fpeak, zH_cat3_ggh_fsigma, alpha1_subCat3_zh, n1_subCat3_zh, alpha2_subCat3_zh, n2_subCat3_zh)
+
+    # subCat 4
+    
+    sigma_subCat4_zh = rt.RooRealVar("sigma_subCat4_zh" , "sigma_subCat4_zh", 2, .1, 4.0)
+    alpha1_subCat4_zh = rt.RooRealVar("alpha1_subCat4_zh" , "alpha1_subCat4_zh", 2, 0.01, 65)
+    n1_subCat4_zh = rt.RooRealVar("n1_subCat4_zh" , "n1_subCat4_zh", 10, 0.01, 100)
+    alpha2_subCat4_zh = rt.RooRealVar("alpha2_subCat4_zh" , "alpha2_subCat4_zh", 2.0, 0.01, 65)
+    n2_subCat4_zh = rt.RooRealVar("n2_subCat4_zh" , "n2_subCat4_zh", 25, 0.01, 100)
+
+
+
+    zH_cat4_ggh_fsigma = rt.RooFormulaVar("zH_cat4_ggh_fsigma", "zH_cat4_ggh_fsigma",'@0*(1+@1)',[sigma_subCat4_zh, CMS_hmm_sigma_cat4_ggh])
+    zH_cat4_ggh_fpeak = rt.RooFormulaVar("zH_cat4_ggh_fpeak", "zH_cat4_ggh_fpeak",'@0*(1+@1)',[MH_subCat4, CMS_hmm_peak_cat4_ggh])
+    
+    name = "signal_subCat4_zh"
+    signal_subCat4_zh = rt.RooCrystalBall(name,name,mass, zH_cat4_ggh_fpeak, zH_cat4_ggh_fsigma, alpha1_subCat4_zh, n1_subCat4_zh, alpha2_subCat4_zh, n2_subCat4_zh)
+    
+    
+
+    # ---------------------------------------------------
+    # Define signal MC samples to fit to for zH
+    # ---------------------------------------------------
+
+    # subCat 0
+    hist_name = "data_zH_cat0_ggh_m125"
+    roo_histData_subCat0_zh_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat0_zh_signal = roo_histData_subCat0_zh_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat0"],
+        "dataset": ["zH"], 
+        "yield": [data_subCat0_zh_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    norm_val = data_subCat0_zh_signal.sumEntries()
+    sig_norm_subCat0_zh = rt.RooRealVar(signal_subCat0_zh.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat0_zh norm_val: {norm_val}")
+    sig_norm_subCat0_zh.setConstant(True)
+
+    # subCat 1  
+
+    hist_name = "data_zH_cat1_ggh_m125"
+    roo_histData_subCat1_zh_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat1_zh_signal = roo_histData_subCat1_zh_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat1"],
+        "dataset": ["zH"], 
+        "yield": [data_subCat1_zh_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat1_zh_signal.sumEntries()
+    sig_norm_subCat1_zh = rt.RooRealVar(signal_subCat1_zh.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat1_zh norm_val: {norm_val}")
+    sig_norm_subCat1_zh.setConstant(True)
+
+    # subCat 2
+
+    hist_name = "data_zH_cat2_ggh_m125"
+    roo_histData_subCat2_zh_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat2_zh_signal = roo_histData_subCat2_zh_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat2"],
+        "dataset": ["zH"], 
+        "yield": [data_subCat2_zh_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat2_zh_signal.sumEntries()
+    sig_norm_subCat2_zh = rt.RooRealVar(signal_subCat2_zh.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat2_zh norm_val: {norm_val}")
+    sig_norm_subCat2_zh.setConstant(True)
+
+    # subCat 3
+
+    hist_name = "data_zH_cat3_ggh_m125"
+    roo_histData_subCat3_zh_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat3_zh_signal = roo_histData_subCat3_zh_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat3"],
+        "dataset": ["zH"], 
+        "yield": [data_subCat3_zh_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat3_zh_signal.sumEntries()
+    sig_norm_subCat3_zh = rt.RooRealVar(signal_subCat3_zh.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat3_zh norm_val: {norm_val}")
+    sig_norm_subCat3_zh.setConstant(True)
+    
+    # subCat 4
+
+    hist_name = "data_zH_cat4_ggh_m125"
+    roo_histData_subCat4_zh_signal = get_sigHist(mass, hist_name)
+    
+    data_subCat4_zh_signal = roo_histData_subCat4_zh_signal
+    # add yield
+    new_row = {
+        "year": [args.year],
+        "category": ["cat4"],
+        "dataset": ["zH"], 
+        "yield": [data_subCat4_zh_signal.sumEntries()]
+    }
+    new_row = pd.DataFrame(new_row)
+    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
+    print(f"yield_df after zH: \n {yield_df}")
+
+    # define normalization value from signal MC event weights 
+    
+    norm_val = data_subCat4_zh_signal.sumEntries()
+    sig_norm_subCat4_zh = rt.RooRealVar(signal_subCat4_zh.GetName()+"_norm","Number of signal events",norm_val)
+    print(f"signal_subCat4_zh norm_val: {norm_val}")
+    sig_norm_subCat4_zh.setConstant(True)
+
+
+    # -------------------------------------------------------------------------
+    # do signal zH plotting with fit and data
+    # -------------------------------------------------------------------------
+    
+    # subCat 0
+    print(f"data_subCat0_zh_signal.sumEntries(): {data_subCat0_zh_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat0_zh_signal.GetName()
+    data_subCat0_zh_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat0_zh.GetName()
+    signal_subCat0_zh.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat0_zh.pdf")
+
+
+    # subCat 1
+    print(f"data_subCat1_zh_signal.sumEntries(): {data_subCat1_zh_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat1_zh_signal.GetName()
+    data_subCat1_zh_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat1_zh.GetName()
+    signal_subCat1_zh.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat1_zh.pdf")
+
+    # subCat 2
+    print(f"data_subCat2_zh_signal.sumEntries(): {data_subCat2_zh_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat2_zh_signal.GetName()
+    data_subCat2_zh_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat2_zh.GetName()
+    signal_subCat2_zh.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat2_zh.pdf")
+
+    # subCat 3
+    print(f"data_subCat3_zh_signal.sumEntries(): {data_subCat3_zh_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat3_zh_signal.GetName()
+    data_subCat3_zh_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat3_zh.GetName()
+    signal_subCat3_zh.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat3_zh.pdf")
+
+    # subCat 4
+    print(f"data_subCat4_zh_signal.sumEntries(): {data_subCat4_zh_signal.sumEntries()}")
+    name = "Canvas"
+    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    canvas.cd()
+    frame = mass.frame()
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    name = data_subCat4_zh_signal.GetName()
+    data_subCat4_zh_signal.plotOn(frame, DataError="SumW2", Name=name)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    name = signal_subCat4_zh.GetName()
+    signal_subCat4_zh.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    
+    frame.Draw()
+    legend.Draw()
+    
+    canvas.Update()
+    canvas.Draw()
+    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4_zh.pdf")
+
+
+
+    # ---------------------------------------------------
+    # All fitting and plotting signal MC sample is complete
+    # ---------------------------------------------------
+
+
+
+
     # ---------------------------------------------------
     # Save to Signal, Background and Data to Workspace
     # ---------------------------------------------------
@@ -2715,6 +3393,8 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+
+    # write signal root file
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat0_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
     # matching names consistent with UCSD's naming scheme
@@ -2731,6 +3411,16 @@ if __name__ == "__main__":
     wout.Import(signal_subCat0_vbf);
     wout.Import(roo_histData_subCat0_vbf_signal); 
     wout.Import(sig_norm_subCat0_vbf); 
+
+    # ttH
+    signal_subCat0_tth.SetName("ttH_cat0_ggh_pdf");
+    roo_histData_subCat0_tth_signal.SetName("data_ttH_cat0_ggh");
+    sig_norm_subCat0_tth.SetName(signal_subCat0_tth.GetName()+"_norm"); 
+    wout.Import(signal_subCat0_tth);
+    wout.Import(roo_histData_subCat0_tth_signal); 
+    wout.Import(sig_norm_subCat0_tth); 
+
+
     
     # wout.Print();
     wout.Write();
@@ -2754,6 +3444,7 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # write signal root file
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat1_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
     # matching names consistent with UCSD's naming scheme
@@ -2770,6 +3461,16 @@ if __name__ == "__main__":
     wout.Import(sig_norm_subCat1_vbf);
     wout.Import(signal_subCat1_vbf); 
     wout.Import(roo_histData_subCat1_vbf_signal); 
+
+    # ttH
+    signal_subCat1_tth.SetName("ttH_cat1_ggh_pdf");
+    roo_histData_subCat1_tth_signal.SetName("data_ttH_cat1_ggh");
+    sig_norm_subCat1_tth.SetName(signal_subCat1_tth.GetName()+"_norm"); 
+    wout.Import(signal_subCat1_tth);
+    wout.Import(roo_histData_subCat1_tth_signal); 
+    wout.Import(sig_norm_subCat1_tth); 
+    
+
     # wout.Print();
     wout.Write();
 
@@ -2791,6 +3492,7 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # write signal root file
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat2_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
     # matching names consistent with UCSD's naming scheme
@@ -2807,6 +3509,15 @@ if __name__ == "__main__":
     wout.Import(sig_norm_subCat2_vbf);
     wout.Import(signal_subCat2_vbf); 
     wout.Import(roo_histData_subCat2_vbf_signal); 
+
+    # ttH
+    signal_subCat2_tth.SetName("ttH_cat2_ggh_pdf");
+    roo_histData_subCat2_tth_signal.SetName("data_ttH_cat2_ggh");
+    sig_norm_subCat2_tth.SetName(signal_subCat2_tth.GetName()+"_norm"); 
+    wout.Import(signal_subCat2_tth);
+    wout.Import(roo_histData_subCat2_tth_signal); 
+    wout.Import(sig_norm_subCat2_tth); 
+
     # wout.Print();
     wout.Write();
 
@@ -2829,6 +3540,7 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # write signal root file
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat3_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
     # matching names consistent with UCSD's naming scheme
@@ -2845,6 +3557,16 @@ if __name__ == "__main__":
     wout.Import(sig_norm_subCat3_vbf);
     wout.Import(signal_subCat3_vbf); 
     wout.Import(roo_histData_subCat3_vbf_signal); 
+
+    # ttH
+    signal_subCat3_tth.SetName("ttH_cat3_ggh_pdf");
+    roo_histData_subCat3_tth_signal.SetName("data_ttH_cat3_ggh");
+    sig_norm_subCat3_tth.SetName(signal_subCat3_tth.GetName()+"_norm"); 
+    wout.Import(signal_subCat3_tth);
+    wout.Import(roo_histData_subCat3_tth_signal); 
+    wout.Import(sig_norm_subCat3_tth); 
+
+
     # wout.Print();
     wout.Write();
 
@@ -2866,6 +3588,7 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # write signal root file
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat4_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
     # matching names consistent with UCSD's naming scheme
@@ -2882,6 +3605,16 @@ if __name__ == "__main__":
     wout.Import(sig_norm_subCat4_vbf);
     wout.Import(signal_subCat4_vbf); 
     wout.Import(roo_histData_subCat4_vbf_signal);
+
+    # ttH
+    signal_subCat4_tth.SetName("ttH_cat4_ggh_pdf"); 
+    roo_histData_subCat4_tth_signal.SetName("data_ttH_cat4_ggh");
+    sig_norm_subCat4_tth.SetName(signal_subCat4_tth.GetName()+"_norm"); 
+    wout.Import(signal_subCat4_tth);
+    wout.Import(roo_histData_subCat4_tth_signal); 
+    wout.Import(sig_norm_subCat4_tth); 
+
+
     # wout.Print();
     wout.Write();
     
