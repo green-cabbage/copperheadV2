@@ -401,7 +401,7 @@ class EventProcessor(processor.ProcessorABC):
             "do_trigger_match" : True, # False
             "do_roccor" : True,# True
             "do_fsr" : True, # True
-            "do_geofit" : False, # True # FIXME: Make it false for always
+            "do_geofit" : True, # True # FIXME: Make it false for always
             "do_beamConstraint": True, # if True, override do_geofit
             "do_nnlops" : True,
             "do_pdf" : True,
@@ -756,6 +756,8 @@ class EventProcessor(processor.ProcessorABC):
 
 
         muons = events.Muon[muon_selection]
+        logger.debug(f"muons pT: {muons.pt[:100].compute()}")
+        
         # muons = ak.to_packed(events.Muon[muon_selection])
 
         # do the separate mu1 leading pt cut that copperheadV1 does instead of trigger matching
