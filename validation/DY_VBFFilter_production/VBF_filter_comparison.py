@@ -37,22 +37,22 @@ def applyEps(values, eps = 1/256):
     values = values + rand_val
     return values
 
-def applyMuonBaseSelection(events):
-    muons = events.Muon
-    mm_charge = ak.prod(muons.charge, axis=1)
-    muon_selection = (
-        muons.mediumId
-        & (muons.pt > 20 )
-        & (abs(muons.eta) < 2.4)
-        & (muons.pfRelIso04_all < 0.25)
-        & (muons.isGlobal | muons.isTracker)
-        & (events.HLT.IsoMu24)
-        & (mm_charge < 0)
-    )
-    nmuons = ak.sum(muon_selection, axis=1)
-    # print(f"nmuons len: {ak.num(nmuons, axis=0).compute()}")
+# def applyMuonBaseSelection(events):
+#     muons = events.Muon
+#     mm_charge = ak.prod(muons.charge, axis=1)
+#     muon_selection = (
+#         muons.mediumId
+#         & (muons.pt > 20 )
+#         & (abs(muons.eta) < 2.4)
+#         & (muons.pfRelIso04_all < 0.25)
+#         & (muons.isGlobal | muons.isTracker)
+#         & (events.HLT.IsoMu24)
+#         & (mm_charge < 0)
+#     )
+#     nmuons = ak.sum(muon_selection, axis=1)
+#     # print(f"nmuons len: {ak.num(nmuons, axis=0).compute()}")
     
-    return events[nmuons==2]
+#     return events[nmuons==2]
 
 
 def applyQuickSelection(events):
@@ -532,7 +532,7 @@ def quickPlotByHardProcess(events, nbins_l, xlow, xhigh, save_path, save_fname, 
     dy_muon_filter = applyGenMuonCuts(genPart)
     dy_gen_muons  = genPart[dy_muon_filter]
     eta = (dy_gen_muons.eta).compute()
-    from_hardProcess = 
+    # from_hardProcess = 
     nmuon = ak.num(eta, axis=1)# this is number of gen muons
     # print(f"eta: {eta}")
     # nmuon_edges = [0, 1, 2, 3]
@@ -1284,6 +1284,104 @@ def applyBasicRecoMuSelection(reco_muons):
     )
     return reco_muons[selection]
 
+def applyMuonBaseSelection(events):
+    muons = events.Muon
+    muon_selection = (
+        muons.mediumId
+        & (muons.pt > 20 )
+        & (abs(muons.eta) < 2.4)
+        & (muons.pfRelIso04_all < 0.25)
+        & (muons.isGlobal | muons.isTracker)
+    )
+    muons= muons[muon_selection]
+    nmuons = ak.sum(muon_selection, axis=1)
+    mm_charge = ak.prod(muons.charge, axis=1)
+    eventiwise_filter =(
+        (nmuons==2)
+        & (mm_charge < 0) # problematic cut
+        & (events.HLT.IsoMu24)
+    )    
+    events = events[eventiwise_filter] # to extract Jet variables later
+    muons = muons[eventiwise_filter]
+    
+    return muons, events
+
+def getZipReco(events) -> ak.zip:
+    """
+    from events return dictionary of dimuon, muon, dijet, jet values
+    we assume all events have at least two jet and two muons
+    """
+    muons, events = applyMuonBaseSelection(events)
+    muons = ak.pad_none(muons, target=2)
+    mu1 = muons[:,0]
+    mu2 = muons[:,1]
+    dimuon = mu1+mu2
+    return_dict = {
+        "mu1_pt" : mu1.pt,
+        "mu2_pt" : mu2.pt,
+        "mu1_eta" : mu1.eta,
+        "mu2_eta" : mu2.eta,
+        "mu1_phi" : mu1.phi,
+        "mu2_phi" : mu2.phi,
+        "genWeight" : events.genWeight,
+        "dimuon_mass" : dimuon.mass,
+        "dimuon_pt" : dimuon.pt,
+        "dimuon_eta" : dimuon.eta,
+        "dimuon_phi" : dimuon.phi,
+    }
+    # comput zip and return
+    return_dict = ak.zip(return_dict).compute()
+    print(f"return_dict: {return_dict}")
+    return return_dict
+
+def applyMuonBaseSelectionGen(events):
+    GenPart = events.GenPart
+    gen_muon_selection = (
+        (abs(GenPart.pdgId) ==13)
+        & (abs(GenPart.eta) <2.4)
+        & (GenPart.pt > 20 )
+        & (GenPart.status==1)
+    )
+    gen_muons = GenPart[gen_muon_selection]
+    mm_charge = ak.prod(gen_muons.pdgId, axis=1)
+    nmuons = ak.sum(gen_muon_selection, axis=1)
+    eventwise_filter = (
+        (nmuons==2)
+        & (mm_charge < 0)
+    )
+    events = events[eventwise_filter] # to extract Jet variables later
+    gen_muons = gen_muons[eventwise_filter]
+    
+    return gen_muons, events
+
+def getZipGen(events) -> ak.zip:
+    """
+    from events return dictionary of dimuon, muon, dijet, jet values
+    we assume all events have at least two jet and two muons
+    """
+    gen_muons, events = applyMuonBaseSelectionGen(events)
+    gen_muons = ak.pad_none(gen_muons, target=2)
+    mu1 = gen_muons[:,0]
+    mu2 = gen_muons[:,1]
+    dimuon = mu1+mu2
+    return_dict = {
+        "mu1_pt" : mu1.pt,
+        "mu2_pt" : mu2.pt,
+        "mu1_eta" : mu1.eta,
+        "mu2_eta" : mu2.eta,
+        "mu1_phi" : mu1.phi,
+        "mu2_phi" : mu2.phi,
+        "genWeight" : events.genWeight,
+        "dimuon_mass" : dimuon.mass,
+        "dimuon_pt" : dimuon.pt,
+        "dimuon_eta" : dimuon.eta,
+        "dimuon_phi" : dimuon.phi,
+    }
+    # comput zip and return
+    return_dict = ak.zip(return_dict).compute()
+    print(f"return_dict: {return_dict}")
+    return return_dict
+
 def getZip(events, applyRecoMuCut=False) -> ak.zip:
     """
     from events return dictionary of dimuon, muon, dijet, jet values
@@ -1835,15 +1933,153 @@ def print_t_statisticROOT(hist_fromScratch, hist_rereco, field):
         print(f"{field} Bin {i}: center={bin_center:.2f}, diff={diff:.2f}, error={err_total:.2f}, t value={t_val:.2f}")
 
 
+def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./plots", centralVsCentral=False, nbins=30, target_nMuon="all", normalize=False, save_fname="plotTwoWay"):
+    # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", "mu1_eta", "mu2_eta",   "mu1_eta_gen", "mu2_eta_gen","n_reco_muons", "n_reco_muons_wMediumId","noGenmatchMu1_wMediumIdEq2cut_eta", "noGenmatchMu2_wMediumIdEq2cut_eta", "mu1_wMediumIdEq2cut__eta", "mu2_wMediumIdEq2cut__eta",]
+    # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", "mu1_eta", "mu2_eta",   "mu1_eta_gen", "mu2_eta_gen","n_reco_muons", "n_reco_muons_wMediumId","noGenmatchMu1_wMediumIdEq2cut_eta", "noGenmatchMu2_wMediumIdEq2cut_eta", "mu1_wMediumIdEq2cut__eta", "mu2_wMediumIdEq2cut__eta",]
+    # other_kinematics = ["mu1_pt", "mu2_pt", "mu1_pt_gen", "mu2_pt_gen","mu1_phi", "mu2_phi", "mu1_phi_gen", "mu2_phi_gen", "noGenmatchMu1_pt", "noGenmatchMu2_pt", "noGenmatchMu1_phi", "noGenmatchMu2_phi",]
+    # fields2plot = fields2plot + other_kinematics
+    # fields2plot = list(zip_fromScratch.keys())
+    # fields2plot = zip_fromScratch.fields
+    fields2plot = ["mu1_eta", "mu2_eta","mu1_pt", "mu2_pt","mu1_phi", "mu2_phi", "dimuon_mass","dimuon_pt","dimuon_eta","dimuon_phi"]
+    # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", ]
+    print(f"fields2plot: {fields2plot}")
+    
+    for field in fields2plot:
+        # Create a histogram: name, title, number of bins, xlow, xhigh
+        if "eta" in field:
+            # xlow, xhigh = -2, 2
+            xlow, xhigh = -2.4, 2.4
+            # xlow, xhigh = -4, 4
+            current_nbins = nbins
+        elif "pt" in field:
+            xlow, xhigh = 0, 250
+            current_nbins = nbins
+        elif "phi" in field:
+            xlow, xhigh = -3, 3
+            current_nbins = nbins
+        elif "n_reco_muons" in field:
+            xlow, xhigh = -0.5, 4.5
+            current_nbins = 5 # override nbins
+        elif "mass" in field:
+            xlow, xhigh = 110, 150
+            current_nbins = nbins
+
+        title =f"{field}"
+        
+        hist_fromScratch = ROOT.TH1F("hist_fromScratch", f"2018 {title};nbins: {current_nbins};Entries", current_nbins, xlow, xhigh)
+        values = ak.to_numpy(zip_fromScratch[field])
+        if "Gen" in save_fname:
+            values = applyEps(values)
+        weights = np.sign(zip_fromScratch.genWeight)
+        values = array('d', values) # make the array double
+        weights = array('d', weights) # make the array double
+        
+        print(f"from scratch {field} len : {len(values)}")
+        hist_fromScratch.FillN(len(values), values, weights)
+
+        hist_rereco = ROOT.TH1F("hist_rereco", f"2018;{field};Entries", current_nbins, xlow, xhigh)
+        # values = zip_rereco[field]
+        values = ak.to_numpy(zip_rereco[field])
+        if "Gen" in save_fname:
+            values = applyEps(values)
+        weights = np.sign(zip_rereco.genWeight)
+        values = array('d', values) # make the array double
+        weights = array('d', weights) # make the array double
+        
+        print(f"rereco {field} len : {len(values)}")
+        hist_rereco.FillN(len(values), values, weights)
+        
+        # Create a canvas
+        canvas = ROOT.TCanvas("canvas", "Canvas for Plotting", 800, 600)
+        pad1 = ROOT.TPad("pad1", "Top pad", 0, 0.3, 1, 1.0)
+        pad2 = ROOT.TPad("pad2", "Bottom pad", 0, 0.05, 1, 0.3)
+        
+        pad1.SetBottomMargin(0.02)
+        pad2.SetTopMargin(0.02)
+        pad2.SetBottomMargin(0.3)
+        
+        pad1.Draw()
+        pad2.Draw()
+
+        pad1.cd()
+        # Style histograms
+        hist_fromScratch.SetLineColor(ROOT.kRed)
+        hist_rereco.SetLineColor(ROOT.kBlue)
+        
+        # hist_fromScratch.SetMarkerStyle(20)  # Add markers
+        # hist_rereco.SetMarkerStyle(21)
+        if normalize:
+            hist_fromScratch.Scale(1/hist_fromScratch.Integral())
+            hist_rereco.Scale(1/hist_rereco.Integral())
+        
+        hist_fromScratch.SetMarkerColor(ROOT.kRed)
+        hist_rereco.SetMarkerColor(ROOT.kBlue)
+        
+        # Draw the histogram
+        hist_fromScratch.Draw('E')
+        hist_rereco.Draw('E SAME')
+
+
+        # # Create a legend
+        # if "gen" in field:
+        #     legend = ROOT.TLegend(0.35, 0.8, 0.65, 0.93)  # (x1,y1,x2,y2) in NDC coordinates
+        #     # legend = ROOT.TLegend(0.35, 0.1, 0.65, 0.23)  # (x1,y1,x2,y2) in NDC coordinates
+        # else:
+        #     legend = ROOT.TLegend(0.65, 0.8, 0.95, 0.93)  # (x1,y1,x2,y2) in NDC coordinates
+
+        # Create a legend
+        max_bin = hist_fromScratch.GetMaximumBin()
+        if max_bin > int(nbins * 0.25) and max_bin < int(nbins * 0.75): # if max bin is in center, put legend somewhere else
+            legend = ROOT.TLegend(0.65, 0.85, 0.95, 0.93)  # (x1,y1,x2,y2) in NDC coordinates
+        else:
+            legend = ROOT.TLegend(0.35, 0.85, 0.65, 0.93)  # (x1,y1,x2,y2) in NDC coordinates
+            
+        # Add entries
+        if centralVsCentral:
+            legend.AddEntry(hist_fromScratch, f"Central UL (Entries: {hist_fromScratch.GetEntries():.2e})", "l")  # "l" means line
+            legend.AddEntry(hist_rereco, f"Central Rereco (Entries: {hist_rereco.GetEntries():.2e})", "l")
+        else:
+            legend.AddEntry(hist_fromScratch, f"Private UL (Entries: {hist_fromScratch.GetEntries():.2e})", "l")  # "l" means line
+            legend.AddEntry(hist_rereco, f"Central Rereco (Entries: {hist_rereco.GetEntries():.2e})", "l")
+        legend.Draw()
+        pad1.SetTicks(2, 2)
+
+        # Residual
+
+        pad2.cd()
+        residual = hist_fromScratch.Clone("residual")
+        residual.Add(hist_rereco, -1)
+        residual.SetLineColor(ROOT.kBlack)
+        residual.SetMarkerColor(ROOT.kBlack)
+        residual.Draw("E")
+        residual.SetTitle(f";{field}, nbins:{nbins};Residual")
+        # Similarly for the residual plot
+        residual.GetXaxis().SetTitleSize(0.12)  # Bigger because bottom pad is small
+        residual.GetXaxis().SetLabelSize(0.10)
+
+        pad2.SetTicks(2, 2)
+        nentries = int(hist_fromScratch.GetEntries()/1000)
+        # Save the canvas as a PNG
+        save_full_path = f"{save_path}/{save_fname}_{field}_ROOT_nbins{nbins}_nMuon{target_nMuon}_entries{nentries}k.pdf"
+        # canvas.
+        canvas.Update()
+        canvas.SaveAs(save_full_path)
+
+        
+
+        # print t statistic
+        print_t_statisticROOT(hist_fromScratch, hist_rereco, field)
+
 def plotTwoWayROOT(zip_fromScratch, zip_rereco, plot_bins, save_path="./plots", centralVsCentral=False, nbins=30, target_nMuon="all"):
     # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", "mu1_eta", "mu2_eta",   "mu1_eta_gen", "mu2_eta_gen","n_reco_muons", "n_reco_muons_wMediumId","noGenmatchMu1_wMediumIdEq2cut_eta", "noGenmatchMu2_wMediumIdEq2cut_eta", "mu1_wMediumIdEq2cut__eta", "mu2_wMediumIdEq2cut__eta",]
     # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", "mu1_eta", "mu2_eta",   "mu1_eta_gen", "mu2_eta_gen","n_reco_muons", "n_reco_muons_wMediumId","noGenmatchMu1_wMediumIdEq2cut_eta", "noGenmatchMu2_wMediumIdEq2cut_eta", "mu1_wMediumIdEq2cut__eta", "mu2_wMediumIdEq2cut__eta",]
     # other_kinematics = ["mu1_pt", "mu2_pt", "mu1_pt_gen", "mu2_pt_gen","mu1_phi", "mu2_phi", "mu1_phi_gen", "mu2_phi_gen", "noGenmatchMu1_pt", "noGenmatchMu2_pt", "noGenmatchMu1_phi", "noGenmatchMu2_phi",]
     # fields2plot = fields2plot + other_kinematics
     # fields2plot = list(zip_fromScratch.keys())
-    fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", ]
+    # fields2plot = zip_fromScratch.fields
+    fields2plot = ["mu1_eta", "mu2_eta"]
+    # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", ]
     print(f"fields2plot: {fields2plot}")
-    print(f"zip_fromScratch.keys(): {zip_fromScratch.keys()}")
     
     for field in fields2plot:
         # Create a histogram: name, title, number of bins, xlow, xhigh
@@ -2202,7 +2438,7 @@ if __name__ == "__main__":
     # quickPlot(events_fromScratch, nbins_l, xlow, xhigh, save_path, save_fname, y_range=y_range)
     # quickPlot(events_fromScratch, nbins_l, xlow, xhigh, save_path, save_fname)
     # quickPlot_nUnique(events_fromScratch, nbins_l, xlow, xhigh, save_path, save_fname,y_range=(0,60))
-    quickPlotByHardProcess(events_fromScratch, nbins_l, xlow, xhigh, save_path, save_fname, y_range=y_range)
+    # quickPlotByHardProcess(events_fromScratch, nbins_l, xlow, xhigh, save_path, save_fname, y_range=y_range)
 
     # # plot nmuonsNot2
     # quickPlotByNMuon(events_fromScratch, nbins_l, xlow, xhigh, save_path, save_fname, exclude=True)
@@ -2298,12 +2534,12 @@ if __name__ == "__main__":
     # Plot Two-way DY VBF-filter MC private UL vs central Rereco
     # -----------------------------------------------
     # test_len = 14000
-    test_len = 400000
+    # test_len = 400000
     # test_len = 800000
-    # test_len = 4000000
+    test_len = 4000000
     # test_len = 8000000
     centralVsCentral = args.centralVsCentral
-
+    print(f"centralVsCentral: {centralVsCentral}")
     if centralVsCentral:
         files = json.load(open("dy_m50_v9.json", "r"))
     else:    
@@ -2313,7 +2549,8 @@ if __name__ == "__main__":
         schemaclass=NanoAODSchema,
     ).events()
     if do_quick_test:
-        events_fromScratch = events_fromScratch[:test_len]
+        # events_fromScratch = events_fromScratch[:test_len]
+        events_fromScratch = events_fromScratch[-test_len:]
     events_fromScratch = applyQuickSelection(events_fromScratch)
 
     
@@ -2326,24 +2563,28 @@ if __name__ == "__main__":
         schemaclass=NanoAODSchema,
     ).events()
     if do_quick_test:
-        events_rereco = events_rereco[:test_len]
+        # events_rereco = events_rereco[:test_len]
+        events_rereco = events_rereco[-test_len:]
     events_rereco = applyQuickSelection(events_rereco)
     # print(f"events_rereco nevents: {ak.num(events_rereco, axis=0).compute()}")
 
 
 
-
+    # ----------------------------------------------------
+    # plot Reco muons
+    #---------------------------------------------------------
     # for applyRecoMuCut in [False, True]:
     for applyRecoMuCut in [False]:
         print("starting UL zip!")
-        # zip_fromScratch = getZip(events_fromScratch)
-        zip_fromScratch = getZip(events_fromScratch, applyRecoMuCut=applyRecoMuCut)
+        # zip_fromScratch = getZip(events_fromScratch, applyRecoMuCut=applyRecoMuCut)
+        zip_fromScratch = getZipReco(events_fromScratch)
         
         print("done UL zip!")
         
         print("starting rereco zip!")
         # zip_rereco = getZip(events_rereco)
-        zip_rereco = getZip(events_rereco, applyRecoMuCut=applyRecoMuCut)
+        # zip_rereco = getZip(events_rereco, applyRecoMuCut=applyRecoMuCut)
+        zip_rereco = getZipReco(events_rereco)
         print("done rereco zip!")
         
     
@@ -2357,10 +2598,35 @@ if __name__ == "__main__":
     
         # nbins_l = [60, 64, 128, 256]
         nbins_l = [128]
-        target_nMuons = ["all", 2,3]
+        # target_nMuons = ["all", 2,3]
+        target_nMuons = ["all"]
         for nbins in nbins_l:
             for target_nMuon in target_nMuons:
-                plotTwoWayROOT(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon)
+                # plotTwoWayROOT(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon)
+                plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon, normalize=True)
+
+    # ----------------------------------------------------
+    # plot gen muons
+    #---------------------------------------------------------
+    for applyRecoMuCut in [False]:
+        zip_fromScratch = getZipGen(events_fromScratch)
+        zip_rereco = getZipGen(events_rereco)
+        
+        with open("plot_settings.json", "r") as file:
+            plot_bins = json.load(file)
+    
+        save_path = "./plots"
+        os.makedirs(save_path, exist_ok=True)
+    
+        # nbins_l = [60, 64, 128, 256]
+        nbins_l = [128]
+        # target_nMuons = ["all", 2,3]
+        target_nMuons = ["all"]
+        save_fname="TwoWayGen"
+        for nbins in nbins_l:
+            for target_nMuon in target_nMuons:
+                plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon, normalize=True, save_fname=save_fname)
+
     
     
     # do individual plots -------------------------------------------
