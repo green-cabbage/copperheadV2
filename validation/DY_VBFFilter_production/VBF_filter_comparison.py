@@ -1306,6 +1306,24 @@ def applyMuonBaseSelection(events):
     
     return muons, events
 
+def applyJetBaseSelection(events):
+    jets = events.Jet
+    jet_selection = (
+        (jets.pt > 25)
+        & (abs(jets.eta) < 4.7)
+        & ((jets.puId >= 4) | (jets.pt > 50)) # loose PuId
+        & (jets.jetId >= 2) # tight jetId NOTE: careful of the Rereco and UL campaign
+    )
+    jets = jets[jet_selection]
+    sorted_args = ak.argsort(jets.pt, ascending=False)
+    jets = (jets[sorted_args])
+    jets = ak.pad_none(jets, target=2)
+    # remove events where leading jet isn't > 35 GeV
+    leadingJetCut = ak.fill_none(jets.pt[:,0]>35, value=False)
+    jets = jets[leadingJetCut]
+    events = events[leadingJetCut]
+    return jets, events.genWeight
+
 def getZipReco(events) -> ak.zip:
     """
     from events return dictionary of dimuon, muon, dijet, jet values
@@ -1316,7 +1334,11 @@ def getZipReco(events) -> ak.zip:
     mu1 = muons[:,0]
     mu2 = muons[:,1]
     dimuon = mu1+mu2
-    return_dict = {
+    jets, jets_genWgt = applyJetBaseSelection(events)
+    jets = ak.pad_none(jets, target=2)
+    jet1 = jets[:,0]
+    jet2 = jets[:,1]
+    return_dict_muon = {
         "mu1_pt" : mu1.pt,
         "mu2_pt" : mu2.pt,
         "mu1_eta" : mu1.eta,
@@ -1327,12 +1349,26 @@ def getZipReco(events) -> ak.zip:
         "dimuon_mass" : dimuon.mass,
         "dimuon_pt" : dimuon.pt,
         "dimuon_eta" : dimuon.eta,
+        "dimuon_rapidity" : dimuon.rapidity,
         "dimuon_phi" : dimuon.phi,
     }
+    return_dict_jet = {
+        "jet1_pt" : jet1.pt,
+        "jet2_pt" : jet2.pt,
+        "jet1_eta" : jet1.eta,
+        "jet2_eta" : jet2.eta,
+        "jet1_phi" : jet1.phi,
+        "jet2_phi" : jet2.phi,
+        "genWeight" : jets_genWgt,
+    }
     # comput zip and return
-    return_dict = ak.zip(return_dict).compute()
-    print(f"return_dict: {return_dict}")
-    return return_dict
+    return_dict_muon, return_dict_jet = dask.compute([
+        ak.zip(return_dict_muon),
+        ak.zip(return_dict_jet)
+    ])[0]
+    # print(f"return_dict_muon: {return_dict_muon}")
+    # print(f"return_dict_jet: {return_dict_jet}")
+    return return_dict_muon, return_dict_jet
 
 def applyMuonBaseSelectionGen(events):
     GenPart = events.GenPart
@@ -1375,6 +1411,7 @@ def getZipGen(events) -> ak.zip:
         "dimuon_mass" : dimuon.mass,
         "dimuon_pt" : dimuon.pt,
         "dimuon_eta" : dimuon.eta,
+        "dimuon_rapidity" : dimuon.rapidity,
         "dimuon_phi" : dimuon.phi,
     }
     # comput zip and return
@@ -1940,22 +1977,27 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
     # fields2plot = fields2plot + other_kinematics
     # fields2plot = list(zip_fromScratch.keys())
     # fields2plot = zip_fromScratch.fields
-    fields2plot = ["mu1_eta", "mu2_eta","mu1_pt", "mu2_pt","mu1_phi", "mu2_phi", "dimuon_mass","dimuon_pt","dimuon_eta","dimuon_phi"]
+    fields2plot = ["mu1_eta", "mu2_eta","mu1_pt", "mu2_pt","mu1_phi", "mu2_phi", "dimuon_mass","dimuon_pt","dimuon_eta","dimuon_rapidity","dimuon_phi", "jet1_pt", "jet2_pt", "jet1_eta", "jet2_eta", "jet1_phi", "jet2_phi"]
     # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", ]
     print(f"fields2plot: {fields2plot}")
     
     for field in fields2plot:
+        if field not in zip_fromScratch.fields:
+            print(f"field {field} not present. Skipping!")
+            continue
         # Create a histogram: name, title, number of bins, xlow, xhigh
         if "eta" in field:
-            # xlow, xhigh = -2, 2
-            xlow, xhigh = -2.4, 2.4
-            # xlow, xhigh = -4, 4
+            if "dimuon" in field:
+                xlow, xhigh = -2.5, 2.5
+            else:
+                xlow, xhigh = -2.4, 2.4
             current_nbins = nbins
         elif "pt" in field:
             xlow, xhigh = 0, 250
             current_nbins = nbins
         elif "phi" in field:
-            xlow, xhigh = -3, 3
+            # xlow, xhigh = -3, 3
+            xlow, xhigh = -np.pi, np.pi
             current_nbins = nbins
         elif "n_reco_muons" in field:
             xlow, xhigh = -0.5, 4.5
@@ -1963,7 +2005,9 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         elif "mass" in field:
             xlow, xhigh = 110, 150
             current_nbins = nbins
-
+        elif "rapidity" in field:
+            xlow, xhigh = -2.5, 2.5
+            
         title =f"{field}"
         
         hist_fromScratch = ROOT.TH1F("hist_fromScratch", f"2018 {title};nbins: {current_nbins};Entries", current_nbins, xlow, xhigh)
@@ -2011,6 +2055,7 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         if normalize:
             hist_fromScratch.Scale(1/hist_fromScratch.Integral())
             hist_rereco.Scale(1/hist_rereco.Integral())
+            hist_fromScratch.GetYaxis().SetTitle("A.U.")
         
         hist_fromScratch.SetMarkerColor(ROOT.kRed)
         hist_rereco.SetMarkerColor(ROOT.kBlue)
@@ -2056,6 +2101,8 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         # Similarly for the residual plot
         residual.GetXaxis().SetTitleSize(0.12)  # Bigger because bottom pad is small
         residual.GetXaxis().SetLabelSize(0.10)
+        # residual.GetYaxis().SetTitleSize(0.80)
+        residual.GetYaxis().SetLabelSize(0.10)
 
         pad2.SetTicks(2, 2)
         nentries = int(hist_fromScratch.GetEntries()/1000)
@@ -2577,18 +2624,11 @@ if __name__ == "__main__":
     for applyRecoMuCut in [False]:
         print("starting UL zip!")
         # zip_fromScratch = getZip(events_fromScratch, applyRecoMuCut=applyRecoMuCut)
-        zip_fromScratch = getZipReco(events_fromScratch)
+        zip_fromScratch_mu, zip_fromScratch_jet= getZipReco(events_fromScratch)
         
-        print("done UL zip!")
-        
-        print("starting rereco zip!")
         # zip_rereco = getZip(events_rereco)
         # zip_rereco = getZip(events_rereco, applyRecoMuCut=applyRecoMuCut)
-        zip_rereco = getZipReco(events_rereco)
-        print("done rereco zip!")
-        
-    
-        
+        zip_rereco_mu, zip_rereco_jet= getZipReco(events_rereco)
         
         with open("plot_settings.json", "r") as file:
             plot_bins = json.load(file)
@@ -2597,13 +2637,21 @@ if __name__ == "__main__":
         os.makedirs(save_path, exist_ok=True)
     
         # nbins_l = [60, 64, 128, 256]
-        nbins_l = [128]
+        nbins_l = [64, 128]
         # target_nMuons = ["all", 2,3]
         target_nMuons = ["all"]
-        for nbins in nbins_l:
-            for target_nMuon in target_nMuons:
-                # plotTwoWayROOT(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon)
-                plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon, normalize=True)
+        mu_jet_pairs = [
+            (zip_fromScratch_mu, zip_rereco_mu),
+            (zip_fromScratch_jet, zip_rereco_jet)
+        ]
+        for (zip_fromScratch, zip_rereco) in mu_jet_pairs:
+            print(f"zip_fromScratch: {zip_fromScratch}")
+            print(f"zip_rereco: {zip_rereco}")
+            
+            for nbins in nbins_l:
+                for target_nMuon in target_nMuons:
+                    # plotTwoWayROOT(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon)
+                    plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path=save_path, centralVsCentral=centralVsCentral, nbins=nbins, target_nMuon=target_nMuon, normalize=True)
 
     # ----------------------------------------------------
     # plot gen muons
@@ -2611,7 +2659,6 @@ if __name__ == "__main__":
     for applyRecoMuCut in [False]:
         zip_fromScratch = getZipGen(events_fromScratch)
         zip_rereco = getZipGen(events_rereco)
-        
         with open("plot_settings.json", "r") as file:
             plot_bins = json.load(file)
     
@@ -2619,7 +2666,7 @@ if __name__ == "__main__":
         os.makedirs(save_path, exist_ok=True)
     
         # nbins_l = [60, 64, 128, 256]
-        nbins_l = [128]
+        nbins_l = [64, 128]
         # target_nMuons = ["all", 2,3]
         target_nMuons = ["all"]
         save_fname="TwoWayGen"
