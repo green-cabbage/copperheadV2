@@ -13,6 +13,9 @@ import cmsstyle as CMS
 from collections import OrderedDict
 import glob
 import copy
+import hist.dask as hda
+from hist import Hist
+import dask
 
 def get_scalar_ptCentrality(events):
     pt_centrality_scalar = events.dimuon_pt - abs(events.jet1_pt_nominal + events.jet2_pt_nominal)/2
@@ -50,6 +53,22 @@ group_VV_processes = ["ww_2l2nu", "wz_3lnu", "wz_2l2q", "wz_1l1nu2q", "zz"]# dib
 # group_ggH_processes = ["ggh_amcPS"]
 group_ggH_processes = ["ggh_powhegPS"]
 group_VBF_processes = ["vbf_powheg_dipole"]
+
+group_dict = {
+    "data": group_data_processes,
+    "dy": group_DY_processes,
+    "top": group_Top_processes,
+    "ewk": group_Ewk_processes,
+    "vv": group_VV_processes,
+    "ggh": group_ggH_processes,
+    "vbf": group_VBF_processes
+}
+
+def find_group_name(process_name, group_dict):
+    for group_name, processes in group_dict.items():
+        if process_name in processes:
+            return group_name
+    return "other"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -279,7 +298,7 @@ if __name__ == "__main__":
         raise ValueError
     for particle in args.variables:
         if "dimuon" in particle:
-            variables2plot.append(f"{particle}_mass")
+            # variables2plot.append(f"{particle}_mass")
             variables2plot.append(f"{particle}_pt")
             variables2plot.append(f"{particle}_eta")
             variables2plot.append(f"{particle}_phi")
@@ -296,7 +315,7 @@ if __name__ == "__main__":
             variables2plot.append(f"{particle}_rapidity")
         elif "dijet" in particle:
             variables2plot.append(f"jj_dEta_nominal")
-            variables2plot.append(f"jj_mass_nominal")
+            # variables2plot.append(f"jj_mass_nominal")
             variables2plot.append(f"jj_pt_nominal")
             
             variables2plot.append(f"jj_dPhi_nominal")
@@ -319,6 +338,8 @@ if __name__ == "__main__":
                 variables2plot.append(f"{particle}2_{kinematic}")
             variables2plot.append(f"{particle}1_pt_over_mass")
             variables2plot.append(f"{particle}2_pt_over_mass")
+            # variables2plot.append("mu1_pt")
+            # variables2plot.append("mu2_pt")
         elif ("jet" in particle):
             variables2plot.append(f"njets_nominal")
             for kinematic in kinematic_vars:
@@ -383,6 +404,8 @@ if __name__ == "__main__":
         print(f"full_load_path: {full_load_path}")
         try:
             events = dak.from_parquet(full_load_path)
+            # target_chunksize = 10_000
+            # events = events.repartition(rows_per_partition=target_chunksize)
         except:
             print(f"full_load_path: {full_load_path} Not available. Skipping")
             continue
@@ -438,11 +461,11 @@ if __name__ == "__main__":
         #     print("removing separate_wgt_zpt_wgt!")
         #     events["wgt_nominal"] = events["wgt_nominal"] / events["separate_wgt_zpt_wgt"] # remove zpt wgt
         
-        events = events[fields2load]
-        # load data to memory using compute()
-        events = ak.zip({
-            field : events[field] for field in events.fields
-        }).compute()
+        # events = events[fields2load]
+        # # load data to memory using compute()
+        # events = ak.zip({
+        #     field : events[field] for field in events.fields
+        # }).compute()
         loaded_events[process] = events
     print("finished loading parquet files!")
     # ROOT style or mplhep style starts here --------------------------------------
@@ -986,8 +1009,39 @@ if __name__ == "__main__":
         # this mplhep implementation assumes non-empty data; otherwise, it will crash
         # Dictionary for histograms and binnings
 
-        
+        # initialize histograms
+        regions = ["z-peak", "signal", "h-peak", "h-sidebands"] # full list of possible regions to loop over
+        channels = ["nocat", "vbf", "ggh"] # full list of possible channels to loop over
+        variations = ["nominal"]
+        sample_groups = list(group_dict.keys()) + ["other"]
+        sample_hist = (
+                hda.Hist.new.StrCat(regions, name="region")
+                .StrCat(channels, name="channel")
+                .StrCat(["value", "sumw2"], name="val_sumw2")
+                .StrCat(sample_groups, name="sample_group")
+        )
+        # add axis for systematic variation
+        sample_hist_dictByVar = {} 
+        sample_hist = sample_hist.StrCat(variations, name="variation")
+        for var in variables2plot:
+            # for process in available_processes:
+            if "_nominal" in var:
+                plot_var = var.replace("_nominal", "")
+            else:
+                plot_var = var
+            if plot_var not in plot_settings.keys():
+                print(f"variable {var} not configured in plot settings!")
+                continue
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+            print(f"var: {var}")
+            sample_hist_dictByVar[var] = sample_hist.Var(binning, name=var).Double()
+        # sample_hist_empty = sample_hist.Double()
+        # sample_hist_l = []
+        # fill the histograms
+        sample_hist_dictByVar2compute = {}
         for var in tqdm.tqdm(variables2plot):
+            sample_hist_empty = sample_hist_dictByVar[var]
+            sample_hist_l = []
             var_step = time.time()
             # for process in available_processes:
             if "_nominal" in var:
@@ -1029,6 +1083,8 @@ if __name__ == "__main__":
 
             
             for process in available_processes:    
+                # for each process make new hist
+                sample_hist = copy.deepcopy(sample_hist_empty)
                 print(f"process: {process}")
                 try:
                     events = loaded_events[process]
@@ -1114,15 +1170,15 @@ if __name__ == "__main__":
                     prod_cat_cut & 
                     region 
                 )
-                print(f"category_selection length: {len(category_selection)}")
-                print(f"category_selection {process} sum : {ak.sum(ak.values_astype(category_selection, np.int32))}")
+                # print(f"category_selection length: {len(category_selection)}")
+                # print(f"category_selection {process} sum : {ak.sum(ak.values_astype(category_selection, np.int32))}")
                 # print(f"category_selection {process} : {category_selection}")
 
                 # filter events fro selected category
 
-                print(f"len(events) {process} b4 selection: {len(events)}")
+                # print(f"len(events) {process} b4 selection: {len(events)}")
                 events = events[category_selection]
-                print(f"len(events) {process} after selection: {len(events)}")
+                # print(f"len(events) {process} after selection: {len(events)}")
                 
                 # category_selection = ak.to_numpy(category_selection) # this will be multiplied with weights
                 # print(f"len(weights) {process} b4 selection: {len(weights)}")
@@ -1131,7 +1187,8 @@ if __name__ == "__main__":
 
                 # extract weights
                 if is_data:
-                    weights = ak.to_numpy(ak.fill_none(events["wgt_nominal"], value=0.0))
+                    weights = (ak.fill_none(events["wgt_nominal"], value=0.0))
+                    # weights = ak.to_numpy(ak.fill_none(events["wgt_nominal"], value=0.0))
                 else: # MC
                     weights = ak.fill_none(events["wgt_nominal"], value=0.0)
                     
@@ -1144,53 +1201,39 @@ if __name__ == "__main__":
 
                     
                     # print(f"weights {process} b4 numpy: {weights}")
-                    weights = ak.to_numpy(weights) # MC are already normalized by xsec*lumi
+                    # weights = ak.to_numpy(weights) # MC are already normalized by xsec*lumi
                     # for some reason, some nan weights are still passes ak.fill_none() bc they're "nan", not None, this used to be not a problem
                     # could be an issue of copying bunching of parquet files from one directory to another, but not exactly sure
-                    weights = np.nan_to_num(weights, nan=0.0) 
+                    # weights = np.nan_to_num(weights, nan=0.0) 
                     
                 
                 fraction_weight = ak.ones_like(events.wgt_nominal) # TBF, all fractions should be same
+                values = (ak.fill_none(events[var], value=-999.0))
+                # values = events[var]
+                
                 print(f"var: {var}")
-                # temp overwrite
-                if ("_range2" in var):
-                    var_reduced = var.replace("_range2","")
-                    values = ak.to_numpy(ak.fill_none(events[var_reduced], value=-999.0))
-                elif ("_zpeak" in var):
-                    var_reduced = var.replace("_zpeak","")
-                    values = ak.to_numpy(ak.fill_none(events[var_reduced], value=-999.0))
-                else:
-                    values = ak.to_numpy(ak.fill_none(events[var], value=-999.0))
+                # # temp overwrite
+                # if ("_range2" in var):
+                #     var_reduced = var.replace("_range2","")
+                #     # values = ak.to_numpy(ak.fill_none(events[var_reduced], value=-999.0))
+                #     values = (ak.fill_none(events[var_reduced], value=-999.0))
+                # elif ("_zpeak" in var):
+                #     var_reduced = var.replace("_zpeak","")
+                #     # values = ak.to_numpy(ak.fill_none(events[var_reduced], value=-999.0))
+                #     values = (ak.fill_none(events[var_reduced], value=-999.0))
+                # else:
+                #     # values = ak.to_numpy(ak.fill_none(events[var], value=-999.0))
+                #     values = (ak.fill_none(events[var], value=-999.0))
                 # print(f"weights.shape: {weights[weights>0].shape}")
-                print(f"weights {process} : {weights.shape}")
-                print(f"values {process} : {values.shape}")
-                val_filter = values > 6
-                print(f"values[val_filter]: {values[val_filter]}")
+                # print(f"weights {process} : {weights.shape}")
+                # print(f"values {process} : {values.shape}")
+                # val_filter = values > 6
+                # print(f"values[val_filter]: {values[val_filter]}")
                 
 
                 
-                # temporary overwrite start -------------------------
-                # we have bad ll_zstar_log caluclation, so we re-calculate on the spot
-                # if var == "ll_zstar_log":
-                #     print("ll_zstar_log overwrite!")
-                #     values = ak.to_numpy(np.log(np.abs(events["zeppenfeld"])))
-                # elif var == "rpt":
-                #     print("rpt overwrite!")
-                #     numerator = np.abs(events["jj_pt"] + events["dimuon_pt"])
-                #     denominator = np.abs(events["jet1_pt"]) + np.abs(events["jet2_pt"]) +  np.abs(events["dimuon_pt"])
-                #     values = ak.to_numpy(numerator/denominator)
-                #     # debug
-                #     print(f"events.jj_pt is nan: {np.any(np.isnan(events.jj_pt))}")
-                #     print(f"events.dimuon_pt is nan: {np.any(np.isnan(events.dimuon_pt))}")
-                #     print(f"events.jet1_pt is nan: {np.any(np.isnan(events.jet1_pt))}")
-                #     print(f"events.jet2_pt is nan: {np.any(np.isnan(events.jet2_pt))}")
-                #     print(f"events.jj_pt is none: {np.any(ak.is_none(events.jj_pt))}")
-                #     print(f"events.dimuon_pt is none: {np.any(ak.is_none(events.dimuon_pt))}")
-                #     print(f"events.jet1_pt is none: {np.any(ak.is_none(events.jet1_pt))}")
-                #     print(f"events.jet2_pt is none: {np.any(ak.is_none(events.jet2_pt))}")
-                    
-                print(f"values is nan: {np.any(np.isnan(values))}")
-                print(f"values is none: {np.any(ak.is_none(values))}")
+                # print(f"values is nan: {np.any(np.isnan(values))}")
+                # print(f"values is none: {np.any(ak.is_none(values))}")
                 
                 # temporary overwrite end -------------------------
                 # print(f"values[0]: {values[0]}")
@@ -1203,164 +1246,217 @@ if __name__ == "__main__":
                     # print(f"fraction_weight: {fraction_weight}")
                     weights = weights*fraction_weight
                 # print(f"weights.shape: {weights[weights>0].shape}")
+
+                group_name = find_group_name(process, group_dict)
+                target_chunksize = 10_000
+                # values = values.repartition(rows_per_partition=target_chunksize)
+                # weights = weights.repartition(rows_per_partition=target_chunksize)
+                # values = values.compute()
+                # weights = weights.compute()
+                # sample_hist = sample_hist.compute()
+                to_fill_setting = {
+                "region" : args.region,
+                "channel" : args.category,
+                "variation" : "nominal",
+                "sample_group": group_name,
+                var : values,
+                }
+                # print(f"values: {ak.num(values, axis=0).compute()}")
+                # print(f"weights: {ak.num(weights, axis=0).compute()}")
+                # print(f"sample_hist b4 compute: {sample_hist}")
                 
-                # weights = weights/ np.sum(weights) # temporary overwrite to normalize
-                # print(f"weights {process} sum: {np.sum(weights)}")
+                to_fill_value = to_fill_setting.copy()
+                to_fill_value["val_sumw2"] = "value"
+                sample_hist.fill(**to_fill_value, weight=weights)
+        
+                to_fill_sumw2 = to_fill_setting.copy()
+                to_fill_sumw2["val_sumw2"] = "sumw2"
+                sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
+                
+                # sample_hist = sample_hist.compute()
+                # print(f"sample_hist after compute: {sample_hist}")
+                
+                sample_hist_l.append(sample_hist)
 
-                if process in group_data_processes:
-                    print("data activated")
-                    group_data_vals.append(values)
-                    group_data_weights.append(weights)
-                #-------------------------------------------------------
-                elif process in group_DY_processes:
-                    print("DY activated")
-                    group_DY_vals.append(values)
-                    group_DY_weights.append(weights)
-                #-------------------------------------------------------
-                elif process in group_Top_processes:
-                    print("top activated")
-                    group_Top_vals.append(values)
-                    group_Top_weights.append(weights)
-                #-------------------------------------------------------
-                elif process in group_Ewk_processes:
-                    print("Ewk activated")
-                    group_Ewk_vals.append(values)
-                    group_Ewk_weights.append(weights)
-                #-------------------------------------------------------
-                elif process in group_VV_processes:
-                    print("VV activated")
-                    group_VV_vals.append(values)
-                    group_VV_weights.append(weights)
-                #-------------------------------------------------------
-                elif process in group_ggH_processes:
-                    print("ggH activated")
-                    group_ggH_vals.append(values)
-                    group_ggH_weights.append(weights)
-                #-------------------------------------------------------
-                elif process in group_VBF_processes:
-                    print("VBF activated")
-                    group_VBF_vals.append(values)
-                    group_VBF_weights.append(weights)
-                #-------------------------------------------------------
-                else: # put into "other" bkg group
-                    print("other activated")
-                    group_other_vals.append(values)
-                    group_other_weights.append(weights)
+            # sample_hist_l = dask.compute(sample_hist_l)[0]
+            sample_hist_dictByVar2compute[var] = sample_hist_l
             
-            
-            # -------------------------------------------------------
-            # Aggregate the data into Sample types b4 plotting
-            # -------------------------------------------------------
+            # print(f"sample_hist_l: {sample_hist_l}")
+        # done with looping over process and variables we now compute
+        print(f"sample_hist_dictByVar2compute b4 compute: {sample_hist_dictByVar2compute}")
+        
+        sample_hist_dictByVar2compute = dask.compute(sample_hist_dictByVar2compute)[0]
+        print(f"sample_hist_dictByVar2compute after compute: {sample_hist_dictByVar2compute}")
+        
+        
+            #     # END loop here
+                
 
-            # define data dict
-            data_dict = {
-                "values" :np.concatenate(group_data_vals, axis=0),
-                "weights":np.concatenate(group_data_weights, axis=0)
-            }
+            #     if process in group_data_processes:
+            #         print("data activated")
+            #         group_data_vals.append(values)
+            #         group_data_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     elif process in group_DY_processes:
+            #         print("DY activated")
+            #         group_DY_vals.append(values)
+            #         group_DY_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     elif process in group_Top_processes:
+            #         print("top activated")
+            #         group_Top_vals.append(values)
+            #         group_Top_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     elif process in group_Ewk_processes:
+            #         print("Ewk activated")
+            #         group_Ewk_vals.append(values)
+            #         group_Ewk_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     elif process in group_VV_processes:
+            #         print("VV activated")
+            #         group_VV_vals.append(values)
+            #         group_VV_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     elif process in group_ggH_processes:
+            #         print("ggH activated")
+            #         group_ggH_vals.append(values)
+            #         group_ggH_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     elif process in group_VBF_processes:
+            #         print("VBF activated")
+            #         group_VBF_vals.append(values)
+            #         group_VBF_weights.append(weights)
+            #     #-------------------------------------------------------
+            #     else: # put into "other" bkg group
+            #         print("other activated")
+            #         group_other_vals.append(values)
+            #         group_other_weights.append(weights)
             
-            # define Bkg MC dict
-            bkg_MC_dict = OrderedDict()
-            # start from lowest yield to highest yield
-            if len(group_other_vals) > 0:
-                bkg_MC_dict["other"] = {
-                    "values" :np.concatenate(group_other_vals, axis=0),
-                    "weights":np.concatenate(group_other_weights, axis=0)
-                }
-            if len(group_VV_vals) > 0:
-                bkg_MC_dict["VV"] = {
-                    "values" :np.concatenate(group_VV_vals, axis=0),
-                    "weights":np.concatenate(group_VV_weights, axis=0)
-                }
-            if len(group_Ewk_vals) > 0:
-                bkg_MC_dict["Ewk"] = {
-                    "values" :np.concatenate(group_Ewk_vals, axis=0),
-                    "weights":np.concatenate(group_Ewk_weights, axis=0)
-                }
-            if len(group_Top_vals) > 0:
-                bkg_MC_dict["Top"] = {
-                    "values" :np.concatenate(group_Top_vals, axis=0),
-                    "weights":np.concatenate(group_Top_weights, axis=0)
-                }
-            if len(group_DY_vals) > 0:
-                bkg_MC_dict["DY"] = {
-                    "values" :np.concatenate(group_DY_vals, axis=0),
-                    "weights":np.concatenate(group_DY_weights, axis=0)
-                }
+            
+            # # -------------------------------------------------------
+            # # Aggregate the data into Sample types b4 plotting
+            # # -------------------------------------------------------
 
+            # # define data dict
+            # data_dict = {
+            #     "values" :np.concatenate(group_data_vals, axis=0),
+            #     "weights":np.concatenate(group_data_weights, axis=0)
+            # }
             
-            # bkg_MC_dict = {
-            #     "Top" :{
+            # # define Bkg MC dict
+            # bkg_MC_dict = OrderedDict()
+            # # start from lowest yield to highest yield
+            # if len(group_other_vals) > 0:
+            #     bkg_MC_dict["other"] = {
+            #         "values" :np.concatenate(group_other_vals, axis=0),
+            #         "weights":np.concatenate(group_other_weights, axis=0)
+            #     }
+            # if len(group_VV_vals) > 0:
+            #     bkg_MC_dict["VV"] = {
+            #         "values" :np.concatenate(group_VV_vals, axis=0),
+            #         "weights":np.concatenate(group_VV_weights, axis=0)
+            #     }
+            # if len(group_Ewk_vals) > 0:
+            #     bkg_MC_dict["Ewk"] = {
+            #         "values" :np.concatenate(group_Ewk_vals, axis=0),
+            #         "weights":np.concatenate(group_Ewk_weights, axis=0)
+            #     }
+            # if len(group_Top_vals) > 0:
+            #     bkg_MC_dict["Top"] = {
             #         "values" :np.concatenate(group_Top_vals, axis=0),
             #         "weights":np.concatenate(group_Top_weights, axis=0)
-            #     },
-            #     "DY" :{
+            #     }
+            # if len(group_DY_vals) > 0:
+            #     bkg_MC_dict["DY"] = {
             #         "values" :np.concatenate(group_DY_vals, axis=0),
             #         "weights":np.concatenate(group_DY_weights, axis=0)
-            #     },     
-            # }
+            #     }
 
-            # define Sig MC dict
             
-            # sig_MC_dict = {
-            #     "ggH" :{
+            # # bkg_MC_dict = {
+            # #     "Top" :{
+            # #         "values" :np.concatenate(group_Top_vals, axis=0),
+            # #         "weights":np.concatenate(group_Top_weights, axis=0)
+            # #     },
+            # #     "DY" :{
+            # #         "values" :np.concatenate(group_DY_vals, axis=0),
+            # #         "weights":np.concatenate(group_DY_weights, axis=0)
+            # #     },     
+            # # }
+
+            # # define Sig MC dict
+            
+            # # sig_MC_dict = {
+            # #     "ggH" :{
+            # #         "values" :np.concatenate(group_ggH_vals, axis=0),
+            # #         "weights":np.concatenate(group_ggH_weights, axis=0)
+            # #     },  
+            # #     "VBF" :{
+            # #         "values" :np.concatenate(group_VBF_vals, axis=0),
+            # #         "weights":np.concatenate(group_VBF_weights, axis=0)
+            # #     },  
+            # # }
+            # sig_MC_dict = OrderedDict()
+            # # if len(group_ggH_vals) > 0:
+            # #     sig_MC_dict["ggH"] = {
+            # #         "values" :np.concatenate(group_ggH_vals, axis=0),
+            # #         "weights":np.concatenate(group_ggH_weights, axis=0)
+            # #     }
+            # # if len(group_VBF_vals) > 0:
+            # #     sig_MC_dict["VBF"] = {
+            # #         "values" :np.concatenate(group_VBF_vals, axis=0),
+            # #         "weights":np.concatenate(group_VBF_weights, axis=0)
+            # #     }
+            # if len(group_ggH_vals) > 0:
+            #     sig_MC_dict["ggH"] = {
             #         "values" :np.concatenate(group_ggH_vals, axis=0),
             #         "weights":np.concatenate(group_ggH_weights, axis=0)
-            #     },  
-            #     "VBF" :{
+            #     }
+            # if len(group_VBF_vals) > 0:
+            #     sig_MC_dict["VBF"] = {
             #         "values" :np.concatenate(group_VBF_vals, axis=0),
             #         "weights":np.concatenate(group_VBF_weights, axis=0)
-            #     },  
-            # }
-            sig_MC_dict = OrderedDict()
-            if len(group_ggH_vals) > 0:
-                sig_MC_dict["ggH"] = {
-                    "values" :np.concatenate(group_ggH_vals, axis=0),
-                    "weights":np.concatenate(group_ggH_weights, axis=0)
-                }
-            if len(group_VBF_vals) > 0:
-                sig_MC_dict["VBF"] = {
-                    "values" :np.concatenate(group_VBF_vals, axis=0),
-                    "weights":np.concatenate(group_VBF_weights, axis=0)
-                }
+            #     }
             
 
 
-            # -------------------------------------------------------
-            # All data are prepped, now plot Data/MC histogram
-            # -------------------------------------------------------
-            # if args.vbf_cat_mode:
-            #     production_cat = "vbf"
-            # else:
-            #     production_cat = "ggh"
-            # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{production_cat}"
-            full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{args.category}/{args.label}"
+            # # -------------------------------------------------------
+            # # All data are prepped, now plot Data/MC histogram
+            # # -------------------------------------------------------
+            # # if args.vbf_cat_mode:
+            # #     production_cat = "vbf"
+            # # else:
+            # #     production_cat = "ggh"
+            # # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{production_cat}"
+            # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{args.category}/{args.label}"
 
             
-            if not os.path.exists(full_save_path):
-                os.makedirs(full_save_path)
-            full_save_fname = f"{full_save_path}/{var}.pdf"
+            # if not os.path.exists(full_save_path):
+            #     os.makedirs(full_save_path)
+            # full_save_fname = f"{full_save_path}/{var}.pdf"
 
            
-            plotDataMC_compare(
-                binning, 
-                data_dict, 
-                bkg_MC_dict, 
-                full_save_fname,
-                sig_MC_dict=sig_MC_dict,
-                title = "", 
-                x_title = plot_settings[plot_var].get("xlabel"), 
-                y_title = plot_settings[plot_var].get("ylabel"),
-                lumi = args.lumi,
-                status = status,
-                log_scale = do_logscale,
-            )
+            # # plotDataMC_compare(
+            # plotDataMC_compare_hda(
+            #     binning, 
+            #     data_dict, 
+            #     bkg_MC_dict, 
+            #     full_save_fname,
+            #     sig_MC_dict=sig_MC_dict,
+            #     title = "", 
+            #     x_title = plot_settings[plot_var].get("xlabel"), 
+            #     y_title = plot_settings[plot_var].get("ylabel"),
+            #     lumi = args.lumi,
+            #     status = status,
+            #     log_scale = do_logscale,
+            # )
             
 
 
             
 
-            var_elapsed = round(time.time() - var_step, 3)
-            print(f"Finished processing {var} in {var_elapsed} s.")
+            # var_elapsed = round(time.time() - var_step, 3)
+            # print(f"Finished processing {var} in {var_elapsed} s.")
     # ROOT style or mplhep style ends here --------------------------------------
     
     time_elapsed = round(time.time() - time_step, 3)
