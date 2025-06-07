@@ -5,7 +5,7 @@ import json
 import argparse
 import os
 from src.lib.histogram.ROOT_utils import setTDRStyle, CMS_lumi, reweightROOTH_data, reweightROOTH_mc #reweightROOTH
-from src.lib.histogram.plotting import plotDataMC_compare
+from src.lib.histogram.plotting import plotDataMC_compare, plotDataMC_compare_hda
 from distributed import Client
 import time    
 import tqdm
@@ -56,12 +56,12 @@ group_VBF_processes = ["vbf_powheg_dipole"]
 
 group_dict = {
     "data": group_data_processes,
-    "dy": group_DY_processes,
-    "top": group_Top_processes,
-    "ewk": group_Ewk_processes,
-    "vv": group_VV_processes,
-    "ggh": group_ggH_processes,
-    "vbf": group_VBF_processes
+    "DY": group_DY_processes,
+    "Top": group_Top_processes,
+    "Ewk": group_Ewk_processes,
+    "VV": group_VV_processes,
+    "ggH": group_ggH_processes,
+    "VBF": group_VBF_processes
 }
 
 def find_group_name(process_name, group_dict):
@@ -69,6 +69,16 @@ def find_group_name(process_name, group_dict):
         if process_name in processes:
             return group_name
     return "other"
+
+def getPlotVar(var: str):
+    """
+    Helper function that removes the variations in variable name if they exist
+    """
+    if "_nominal" in var:
+        plot_var = var.replace("_nominal", "")
+    else:
+        plot_var = var
+    return plot_var
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -300,18 +310,17 @@ if __name__ == "__main__":
         if "dimuon" in particle:
             # variables2plot.append(f"{particle}_mass")
             variables2plot.append(f"{particle}_pt")
-            variables2plot.append(f"{particle}_eta")
-            variables2plot.append(f"{particle}_phi")
-            variables2plot.append(f"{particle}_cos_theta_cs")
-            variables2plot.append(f"{particle}_phi_cs")
-            variables2plot.append(f"{particle}_cos_theta_eta")
-            variables2plot.append(f"{particle}_phi_eta")
-            variables2plot.append(f"mmj_min_dPhi_nominal")
-            variables2plot.append(f"mmj_min_dEta_nominal")
-            variables2plot.append(f"ll_zstar_log_nominal")
-            
-            variables2plot.append(f"dimuon_ebe_mass_res")
-            variables2plot.append(f"dimuon_ebe_mass_res_rel")
+            # variables2plot.append(f"{particle}_eta")
+            # variables2plot.append(f"{particle}_phi")
+            # variables2plot.append(f"{particle}_cos_theta_cs")
+            # variables2plot.append(f"{particle}_phi_cs")
+            # variables2plot.append(f"{particle}_cos_theta_eta")
+            # variables2plot.append(f"{particle}_phi_eta")
+            # variables2plot.append(f"mmj_min_dPhi_nominal")
+            # variables2plot.append(f"mmj_min_dEta_nominal")
+            # variables2plot.append(f"ll_zstar_log_nominal")
+            # variables2plot.append(f"dimuon_ebe_mass_res")
+            # variables2plot.append(f"dimuon_ebe_mass_res_rel")
             variables2plot.append(f"{particle}_rapidity")
         elif "dijet" in particle:
             variables2plot.append(f"jj_dEta_nominal")
@@ -404,8 +413,11 @@ if __name__ == "__main__":
         print(f"full_load_path: {full_load_path}")
         try:
             events = dak.from_parquet(full_load_path)
-            # target_chunksize = 10_000
-            # events = events.repartition(rows_per_partition=target_chunksize)
+            target_chunksize = 150_000
+            # target_chunksize = 300_000
+            # if (process not in group_ggH_processes) and 
+# group_VBF_processes
+            events = events.repartition(rows_per_partition=target_chunksize)
         except:
             print(f"full_load_path: {full_load_path} Not available. Skipping")
             continue
@@ -1188,7 +1200,7 @@ if __name__ == "__main__":
                 # extract weights
                 if is_data:
                     weights = (ak.fill_none(events["wgt_nominal"], value=0.0))
-                    # weights = ak.to_numpy(ak.fill_none(events["wgt_nominal"], value=0.0))
+                    fraction_weight = 1/events.fraction
                 else: # MC
                     weights = ak.fill_none(events["wgt_nominal"], value=0.0)
                     
@@ -1201,34 +1213,24 @@ if __name__ == "__main__":
 
                     
                     # print(f"weights {process} b4 numpy: {weights}")
-                    # weights = ak.to_numpy(weights) # MC are already normalized by xsec*lumi
                     # for some reason, some nan weights are still passes ak.fill_none() bc they're "nan", not None, this used to be not a problem
                     # could be an issue of copying bunching of parquet files from one directory to another, but not exactly sure
                     # weights = np.nan_to_num(weights, nan=0.0) 
-                    
+                    fraction_weight = ak.ones_like(events["wgt_nominal"])  # MC is already normalized by lumisonity, so no need for scaling by fraction
                 
-                fraction_weight = ak.ones_like(events.wgt_nominal) # TBF, all fractions should be same
-                values = (ak.fill_none(events[var], value=-999.0))
-                # values = events[var]
-                
-                print(f"var: {var}")
-                # # temp overwrite
-                # if ("_range2" in var):
-                #     var_reduced = var.replace("_range2","")
-                #     # values = ak.to_numpy(ak.fill_none(events[var_reduced], value=-999.0))
-                #     values = (ak.fill_none(events[var_reduced], value=-999.0))
-                # elif ("_zpeak" in var):
-                #     var_reduced = var.replace("_zpeak","")
-                #     # values = ak.to_numpy(ak.fill_none(events[var_reduced], value=-999.0))
-                #     values = (ak.fill_none(events[var_reduced], value=-999.0))
-                # else:
-                #     # values = ak.to_numpy(ak.fill_none(events[var], value=-999.0))
-                #     values = (ak.fill_none(events[var], value=-999.0))
+                # overwrite variable names with two bin ranges
+                if ("_range2" in var):
+                    var_reduced = var.replace("_range2","")
+                    values = ak.fill_none(events[var_reduced], value=-999.0)
+                elif ("_zpeak" in var):
+                    var_reduced = var.replace("_zpeak","")
+                    values = ak.fill_none(events[var_reduced], value=-999.0)
+                else:
+                    values = ak.fill_none(events[var], value=-999.0)
                 # print(f"weights.shape: {weights[weights>0].shape}")
                 # print(f"weights {process} : {weights.shape}")
                 # print(f"values {process} : {values.shape}")
-                # val_filter = values > 6
-                # print(f"values[val_filter]: {values[val_filter]}")
+                
                 
 
                 
@@ -1242,15 +1244,12 @@ if __name__ == "__main__":
                 weights = weights[values_filter]
                 # MC samples are already normalized by their xsec*lumi, but data is not
                 if process in group_data_processes:
+                    print(f"{process} is in data processes")
                     fraction_weight = fraction_weight[values_filter]
                     # print(f"fraction_weight: {fraction_weight}")
                     weights = weights*fraction_weight
                 # print(f"weights.shape: {weights[weights>0].shape}")
-
                 group_name = find_group_name(process, group_dict)
-                target_chunksize = 10_000
-                # values = values.repartition(rows_per_partition=target_chunksize)
-                # weights = weights.repartition(rows_per_partition=target_chunksize)
                 # values = values.compute()
                 # weights = weights.compute()
                 # sample_hist = sample_hist.compute()
@@ -1285,53 +1284,53 @@ if __name__ == "__main__":
         # done with looping over process and variables we now compute
         print(f"sample_hist_dictByVar2compute b4 compute: {sample_hist_dictByVar2compute}")
         
-        sample_hist_dictByVar2compute = dask.compute(sample_hist_dictByVar2compute)[0]
+        sample_hist_dictByVarComputed = dask.compute(sample_hist_dictByVar2compute)[0]
         print(f"sample_hist_dictByVar2compute after compute: {sample_hist_dictByVar2compute}")
         
-        
             #     # END loop here
-                
-
-            #     if process in group_data_processes:
-            #         print("data activated")
-            #         group_data_vals.append(values)
-            #         group_data_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     elif process in group_DY_processes:
-            #         print("DY activated")
-            #         group_DY_vals.append(values)
-            #         group_DY_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     elif process in group_Top_processes:
-            #         print("top activated")
-            #         group_Top_vals.append(values)
-            #         group_Top_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     elif process in group_Ewk_processes:
-            #         print("Ewk activated")
-            #         group_Ewk_vals.append(values)
-            #         group_Ewk_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     elif process in group_VV_processes:
-            #         print("VV activated")
-            #         group_VV_vals.append(values)
-            #         group_VV_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     elif process in group_ggH_processes:
-            #         print("ggH activated")
-            #         group_ggH_vals.append(values)
-            #         group_ggH_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     elif process in group_VBF_processes:
-            #         print("VBF activated")
-            #         group_VBF_vals.append(values)
-            #         group_VBF_weights.append(weights)
-            #     #-------------------------------------------------------
-            #     else: # put into "other" bkg group
-            #         print("other activated")
-            #         group_other_vals.append(values)
-            #         group_other_weights.append(weights)
+        for var in tqdm.tqdm(variables2plot):
+            data_dict = {}
+            bkg_MC_dict = {}
+            sig_MC_dict = {}
+            # for process in available_processes: 
+            for group_name in sample_groups: 
+                sample_hist_l = sample_hist_dictByVarComputed[var]
+                sample_hist = sum(sample_hist_l)
+                # print(f"sample_hist: {sample_hist}")
+                to_project_setting = {
+                    "region" : args.region,
+                    "channel" : args.category,
+                    "variation" : "nominal",
+                    "sample_group": group_name,
+                }
+                to_project_setting_val = to_project_setting.copy()
+                to_project_setting_val["val_sumw2"] = "value"
+                hist_val = sample_hist[to_project_setting_val].project(var).values()
+                #------------------------------------------------------
+                to_project_setting_w2 = to_project_setting.copy()
+                to_project_setting_w2["val_sumw2"] = "sumw2"
+                hist_w2 = sample_hist[to_project_setting_w2].project(var).values()
+                if np.sum(hist_val)==0: # skip processes that doesn't have anything
+                    continue
+                hist_dict = {
+                    "hist_arr" : hist_val,
+                    "hist_w2_arr": hist_w2
+                }
+                if "data" in group_name: # data
+                    data_dict = hist_dict
+                elif "ggH" in group_name or "VBF" in group_name: # signal
+                    sig_MC_dict[group_name] = hist_dict
+                else: # bkg MC
+                    bkg_MC_dict[group_name] = hist_dict
+            # order bkg_MC_dict in a specific way for plotting, smallest yielding process first:
+            bkg_MC_order = ["other", "VV", "Ewk", "Top", "DY"]
+            bkg_MC_dict = {process: bkg_MC_dict[process] for process in bkg_MC_order if process in bkg_MC_dict}
+            print(f"data_dict: {data_dict}")
+            print(f"bkg_MC_dict: {bkg_MC_dict}")
+            print(f"sig_MC_dict: {sig_MC_dict}")
             
+
+
             
             # # -------------------------------------------------------
             # # Aggregate the data into Sample types b4 plotting
@@ -1420,36 +1419,40 @@ if __name__ == "__main__":
             
 
 
-            # # -------------------------------------------------------
-            # # All data are prepped, now plot Data/MC histogram
-            # # -------------------------------------------------------
-            # # if args.vbf_cat_mode:
-            # #     production_cat = "vbf"
-            # # else:
-            # #     production_cat = "ggh"
-            # # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{production_cat}"
-            # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{args.category}/{args.label}"
+            # -------------------------------------------------------
+            # All data are prepped, now plot Data/MC histogram
+            # -------------------------------------------------------
+            # if args.vbf_cat_mode:
+            #     production_cat = "vbf"
+            # else:
+            #     production_cat = "ggh"
+            # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{production_cat}"
+            full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{args.category}/{args.label}"
 
             
-            # if not os.path.exists(full_save_path):
-            #     os.makedirs(full_save_path)
-            # full_save_fname = f"{full_save_path}/{var}.pdf"
+            if not os.path.exists(full_save_path):
+                os.makedirs(full_save_path)
+            full_save_fname = f"{full_save_path}/{var}.pdf"
 
-           
-            # # plotDataMC_compare(
-            # plotDataMC_compare_hda(
-            #     binning, 
-            #     data_dict, 
-            #     bkg_MC_dict, 
-            #     full_save_fname,
-            #     sig_MC_dict=sig_MC_dict,
-            #     title = "", 
-            #     x_title = plot_settings[plot_var].get("xlabel"), 
-            #     y_title = plot_settings[plot_var].get("ylabel"),
-            #     lumi = args.lumi,
-            #     status = status,
-            #     log_scale = do_logscale,
-            # )
+
+            plot_var = getPlotVar(var)
+            if plot_var not in plot_settings.keys():
+                print(f"variable {var} not configured in plot settings!")
+                continue
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+            plotDataMC_compare(
+                binning, 
+                data_dict, 
+                bkg_MC_dict, 
+                full_save_fname,
+                sig_MC_dict=sig_MC_dict,
+                title = "", 
+                x_title = plot_settings[plot_var].get("xlabel"), 
+                y_title = plot_settings[plot_var].get("ylabel"),
+                lumi = args.lumi,
+                status = status,
+                log_scale = do_logscale,
+            )
             
 
 
