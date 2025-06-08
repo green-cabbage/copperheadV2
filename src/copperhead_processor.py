@@ -94,42 +94,6 @@ def getZptWgts(dimuon_pt, njets, nbins, year):
     return zpt_wgt
 
 
-def merge_zpt_wgt(yun_wgt, valerie_wgt, njets, year):
-    """
-    helper function that merges yun_wgt and valerie_wgt defined by jet multiplicity
-    """
-    val_filter_dict_run2 = {
-        "2018": {0: False, 1: False, 2: True},
-        "2017": {0: True, 1: False, 2: True},
-        "2016postVFP": False,
-        "2016preVFP": False,
-    }
-    val_filter_dict = val_filter_dict_run2[year]
-    # print(f"val_filter_dict: {val_filter_dict}")
-    if val_filter_dict == False:
-        return yun_wgt
-    else: # divide by njet multiplicity
-        val_filter = ak.zeros_like(valerie_wgt, dtype="bool")
-        for njet_multiplicity_target, use_flag in val_filter_dict.items():
-            # print(f"njet_multiplicity_target: {njet_multiplicity_target}")
-            # print(f"{year} njet {njet_multiplicity_target} use_flag: {use_flag}")
-            if use_flag == False: # skip
-                print("skipping!")
-                continue 
-            # If true, generate a boolean 1-D array
-            if njet_multiplicity_target != 2:
-                use_valerie_zpt =  njets == njet_multiplicity_target
-            else:
-                use_valerie_zpt =  njets >= njet_multiplicity_target
-            val_filter = val_filter | use_valerie_zpt
-
-            # print(f"{year} njet {njet_multiplicity_target} use_valerie_zpt: {use_valerie_zpt[:20].compute()}")
-            # print(f"{year} njet {njet_multiplicity_target} njets: {njets[:20].compute()}")
-        # print(f"{year}  val_filter: {val_filter[:20].compute()}")
-        # raise ValueError
-        final_filter = ak.where(val_filter, valerie_wgt, yun_wgt)
-        return final_filter
-
 def getRapidity(obj):
     px = obj.pt * np.cos(obj.phi)
     py = obj.pt * np.sin(obj.phi)
@@ -402,6 +366,19 @@ class EventProcessor(processor.ProcessorABC):
         Apply LHE cuts for DY sample stitching
         Basically remove events that has dilepton mass between 100 and 200 GeV
         """
+        # print("testJetVector right as process starts")
+        # testJetVector(events.Jet)
+        # numevents = len(events)
+        # print(f"numevents: {numevents}")
+        # print(f"events.events: {events.event.compute()}")
+        # event_match = events.event==95324165 # debugging
+        # print(f"event match: {ak.sum(event_match).compute()}")
+        # raise ValueError
+        # print(f"events.MET.pt: {events.MET.pt.compute()}")
+        # print(f"df.Muon.pt: {events.Muon.pt.compute()}")
+        # print(f"df.Muon.eta: {events.Muon.eta.compute()}")
+        # print(f"df.Muon.phi: {events.Muon.phi.compute()}")
+        # print(f"df.Muon.pfRelIso04_all: {events.Muon.pfRelIso04_all.compute()}")
         event_filter = ak.ones_like(events.event, dtype="bool") # 1D boolean array to be used to filter out bad events
         dataset = events.metadata['dataset']
         print(f"dataset: {dataset}")
@@ -444,9 +421,10 @@ class EventProcessor(processor.ProcessorABC):
             
             
 
+# just reading test start --------------------------------------------------------------------------        
 
             
-        # Apply HLT to both Data and MC. NOTE: this would probably be superfluous if you already do trigger matching
+        # # Apply HLT to both Data and MC. NOTE: this would probably be superfluous if you already do trigger matching
         HLT_filter = ak.zeros_like(event_filter, dtype="bool")  # start with 1D of Falses
         for HLT_str in self.config["hlt"]:
             print(f"HLT_str: {HLT_str}")
@@ -477,7 +455,7 @@ class EventProcessor(processor.ProcessorABC):
 
         
         if do_pu_wgt:
-            
+            print("doing PU re-wgt!")
             # obtain PU reweighting b4 event filtering, and apply it after we finalize event_filter
             print(f"year: {year}")
             if ("22" in year) or ("23" in year) or ("24" in year):
@@ -486,7 +464,6 @@ class EventProcessor(processor.ProcessorABC):
                 run_campaign = 2
             print(f"run_campaign: {run_campaign}")
             if is_mc:
-                print("doing PU re-wgt!")
                 pu_wgts = pu_evaluator(
                             self.config,
                             events.Pileup.nTrueInt,
@@ -523,7 +500,6 @@ class EventProcessor(processor.ProcessorABC):
             (events.Muon.pt_raw >= self.config["muon_pt_cut"]) # pt_raw is pt b4 rochester
             & (abs(events.Muon.eta_raw) <= self.config["muon_eta_cut"])
             & events.Muon[self.config["muon_id"]]
-            & (events.Muon.isGlobal | events.Muon.isTracker) # Table 3.5  AN-19-124
         )
         
         # # --------------------------------------------------------
@@ -567,14 +543,18 @@ class EventProcessor(processor.ProcessorABC):
             """
             
             mu_id = 13
-            pt_threshold = self.config["muon_trigmatch_pt"] #- 0.5 # leave a little room for uncertainties 
-            
+            # pt_threshold = self.config["muon_leading_pt"] # line 371 of AN-19-124. "muon_leading_pt" is deceptive name, but that's where we saved the threshold
+            # pt_threshold = 0 # temporaray overwrite
+            # pt_threshold = 24
+            pt_threshold = self.config["muon_trigmatch_pt"] - 0.5 # leave a little room for uncertainties 
             print(f"pt_threshold: {pt_threshold}")
-            
-            
+            # dr_threshold = 0.1 # for matching gen muons to reco muons
+            dr_threshold = self.config["muon_trigmatch_dr"]
+            print(f"dr_threshold: {dr_threshold}")
             pass_id = abs(events.TrigObj.id) == mu_id
             pass_pt = events.TrigObj.pt >= pt_threshold
-            # start TrigObject matching
+
+
             pass_filterbit_total = ak.zeros_like(events.TrigObj.filterBits, dtype="bool")
             # grab muon candidates passing any one of the used HLTs
             for HLT_str in self.config["hlt"]:
@@ -582,22 +562,28 @@ class EventProcessor(processor.ProcessorABC):
                     trig_filterbit = 8 # isoTkMu; source https://cms-talk.web.cern.ch/t/understanding-trigobj-filterbits-in-nanoaodv9/21646/2
                 else:
                     trig_filterbit = 2 # isoMu; source https://cms-talk.web.cern.ch/t/understanding-trigobj-filterbits-in-nanoaodv9/21646/2
+                # print(f"{HLT_str} trig_filterbit: {trig_filterbit}")
                 pass_filterbit = (events.TrigObj.filterBits & trig_filterbit) > 0
+                # print(f"{HLT_str} pass_filterbit: {pass_filterbit[:20].compute()}")
                 pass_filterbit_total = pass_filterbit_total | pass_filterbit
+            print(f"Trigger pass_filterbit_total: {pass_filterbit_total[:20].compute()}")
 
             trigger_cands_filter = pass_pt & pass_id & pass_filterbit_total
             trigger_cands = events.TrigObj[trigger_cands_filter]
+            # print(f"Trigger trigger_cands_filter: {trigger_cands_filter[:20].compute()}")
+            print(f"trigger_cands: {trigger_cands.pt[:20].compute()}")
             
 
-            dr_threshold = self.config["muon_trigmatch_dr"]
-            print(f"dr_threshold: {dr_threshold}")
-                                               
+
             #check the first two leading muons match any of the HLT trigger objs. if neither match, reject event
             padded_muons = ak.pad_none(events.Muon[muon_selection], 2) # pad in case we have only one muon or zero in an event
             sorted_args = ak.argsort(padded_muons.pt, ascending=False)
             muons_sorted = (padded_muons[sorted_args])
             mu1 = muons_sorted[:,0]
+            mu2 = muons_sorted[:,1]
 
+            print(f"mu1: {mu1.pt[:20].compute()}")
+            print(f"mu1.delta_r(trigger_cands): {mu1.delta_r(trigger_cands)[:20].compute()}")
             mu1_dr_match = mu1.delta_r(trigger_cands) <= dr_threshold
             
             mu1_dr_match = ak.sum(mu1_dr_match, axis=1) > 0
@@ -605,8 +591,13 @@ class EventProcessor(processor.ProcessorABC):
             mu1_leading_pt_match = mu1.pt >= self.config["muon_leading_pt"] # apply leading pt cut for trigger matching muon
             mu1_leading_pt_match = ak.fill_none(mu1_leading_pt_match, value=False)
             mu1_trigger_match = mu1_dr_match & mu1_leading_pt_match
+            print(f"mu1_leading_pt_match: {mu1_leading_pt_match[:20].compute()}")
+            print(f"mu1_trigger_match: {mu1_trigger_match[:20].compute()}")
 
-            mu2 = muons_sorted[:,1]
+
+
+            print(f"mu2: {mu2.pt[:20].compute()}")
+            print(f"mu2.delta_r(trigger_cands): {mu2.delta_r(trigger_cands)[:20].compute()}")
             mu2_dr_match = mu2.delta_r(trigger_cands) <= dr_threshold
             
             mu2_dr_match = ak.sum(mu2_dr_match, axis=1) > 0
@@ -614,45 +605,16 @@ class EventProcessor(processor.ProcessorABC):
             mu2_leading_pt_match = mu2.pt >= self.config["muon_leading_pt"] # apply leading pt cut for trigger matching muon
             mu2_leading_pt_match = ak.fill_none(mu2_leading_pt_match, value=False)
             mu2_trigger_match = mu2_dr_match & mu2_leading_pt_match
+            print(f"mu2_dr_match: {mu2_dr_match[:20].compute()}")
+            print(f"mu2_leading_pt_match: {mu2_leading_pt_match[:20].compute()}")
+            print(f"mu2_trigger_match: {mu2_trigger_match[:20].compute()}")
             
-            trigger_match = mu1_trigger_match  | mu2_trigger_match # if neither mu1 or mu2 is matched, fail trigger match
-            event_filter = event_filter & trigger_match
-
-            # print(f"trigger_match sum with dr threshold {dr_threshold}: {ak.sum(trigger_match).compute()}")
-            
-        
-            # # check which events HLT and trigger match don't align, and print five events
-            # test_nevents = 5
-            # HLT_disagreement = (trigger_match != HLT_filter) & (~HLT_filter)
-
-            # print(f"HLT_disagreement len: {ak.num(HLT_disagreement, axis=0).compute()}")
-            # print(f"HLT_disagreement sum: {ak.sum(HLT_disagreement).compute()}")
-            
-            # print(f"{HLT_str} decision: {events.HLT[HLT_str][HLT_disagreement][: test_nevents].compute()}")
-            # print(f"trigger_match: {trigger_match[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"event number: {events.event[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"event run: {events.run[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"TrigObject matched with mu1: {mu1_trigger_match[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"TrigObject matched with mu2: {mu2_trigger_match[HLT_disagreement][: test_nevents].compute()}")
-
-            # print(f"TrigObject candidate id: {trigger_cands.id[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"TrigObject candidate pt: {trigger_cands.pt[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"TrigObject candidate eta: {trigger_cands.eta[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"TrigObject candidate phi: {trigger_cands.phi[HLT_disagreement][: test_nevents].compute()}")
-            # # print(f"mu1.delta_r(trigger_cands): {mu1.delta_r(trigger_cands)[HLT_disagreement][: test_nevents].compute()}")
-            # # print(f"mu2.delta_r(trigger_cands): {mu2.delta_r(trigger_cands)[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"mu1 pt: {mu1.pt[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"mu1 eta: {mu1.eta[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"mu1 phi: {mu1.phi[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"mu2 pt: {mu2.pt[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"mu2 eta: {mu2.eta[HLT_disagreement][: test_nevents].compute()}")
-            # print(f"mu2 phi: {mu2.phi[HLT_disagreement][: test_nevents].compute()}")
-
             # raise ValueError
+
+            trigger_match = mu1_trigger_match  | mu2_trigger_match # if neither mu1 or mu2 is matched, fail trigger match
+            print(f"trigger_match: {trigger_match[:20].compute()}")
+            event_filter = event_filter & trigger_match
             
-            
-            
-        
         else:
             do_seperate_mu1_leading_pt_cut = True
             print("NO trigger match! Doing leading mu pass instead!")
@@ -712,19 +674,16 @@ class EventProcessor(processor.ProcessorABC):
         # count muons that pass the muon selection
         nmuons = ak.num(muons, axis=1)
         # print(f"nmuons: {nmuons.compute()}")
-        
         # Find opposite-sign muons
         mm_charge = ak.prod(muons.charge, axis=1) # techinally not a product of two leading pT muon charge, but (nmuons==2) cut ensures that there's only two muons
         
         electron_id = self.config[f"electron_id_v{NanoAODv}"]
         print(f"electron_id: {electron_id}")
         # Veto events with good quality electrons; VBF and ggH categories need zero electrons
-        ecal_gap = (1.444 < abs(events.Electron.eta)) & (abs(events.Electron.eta) <1.566)
         electron_selection = (
             (events.Electron.pt > self.config["electron_pt_cut"])
             & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
             & events.Electron[electron_id]
-            & ~ecal_gap # reject electrons in ecal gap region, as specified in table 3.5 of AN-19-124
         )
         
         # some temporary testing code start -----------------------------------------
@@ -736,23 +695,8 @@ class EventProcessor(processor.ProcessorABC):
         # else:
         #     electron_veto = (ak.num(events.Electron[electron_selection], axis=1) == 0) 
         # some temporary testing code end -----------------------------------------
-
-        selected_electrons = events.Electron[electron_selection]
-        nelectrons = ak.num(selected_electrons, axis=1)
-        electron_veto = (nelectrons == 0) 
-
-        # # check cases where either: nelectrons + nmuons > 4
-        # edge_cases = nelectrons + nmuons
-        # # print(f"edge_cases: {edge_cases[:20].compute()}")
-        # print(f"edge_cases > 4 sum: {ak.sum(edge_cases> 4).compute()}")
-        # raise ValueError
-
-        # # check Ecal Gap:
-        # ecal_gap = (1.444 < abs(selected_electrons.eta)) & (abs(selected_electrons.eta) <1.566)
-        # ecal_gap = ak.sum(ecal_gap, axis=1) > 0
-        # print(f"ecal gap sum: {ak.sum(ecal_gap).compute()}")
-        # print(f"total nevens: {ak.num(event_filter, axis=0).compute()}")
         
+        electron_veto = (ak.num(events.Electron[electron_selection], axis=1) == 0) 
         # electron_veto_test = ak.sum(electron_selection, axis=1) == 0 # temporary test
         # print(f"electron veto test: {ak.all(electron_veto_test == electron_veto).compute()}")
         # print(f"electron veto is none: {ak.any(ak.is_none(electron_veto_test)).compute()}")
@@ -889,6 +833,8 @@ class EventProcessor(processor.ProcessorABC):
         dimuon_dPhi = abs(mu1.delta_phi(mu2))
         dimuon = mu1+mu2
 
+        # print(f"event match dimuon: {dimuon.mass[event_match].compute()}")
+        # raise ValueError
         
         dimuon_ebe_mass_res = self.get_mass_resolution(dimuon, mu1, mu2, is_mc, test_mode=self.test_mode, doing_BS_correction=doing_BS_correction)
         dimuon_ebe_mass_res_rel = dimuon_ebe_mass_res/dimuon.mass
@@ -988,7 +934,7 @@ class EventProcessor(processor.ProcessorABC):
             year
         )   
         
-        do_jec = True # True       
+        do_jec = False # True       
         # do_jecunc = self.config["do_jecunc"]
         # do_jerunc = self.config["do_jerunc"]
         #testing 
@@ -1334,7 +1280,7 @@ class EventProcessor(processor.ProcessorABC):
             # valerie
             zpt_weight_valerie =\
                      self.evaluator[self.zpt_path_valerie](dimuon.pt, njets)
-            # out_dict["zpt_weight_valerie"] = zpt_weight_valerie
+            out_dict["zpt_weight_valerie"] = zpt_weight_valerie
 
             # # dmitry's old zpt
             # zpt_weight_dmitry =\
@@ -1346,8 +1292,8 @@ class EventProcessor(processor.ProcessorABC):
 
             # zpt_weight_mine_nbins50 = getZptWgts(dimuon.pt, njets, 50, year)
             # out_dict["zpt_weight_mine_nbins50"] = zpt_weight_mine_nbins50
-            zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year)
-            out_dict["zpt_weight_mine_nbins100"] = zpt_weight_mine_nbins100
+            # zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year)
+            # out_dict["zpt_weight_mine_nbins100"] = zpt_weight_mine_nbins100
 
             
 
@@ -1363,8 +1309,8 @@ class EventProcessor(processor.ProcessorABC):
             # ones = ak.ones_like(zpt_weight)
             # zpt_weight = ak.where((dimuon.pt<=200), zpt_weight, ones)
 
-            # zpt_weight = zpt_weight_valerie
-            zpt_weight = merge_zpt_wgt(zpt_weight_mine_nbins100, zpt_weight_valerie, njets, year)
+            zpt_weight = zpt_weight_valerie
+            # ones = ak.ones_like(zpt_weight)
             # zpt_weight = ak.where((dimuon.pt<=200), zpt_weight, ones)
             # # out_dict["wgt_nominal_zpt_wgt"] =  zpt_weight
             weights.add("zpt_wgt", 
@@ -1547,7 +1493,6 @@ class EventProcessor(processor.ProcessorABC):
             & (abs(matched_mu_eta) < self.config["muon_eta_cut"])
             & (matched_mu_iso < self.config["muon_iso_cut"])
             & matched_mu_id
-            & (jets.matched_muons.isGlobal | jets.matched_muons.isTracker) # Table 3.5 AN-19-124
         )
         # print(f"matched_mu_pass: {matched_mu_pass.compute()}")
         # print(f"ak.sum(matched_mu_pass, axis=2): {ak.sum(matched_mu_pass, axis=2).compute()}")
@@ -1984,13 +1929,6 @@ class EventProcessor(processor.ProcessorABC):
         
         nBtagMedium = ak.num(ak.to_packed(jets[btagMedium_filter]), axis=1)
         nBtagMedium = ak.fill_none(nBtagMedium, value=0)
-
-        # #quick sanity check
-        # print(f"nBtagLoose : {nBtagLoose[:20].compute()}")
-        # print(f"btagLoose_filter sum : {ak.sum(btagLoose_filter, axis=1)[:20].compute()}")
-        # print(f"nBtagMedium : {nBtagMedium[:20].compute()}")
-        # print(f"btagMedium_filter sum : {ak.sum(btagMedium_filter, axis=1)[:20].compute()}")
-        # raise ValueError
             
         # print(f"nBtagLoose: {jets.btagDeepFlavB.compute()}")
         # print(f"nBtagLoose: {ak.to_numpy(nBtagLoose.compute())}")

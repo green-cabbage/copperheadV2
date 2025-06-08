@@ -133,12 +133,11 @@ if __name__ == "__main__":
     # print(f"args.bkg_samples: {args.bkg_samples}")
     os.environ['XRD_REQUESTTIMEOUT']="2400" # some root files via XRootD may timeout with default value
     if args.fraction is None: # do the normal prestage setup
-        # allowlist_sites=["T2_US_Nebraska"] # take data only from purdue for now
+        # allowlist_sites=["T2_US_Purdue"] # take data only from purdue for now
         allowlist_sites=["T2_US_Purdue", "T2_US_MIT","T2_US_FNAL"]
-        # allowlist_sites=["T2_UK_London_IC", "T2_FI_HIP", "T1_DE_KIT_Disk","T2_US_Nebraska","T2_US_Wisconsin","T1_US_FNAL_Disk", "T2_US_Florida", "T2_US_FNAL",  "T2_CH_CERN", "T2_US_MIT" ]
-        # allowlist_sites=["T1_DE_KIT_Disk"]
         total_events = 0
         # get dask client
+        # turning off seperate client test start --------------------------------------------------------
         if args.use_gateway:
             from dask_gateway import Gateway
             gateway = Gateway(
@@ -149,8 +148,12 @@ if __name__ == "__main__":
             client = gateway.connect(cluster_info.name).get_client()
             print("Gateway Client created")
         else: # use local cluster
+            # cluster = LocalCluster(processes=True)
+            # cluster.adapt(minimum=8, maximum=31) #min: 8 max: 32
+            # client = Client(cluster)
             client = Client(n_workers=15,  threads_per_worker=1, processes=True, memory_limit='30 GiB')
             print("Local scale Client created")
+        # turning off seperate client test end --------------------------------------------------------
         big_sample_info = {}
         year = args.year
         
@@ -211,9 +214,9 @@ if __name__ == "__main__":
                     new_sample_list.append("wz_1l1nu2q")
                     new_sample_list.append("zz")
                 elif bkg_sample.upper() == "EWK": # enforce upper case to prevent confusion
-                    new_sample_list.append("ewk_lljj_mll50_mjj120")
-                    # new_sample_list.append("ewk_lljj_mll105_160_ptj0")
-                    # new_sample_list.append("ewk_lljj_mll105_160_py_dipole")
+                    # new_sample_list.append("ewk_lljj_mll50_mjj120")
+                    new_sample_list.append("ewk_lljj_mll105_160_ptj0")
+                    new_sample_list.append("ewk_lljj_mll105_160_py_dipole")
                 else:
                     print(f"unknown background {bkg_sample} was given!")
             
@@ -260,21 +263,10 @@ if __name__ == "__main__":
                 """
                 load directly from local files
                 """
-                if year == "2018_RERECO":
-                    # test start -----------------------------------------------------------
-                    load_path = "/eos/purdue/store/mc/RunIIAutumn18NanoAODv6/DYJetsToLL_M-105To160_VBFFilter_TuneCP5_PSweights_13TeV-amcatnloFXFX-pythia8/NANOAODSIM"
-                    fnames = glob.glob(f"{load_path}/*/*/*.root")
-                elif year == "2017_RERECO":
-                    # test start -----------------------------------------------------------
-                    load_path = "/eos/purdue/store/group/local/hmm/nanoAODv6_private/FSRmyNanoProdMc2017_NANOV4b/DYJetsToLL_M-105To160_VBFFilter_TuneCP5_PSweights_13TeV-amcatnloFXFX-pythia8"
-                    fnames = glob.glob(f"{load_path}/*/*/*/*.root")
-                elif year == "2016_RERECO":
-                    # test start -----------------------------------------------------------
-                    load_path = "/eos/purdue/store/mc/RunIISummer16NanoAODv6/DYJetsToLL_M-105To160_VBFFilter_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8//NANOAODSIM"
-                    fnames = glob.glob(f"{load_path}/*/*/*.root")
-                else:
-                    print("no valid year is Given!")
-                    raise ValueError
+                # test start -----------------------------------------------------------
+                load_path = "/eos/purdue/store/mc/RunIIAutumn18NanoAODv6/DYJetsToLL_M-105To160_VBFFilter_TuneCP5_PSweights_13TeV-amcatnloFXFX-pythia8/NANOAODSIM"
+                fnames = glob.glob(f"{load_path}/*/*/*.root")
+                
             elif sample_name == "dy_VBF_filter_fromGridpack":
                 """
                 load directly from local files
@@ -282,6 +274,7 @@ if __name__ == "__main__":
                 # test start -----------------------------------------------------------
                 load_path = "/eos/purdue/store/user/hyeonseo/DYJetsToLL_M-105To160_VBFFilter_TuneCP5_PSweights_13TeV-amcatnloFXFX-pythia8/Flat_NanoAODSIMv9_CMSSW_10_6_26_BigRun/240904_151935/0000/"
                 fnames = glob.glob(f"{load_path}/*.root")
+            
             elif year == "2018":
                 if (sample_name == "dy_m105_160_vbf_amc"): # temporary overwrite for BDT input test Nov 14 2024
                     load_path = "/eos/purdue/store/mc/RunIIAutumn18NanoAODv6/DYJetsToLL_M-105To160_TuneCP5_PSweights_13TeV-amcatnloFXFX-pythia8/"
@@ -521,21 +514,19 @@ if __name__ == "__main__":
                     # partial_allowed=True
                 )
                 fnames = [file[0] for file in outfiles if file != []]
-                
-                # fnames = [fname.replace("root://eos.cms.rcac.purdue.edu/", "/eos/purdue") for fname in fnames] # replace xrootd prefix bc it's causing file not found error
+                fnames = [fname.replace("root://eos.cms.rcac.purdue.edu/", "/eos/purdue") for fname in fnames] # replace xrootd prefix bc it's causing file not found error
                 
                 
                 # random.shuffle(fnames)
                 if args.xcache:
                     fnames = get_Xcache_filelist(fnames)
-                # print(f"fnames: {fnames}")
             
             print(f"sample_name: {sample_name}")
             print(f"das_query: {das_query}")
             print(f"len(fnames): {len(fnames)}")
-            print(f"fnames: {fnames}")
+            # print(f"fnames: {fnames}")
             
-            # fnames = [fname.replace("/eos/purdue", "root://eos.cms.rcac.purdue.edu/") for fname in fnames] # replace to xrootd bc sometimes eos mounts timeout when reading 
+            fnames = [fname.replace("/eos/purdue", "root://eos.cms.rcac.purdue.edu/") for fname in fnames] # replace to xrootd bc sometimes eos mounts timeout when reading 
             # print(f"fnames: {fnames[:5]}")
 
             
@@ -553,22 +544,20 @@ if __name__ == "__main__":
                         file_input,
                         metadata={},
                         schemaclass=NanoAODSchema,
-                        uproot_options={"timeout":4*2400},
+                        uproot_options={"timeout":2400},
                 ).events()
-                # print(f"file_input: {file_input}")
-                # print(f"events.fields: {events.fields}")
                 preprocess_metadata["data_entries"] = int(ak.num(events.Muon.pt, axis=0).compute()) # convert into 32bit precision as 64 bit precision isn't json serializable
                 total_events += preprocess_metadata["data_entries"] 
             else: # if MC
                 file_input = {fname : {"object_path": "Runs"} for fname in fnames}
-                print(f"file_input: {file_input}")
+                # print(f"file_input: {file_input}")
                 # print(f"file_input: {file_input}")
                 # print(len(file_input.keys()))
                 runs = NanoEventsFactory.from_root(
                         file_input,
                         metadata={},
                         schemaclass=BaseSchema,
-                        uproot_options={"timeout":4*2400},
+                        uproot_options={"timeout":2400},
                 ).events()               
                 # print(f"runs.fields: {runs.fields}")
                 # if sample_name == "dy_m105_160_vbf_amc": # nanoAODv6
@@ -598,6 +587,8 @@ if __name__ == "__main__":
                         uproot_options={"timeout":2400},
                 ).events()  
                 genEventCount = runs.genEventCount.compute()
+                # print(f"(genEventCount): {(genEventCount)}")
+                # print(f"len(genEventCount): {len(genEventCount)}")
                 
                 assert len(fnames) == len(genEventCount)
                 file_dict = {}
