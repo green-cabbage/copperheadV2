@@ -33,7 +33,7 @@
     },
     "dimuon_eta": {
         "variable": "dimuon_eta",
-        "binning_linspace": [-5, 5, 51],
+        "binning_linspace": [-2.5, 2.5, 51],
         "density": false,
         "ylabel": "Events / 1 GeV",
         "xlabel": "$\\eta(\\mu\\mu)$ [GeV]",
@@ -291,7 +291,7 @@
     },
     "mu1_eta": {
         "variable": "mu1_eta",
-        "binning_linspace": [-2, 2, 31],
+        "binning_linspace": [-2.4, 2.4, 31],
         "density": false,
         "ylabel": "Events",
         "xlabel": "$\\eta (mu1)$",
@@ -323,7 +323,7 @@
     },
     "mu2_eta": {
         "variable": "mu2_eta",
-        "binning_linspace": [-2, 2, 31],
+        "binning_linspace": [-2.4, 2.4, 31],
         "density": false,
         "ylabel": "Events",
         "xlabel": "$\\eta (mu2)$",

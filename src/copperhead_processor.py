@@ -471,10 +471,7 @@ class EventProcessor(processor.ProcessorABC):
 
 
 
-        """
-        Apply LHE cuts for DY sample stitching
-        Basically remove events that has dilepton mass between 100 and 200 GeV
-        """
+        
 
         event_filter = ak.ones_like(events.event, dtype="bool") # 1D boolean array to be used to filter out bad events
             # Debugging: Check structure of event_filter
@@ -494,33 +491,37 @@ class EventProcessor(processor.ProcessorABC):
         NanoAODv = events.metadata['NanoAODv']
         is_mc = events.metadata['is_mc']
         logger.debug(f"NanoAODv: {NanoAODv}")
+        """
+        Apply LHE cuts for DY sample stitching
+        Basically remove events that has dilepton mass between 100 and 200 GeV
+        """
         # LHE cut original start -----------------------------------------------------------------------------
-        if 'dy_M-50' in dataset: # if dy_M-50, apply LHE cut
-            logger.info("doing dy_M-50 LHE cut!")
-            LHE_particles = events.LHEPart #has unique pdgIDs of [ 1,  2,  3,  4,  5, 11, 13, 15, 21]
-            bool_filter = (abs(LHE_particles.pdgId) == 11) | (abs(LHE_particles.pdgId) == 13) | (abs(LHE_particles.pdgId) == 15)
-            LHE_leptons = LHE_particles[bool_filter]
+        # if 'dy_M-50' in dataset: # if dy_M-50, apply LHE cut
+        #     logger.info("doing dy_M-50 LHE cut!")
+        #     LHE_particles = events.LHEPart #has unique pdgIDs of [ 1,  2,  3,  4,  5, 11, 13, 15, 21]
+        #     bool_filter = (abs(LHE_particles.pdgId) == 11) | (abs(LHE_particles.pdgId) == 13) | (abs(LHE_particles.pdgId) == 15)
+        #     LHE_leptons = LHE_particles[bool_filter]
 
 
-            """
-            TODO: maybe we can get faster by just indexing first and second, instead of argmax and argmins
-            When I had a quick look, all LHE_leptons had either two or zero leptons per event, never one,
-            so just indexing first and second could work
-            """
-            max_idxs = ak.argmax(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for normal lepton
-            min_idxs = ak.argmin(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for anti lepton
-            LHE_lepton_barless = LHE_leptons[max_idxs]
-            LHE_lepton_bar = LHE_leptons[min_idxs]
-            LHE_dilepton_mass =  (LHE_lepton_barless +LHE_lepton_bar).mass
+        #     """
+        #     TODO: maybe we can get faster by just indexing first and second, instead of argmax and argmins
+        #     When I had a quick look, all LHE_leptons had either two or zero leptons per event, never one,
+        #     so just indexing first and second could work
+        #     """
+        #     max_idxs = ak.argmax(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for normal lepton
+        #     min_idxs = ak.argmin(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for anti lepton
+        #     LHE_lepton_barless = LHE_leptons[max_idxs]
+        #     LHE_lepton_bar = LHE_leptons[min_idxs]
+        #     LHE_dilepton_mass =  (LHE_lepton_barless +LHE_lepton_bar).mass
 
-            # LHE_filter = ak.flatten(((LHE_dilepton_mass > 100) & (LHE_dilepton_mass < 200)))
-            LHE_filter = (((LHE_dilepton_mass > 100) & (LHE_dilepton_mass < 200)))[:,0]
-            # logger.info(f"LHE_filter: {LHE_filter.compute()}")
-            LHE_filter = ak.fill_none(LHE_filter, value=False)
-            LHE_filter = (LHE_filter== False) # we want True to indicate that we want to keep the event
-            # logger.info(f"copperhead2 EventProcessor LHE_filter[32]: \n{ak.to_numpy(LHE_filter[32])}")
-            # self.selection.add("LHE_cut", LHE_filter)
-            event_filter = event_filter & LHE_filter
+        #     # LHE_filter = ak.flatten(((LHE_dilepton_mass > 100) & (LHE_dilepton_mass < 200)))
+        #     LHE_filter = (((LHE_dilepton_mass > 100) & (LHE_dilepton_mass < 200)))[:,0]
+        #     # logger.info(f"LHE_filter: {LHE_filter.compute()}")
+        #     LHE_filter = ak.fill_none(LHE_filter, value=False)
+        #     LHE_filter = (LHE_filter== False) # we want True to indicate that we want to keep the event
+        #     # logger.info(f"copperhead2 EventProcessor LHE_filter[32]: \n{ak.to_numpy(LHE_filter[32])}")
+        #     # self.selection.add("LHE_cut", LHE_filter)
+        #     event_filter = event_filter & LHE_filter
         # LHE cut original end -----------------------------------------------------------------------------
 
 
@@ -1412,9 +1413,13 @@ class EventProcessor(processor.ProcessorABC):
             # due weirdness of btag weight implementation. I suspect it's due to weights being evaluated
             # once kind of screws with the dak awkward array
 
-            logger.info("======================= old zpt method =======================")
+            # logger.info("======================= old zpt method =======================")
             
-            zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            # zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+
+            logger.info("======================= new zpt method =======================")
+            
+            zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
             
             # logger.info("======================= old zpt weights are commented out =======================")
             # if year == "2016postVFP" or year=="2018": #FIXME: This is temporary, we need to sync the zpt strategy and update it.

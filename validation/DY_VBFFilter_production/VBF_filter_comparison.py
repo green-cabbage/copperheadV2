@@ -1338,6 +1338,8 @@ def getZipReco(events) -> ak.zip:
     jets = ak.pad_none(jets, target=2)
     jet1 = jets[:,0]
     jet2 = jets[:,1]
+    jj_dEta = abs(jet1.eta - jet2.eta)
+    jj_mass = (jet1+jet2).mass
     return_dict_muon = {
         "mu1_pt" : mu1.pt,
         "mu2_pt" : mu2.pt,
@@ -1360,6 +1362,8 @@ def getZipReco(events) -> ak.zip:
         "jet1_phi" : jet1.phi,
         "jet2_phi" : jet2.phi,
         "genWeight" : jets_genWgt,
+        "jj_mass" : jj_mass,
+        "jj_dEta" : jj_dEta,
     }
     # comput zip and return
     return_dict_muon, return_dict_jet = dask.compute([
@@ -1977,7 +1981,7 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
     # fields2plot = fields2plot + other_kinematics
     # fields2plot = list(zip_fromScratch.keys())
     # fields2plot = zip_fromScratch.fields
-    fields2plot = ["mu1_eta", "mu2_eta","mu1_pt", "mu2_pt","mu1_phi", "mu2_phi", "dimuon_mass","dimuon_pt","dimuon_eta","dimuon_rapidity","dimuon_phi", "jet1_pt", "jet2_pt", "jet1_eta", "jet2_eta", "jet1_phi", "jet2_phi"]
+    fields2plot = ["mu1_eta", "mu2_eta","mu1_pt", "mu2_pt","mu1_phi", "mu2_phi", "dimuon_mass","dimuon_pt","dimuon_eta","dimuon_rapidity","dimuon_phi", "jet1_pt", "jet2_pt", "jet1_eta", "jet2_eta", "jet1_phi", "jet2_phi", "jj_mass", "jj_dEta"]
     # fields2plot = ["noGenmatchMu1_eta", "noGenmatchMu2_eta", ]
     print(f"fields2plot: {fields2plot}")
     
@@ -1989,6 +1993,8 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         if "eta" in field:
             if "dimuon" in field:
                 xlow, xhigh = -2.5, 2.5
+            elif "jet" in field:
+                xlow, xhigh = -4.7, 4.7
             else:
                 xlow, xhigh = -2.4, 2.4
             current_nbins = nbins
@@ -1998,15 +2004,20 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         elif "phi" in field:
             # xlow, xhigh = -3, 3
             xlow, xhigh = -np.pi, np.pi
-            current_nbins = nbins
+            current_nbins = int(nbins/4)
         elif "n_reco_muons" in field:
             xlow, xhigh = -0.5, 4.5
             current_nbins = 5 # override nbins
         elif "mass" in field:
-            xlow, xhigh = 110, 150
+            if "jj_mass" in field:
+                xlow, xhigh = 0, 1_000
+            else:
+                xlow, xhigh = 110, 150
             current_nbins = nbins
         elif "rapidity" in field:
             xlow, xhigh = -2.5, 2.5
+        elif "dEta" in field:
+            xlow, xhigh = 0, 8
             
         title =f"{field}"
         
@@ -2041,6 +2052,8 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         pad1.SetBottomMargin(0.02)
         pad2.SetTopMargin(0.02)
         pad2.SetBottomMargin(0.3)
+        if "jj_mass" in field:
+            pad1.SetLogy()
         
         pad1.Draw()
         pad2.Draw()
@@ -2053,8 +2066,10 @@ def plotTwoWayROOT_withWgt(zip_fromScratch, zip_rereco, plot_bins, save_path="./
         # hist_fromScratch.SetMarkerStyle(20)  # Add markers
         # hist_rereco.SetMarkerStyle(21)
         if normalize:
-            hist_fromScratch.Scale(1/hist_fromScratch.Integral())
-            hist_rereco.Scale(1/hist_rereco.Integral())
+            if hist_fromScratch.Integral()!=0:
+                hist_fromScratch.Scale(1/hist_fromScratch.Integral())
+            if hist_rereco.Integral()!=0:
+                hist_rereco.Scale(1/hist_rereco.Integral())
             hist_fromScratch.GetYaxis().SetTitle("A.U.")
         
         hist_fromScratch.SetMarkerColor(ROOT.kRed)
@@ -2583,8 +2598,8 @@ if __name__ == "__main__":
     # test_len = 14000
     # test_len = 400000
     # test_len = 800000
-    test_len = 4000000
-    # test_len = 8000000
+    # test_len = 4000000
+    test_len = 8000000
     centralVsCentral = args.centralVsCentral
     print(f"centralVsCentral: {centralVsCentral}")
     if centralVsCentral:
@@ -2637,7 +2652,7 @@ if __name__ == "__main__":
         os.makedirs(save_path, exist_ok=True)
     
         # nbins_l = [60, 64, 128, 256]
-        nbins_l = [64, 128]
+        nbins_l = [128]
         # target_nMuons = ["all", 2,3]
         target_nMuons = ["all"]
         mu_jet_pairs = [
@@ -2666,7 +2681,7 @@ if __name__ == "__main__":
         os.makedirs(save_path, exist_ok=True)
     
         # nbins_l = [60, 64, 128, 256]
-        nbins_l = [64, 128]
+        nbins_l = [128]
         # target_nMuons = ["all", 2,3]
         target_nMuons = ["all"]
         save_fname="TwoWayGen"
