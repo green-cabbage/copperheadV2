@@ -5,7 +5,7 @@ import json
 import argparse
 import os
 from src.lib.histogram.ROOT_utils import setTDRStyle, CMS_lumi, reweightROOTH_data, reweightROOTH_mc #reweightROOTH
-from src.lib.histogram.plotting import plotDataMC_compare, plotDataMC_compare_hda
+from src.lib.histogram.plotting import plotDataMC_compare
 from distributed import Client
 import time    
 import tqdm
@@ -308,23 +308,23 @@ if __name__ == "__main__":
         raise ValueError
     for particle in args.variables:
         if "dimuon" in particle:
-            # variables2plot.append(f"{particle}_mass")
+            variables2plot.append(f"{particle}_mass")
             variables2plot.append(f"{particle}_pt")
-            # variables2plot.append(f"{particle}_eta")
-            # variables2plot.append(f"{particle}_phi")
-            # variables2plot.append(f"{particle}_cos_theta_cs")
-            # variables2plot.append(f"{particle}_phi_cs")
-            # variables2plot.append(f"{particle}_cos_theta_eta")
-            # variables2plot.append(f"{particle}_phi_eta")
-            # variables2plot.append(f"mmj_min_dPhi_nominal")
-            # variables2plot.append(f"mmj_min_dEta_nominal")
-            # variables2plot.append(f"ll_zstar_log_nominal")
-            # variables2plot.append(f"dimuon_ebe_mass_res")
-            # variables2plot.append(f"dimuon_ebe_mass_res_rel")
+            variables2plot.append(f"{particle}_eta")
+            variables2plot.append(f"{particle}_phi")
+            variables2plot.append(f"{particle}_cos_theta_cs")
+            variables2plot.append(f"{particle}_phi_cs")
+            variables2plot.append(f"{particle}_cos_theta_eta")
+            variables2plot.append(f"{particle}_phi_eta")
+            variables2plot.append(f"mmj_min_dPhi_nominal")
+            variables2plot.append(f"mmj_min_dEta_nominal")
+            variables2plot.append(f"ll_zstar_log_nominal")
+            variables2plot.append(f"dimuon_ebe_mass_res")
+            variables2plot.append(f"dimuon_ebe_mass_res_rel")
             variables2plot.append(f"{particle}_rapidity")
         elif "dijet" in particle:
             variables2plot.append(f"jj_dEta_nominal")
-            # variables2plot.append(f"jj_mass_nominal")
+            variables2plot.append(f"jj_mass_nominal")
             variables2plot.append(f"jj_pt_nominal")
             
             variables2plot.append(f"jj_dPhi_nominal")
@@ -347,8 +347,6 @@ if __name__ == "__main__":
                 variables2plot.append(f"{particle}2_{kinematic}")
             variables2plot.append(f"{particle}1_pt_over_mass")
             variables2plot.append(f"{particle}2_pt_over_mass")
-            # variables2plot.append("mu1_pt")
-            # variables2plot.append("mu2_pt")
         elif ("jet" in particle):
             variables2plot.append(f"njets_nominal")
             for kinematic in kinematic_vars:
@@ -553,7 +551,6 @@ if __name__ == "__main__":
                 # obtain the category selection
                 
                 # print("doing root style!")
-                # print(f"args.region: {args.region}")
                 mass = events.dimuon_mass
                 z_peak = ((mass > 76) & (mass < 106))
                 h_sidebands =  ((mass > 110) & (mass < 115.03)) | ((mass > 135.03) & (mass < 150))
@@ -1325,9 +1322,12 @@ if __name__ == "__main__":
             # order bkg_MC_dict in a specific way for plotting, smallest yielding process first:
             bkg_MC_order = ["other", "VV", "Ewk", "Top", "DY"]
             bkg_MC_dict = {process: bkg_MC_dict[process] for process in bkg_MC_order if process in bkg_MC_dict}
-            print(f"data_dict: {data_dict}")
-            print(f"bkg_MC_dict: {bkg_MC_dict}")
-            print(f"sig_MC_dict: {sig_MC_dict}")
+            if len(data_dict) ==0:
+                print(f"empty histograms for {var} skipping!")
+                continue
+            # print(f"{process} {var} data_dict: {data_dict}")
+            # print(f"{process} {var} bkg_MC_dict: {bkg_MC_dict}")
+            # print(f"{process} {var} sig_MC_dict: {sig_MC_dict}")
             
 
 
