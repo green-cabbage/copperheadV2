@@ -412,9 +412,6 @@ if __name__ == "__main__":
         try:
             events = dak.from_parquet(full_load_path)
             target_chunksize = 150_000
-            # target_chunksize = 300_000
-            # if (process not in group_ggH_processes) and 
-# group_VBF_processes
             events = events.repartition(rows_per_partition=target_chunksize)
         except:
             print(f"full_load_path: {full_load_path} Not available. Skipping")
@@ -567,51 +564,50 @@ if __name__ == "__main__":
                 else: 
                     print("ERROR: acceptable region!")
                     raise ValueError
-                # region = events.z_peak
-                # btag_cut = btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
-                btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
-                btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
-                btag_cut = btagLoose_filter | btagMedium_filter
-                vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
-                vbf_cut = ak.fill_none(vbf_cut, value=False)
-                # if args.vbf_cat_mode:
-                if args.category == "vbf":
-                    print("vbf mode!")
-                    prod_cat_cut =  vbf_cut
-                    prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-                    # apply additional cut to MC samples if vbf 
-                    # VBF filter cut start -------------------------------------------------
-                    if args.do_vbf_filter_study:
-                        print("applying VBF filter gen cut!")
-                        if "dy_" in process:
-                            if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
-                                print("dy_VBF_filter extra!")
-                                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
-                                prod_cat_cut =  (prod_cat_cut  
-                                            & vbf_filter
-                                )
-                            elif process == "dy_m105_160_amc":
-                                print("dy_M-100To200 extra!")
-                                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
-                                prod_cat_cut =  (
-                                    prod_cat_cut  
-                                    & ~vbf_filter 
-                                )
-                            else:
-                                print(f"no extra processing for {process}")
-                                pass
-                    # VBF filter cut end -------------------------------------------------
-                # else: # we're interested in ggH category
-                elif args.category == "ggh":
-                    print("ggH mode!")
-                    prod_cat_cut =  ~vbf_cut 
-                    prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-                elif args.category == "nocat":
+                if args.category == "nocat":
                     print("nocat mode!")
-                    prod_cat_cut =  ak.ones_like(vbf_cut, dtype="bool")
-                else:
-                    print("Error: invalid category option!")
-                    raise ValueError
+                    prod_cat_cut =  ak.ones_like(region, dtype="bool")
+                else: # VBF or ggH
+                    btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
+                    btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
+                    btag_cut = btagLoose_filter | btagMedium_filter
+                    vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
+                    vbf_cut = ak.fill_none(vbf_cut, value=False)
+                    # if args.vbf_cat_mode:
+                    if args.category == "vbf":
+                        print("vbf mode!")
+                        prod_cat_cut =  vbf_cut
+                        prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+                        # apply additional cut to MC samples if vbf 
+                        # VBF filter cut start -------------------------------------------------
+                        if args.do_vbf_filter_study:
+                            print("applying VBF filter gen cut!")
+                            if "dy_" in process:
+                                if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
+                                    print("dy_VBF_filter extra!")
+                                    vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
+                                    prod_cat_cut =  (prod_cat_cut  
+                                                & vbf_filter
+                                    )
+                                elif process == "dy_m105_160_amc":
+                                    print("dy_M-100To200 extra!")
+                                    vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+                                    prod_cat_cut =  (
+                                        prod_cat_cut  
+                                        & ~vbf_filter 
+                                    )
+                                else:
+                                    print(f"no extra processing for {process}")
+                                    pass
+                        # VBF filter cut end -------------------------------------------------
+                    # else: # we're interested in ggH category
+                    elif args.category == "ggh":
+                        print("ggH mode!")
+                        prod_cat_cut =  ~vbf_cut 
+                        prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+                    else:
+                        print("Error: invalid category option!")
+                        raise ValueError
                 # print(f"prod_cat_cut sum b4: {ak.sum(prod_cat_cut).compute()}")
                 
                
@@ -994,12 +990,6 @@ if __name__ == "__main__":
             # -------------------------------------------------------
             # All data are prepped, now plot Data/MC histogram
             # -------------------------------------------------------
-            # if args.vbf_cat_mode:
-            #     production_cat = "vbf"
-            # else:
-            #     production_cat = "ggh"
-            # full_save_path = f"{args.save_path}/{args.year}/ROOT/Reg_{args.region}/Cat_{production_cat}"
-
             full_save_path = f"{args.save_path}/{args.year}/ROOT/Reg_{args.region}/Cat_{args.category}/{args.label}"
             if not os.path.exists(full_save_path):
                 os.makedirs(full_save_path)
@@ -1131,57 +1121,54 @@ if __name__ == "__main__":
                     raise ValueError
 
                 # do category cut
-                # btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
-                btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
-                btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
-                btag_cut = btagLoose_filter | btagMedium_filter
-                # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
-                vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
-                vbf_cut = ak.fill_none(vbf_cut, value=False)
-                # if args.vbf_cat_mode:
-                if args.category == "vbf":
-                    print("vbf mode!")
-                    prod_cat_cut =  vbf_cut
-                    prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-                    print("applying jet1 pt 35 Gev cut!")
-                    if args.do_vbf_filter_study:
-                        print("applying VBF filter gen cut!")
-                        if "dy_" in process:
-                            if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
-                                print("dy_VBF_filter extra!")
-                                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
-                                prod_cat_cut =  (prod_cat_cut  
-                                            & vbf_filter
-                                )
-                            elif process == "dy_m105_160_amc":
-                                print("dy_M-100To200 extra!")
-                                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
-                                prod_cat_cut =  (
-                                    prod_cat_cut  
-                                    & ~vbf_filter 
-                                )
-                            else:
-                                print(f"no extra processing for {process}")
-                                pass
-                # else: # we're interested in ggH category
-                elif args.category == "ggh":
-                    print("ggH mode!")
-                    prod_cat_cut =  ~vbf_cut 
-                    prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-                elif args.category == "nocat":
+                if args.category == "nocat": 
                     print("nocat mode!")
-                    prod_cat_cut =  ak.ones_like(vbf_cut, dtype="bool")
-                else:
-                    print("Error: invalid category option!")
-                    raise ValueError
+                    prod_cat_cut =  ak.ones_like(region, dtype="bool")
+                else: # VBF or ggH
+                    btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
+                    btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
+                    btag_cut = btagLoose_filter | btagMedium_filter
+                    # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
+                    vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
+                    vbf_cut = ak.fill_none(vbf_cut, value=False)
+                    # if args.vbf_cat_mode:
+                    if args.category == "vbf":
+                        print("vbf mode!")
+                        prod_cat_cut =  vbf_cut
+                        prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+                        print("applying jet1 pt 35 Gev cut!")
+                        if args.do_vbf_filter_study:
+                            print("applying VBF filter gen cut!")
+                            if "dy_" in process:
+                                if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
+                                    print("dy_VBF_filter extra!")
+                                    vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
+                                    prod_cat_cut =  (prod_cat_cut  
+                                                & vbf_filter
+                                    )
+                                elif process == "dy_m105_160_amc":
+                                    print("dy_M-100To200 extra!")
+                                    vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+                                    prod_cat_cut =  (
+                                        prod_cat_cut  
+                                        & ~vbf_filter 
+                                    )
+                                else:
+                                    print(f"no extra processing for {process}")
+                                    pass
+                    # else: # we're interested in ggH category
+                    elif args.category == "ggh":
+                        print("ggH mode!")
+                        prod_cat_cut =  ~vbf_cut 
+                        prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+                    else:
+                        print("Error: invalid category option!")
+                        raise ValueError
             
                 category_selection = (
                     prod_cat_cut & 
                     region 
                 )
-                # print(f"category_selection length: {len(category_selection)}")
-                # print(f"category_selection {process} sum : {ak.sum(ak.values_astype(category_selection, np.int32))}")
-                # print(f"category_selection {process} : {category_selection}")
 
                 # filter events fro selected category
 
@@ -1209,7 +1196,6 @@ if __name__ == "__main__":
                     #     weights = weights/events["separate_wgt_zpt_wgt"]
 
                     
-                    # print(f"weights {process} b4 numpy: {weights}")
                     # for some reason, some nan weights are still passes ak.fill_none() bc they're "nan", not None, this used to be not a problem
                     # could be an issue of copying bunching of parquet files from one directory to another, but not exactly sure
                     # weights = np.nan_to_num(weights, nan=0.0) 
@@ -1224,18 +1210,6 @@ if __name__ == "__main__":
                     values = ak.fill_none(events[var_reduced], value=-999.0)
                 else:
                     values = ak.fill_none(events[var], value=-999.0)
-                # print(f"weights.shape: {weights[weights>0].shape}")
-                # print(f"weights {process} : {weights.shape}")
-                # print(f"values {process} : {values.shape}")
-                
-                
-
-                
-                # print(f"values is nan: {np.any(np.isnan(values))}")
-                # print(f"values is none: {np.any(ak.is_none(values))}")
-                
-                # temporary overwrite end -------------------------
-                # print(f"values[0]: {values[0]}")
                 values_filter = values!=-999.0
                 values = values[values_filter]
                 weights = weights[values_filter]
@@ -1247,9 +1221,6 @@ if __name__ == "__main__":
                     weights = weights*fraction_weight
                 # print(f"weights.shape: {weights[weights>0].shape}")
                 group_name = find_group_name(process, group_dict)
-                # values = values.compute()
-                # weights = weights.compute()
-                # sample_hist = sample_hist.compute()
                 to_fill_setting = {
                 "region" : args.region,
                 "channel" : args.category,
@@ -1257,9 +1228,6 @@ if __name__ == "__main__":
                 "sample_group": group_name,
                 var : values,
                 }
-                # print(f"values: {ak.num(values, axis=0).compute()}")
-                # print(f"weights: {ak.num(weights, axis=0).compute()}")
-                # print(f"sample_hist b4 compute: {sample_hist}")
                 
                 to_fill_value = to_fill_setting.copy()
                 to_fill_value["val_sumw2"] = "value"
@@ -1269,20 +1237,13 @@ if __name__ == "__main__":
                 to_fill_sumw2["val_sumw2"] = "sumw2"
                 sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
                 
-                # sample_hist = sample_hist.compute()
-                # print(f"sample_hist after compute: {sample_hist}")
                 
                 sample_hist_l.append(sample_hist)
 
-            # sample_hist_l = dask.compute(sample_hist_l)[0]
             sample_hist_dictByVar2compute[var] = sample_hist_l
             
-            # print(f"sample_hist_l: {sample_hist_l}")
         # done with looping over process and variables we now compute
-        print(f"sample_hist_dictByVar2compute b4 compute: {sample_hist_dictByVar2compute}")
-        
         sample_hist_dictByVarComputed = dask.compute(sample_hist_dictByVar2compute)[0]
-        print(f"sample_hist_dictByVar2compute after compute: {sample_hist_dictByVar2compute}")
         
             #     # END loop here
         for var in tqdm.tqdm(variables2plot):
@@ -1325,108 +1286,10 @@ if __name__ == "__main__":
             if len(data_dict) ==0:
                 print(f"empty histograms for {var} skipping!")
                 continue
-            # print(f"{process} {var} data_dict: {data_dict}")
-            # print(f"{process} {var} bkg_MC_dict: {bkg_MC_dict}")
-            # print(f"{process} {var} sig_MC_dict: {sig_MC_dict}")
-            
-
-
-            
-            # # -------------------------------------------------------
-            # # Aggregate the data into Sample types b4 plotting
-            # # -------------------------------------------------------
-
-            # # define data dict
-            # data_dict = {
-            #     "values" :np.concatenate(group_data_vals, axis=0),
-            #     "weights":np.concatenate(group_data_weights, axis=0)
-            # }
-            
-            # # define Bkg MC dict
-            # bkg_MC_dict = OrderedDict()
-            # # start from lowest yield to highest yield
-            # if len(group_other_vals) > 0:
-            #     bkg_MC_dict["other"] = {
-            #         "values" :np.concatenate(group_other_vals, axis=0),
-            #         "weights":np.concatenate(group_other_weights, axis=0)
-            #     }
-            # if len(group_VV_vals) > 0:
-            #     bkg_MC_dict["VV"] = {
-            #         "values" :np.concatenate(group_VV_vals, axis=0),
-            #         "weights":np.concatenate(group_VV_weights, axis=0)
-            #     }
-            # if len(group_Ewk_vals) > 0:
-            #     bkg_MC_dict["Ewk"] = {
-            #         "values" :np.concatenate(group_Ewk_vals, axis=0),
-            #         "weights":np.concatenate(group_Ewk_weights, axis=0)
-            #     }
-            # if len(group_Top_vals) > 0:
-            #     bkg_MC_dict["Top"] = {
-            #         "values" :np.concatenate(group_Top_vals, axis=0),
-            #         "weights":np.concatenate(group_Top_weights, axis=0)
-            #     }
-            # if len(group_DY_vals) > 0:
-            #     bkg_MC_dict["DY"] = {
-            #         "values" :np.concatenate(group_DY_vals, axis=0),
-            #         "weights":np.concatenate(group_DY_weights, axis=0)
-            #     }
-
-            
-            # # bkg_MC_dict = {
-            # #     "Top" :{
-            # #         "values" :np.concatenate(group_Top_vals, axis=0),
-            # #         "weights":np.concatenate(group_Top_weights, axis=0)
-            # #     },
-            # #     "DY" :{
-            # #         "values" :np.concatenate(group_DY_vals, axis=0),
-            # #         "weights":np.concatenate(group_DY_weights, axis=0)
-            # #     },     
-            # # }
-
-            # # define Sig MC dict
-            
-            # # sig_MC_dict = {
-            # #     "ggH" :{
-            # #         "values" :np.concatenate(group_ggH_vals, axis=0),
-            # #         "weights":np.concatenate(group_ggH_weights, axis=0)
-            # #     },  
-            # #     "VBF" :{
-            # #         "values" :np.concatenate(group_VBF_vals, axis=0),
-            # #         "weights":np.concatenate(group_VBF_weights, axis=0)
-            # #     },  
-            # # }
-            # sig_MC_dict = OrderedDict()
-            # # if len(group_ggH_vals) > 0:
-            # #     sig_MC_dict["ggH"] = {
-            # #         "values" :np.concatenate(group_ggH_vals, axis=0),
-            # #         "weights":np.concatenate(group_ggH_weights, axis=0)
-            # #     }
-            # # if len(group_VBF_vals) > 0:
-            # #     sig_MC_dict["VBF"] = {
-            # #         "values" :np.concatenate(group_VBF_vals, axis=0),
-            # #         "weights":np.concatenate(group_VBF_weights, axis=0)
-            # #     }
-            # if len(group_ggH_vals) > 0:
-            #     sig_MC_dict["ggH"] = {
-            #         "values" :np.concatenate(group_ggH_vals, axis=0),
-            #         "weights":np.concatenate(group_ggH_weights, axis=0)
-            #     }
-            # if len(group_VBF_vals) > 0:
-            #     sig_MC_dict["VBF"] = {
-            #         "values" :np.concatenate(group_VBF_vals, axis=0),
-            #         "weights":np.concatenate(group_VBF_weights, axis=0)
-            #     }
-            
-
 
             # -------------------------------------------------------
             # All data are prepped, now plot Data/MC histogram
             # -------------------------------------------------------
-            # if args.vbf_cat_mode:
-            #     production_cat = "vbf"
-            # else:
-            #     production_cat = "ggh"
-            # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{production_cat}"
             full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{args.region}/Cat_{args.category}/{args.label}"
 
             
