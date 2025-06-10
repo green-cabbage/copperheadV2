@@ -15,7 +15,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")
 sys.path.insert(0, parent_dir)
 
 # Now you can import your module
-from src.lib.histogram.plotting import plotDataMC_compare
+from src.lib.histogram.plotting import plotDataMC_compare_eager
 
 def filterRegion(events, region="h-peak"):
     dimuon_mass = events.dimuon_mass
@@ -317,7 +317,7 @@ if __name__ == "__main__":
             status = "Private"
             
             do_logscale = True
-            plotDataMC_compare(
+            plotDataMC_compare_eager(
                 binning, 
                 data_dict, 
                 bkg_MC_dict, 
