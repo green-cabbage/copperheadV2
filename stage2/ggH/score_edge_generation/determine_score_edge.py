@@ -252,77 +252,12 @@ if __name__ == "__main__":
     print(f"years: {years}")
     n_parts = 8 # number of parallelized chunks
     
-    # # for iter_idx in range(1, 7):
-    # for iter_idx in range(1, 2):
-    #     AMS_df = pd.DataFrame({})
-    #     split_sig_effs2iterate = np.array_split(sig_effs2iterate, n_parts)
-    #     final_sig_effs_l = [copy.deepcopy(final_sig_effs) for _ in range(n_parts)]
-    #     AMS_df = getAMS_df_parallelize(split_sig_effs2iterate, final_sig_effs_l)
-
-    #     max_ix = np.argmax(AMS_df["Significance"])
-    #     sig_eff_max = AMS_df["sig_eff"][max_ix]
-    #     # add the sig_eff maxx to fianl sig eff list
-    #     final_sig_effs.append(sig_eff_max)
-    #     final_sig_effs = sorted(final_sig_effs)
-        
-    #     print(f"final_sig_effs: {final_sig_effs}")
-    #     print(f"sigsig_eff_max: {sig_eff_max}")
-    #     print(f"sig_effs2iterate b4 remove: {sig_effs2iterate}")
-
-    #     sig_effs2iterate.remove(sig_eff_max)
-
-    #     print(f"sig_effs2iterate after remove: {sig_effs2iterate}")
-
-    #     # Record the AMS
-    #     AMS_df.to_csv(f"iter{iter_idx}_significances.csv")
-        
-
-    # for iter_idx in range(1, 2):
-    for iter_idx in range(1, 4):
+    for iter_idx in range(1, 7):
+    # for iter_idx in range(1, 4):
         AMS_df = pd.DataFrame({})
-        for sig_eff in sig_effs2iterate:
-            target_sig_effs = final_sig_effs + [sig_eff]
-            target_sig_effs = np.sort(np.array(target_sig_effs))
-        
-            
-            print(f"target_sig_effs: {target_sig_effs}")
-        
-            BDT_score_edge_dict = obtain_BDT_edges(target_sig_effs, years, load_path)
-            print(f"BDT_score_edge_dict: {BDT_score_edge_dict}")
-        
-            signal_arrs = []
-            background_arrs = []
-            for year, bdt_score_edges in BDT_score_edge_dict.items():
-                signal_arr = get_signal_yields(bdt_score_edges, year, load_path)
-                signal_arrs.append(signal_arr)
-                background_arr = get_background_yields(bdt_score_edges, year, load_path)
-                background_arrs.append(background_arr)
-        
-            
-            signal_yields = sum(signal_arrs)
-            background_yields = sum(background_arrs)
-    
-    
-            # sanity check
-            # print(f"signal_arrs: {signal_arrs}")
-            # print(f"signal_yields: {signal_yields}")
-            # print(f"signal_yields sum: {np.sum(signal_yields)}")
-            # print(f"background_arrs: {background_arrs}")
-            # print(f"background_yields: {background_yields}")
-            # print(f"background_yields sum: {np.sum(background_yields)}")
-    
-    
-            
-            AMS = calculate_AMS(signal_yields, background_yields)
-            results = {
-                "sig_eff" : [sig_eff],
-                "Significance" : [AMS]
-            }
-            # print(f"results: {results}")
-            results = pd.DataFrame(results)
-            AMS_df = pd.concat([AMS_df, results], ignore_index=True)
-            # print(f"sig eff {sig_eff} AMS: {AMS}")
-
+        split_sig_effs2iterate = np.array_split(sig_effs2iterate, n_parts)
+        final_sig_effs_l = [copy.deepcopy(final_sig_effs) for _ in range(n_parts)]
+        AMS_df = getAMS_df_parallelize(split_sig_effs2iterate, final_sig_effs_l)
 
         max_ix = np.argmax(AMS_df["Significance"])
         sig_eff_max = AMS_df["sig_eff"][max_ix]
@@ -330,6 +265,7 @@ if __name__ == "__main__":
         final_sig_effs.append(sig_eff_max)
         final_sig_effs = sorted(final_sig_effs)
         
+        print(f"final_sig_effs: {final_sig_effs}")
         print(f"sigsig_eff_max: {sig_eff_max}")
         print(f"sig_effs2iterate b4 remove: {sig_effs2iterate}")
 
@@ -339,6 +275,8 @@ if __name__ == "__main__":
 
         # Record the AMS
         AMS_df.to_csv(f"iter{iter_idx}_significances.csv")
+        
+
     
     end_time = time.time()
     
