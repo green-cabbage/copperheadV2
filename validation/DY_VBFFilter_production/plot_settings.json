@@ -161,7 +161,7 @@
     },
     "jj_mass": {
         "variable": "jj_mass",
-        "binning_linspace": [0, 500, 41],
+        "binning_linspace": [400, 2500, 41],
         "density": false,
         "ylabel": "Events / 1 GeV",
         "xlabel": "$m_{jj}$ [GeV]",
