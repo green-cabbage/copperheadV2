@@ -418,7 +418,21 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
 #     })
 #     return processed_events
 
-
+def getOtherSamples(load_path):
+    otherMC_samples = [
+        "www",
+        "wwz",
+        "wzz",
+        "zzz",
+    ]
+    glob_l = []
+    for mc_name in otherMC_samples:
+        glob_path = load_path+f"/{mc_name}/*/*.parquet"
+        glob_out = glob.glob(glob_path)
+        print(f"{mc_name} glob_out: {len(glob_out)}")
+        glob_l += glob_out
+    return glob_l
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -480,7 +494,7 @@ if __name__ == "__main__":
     help="fraction value used in stage1. By default we assume it to be 1.0",
     )
     start_time = time.time()
-    client =  Client(n_workers=20,  threads_per_worker=1, processes=True, memory_limit='4 GiB') 
+    client =  Client(n_workers=40,  threads_per_worker=1, processes=True, memory_limit='10 GiB') 
     args = parser.parse_args()
     # check for valid arguments
     if args.load_path == None:
@@ -523,13 +537,15 @@ if __name__ == "__main__":
         elif sample.lower() == "tt":
             full_load_path = load_path+f"/ttjets*/*/*.parquet"
         elif sample.lower() == "st":
-            full_load_path = load_path+f"/st_tw*/*/*.parquet"
+            full_load_path = load_path+f"/st_t*/*/*.parquet"
         elif sample.lower() == "ww":
             full_load_path = load_path+f"/ww_*/*/*.parquet"
         elif sample.lower() == "wz":
             full_load_path = load_path+f"/wz_*/*/*.parquet"
         elif sample.lower() == "zz":
             full_load_path = load_path+f"/zz/*/*.parquet"
+        elif sample.lower() == "other": # get a glob list of other mc samples
+            full_load_path = getOtherSamples(load_path) # returns a list
         else:
             print(f"unsupported sample!")
             raise ValueError
@@ -543,43 +559,8 @@ if __name__ == "__main__":
         #     bkg_MC_filelist.append(full_load_path)
         
         events = dak.from_parquet(full_load_path)
-        
-        # making so taht copperheadV1 results work start -------------------------------------------
-        # fields2load = [
-        #     "jet1_pt_nominal",
-        #     'jet1_eta_nominal', 
-        #     'jet2_pt_nominal', 
-        #     'mmj1_dEta_nominal', 
-        #     'mmj1_dPhi_nominal',  
-        #     'jj_dEta_nominal', 
-        #     'jj_dPhi_nominal', 
-        #     'jj_mass_nominal', 
-        #     'zeppenfeld_nominal', 
-        #     'mmj_min_dEta_nominal', 
-        #     'mmj_min_dPhi_nominal', 
-        #     'njets_nominal',
-        #     "nBtagLoose_nominal",
-        #     "nBtagMedium_nominal",
-        #     "mmj2_dEta_nominal",
-        #     "mmj2_dPhi_nominal",
-        #     "wgt_nominal",
-        #     'dimuon_mass', 
-        #     'dimuon_pt', 
-        #     'dimuon_eta', 
-        #     'dimuon_cos_theta_cs', 
-        #     'dimuon_phi_cs', 
-        #     'mu1_pt_over_mass', 
-        #     'mu1_eta', 
-        #     'mu2_pt_over_mass', 
-        #     'mu2_eta', 
-        #     'zeppenfeld_nominal', 
-        # ]
-        # events = ak.zip({
-        #     field : events[field] for field in fields2load
-        # }).compute()
-        # events = renameFieldsToV2(events)
-        # making so taht copperheadV1 results work end -------------------------------------------
-        
+        target_chunksize = 150_000
+        events = events.repartition(rows_per_partition=target_chunksize)
         
         print("done loading events!")
         if category == "ggh":
@@ -619,6 +600,8 @@ if __name__ == "__main__":
             save_filename = f"{save_path}/processed_events_bkgMC_wz.parquet" 
         elif sample.lower() == "zz":
             save_filename = f"{save_path}/processed_events_bkgMC_zz.parquet" 
+        elif sample.lower() == "other":
+            save_filename = f"{save_path}/processed_events_bkgMC_other.parquet" 
         else:
             print ("unsupported sample given!")
             raise ValueError

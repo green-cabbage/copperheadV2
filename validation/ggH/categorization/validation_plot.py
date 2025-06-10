@@ -10,10 +10,8 @@ from collections import OrderedDict
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-
 # Add it to sys.path
 sys.path.insert(0, parent_dir)
-
 # Now you can import your module
 from src.lib.histogram.plotting import plotDataMC_compare_eager
 
@@ -31,6 +29,15 @@ def filterRegion(events, region="h-peak"):
     events = events[region]
     return events
 
+def tranformBDT_score(computed_zip):
+    """
+    simple function that changes the range from [0,1] to [-1,-1]
+    """
+    score_name = "BDT_score"
+    BDT_score = computed_zip[score_name]
+    computed_zip[score_name] = (BDT_score-0.5)*2
+    return computed_zip
+
 def fillSampleValues(events, sample_dict, sample_groups, sample: str):
     sample_name = sample.lower()
     # find which sample group sample_name belongs to
@@ -44,7 +51,9 @@ def fillSampleValues(events, sample_dict, sample_groups, sample: str):
         computed_zip = ak.zip({
             field : events[field] for field in fields2load
         }).compute()
-        
+        computed_zip = tranformBDT_score(computed_zip)
+        # print(f"computed_zip.BDT_score min: {np.min(computed_zip.BDT_score)}")
+        # print(f"computed_zip.BDT_score max: {np.max(computed_zip.BDT_score)}")
         # add the computed fields to sample_dict 
         for field in fields2load:
             sample_dict[sample_group][field].append(
@@ -151,7 +160,7 @@ if __name__ == "__main__":
     }
     lumi_val = lumi_dict[year]
 
-    possible_samples = ["data", "ggh", "vbf", "dy", "ewk", "tt", "st", "ww", "wz", "zz",]
+    possible_samples = ["data", "ggh", "vbf", "dy", "ewk", "tt", "st", "ww", "wz", "zz","other"]
     sample_groups = {
         "data": ["data"],
         "ggh": ["ggh"],
@@ -159,7 +168,8 @@ if __name__ == "__main__":
         "dy": ["dy"],
         "top": ["tt", "st"],
         "ewk": ["ewk"],
-        "diboson": ["ww", "wz", "zz"]
+        "diboson": ["ww", "wz", "zz"],
+        "other": ["other"],
     }
     
     
@@ -203,6 +213,8 @@ if __name__ == "__main__":
                     full_load_path = load_path+f"*bkgMC_wz.parquet" 
                 elif sample.lower() == "zz":
                     full_load_path = load_path+f"*bkgMC_zz.parquet" 
+                elif sample.lower() == "other":
+                    full_load_path = load_path+f"*bkgMC_other.parquet" 
                 else:
                     print(f"unsupported sample!")
                     raise ValueError
@@ -230,10 +242,18 @@ if __name__ == "__main__":
                 "values" :np.concatenate(sample_dict["data"][plot_var], axis=0),
                 "weights":np.concatenate(sample_dict["data"]["wgt_nominal"], axis=0)
             }
+            # print(f"sample_dict: {sample_dict.keys()}")
+            # raise ValueError
             
             # define Bkg MC dict
             bkg_MC_dict = OrderedDict()
             # start from lowest yield to highest yield
+            if len(sample_dict["other"]["wgt_nominal"]) > 0:
+                group_name = "other"
+                bkg_MC_dict["Other"] = {
+                    "values" :np.concatenate(sample_dict[group_name][plot_var], axis=0),
+                    "weights":np.concatenate(sample_dict[group_name]["wgt_nominal"], axis=0)
+                }
             if len(sample_dict["diboson"]["wgt_nominal"]) > 0:
                 group_name = "diboson"
                 bkg_MC_dict["VV"] = {
@@ -258,7 +278,7 @@ if __name__ == "__main__":
                     "values" :np.concatenate(sample_dict[group_name][plot_var], axis=0),
                     "weights":np.concatenate(sample_dict[group_name]["wgt_nominal"], axis=0)
                 }
-        
+            
             
         
             # define Sig MC dict
@@ -276,17 +296,7 @@ if __name__ == "__main__":
                     "values" :np.concatenate(sample_dict[group_name][plot_var], axis=0),
                     "weights":np.concatenate(sample_dict[group_name]["wgt_nominal"], axis=0)
                 }
-            # if len(group_ggH_vals) > 0:
-            #     sig_MC_dict["ggH"] = {
-            #         "values" :np.concatenate(group_ggH_vals, axis=0),
-            #         "weights":np.concatenate(group_ggH_weights, axis=0)
-            #     }
-            # if len(group_VBF_vals) > 0:
-            #     sig_MC_dict["VBF"] = {
-            #         "values" :np.concatenate(group_VBF_vals, axis=0),
-            #         "weights":np.concatenate(group_VBF_weights, axis=0)
-            #     }
-            
+
             # print(f"sig_MC_dict: {sig_MC_dict}")
         
             # -------------------------------------------------------
@@ -314,7 +324,12 @@ if __name__ == "__main__":
             
             
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+            region = args.region
+            if region=="z-peak" and plot_var=="dimuon_mass":
+                binning = np.linspace(70, 110, 51)
             status = "Private"
+
+            # print(f"bkg_MC_dict: {bkg_MC_dict}")
             
             do_logscale = True
             plotDataMC_compare_eager(
