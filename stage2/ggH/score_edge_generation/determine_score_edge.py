@@ -5,7 +5,6 @@ import argparse
 from omegaconf import OmegaConf
 import time
 import pandas as pd
-from numba import jit
 import concurrent
 import copy
 
@@ -75,8 +74,7 @@ def obtain_BDT_edges(target_sig_effs, years, load_path):
             bin_edges.append(1.1) # add the last bin edge to maximum value and a bit
         else:
             bin_edges[-1] = 1.1 # switch the last bin edge to maximum value and a bit
-        print("Bin edges:", bin_edges)
-        # raise ValueError
+        # print("Bin edges:", bin_edges)
         hist, _ = np.histogram(signal_score, bins=bin_edges, weights=signal_wgt)
 
         
@@ -94,7 +92,6 @@ def obtain_BDT_edges(target_sig_effs, years, load_path):
     # print(f"score_edge_dict: {score_edge_dict}")
     return score_edge_dict
 
-@jit(nopython=True)
 def getCatWgtSum(bdt_score_edges, subCat_idx, wgt_arr):
     """
     helper function
@@ -145,7 +142,7 @@ def get_background_yields(bdt_score_edges, year:str, load_path:str):
     # print(f"np.min(subCat_idx): {np.min(subCat_idx)}")
 
     out_arr = getCatWgtSum(bdt_score_edges, subCat_idx, background_wgt)
-    
+
     # print(f"{year} np.sum(out_arr): {np.sum(out_arr)}")
     return out_arr
 
@@ -253,7 +250,7 @@ if __name__ == "__main__":
     n_parts = 8 # number of parallelized chunks
     
     for iter_idx in range(1, 7):
-    # for iter_idx in range(1, 4):
+    # for iter_idx in range(1, 2):
         AMS_df = pd.DataFrame({})
         split_sig_effs2iterate = np.array_split(sig_effs2iterate, n_parts)
         final_sig_effs_l = [copy.deepcopy(final_sig_effs) for _ in range(n_parts)]
