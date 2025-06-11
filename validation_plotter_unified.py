@@ -70,6 +70,22 @@ def find_group_name(process_name, group_dict):
             return group_name
     return "other"
 
+
+def fillHist(sample_hist, to_fill_setting, values, weights):
+    values_filter = values!=-999.0
+    values = values[values_filter]
+    weights = weights[values_filter]
+    to_fill_setting[var] = values
+    to_fill_value = to_fill_setting.copy()
+    to_fill_value["val_sumw2"] = "value"
+    sample_hist.fill(**to_fill_value, weight=weights)
+    
+    to_fill_sumw2 = to_fill_setting.copy()
+    to_fill_sumw2["val_sumw2"] = "sumw2"
+    sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
+    return sample_hist
+                    
+
 def getPlotVar(var: str):
     """
     Helper function that removes the variations in variable name if they exist
@@ -79,6 +95,82 @@ def getPlotVar(var: str):
     else:
         plot_var = var
     return plot_var
+
+
+def applyRegionCatCuts(events, category: str, region_name: str):
+    # do mass region cut
+    mass = events.dimuon_mass
+    z_peak = ((mass > 70) & (mass < 110))
+    h_sidebands =  ((mass > 110) & (mass < 115.03)) | ((mass > 135.03) & (mass < 150))
+    h_peak = ((mass > 115.03) & (mass < 135.03))
+    if region_name == "signal":
+        region = h_sidebands | h_peak
+    elif region_name == "h-peak":
+        region = h_peak 
+    elif region_name == "h-sidebands":
+        region = h_sidebands 
+    elif region_name == "z-peak":
+        region = z_peak 
+    else: 
+        print("ERROR: acceptable region!")
+        raise ValueError
+    
+    # do category cut
+    if category == "nocat": 
+        # print("nocat mode!")
+        prod_cat_cut =  ak.ones_like(region, dtype="bool")
+    else: # VBF or ggH
+        btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
+        btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
+        btag_cut = btagLoose_filter | btagMedium_filter
+        # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
+        vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
+        vbf_cut = ak.fill_none(vbf_cut, value=False)
+        # if args.vbf_cat_mode:
+        if category == "vbf":
+            # print("vbf mode!")
+            prod_cat_cut =  vbf_cut
+            prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+            print("applying jet1 pt 35 Gev cut!")
+            if args.do_vbf_filter_study:
+                print("applying VBF filter gen cut!")
+                if "dy_" in process:
+                    if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
+                        print("dy_VBF_filter extra!")
+                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
+                        prod_cat_cut =  (prod_cat_cut  
+                                    & vbf_filter
+                        )
+                    elif process == "dy_m105_160_amc":
+                        print("dy_M-100To200 extra!")
+                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+                        prod_cat_cut =  (
+                            prod_cat_cut  
+                            & ~vbf_filter 
+                        )
+                    else:
+                        print(f"no extra processing for {process}")
+                        pass
+        # else: # we're interested in ggH category
+        elif category == "ggh":
+            # print("ggH mode!")
+            prod_cat_cut =  ~vbf_cut 
+            prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+        else:
+            print("Error: invalid category option!")
+            raise ValueError
+    
+    category_selection = (
+        prod_cat_cut & 
+        region 
+    )
+    
+    # filter events fro selected category
+    
+    # print(f"len(events) {process} b4 selection: {len(events)}")
+    events = events[category_selection]
+    return events
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -421,7 +513,8 @@ if __name__ == "__main__":
         print(f"full_load_path: {full_load_path}")
         try:
             events = dak.from_parquet(full_load_path)
-            target_chunksize = 150_000
+            # target_chunksize = 150_000
+            target_chunksize = 500_000
             events = events.repartition(rows_per_partition=target_chunksize)
         except:
             print(f"full_load_path: {full_load_path} Not available. Skipping")
@@ -1072,7 +1165,7 @@ if __name__ == "__main__":
             # also check if logscale config is mentioned in plot_settings, if yes, that config takes priority
             # if "logscale" in plot_settings[plot_var].keys():
             #     do_logscale = plot_settings[plot_var]["logscale"]
-            print(f"do_logscale: {do_logscale} ")
+            # print(f"do_logscale: {do_logscale} ")
 
             group_data_vals = []
             group_DY_vals = []
@@ -1097,14 +1190,14 @@ if __name__ == "__main__":
                 sample_hist = copy.deepcopy(sample_hist_empty)
                 for region_name in args.regions:
                     # for each process make new hist
-                    print(f"process: {process}")
+                    # print(f"process: {process}")
                     try:
                         events = loaded_events[process]
                     except:
-                        print(f"skipping {process}")
+                        # print(f"skipping {process}")
                         continue
                     is_data = "data" in process.lower()
-                    print(f"is_data: {is_data}")
+                    # print(f"is_data: {is_data}")
                     
                     #-----------------------------------------------    
                     # obtain the category selection
@@ -1115,78 +1208,10 @@ if __name__ == "__main__":
                     # take the mass region and category cuts 
                     # ------------------------------------------------
     
-                    # do mass region cut
-                    mass = events.dimuon_mass
-                    z_peak = ((mass > 70) & (mass < 110))
-                    h_sidebands =  ((mass > 110) & (mass < 115.03)) | ((mass > 135.03) & (mass < 150))
-                    h_peak = ((mass > 115.03) & (mass < 135.03))
-                    if region_name == "signal":
-                        region = h_sidebands | h_peak
-                    elif region_name == "h-peak":
-                        region = h_peak 
-                    elif region_name == "h-sidebands":
-                        print("h_sidebands region chosen!")
-                        region = h_sidebands 
-                    elif region_name == "z-peak":
-                        region = z_peak 
-                    else: 
-                        print("ERROR: acceptable region!")
-                        raise ValueError
-    
-                    # do category cut
-                    if args.category == "nocat": 
-                        print("nocat mode!")
-                        prod_cat_cut =  ak.ones_like(region, dtype="bool")
-                    else: # VBF or ggH
-                        btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
-                        btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
-                        btag_cut = btagLoose_filter | btagMedium_filter
-                        # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
-                        vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
-                        vbf_cut = ak.fill_none(vbf_cut, value=False)
-                        # if args.vbf_cat_mode:
-                        if args.category == "vbf":
-                            print("vbf mode!")
-                            prod_cat_cut =  vbf_cut
-                            prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-                            print("applying jet1 pt 35 Gev cut!")
-                            if args.do_vbf_filter_study:
-                                print("applying VBF filter gen cut!")
-                                if "dy_" in process:
-                                    if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
-                                        print("dy_VBF_filter extra!")
-                                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
-                                        prod_cat_cut =  (prod_cat_cut  
-                                                    & vbf_filter
-                                        )
-                                    elif process == "dy_m105_160_amc":
-                                        print("dy_M-100To200 extra!")
-                                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
-                                        prod_cat_cut =  (
-                                            prod_cat_cut  
-                                            & ~vbf_filter 
-                                        )
-                                    else:
-                                        print(f"no extra processing for {process}")
-                                        pass
-                        # else: # we're interested in ggH category
-                        elif args.category == "ggh":
-                            print("ggH mode!")
-                            prod_cat_cut =  ~vbf_cut 
-                            prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-                        else:
-                            print("Error: invalid category option!")
-                            raise ValueError
-                
-                    category_selection = (
-                        prod_cat_cut & 
-                        region 
-                    )
-    
-                    # filter events fro selected category
-    
-                    # print(f"len(events) {process} b4 selection: {len(events)}")
-                    events = events[category_selection]
+                    
+                    # events = applyRegionCatCuts(events, args.category, region_name)
+                    events = dak.map_partitions(applyRegionCatCuts,events, args.category, region_name)
+                    
                     # print(f"len(events) {process} after selection: {len(events)}")
                     
                     # category_selection = ak.to_numpy(category_selection) # this will be multiplied with weights
@@ -1223,32 +1248,21 @@ if __name__ == "__main__":
                         values = ak.fill_none(events[var_reduced], value=-999.0)
                     else:
                         values = ak.fill_none(events[var], value=-999.0)
-                    values_filter = values!=-999.0
-                    values = values[values_filter]
-                    weights = weights[values_filter]
+                        
                     # MC samples are already normalized by their xsec*lumi, but data is not
                     if process in group_data_processes:
-                        print(f"{process} is in data processes")
-                        fraction_weight = fraction_weight[values_filter]
-                        # print(f"fraction_weight: {fraction_weight}")
+                        # print(f"weights: b4 {weights.compute()}")
                         weights = weights*fraction_weight
-                    # print(f"weights.shape: {weights[weights>0].shape}")
+                        # print(f"fraction_weight: {fraction_weight.compute()}")
+                        # print(f"weights after: {weights.compute()}")
                     group_name = find_group_name(process, group_dict)
                     to_fill_setting = {
                     "region" : region_name,
                     "channel" : args.category,
                     "variation" : "nominal",
                     "sample_group": group_name,
-                    var : values,
                     }
-                    to_fill_value = to_fill_setting.copy()
-                    to_fill_value["val_sumw2"] = "value"
-                    sample_hist.fill(**to_fill_value, weight=weights)
-            
-                    to_fill_sumw2 = to_fill_setting.copy()
-                    to_fill_sumw2["val_sumw2"] = "sumw2"
-                    sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
-                    
+                    sample_hist = fillHist(sample_hist, to_fill_setting, values, weights)
                     
                 sample_hist_l.append(sample_hist)
     
@@ -1303,7 +1317,6 @@ if __name__ == "__main__":
                 # order bkg_MC_dict in a specific way for plotting, smallest yielding process first:
                 bkg_MC_order = ["other", "VV", "Ewk", "Top", "DY"]
                 bkg_MC_dict = {process: bkg_MC_dict[process] for process in bkg_MC_order if process in bkg_MC_dict}
-                print(f"data_dict: {data_dict}")
                 if len(data_dict) ==0:
                     print(f"empty histograms for {var} skipping!")
                     continue
@@ -1312,7 +1325,7 @@ if __name__ == "__main__":
                 # All data are prepped, now plot Data/MC histogram
                 # -------------------------------------------------------
                 full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{region_name}/Cat_{args.category}/{args.label}"
-                print(f"full_save_path: {full_save_path}")
+                # print(f"full_save_path: {full_save_path}")
                 
                 
                 if not os.path.exists(full_save_path):
