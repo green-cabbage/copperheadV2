@@ -598,6 +598,131 @@ def plotDataMC_compare_eager(
     plt.savefig(save_full_path)
 
 
+def plotFig_6_13(
+    binning: np.array, 
+    bkg_MC: Dict[str, np.array], 
+    sig_MC: Dict[str, np.array], 
+    save_full_path: str,
+    title="default title", 
+    x_title="Mass (GeV)", 
+    y_title="A.U.",
+    significance_tuple=None,
+    log_scale=False,
+    lumi = "",
+    status = "Private Work",
+    CenterOfMass = 13,
+    bdtCat_boundaries = [],
+    ):
+    """
+    """
+    plt.style.use(hep.style.CMS)
+
+
+    if significance_tuple is not None:
+        fig, (ax_main, ax_ratio) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
+    else: # skip ratio plot
+        fig, ax_main = plt.subplots()
+    fig.subplots_adjust(hspace=0.1)
+
+    # -----------------------------------------
+    # plot signal and background
+    # -----------------------------------------
+    values = bkg_MC["BDT_score"]
+    weights = bkg_MC["wgt_nominal"]
+    # print(f"values: {values}")
+    # print(f"weights: {weights}")
+    bkg_hist_orig, _ = getHistAndErrs(binning, values, weights)
+    bkg_hist = bkg_hist_orig / np.sum(bkg_hist_orig) # normalize
+    hep.histplot(
+        bkg_hist, 
+        xerr=True, 
+        bins=binning, 
+        stack=False, 
+        histtype='step', 
+        color='red', 
+        label='Background', 
+        ax=ax_main,
+    )
+
+    values = sig_MC["BDT_score"]
+    weights = sig_MC["wgt_nominal"]
+    sig_hist_orig, _ = getHistAndErrs(binning, values, weights)
+    sig_hist = sig_hist_orig / np.sum(sig_hist_orig) # normalize
+    hep.histplot(
+        sig_hist, 
+        xerr=True, 
+        bins=binning, 
+        stack=False, 
+        histtype='step', 
+        color='blue', 
+        label='Signal $m_H$=125 GeV', 
+        ax=ax_main,
+    )
+    
+    
+    ax_main.set_ylabel(y_title)
+
+    if log_scale:
+        ax_main.set_yscale('log')
+        # ax_main.set_ylim(0.01, 1e9)
+            
+    
+    # -----------------------------------------
+    # add boundaries
+    # -----------------------------------------
+    for boundary in bdtCat_boundaries:
+        ax_main.axvline(
+            x=boundary,
+            color='grey',
+            linestyle=':',
+            linewidth=1.5,
+            alpha=0.9  
+        )
+    # axvline(x=0, ymin=0, ymax=1, **kwargs)
+    
+    # -----------------------------------------
+    # plot significance
+    # -----------------------------------------
+    if significance_tuple is not None: 
+        # compute Data/MC ratio
+        subCatSignificance_hist, binning = significance_tuple
+        
+
+        
+        hep.histplot(subCatSignificance_hist, 
+                     bins=binning, 
+                     histtype='step',
+                     color='black', label='Ratio', ax=ax_ratio)
+        
+        
+        
+        ax_ratio.axhline(1, color='gray', linestyle='--')
+        ax_ratio.axhline(0.8, color='gray', linestyle='--')
+        ax_ratio.axhline(0.6, color='gray', linestyle='--')
+        ax_ratio.axhline(0.4, color='gray', linestyle='--')
+        ax_ratio.axhline(0.2, color='gray', linestyle='--')
+        ax_ratio.set_ylim(0.1,1) 
+        ax_ratio.set_xlabel(x_title)
+        ax_ratio.set_ylabel('Data / MC')
+        ax_ratio.set_xlim(binning[0], binning[-1])
+        # ax_ratio.set_yticks([0.6, 0.8, 1.0, 1.2, 1.4]) # explicitly ask for 1.4 and 0.6
+        ax_ratio.set_yticks([0.2, 0.4, 0.6, 0.8, ]) # explicitly ask for 1.4 and 0.6
+    else:
+        ax_main.set_xlabel(x_title)
+        ax_main.set_xlim(binning[0], binning[-1])
+
+    # -----------------------------------------
+    # Legend, title, etc +  save figure
+    # -----------------------------------------
+    ax_main.legend(loc="best", ncol=1)
+    if title != "":
+        ax_main.set_title(title)
+    # save figure, we assume that the directory exists
+    hep.cms.label(data=True, loc=0, label=status, com=CenterOfMass, lumi=lumi, ax=ax_main)
+    plt.savefig(save_full_path)
+
+
+
 def plotDataMC_compare_normalized(
     binning: np.array, 
     data: Dict[str, np.array], 
