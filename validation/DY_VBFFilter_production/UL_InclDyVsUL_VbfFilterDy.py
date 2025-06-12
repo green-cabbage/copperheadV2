@@ -39,6 +39,11 @@ def applyVBF_phaseCut(events):
     gjj_mass_cut = ak.fill_none(gjj_mass_cut, value=False)
     return events[gjj_mass_cut]
 
+def applyVBF_invPhaseCut(events):
+    gjj_mass_cut = (events.gjj_mass <= 350)
+    gjj_mass_cut = ak.fill_none(gjj_mass_cut, value=False)
+    return events[gjj_mass_cut]
+
 def applyVBF_cutV1(events):
     btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
     vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
@@ -239,6 +244,7 @@ def plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf
     # residual.GetYaxis().SetTitleSize(0.80)
     residual.GetYaxis().SetLabelSize(0.10)
 
+    pad1.SetTicks(2, 2)
     pad2.SetTicks(2, 2)
     c.SetGrid()
     c.Update()
@@ -327,7 +333,7 @@ if __name__ == "__main__":
          'mu2_phi',
          'mu1_pt_over_mass',
          'mu2_pt_over_mass',
-         # 'jj_mass_nominal_range2'
+         'gjj_mass'
     ]
     variables2plot.append("wgt_nominal")
     print(f"variables2plot: {variables2plot}")
@@ -340,7 +346,7 @@ if __name__ == "__main__":
     # target_chunksize = 150_000
     target_chunksize = 300_000
     # target_chunksize = 500_000
-    # target_len = 400_000
+    target_len = 400_000
     # target_len = 4_000_000
     
     # dy 100To200
@@ -349,8 +355,9 @@ if __name__ == "__main__":
     events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
     events_100To200 = events_100To200.repartition(rows_per_partition=target_chunksize)
     events_100To200 = filterRegion(events_100To200, region="signal")
-    events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
-    events_100To200 = applyVBF_cutV1(events_100To200)
+    # events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
+    events_100To200 = applyVBF_invPhaseCut(events_100To200) # gjj mass cut
+    # events_100To200 = applyVBF_cutV1(events_100To200)
     events_100To200 = ak.zip({var: events_100To200[var] for var in variables2plot}) # add only variables to plot
     
     # vbf-filter
@@ -359,27 +366,33 @@ if __name__ == "__main__":
     events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
     events_vbf = events_vbf.repartition(rows_per_partition=target_chunksize)
     events_vbf = filterRegion(events_vbf, region="signal")
-    events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
-    events_vbf = applyVBF_cutV1(events_vbf)
+    # events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
+    events_vbf = applyVBF_invPhaseCut(events_vbf) # gjj mass cut
+    # events_vbf = applyVBF_cutV1(events_vbf)
     events_vbf = ak.zip({var: events_vbf[var] for var in variables2plot}) # add only variables to plot
 
     # now compute
     events_100To200, events_vbf = dask.compute((events_100To200, events_vbf))[0]
-    # events_100To200 = events_100To200.compute()
-    # events_vbf = events_vbf.compute()
 
+    variables2plot += ["jj_mass_nominal_range2"]
     
     for var in variables2plot:
+        if ("_range2" in var):
+            var_reduced = var.replace("_range2","")
+        else:
+            var_reduced = var
         plot_var = getPlotVar(var)
+            
+        print(f"plot_var: {plot_var}, var: {var}")
         if plot_var not in plot_bins.keys():
             print(f"{plot_var} not available in plot_bins. skipping!")
             continue
         xmin, xmax, _ = plot_bins[plot_var]["binning_linspace"]
         xlabel = plot_bins[plot_var].get("xlabel").replace("$","")
-        dy100To200 = ak.to_numpy(events_100To200[var])
+        dy100To200 = ak.to_numpy(events_100To200[var_reduced])
         dy100To200_wgt = ak.to_numpy(events_100To200.wgt_nominal)
         dy100To200_wgt = np.sign(dy100To200_wgt)
-        dy_vbf = ak.to_numpy(events_vbf[var])
+        dy_vbf = ak.to_numpy(events_vbf[var_reduced])
         dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
         dy_vbf_wgt = np.sign(dy_vbf_wgt)
         save_fname = f"DY2018UL_{var}_"
