@@ -194,8 +194,8 @@ def plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf
     h2.FillN(len(dy_vbf), dy_vbf, weights)
     
     # Normalize
-    h1.Scale(1/h1.Integral())
-    h2.Scale(1/h2.Integral())
+    # h1.Scale(1/h1.Integral())
+    # h2.Scale(1/h2.Integral())
 
     # Set styles
     h1.SetLineColor(ROOT.kBlue)
@@ -341,8 +341,10 @@ if __name__ == "__main__":
     label="vbf_dy_validationMay30_2025"
 
     year = "2018"
-    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{label}/stage1_output/{year}/f1_0"
-    
+    # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{label}/stage1_output/{year}/f1_0"
+    load_path = "/depot/cms/users/shar1172/hmm/copperheadV1clean/Run2_nanoAODv12_08June/stage1_output/2018/f1_0/"
+    # region="signal"
+    region="h-sidebands"
     # target_chunksize = 150_000
     target_chunksize = 300_000
     # target_chunksize = 500_000
@@ -350,25 +352,28 @@ if __name__ == "__main__":
     # target_len = 4_000_000
     
     # dy 100To200
-    load_path_100To200 = f"{load_path}/dy_M-100To200"
+    # load_path_100To200 = f"{load_path}/dy_M-100To200"
+    load_path_100To200 = f"{load_path}/dy_M-100To200_aMCatNLO"
+    
     # events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")[:target_len]
     events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
     events_100To200 = events_100To200.repartition(rows_per_partition=target_chunksize)
-    events_100To200 = filterRegion(events_100To200, region="signal")
-    # events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
-    events_100To200 = applyVBF_invPhaseCut(events_100To200) # gjj mass cut
-    # events_100To200 = applyVBF_cutV1(events_100To200)
+    events_100To200 = filterRegion(events_100To200, region=region)
+    events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
+    # events_100To200 = applyVBF_invPhaseCut(events_100To200) # gjj mass cut
+    events_100To200 = applyVBF_cutV1(events_100To200)
     events_100To200 = ak.zip({var: events_100To200[var] for var in variables2plot}) # add only variables to plot
     
     # vbf-filter
-    load_path_vbf = f"{load_path}/dy_m105_160_vbf_amc"
+    # load_path_vbf = f"{load_path}/dy_m105_160_vbf_amc"
+    load_path_vbf = f"{load_path}/dy_VBF_filter_NewZWgt"
     # events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")[:target_len]
     events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
     events_vbf = events_vbf.repartition(rows_per_partition=target_chunksize)
-    events_vbf = filterRegion(events_vbf, region="signal")
-    # events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
-    events_vbf = applyVBF_invPhaseCut(events_vbf) # gjj mass cut
-    # events_vbf = applyVBF_cutV1(events_vbf)
+    events_vbf = filterRegion(events_vbf, region=region)
+    events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
+    # events_vbf = applyVBF_invPhaseCut(events_vbf) # gjj mass cut
+    events_vbf = applyVBF_cutV1(events_vbf)
     events_vbf = ak.zip({var: events_vbf[var] for var in variables2plot}) # add only variables to plot
 
     # now compute
@@ -391,10 +396,10 @@ if __name__ == "__main__":
         xlabel = plot_bins[plot_var].get("xlabel").replace("$","")
         dy100To200 = ak.to_numpy(events_100To200[var_reduced])
         dy100To200_wgt = ak.to_numpy(events_100To200.wgt_nominal)
-        dy100To200_wgt = np.sign(dy100To200_wgt)
+        # dy100To200_wgt = np.sign(dy100To200_wgt)
         dy_vbf = ak.to_numpy(events_vbf[var_reduced])
         dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
-        dy_vbf_wgt = np.sign(dy_vbf_wgt)
+        # dy_vbf_wgt = np.sign(dy_vbf_wgt)
         save_fname = f"DY2018UL_{var}_"
         plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname)
     
