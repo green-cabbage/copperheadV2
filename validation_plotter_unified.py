@@ -31,16 +31,18 @@ group_data_processes = ["data_A", "data_B", "data_C", "data_D", "data_E",  "data
 group_DY_processes = [
     "dy_M-50",
     "dy_M-100To200",
+    "dy_M-50_aMCatNLO",
     "dy_m105_160_amc",
     "dy_m105_160_vbf_amc",
     "dy_VBF_filter_customJMEoff",
     "dy_VBF_filter_fromGridpack",
-    "dyTo2L_M-50_0j",
-    "dyTo2L_M-50_1j",
-    "dyTo2L_M-50_2j",
-    "dyTo2L_M-50_incl",
-    "dy_M-100To200_MiNNLO",
-    "dy_M-50_MiNNLO"
+    "dy_VBF_filter_NewZWgt",
+    # "dyTo2L_M-50_0j",
+    # "dyTo2L_M-50_1j",
+    # "dyTo2L_M-50_2j",
+    # "dyTo2L_M-50_incl",
+    # "dy_M-100To200_MiNNLO",
+    # "dy_M-50_MiNNLO"
 ]
 
 
@@ -126,14 +128,12 @@ def applyRegionCatCuts(events, category: str, region_name: str):
         # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
         vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
         vbf_cut = ak.fill_none(vbf_cut, value=False)
-        # if args.vbf_cat_mode:
         if category == "vbf":
             # print("vbf mode!")
             prod_cat_cut =  vbf_cut
             prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-            print("applying jet1 pt 35 Gev cut!")
             if args.do_vbf_filter_study:
-                print("applying VBF filter gen cut!")
+                # print("applying VBF filter gen cut!")
                 if "dy_" in process:
                     if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
                         print("dy_VBF_filter extra!")
@@ -335,7 +335,8 @@ if __name__ == "__main__":
     available_processes = []
     # if doing VBF filter study, add the vbf filter sample to the DY group
     if args.do_vbf_filter_study:
-        vbf_filter_sample =  "dy_m105_160_vbf_amc"
+        # vbf_filter_sample =  "dy_m105_160_vbf_amc"
+        vbf_filter_sample =  "dy_VBF_filter_NewZWgt"
         # vbf_filter_sample =  "dy_VBF_filter_customJMEoff"
         # vbf_filter_sample =  "dy_VBF_filter_fromGridpack"
         available_processes.append(vbf_filter_sample)
@@ -353,16 +354,17 @@ if __name__ == "__main__":
     if len(bkg_samples) >0:
         for bkg_sample in bkg_samples:
             if bkg_sample.upper() == "DY": # enforce upper case to prevent confusion
-                available_processes.append("dy_M-50")
-                available_processes.append("dy_M-100To200")
+                # available_processes.append("dy_M-50")
+                # available_processes.append("dy_M-100To200")
                 # available_processes.append("dy_m105_160_amc")
                 # available_processes.append("dyTo2L_M-50_0j")
                 # available_processes.append("dyTo2L_M-50_1j")
                 # available_processes.append("dyTo2L_M-50_2j")
                 # available_processes.append("dyTo2L_M-50_incl")
                 # available_processes.append("dy_m105_160_vbf_amc")
-                available_processes.append("dy_M-100To200_MiNNLO")
-                available_processes.append("dy_M-50_MiNNLO")
+                # available_processes.append("dy_M-100To200_MiNNLO")
+                # available_processes.append("dy_M-50_MiNNLO")
+                available_processes.append("dy_M-100To200_aMCatNLO")
             
             elif bkg_sample.upper() == "TT": # enforce upper case to prevent confusion
                 available_processes.append("ttjets_dl")
@@ -687,22 +689,23 @@ if __name__ == "__main__":
                             if args.do_vbf_filter_study:
                                 print("applying VBF filter gen cut!")
                                 if "dy_" in process:
-                                    if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
+                                    if ("dy_VBF_filter_NewZWgt" in process) or (process =="dy_m105_160_vbf_amc"):
                                         print("dy_VBF_filter extra!")
                                         vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
                                         prod_cat_cut =  (prod_cat_cut  
                                                     & vbf_filter
                                         )
-                                    elif process == "dy_m105_160_amc":
+                                    else:
                                         print("dy_M-100To200 extra!")
                                         vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
                                         prod_cat_cut =  (
                                             prod_cat_cut  
                                             & ~vbf_filter 
                                         )
-                                    else:
-                                        print(f"no extra processing for {process}")
-                                        pass
+                                else:
+                                    print(f"no extra processing for {process}")
+                                    pass
+
                             # VBF filter cut end -------------------------------------------------
                         # else: # we're interested in ggH category
                         elif args.category == "ggh":
