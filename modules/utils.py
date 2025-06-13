@@ -4,6 +4,7 @@ from rich.console import Console
 from typing import Optional
 import os
 import sys
+import awkward as ak
 
 LOGGER_NAME = "CopperHead"
 NO_GIT_INFO_AVAILABLE = "No git info available"
@@ -97,3 +98,38 @@ def get_git_info_str():
         return NO_GIT_INFO_AVAILABLE
     else:
         return f"Commit: {commit_hash}, Branch: {branch_name}, Diff: {diff}"
+
+def fillSampleValues(events, sample_dict, sample: str, fields2load=None):
+    # find which sample group sample_name belongs to
+    if fields2load is None:
+        fields2load = ["wgt_nominal", "BDT_score", "dimuon_mass", "subCategory_idx"]
+    if sample in sample_dict.keys():
+        # compute in parallel fields to load
+        computed_zip = ak.zip({
+            field : events[field] for field in fields2load
+        }).compute()
+        for field in fields2load:
+            sample_dict[sample][field] = ak.to_numpy(computed_zip[field])
+            
+    else:
+        print(f"sample {sample} not present in sample_dict!")
+
+    return sample_dict
+
+
+
+def getDimuMassBySubCat(sample_dict, sample="", nSubCats=5):
+    dimuon_mass = sample_dict[sample]["dimuon_mass"]
+    wgt_nominal = sample_dict[sample]["wgt_nominal"]
+    subCat_ixs = sample_dict[sample]["subCategory_idx"]
+    dict_by_subCat = {}
+    for target_subCat in range(nSubCats):
+        subCat_filter = target_subCat == subCat_ixs
+        dimuon_mass_subCat = dimuon_mass[subCat_filter]
+        wgt_nominal_subCat = wgt_nominal[subCat_filter]
+        subCat_dict = {
+            "dimuon_mass" : dimuon_mass_subCat,
+            "wgt_nominal" : wgt_nominal_subCat,
+        }
+        dict_by_subCat[target_subCat] = subCat_dict
+    return dict_by_subCat

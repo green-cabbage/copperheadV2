@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 plt.style.use(hep.style.CMS)
 from omegaconf import OmegaConf
+from modules.utils import fillSampleValues, getDimuMassBySubCat
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -57,28 +58,6 @@ def tranformBDT_edges(bin_edges):
         transformed_edges.append(transformed_edge)
     return transformed_edges
 
-def fillSampleValues(events, sample_dict, sample: str):
-    # find which sample group sample_name belongs to
-    if sample in sample_dict.keys():
-        fields2load = ["wgt_nominal", "BDT_score", "dimuon_mass", "subCategory_idx"]
-        
-        # compute in parallel fields to load
-        computed_zip = ak.zip({
-            field : events[field] for field in fields2load
-        }).compute()
-        computed_zip = tranformBDT_score(computed_zip)
-        for field in fields2load:
-            # sample_dict[sample][field].append(
-            #     ak.to_numpy(computed_zip[field])
-            # )
-            sample_dict[sample][field] = ak.to_numpy(computed_zip[field])
-            
-    else:
-        print(f"sample {sample} not present in sample_dict!")
-
-    return sample_dict
-
-
 def getHWHM(fwhm, counts, bin_centers):
     hwhm = fwhm/2
     max_ix = np.argmax(counts)
@@ -110,21 +89,6 @@ def compute_hwhm_with_edges(counts, bin_edges):
     hwhm = fwhm/2
     return hwhm, bin_center_l, bin_center_r
 
-def getDimuMassBySubCat(sample_dict, sample="", nSubCats=5):
-    dimuon_mass = sample_dict[sample]["dimuon_mass"]
-    wgt_nominal = sample_dict[sample]["wgt_nominal"]
-    subCat_ixs = sample_dict[sample]["subCategory_idx"]
-    dict_by_subCat = {}
-    for target_subCat in range(nSubCats):
-        subCat_filter = target_subCat == subCat_ixs
-        dimuon_mass_subCat = dimuon_mass[subCat_filter]
-        wgt_nominal_subCat = wgt_nominal[subCat_filter]
-        subCat_dict = {
-            "dimuon_mass" : dimuon_mass_subCat,
-            "wgt_nominal" : wgt_nominal_subCat,
-        }
-        dict_by_subCat[target_subCat] = subCat_dict
-    return dict_by_subCat
 
 def getHWHM_withEdges(sample_dict, binning):
     dimuon_mass = sample_dict["dimuon_mass"]
@@ -269,7 +233,12 @@ if __name__ == "__main__":
         events = dak.from_parquet(full_load_path)
         events = filterRegion(events, region=args.region)
         sample_dict = fillSampleValues(events, sample_dict, group)
+        print(f"sample_dict: {sample_dict}")
 
+    #transform BDT score
+    for group, field_dict in sample_dict.items():
+        field_dict = tranformBDT_score(field_dict)
+        sample_dict[group] = field_dict
 
     plot_setting_fname = "../../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
     plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
@@ -280,7 +249,7 @@ if __name__ == "__main__":
     bkg_MC = sample_dict["background"]
     sig_MC = sample_dict["signal"]
     save_fname = "plots/Fig6_13.pdf"
-    print(f"sample_dict: {sample_dict}")
+    # print(f"sample_dict: {sample_dict}")
     print(f"binning: {binning}")
     print(f"bkg_MC: {bkg_MC}")
     print(f"sig_MC: {sig_MC}")
