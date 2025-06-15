@@ -14,6 +14,7 @@ plt.style.use(hep.style.CMS)
 from omegaconf import OmegaConf
 from modules.utils import fillSampleValues, getDimuMassBySubCat
 from modules.basic_functions import filterRegion
+from modules.fit_functions import getFEWZ_roospline
 import ROOT
 import ROOT as rt
 import copy
@@ -68,7 +69,7 @@ def getColor(name):
     elif "bwz" in name.lower() and "gamma" in name.lower():
         return rt.kGreen, rt.kDotted
     elif "fewz" in name.lower() and "bern" in name.lower():
-        return rt.kViolet
+        return rt.kViolet, rt.kDashDotted
     elif "landau" in name.lower() and "bern" in name.lower():
         return rt.kGray, rt.kDashDotted
     else:
@@ -193,7 +194,7 @@ def getLandxBern(x):
     
     # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
     # name = "LandauxBernstein"
-    name = "bernstein"
+    name = "bernstein_landau"
     bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
 
     
@@ -211,6 +212,57 @@ def getLandxBern(x):
         bern_pol,
     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
     return coreLandxBern, param_l
+
+# def getFEWZ_roospline(x, root_path):
+#     """
+#     Extract RooSpline1D instance that we assume has been saved in ucsd_workspace/fewz.root
+#     with the name "fewz_1j_spl_order1_cat_ggh" (which we will keep)
+#     replace the variable that the RooSpline1D was constructed with, with our own variable "x"
+#     so fitTo could work with the rest of the roofit pdfs
+#     """
+#     # ucsd_spline = rt.TFile("modules/ucsd_workspace/fewz.root")["fewz_1j_spl_order1_cat_ggh"]
+#     ucsd_spline = rt.TFile(f"{root_path}/fewz.root")["fewz_1j_spl_order1_cat_ggh"]
+#     ucsd_var = ucsd_spline.getVariables()[0]
+#     # replace the variable with our variable
+#     customizer = rt.RooCustomizer(ucsd_spline, "")
+#     customizer.replaceArg(ucsd_var, x)
+#     roo_spline_func = customizer.build()
+#     name = "fewz_1j_spl_order1_cat_ggh"
+#     roo_spline_func.SetName(name)
+#     return roo_spline_func
+
+def getFEWZxBern(x):
+    roo_spline_func = getFEWZ_roospline(x, "modules/ucsd_workspace/")
+
+    name = "fewz_1j_spl_pdf"
+    roo_spline_pdf = rt.RooWrapperPdf(name, name, roo_spline_func)
+
+    name = f"bernstein_a0"
+    a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
+    name = f"bernstein_a1"
+    a1_bern = rt.RooRealVar(name,name, 1.5, 0, 5) 
+    name = f"bernstein_a2"
+    a2_bern = rt.RooRealVar(name,name, 0.75, 0.0, 10) 
+    name = f"bernstein_a3"
+    a3_bern = rt.RooRealVar(name,name, 0.75, 0.0, 10) 
+    
+    name = "bernstein_FEWZxBern"
+    bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern, a3_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
+
+    
+    name = "FEWZxBernstein"
+    coreFEWZxBern = rt.RooProdPdf(name, name, [roo_spline_pdf, bern_pol])
+
+    param_l = [
+        roo_spline_func,
+        roo_spline_pdf,
+        a0_bern,
+        a1_bern,
+        a2_bern,
+        a3_bern,
+        bern_pol,
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreFEWZxBern, param_l
 
 def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
     device = "cpu"
@@ -280,13 +332,21 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         # print(f"coreBWZxBern : \n")
         # fitResult.Print()
 
+        # fit FEWZxBern
+        coreFEWZxBern, param_l_fewz_bern = getFEWZxBern(mass)
+        _ = coreFEWZxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreFEWZxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True)
+        print(f"coreFEWZxBern : \n")
+        fitResult.Print()
+        
         # fit LandxBern
         coreLandxBern, param_l_land_bern = getLandxBern(mass)
         _ = coreLandxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreLandxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True)
-        print(f"coreLandxBern : \n")
-        fitResult.Print()
+        # print(f"coreLandxBern : \n")
+        # fitResult.Print()
 
+        
         
         
         # raise ValueError
@@ -314,8 +374,10 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         pad1.cd()
         legend = rt.TLegend(0.65,0.55,0.9,0.7)
         frame = mass.frame()
-        roo_histData.plotOn(frame)
-        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
+
+        # plot invisible data points for pdfs could be normalized
+        roo_histData.plotOn(frame, Invisible=True)
+        # legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
         
         # BWZRedux
         color, style = getColor(coreBWZRedux.GetName())
@@ -348,6 +410,13 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         name = coreBWZGamma.GetName()
         coreBWZGamma.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+
+        # -----------------------------------------------------------
+        # FEWZxBern
+        color, style = getColor(coreFEWZxBern.GetName())
+        name = coreFEWZxBern.GetName()
+        coreFEWZxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
         
         # -----------------------------------------------------------
         # LandxBern
@@ -356,8 +425,13 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         coreLandxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
-
+        # -----------------------------------------------------------
+        # Data
+        roo_histData.plotOn(frame)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
         
+        
+        # Draw frame and legend        
         frame.Draw()
         legend.Draw()
         
@@ -398,7 +472,11 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         ratio_bwzGamma = rt.RooGenericPdf("BWZGamma ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreBWZGamma))
         color, style = getColor(ratio_bwzGamma.GetName())
         ratio_bwzGamma.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
-
+        # -----------------------------------------------------------
+        # FEWZxBern
+        ratio_FEWZxBern = rt.RooGenericPdf("FEWZxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreFEWZxBern))
+        color, style = getColor(ratio_FEWZxBern.GetName())
+        ratio_FEWZxBern.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         # -----------------------------------------------------------
         # LandxBern
         ratio_landXBern = rt.RooGenericPdf("LandauxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreLandxBern))
