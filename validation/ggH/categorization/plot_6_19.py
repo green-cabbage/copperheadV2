@@ -61,12 +61,12 @@ def getColor(name):
         return rt.kRed, rt.kSolid
     elif "bwz" in name.lower() and "bern" in name.lower():
         return rt.kBlue
-    elif "sumpow" in name.lower():
-        return rt.kCyan
-    elif "sumexp" in name.lower():
+    elif "s-power" in name.lower():
+        return rt.kCyan, rt.kDashDotted
+    elif "s-exponential" in name.lower():
         return rt.kOrange, rt.kDashed 
     elif "bwz" in name.lower() and "gamma" in name.lower():
-        return rt.kGreen
+        return rt.kGreen, rt.kDotted
     elif "fewz" in name.lower() and "bern" in name.lower():
         return rt.kViolet
     elif "landau" in name.lower() and "bern" in name.lower():
@@ -74,6 +74,30 @@ def getColor(name):
     else:
         print("Error, color not available for the function!")
         raise ValueError
+
+def getBWZ_gamma(x):
+    name = f"BWZ_a_coeff"
+    a_coeff_bwz = rt.RooRealVar(name,name, -0.02,-0.5,0.5)
+    name = "BWZ"
+    BWZ = rt.RooModZPdf(name, name, x, a_coeff_bwz) 
+
+    name = f"Gamma_a_coeff"
+    a_coeff_gamma = rt.RooRealVar(name,name, -0.00005,-0.05,0.05)
+    gamma = rt.RooGenericPdf("Gamma", "exp(@1*@0)/pow(@0,2)", rt.RooArgList(x, a_coeff_gamma))
+
+    name = f"frac"
+    frac = rt.RooRealVar(name,name, 0.5, 0.0, 1.0) 
+    name = "BWZGamma"
+    coreBWZGamma = rt.RooAddPdf(name, name, [BWZ, gamma], [frac])
+
+    param_l = [
+        a_coeff_bwz,
+        BWZ,
+        a_coeff_gamma,
+        gamma,
+        frac,
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreBWZGamma, param_l
 
 def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
     device = "cpu"
@@ -96,14 +120,13 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         b_coeff = rt.RooRealVar(name,name, -0.000111,-0.1,0.1)
         name = f"BWZ_Redux_c_coeff"
         c_coeff = rt.RooRealVar(name,name, 0.5,-10.0,10.0)
-        name = "BWZRedux"
+        name = "BWZRedux" # source: https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit/blob/5ae49dd944479b79af5692ff47fd7f1d9de16e91/interface/HMuMuRooPdfs.h#L11
         coreBWZRedux = rt.RooModZPdf(name, name, mass, a_coeff, b_coeff, c_coeff) 
         _ = coreBWZRedux.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreBWZRedux.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
         # print(f"fitResult: {fitResult}")
 
         # fit Sum exp
-        # sumexp subcat
         name = f"RooSumTwoExpPdf_a1_coeff"
         a1_coeff = rt.RooRealVar(name,name, 0.00001,-2.0,1)
         name = f"RooSumTwoExpPdf_a2_coeff"
@@ -111,10 +134,31 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         name = f"RooSumTwoExpPdf_f_coeff"
         f_coeff = rt.RooRealVar(name,name, 0.9,0.0,1.0)
     
-        name = "sumExp"
+        name = "S-Exponential"
         coreSumExp = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
         _ = coreSumExp.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreSumExp.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+
+        # fit Sum Power law
+        name = f"RooSumTwoPowerLawPdf_a1_coeff"
+        a1_coeff_pow = rt.RooRealVar(name,name, 0.00001,-2.0,1)
+        name = f"RooSumTwoPowerLawPdf_a2_coeff"
+        a2_coeff_pow = rt.RooRealVar(name,name, 0.1,-2.0,1)
+        name = f"RooSumTwoPowerLawPdf_f_coeff"
+        f_coeff_pow = rt.RooRealVar(name,name, 0.9,0.0,1.0)
+    
+        name = "S-Power-Law"
+        coreSumPow = rt.RooSumTwoPowerLawPdf(name, name, mass, a1_coeff_pow, a2_coeff_pow, f_coeff_pow) 
+        _ = coreSumPow.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreSumPow.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+
+        # fit BWZ Gamma
+        coreBWZGamma, param_l_bwz_gamma = getBWZ_gamma(mass)
+        _ = coreBWZGamma.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreBWZGamma.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        print(f"coreBWZGamma : \n")
+        fitResult.Print()
+        # raise ValueError
         
         # plot
         name = "Canvas"
@@ -138,7 +182,7 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         legend = rt.TLegend(0.65,0.55,0.9,0.7)
         frame = mass.frame()
         roo_histData.plotOn(frame)
-        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "D")
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
         
         color, style = getColor(coreBWZRedux.GetName())
         name = coreBWZRedux.GetName()
@@ -150,10 +194,22 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         name = coreSumExp.GetName()
         coreSumExp.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
-        
+
+        # ---------------------------cond--------------------------------
+        color, style = getColor(coreSumPow.GetName())
+        name = coreSumPow.GetName()
+        coreSumPow.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+
+        # -----------------------------------------------------------
+        color, style = getColor(coreBWZGamma.GetName())
+        name = coreBWZGamma.GetName()
+        coreBWZGamma.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
         
         frame.Draw()
-
+        legend.Draw()
+        
 
         # ratio
         pad2.cd()
@@ -168,10 +224,22 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         flat_pdf = ROOT.RooPolynomial("BWZRedux ratio", "BWZRedux ratio", mass)
         color, style = getColor(flat_pdf.GetName())
         flat_pdf.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+        # -----------------------------------------------------------
         
-        ratio_sumExp = rt.RooGenericPdf("Sumexp ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumExp))
+        ratio_sumExp = rt.RooGenericPdf("S-Exponential ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumExp))
         color, style = getColor(ratio_sumExp.GetName())
         ratio_sumExp.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+        # -----------------------------------------------------------
+
+        ratio_sumPow = rt.RooGenericPdf("S-Power-Law ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumPow))
+        color, style = getColor(ratio_sumPow.GetName())
+        ratio_sumPow.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+
+        # -----------------------------------------------------------
+
+        ratio_bwzGamma = rt.RooGenericPdf("BWZGamma ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreBWZGamma))
+        color, style = getColor(ratio_bwzGamma.GetName())
+        ratio_bwzGamma.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         
         # set ranges and label sizes after all things are plotted
         ratio_frame.GetXaxis().SetLabelSize(0.10)
