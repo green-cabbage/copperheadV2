@@ -60,7 +60,7 @@ def getColor(name):
     if "bwzredux" in name.lower():
         return rt.kRed, rt.kSolid
     elif "bwz" in name.lower() and "bern" in name.lower():
-        return rt.kBlue
+        return rt.kBlue, rt.kSolid
     elif "s-power" in name.lower():
         return rt.kCyan, rt.kDashDotted
     elif "s-exponential" in name.lower():
@@ -70,7 +70,7 @@ def getColor(name):
     elif "fewz" in name.lower() and "bern" in name.lower():
         return rt.kViolet
     elif "landau" in name.lower() and "bern" in name.lower():
-        return rt.kGray
+        return rt.kGray, rt.kDashDotted
     else:
         print("Error, color not available for the function!")
         raise ValueError
@@ -99,9 +99,122 @@ def getBWZ_gamma(x):
     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
     return coreBWZGamma, param_l
 
+# def getBWZxBern(x):
+#     name = f"BWZ_a_coeff"
+#     # a_coeff_bwz = rt.RooRealVar(name,name, -0.02,-0.5,0.5)
+#     # a_coeff_bwz = rt.RooRealVar(name,name, -0.02,-0.03,-0.01)
+#     # name = "BWZ"
+#     # BWZ = rt.RooModZPdf(name, name, x, a_coeff_bwz) 
+
+#     # name = f"bernstein_a0"
+#     # # a0_bern = rt.RooRealVar(name,name, 1.157, 0, 2)
+#     # # a0_bern = rt.RooRealVar(name,name, 0.3, 0, 2)
+#     # a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
+#     # name = f"bernstein_a1"
+#     # # a1_bern = rt.RooRealVar(name,name, 1.6, 0, 2)
+#     # a1_bern = rt.RooRealVar(name,name, 1.5, 1, 2) # starting value = 1/n_coeffs
+#     # name = f"bernstein_a2"
+#     # a2_bern = rt.RooRealVar(name,name, 3.5, 3, 4) # starting value = 1/n_coeffs
+    
+#     # # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
+#     # bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
+
+#     a_coeff_bwz = rt.RooRealVar(name,name, 8.6877e-03,-0.03,1)
+#     name = "BWZ"
+#     BWZ = rt.RooModZPdf(name, name, x, a_coeff_bwz) 
+
+#     name = f"bernstein_a0"
+#     # a0_bern = rt.RooRealVar(name,name, 1.157, 0, 2)
+#     # a0_bern = rt.RooRealVar(name,name, 0.3, 0, 2)
+#     a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
+#     name = f"bernstein_a1"
+#     # a1_bern = rt.RooRealVar(name,name, 1.6, 0, 2)
+#     a1_bern = rt.RooRealVar(name,name, 1, -10, 10) # starting value = 1/n_coeffs
+#     name = f"bernstein_a2"
+#     a2_bern = rt.RooRealVar(name,name, 1, -10, 10) # starting value = 1/n_coeffs
+    
+#     # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
+#     bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
+
+#     name = "BWZxBernstein"
+#     coreBWZxBern = rt.RooProdPdf(name, name, [BWZ, bern_pol])
+
+#     param_l = [
+#         a_coeff_bwz,
+#         BWZ,
+#         a0_bern,
+#         a1_bern,
+#         a2_bern,
+#         bern_pol,
+#     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+#     return coreBWZxBern, param_l
+
+
+def getBWZxBern(x):
+    name = f"BWZ_a_coeff"
+    a_coeff_bwz = rt.RooRealVar(name,name, -0.02, -10, 10)
+
+    name = f"bernstein_a0"
+    a0_bern = rt.RooRealVar(name,name, 0.3, -10, 10)
+    name = f"bernstein_a1"
+    a1_bern = rt.RooRealVar(name,name, 0.3, -10, 10) # starting value = 1/n_coeffs
+    
+
+    name = "BWZxBernstein"
+    coreBWZxBern = rt.RooModZPdf(name, name, x, a_coeff_bwz, rt.RooArgList(a0_bern,a1_bern)) 
+
+    param_l = [
+        a_coeff_bwz,
+        a0_bern,
+        a1_bern,
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreBWZxBern, param_l
+
+
+def getLandxBern(x):
+    name = f"m_Z"
+    m_Z = rt.RooRealVar(name,name, 91.2)
+    name = f"a_coeff"
+    # a_coeff = rt.RooRealVar(name,name, 0.2,0.1,3)
+    a_coeff = rt.RooRealVar(name,name, 0.258087,0.0,3)
+    name = "Landau"
+    Landau = rt.RooLandau(name, name, x, m_Z, a_coeff) 
+
+    name = f"bernstein_a0"
+    # a0_bern = rt.RooRealVar(name,name, 1.157, 0, 2)
+    # a0_bern = rt.RooRealVar(name,name, 0.3, 0, 2)
+    a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
+    name = f"bernstein_a1"
+    # a1_bern = rt.RooRealVar(name,name, 1.6, 0, 2)
+    # a1_bern = rt.RooRealVar(name,name, 1.5, 0, 5) # starting value = 1/n_coeffs
+    a1_bern = rt.RooRealVar(name,name, 1.5, 0, 5) # starting value = 1/n_coeffs
+    name = f"bernstein_a2"
+    a2_bern = rt.RooRealVar(name,name, 0.75, 0.0, 10) # starting value = 1/n_coeffs
+    
+    # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
+    # name = "LandauxBernstein"
+    name = "bernstein"
+    bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
+
+    
+    name = "LandauxBernstein"
+    # coreLandxBern = rt.RooProdPdf(name, name, [Landau, bern_pol])
+    coreLandxBern = rt.RooProdPdf(name, name, [bern_pol, Landau])
+
+    param_l = [
+        m_Z,
+        a_coeff,
+        Landau,
+        a0_bern,
+        a1_bern,
+        a2_bern,
+        bern_pol,
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreLandxBern, param_l
+
 def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
     device = "cpu"
-    nSubCats=1
+    # nSubCats=1 # FIXME
     for target_subCat in range(nSubCats):
         dataDict_target = dataDict_by_subCat[target_subCat]
         mass_name = "mh_ggh"
@@ -159,8 +272,28 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         print(f"coreBWZGamma : \n")
         fitResult.Print()
         # raise ValueError
+
+        # fit BWZ Gamma
+        coreBWZxBern, param_l_bwz_bern = getBWZxBern(mass)
+        _ = coreBWZxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreBWZxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        # print(f"coreBWZxBern : \n")
+        # fitResult.Print()
+
+        # fit LandxBern
+        coreLandxBern, param_l_land_bern = getLandxBern(mass)
+        _ = coreLandxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreLandxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True)
+        print(f"coreLandxBern : \n")
+        fitResult.Print()
+
         
+        
+        # raise ValueError
+
+        # --------------------------------------------------------------------
         # plot
+        # --------------------------------------------------------------------
         name = "Canvas"
         canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
         canvas.cd()
@@ -184,34 +317,53 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         roo_histData.plotOn(frame)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
         
+        # BWZRedux
         color, style = getColor(coreBWZRedux.GetName())
         name = coreBWZRedux.GetName()
         coreBWZRedux.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
-        
         # -----------------------------------------------------------
+        # BWZxBern
+        color, style = getColor(coreBWZxBern.GetName())
+        name = coreBWZxBern.GetName()
+        coreBWZxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+        # -----------------------------------------------------------
+        # Sum Exp
         color, style = getColor(coreSumExp.GetName())
         name = coreSumExp.GetName()
         coreSumExp.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
-        # ---------------------------cond--------------------------------
+        # -----------------------------------------------------------
+        # Sum Power
         color, style = getColor(coreSumPow.GetName())
         name = coreSumPow.GetName()
         coreSumPow.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
         # -----------------------------------------------------------
+        # BWZxGamma
         color, style = getColor(coreBWZGamma.GetName())
         name = coreBWZGamma.GetName()
         coreBWZGamma.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
         
+        # -----------------------------------------------------------
+        # LandxBern
+        color, style = getColor(coreLandxBern.GetName())
+        name = coreLandxBern.GetName()
+        coreLandxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+
+
+        
         frame.Draw()
         legend.Draw()
         
-
-        # ratio
+        # ---------------------------------------------------------------
+        # ratio plot
+        # ---------------------------------------------------------------
         pad2.cd()
         ratio_frame= mass.frame()
         
@@ -220,26 +372,40 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         # Note: DataError=None flag is needed to set our GetYaxis().SetRangeUser() to our desired values. Otherwise, the size of the error bars plays a role.
         flat_unit_hist.plotOn(ratio_frame, rt.RooFit.MarkerColor(0), rt.RooFit.LineColor(0), Invisible=True, DataError=None)
 
-         
+        # BWZRedux
         flat_pdf = ROOT.RooPolynomial("BWZRedux ratio", "BWZRedux ratio", mass)
         color, style = getColor(flat_pdf.GetName())
         flat_pdf.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+
         # -----------------------------------------------------------
-        
+        # BWZxBern
+        ratio_bwzxBern = rt.RooGenericPdf("BWZxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreBWZxBern))
+        color, style = getColor(ratio_bwzxBern.GetName())
+        ratio_bwzxBern.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+        # -----------------------------------------------------------
+        # Sum Exp
         ratio_sumExp = rt.RooGenericPdf("S-Exponential ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumExp))
         color, style = getColor(ratio_sumExp.GetName())
         ratio_sumExp.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         # -----------------------------------------------------------
-
+        # Sum Power
         ratio_sumPow = rt.RooGenericPdf("S-Power-Law ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumPow))
         color, style = getColor(ratio_sumPow.GetName())
         ratio_sumPow.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
 
         # -----------------------------------------------------------
-
+        # BWZxGamma
         ratio_bwzGamma = rt.RooGenericPdf("BWZGamma ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreBWZGamma))
         color, style = getColor(ratio_bwzGamma.GetName())
         ratio_bwzGamma.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+
+        # -----------------------------------------------------------
+        # LandxBern
+        ratio_landXBern = rt.RooGenericPdf("LandauxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreLandxBern))
+        color, style = getColor(ratio_landXBern.GetName())
+        ratio_landXBern.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
+
+        
         
         # set ranges and label sizes after all things are plotted
         ratio_frame.GetXaxis().SetLabelSize(0.10)
