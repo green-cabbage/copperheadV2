@@ -9,7 +9,8 @@ from omegaconf import OmegaConf
 from typing import Tuple, List, Dict
 import ROOT as rt
 import ROOT
-from src.lib.fit_functions import MakeFEWZxBernDof3
+# from src.lib.fit_functions import MakeFEWZxBernDof3
+from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23
 import argparse
 import os
 import copy
@@ -294,7 +295,11 @@ if __name__ == "__main__":
     print(f"processed_eventsData length: {ak.num(processed_eventsData.dimuon_mass, axis=0)}")
     print("events loaded!")
 
-    
+    # make plot directory
+    base_path = f"./validation/stage3/{args.year}/{args.label}"
+    plot_save_path = base_path
+    if not os.path.exists(plot_save_path):
+        os.makedirs(plot_save_path)
 
     # Define your list of column names
     column_list = ["year", "category", "dataset", "yield"]
@@ -481,6 +486,16 @@ if __name__ == "__main__":
 
 
     # ---------------------------------------------------------------
+    # Extract Data over all sub cats
+    # ---------------------------------------------------------------
+
+    # also do for all subcats for later use
+    allCat_mass_arr = processed_eventsData.dimuon_mass
+    allCat_mass_arr  = ak.to_numpy(allCat_mass_arr) # convert to numpy for rt.RooDataSet
+    roo_datasetData = rt.RooDataSet.from_numpy({mass_name: allCat_mass_arr}, [mass])
+    roo_histData_allCat = rt.RooDataHist("allCat_rooHist","allCat_rooHist", rt.RooArgSet(mass), roo_datasetData)
+    
+    # ---------------------------------------------------------------
     # Initialize Data for Bkg models to fit to
     # ---------------------------------------------------------------
      
@@ -525,7 +540,7 @@ if __name__ == "__main__":
     data_subCat4_BWZRedux = roo_histData_subCat4
 
 
-
+    
 
     # --------------------------------------------------------------
     # Initialize Sum Exponential
@@ -727,6 +742,7 @@ if __name__ == "__main__":
     roo_histData_subCat4_sumExp = rt.RooDataHist("subCat4_rooHist_sumExp","subCat4_rooHist_sumExp", rt.RooArgSet(mass), roo_datasetData_subCat4_sumExp)
     data_subCat4_sumExp = roo_histData_subCat4_sumExp
 
+    
 
     # --------------------------------------------------------------
     # Initialize FEWZxBernstein
@@ -763,13 +779,13 @@ if __name__ == "__main__":
     
     # new start --------------------------------------------------
     name = f"FEWZxBern_c1"
-    c1 = rt.RooRealVar(name,name, 0.25,-10,10)
+    c1 = rt.RooRealVar(name,name, 1.0) # extra frozen parameter is needed. Source: https://root-forum.cern.ch/t/roobernstein-correction/41800
     name = f"FEWZxBern_c2"
-    c2 = rt.RooRealVar(name,name, 0.25,-10,10)
+    c2 = rt.RooRealVar(name,name, 1.5,0,10)
     name = f"FEWZxBern_c3"
-    c3 = rt.RooRealVar(name,name, 0.25,-10,10)
+    c3 = rt.RooRealVar(name,name, 0.75,0,10)
     name = f"FEWZxBern_c4"
-    c4 = rt.RooRealVar(name,name, 0.25,-10,10)
+    c4 = rt.RooRealVar(name,name, 0.75,0,10)
     # new end --------------------------------------------------
     BernCoeff_list = [c1, c2, c3, c4] # we use RooBernstein, which requires n+1 parameters https://root.cern.ch/doc/master/classRooBernstein.html
     # c1.setConstant(True)
@@ -1152,6 +1168,20 @@ if __name__ == "__main__":
     c4.setConstant(False)
     
     print(f"runtime: {end-start} seconds")
+
+    # ---------------------------------------------------
+    # Plot 6.23
+    # ---------------------------------------------------
+    save_fname = f"{plot_save_path}/fig6_23"
+    subCat_dataHists = [
+        roo_histData_subCat0,
+        roo_histData_subCat1,
+        roo_histData_subCat2,
+        roo_histData_subCat3,
+        roo_histData_subCat4,
+    ]
+    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, save_fname)
+    
 
     # ---------------------------------------------------
     # Make CORE-PDF
@@ -2224,11 +2254,7 @@ if __name__ == "__main__":
     n2_subCat4_vbf.setConstant(True)
 
 
-    base_path = f"./validation/figs/{args.year}/{args.label}"
-    # plot_save_path = f"./validation/figs/{args.year}"
-    plot_save_path = base_path
-    if not os.path.exists(plot_save_path):
-        os.makedirs(plot_save_path)
+    
         
     # -------------------------------------------------------------------------
     # Save yield_df
