@@ -57,39 +57,75 @@ def MakeFEWZxBernDof3(
    
     return (final_model, out_dict)
 
-def getShapeModifierHist(x, x_rebinned, allCat_hist, subCat_hist, normalize=False, nbins=nbins):
+def getShapeModifierHist(x, allCat_hist, subCat_hist, normalize=False, nbins=100):
     x_name = x.GetName()
     nbins_old = x.getBins()
-    nbins_new = x_rebinned.getBins()
-    # nbins_new = nbins
+    nbins_new = nbins
     reBinFactor = int(nbins_old/nbins_new)
-    print(f"nbins_old : {nbins_old}")
-    print(f"nbins_new : {nbins_new}")
-    print(f"reBinFactor : {reBinFactor}")
+    # print(f"nbins_old : {nbins_old}")
+    # print(f"nbins_new : {nbins_new}")
+    # print(f"reBinFactor : {reBinFactor}")
     allCat_th1 = allCat_hist.createHistogram(x_name).Clone("allCat_clone").Rebin(reBinFactor) # clone it just in case
     subCat_th1 = subCat_hist.createHistogram(x_name).Clone("subCat_clone").Rebin(reBinFactor) # clone it just in case
     subCat_th1.Divide(allCat_th1)
     if normalize:
         subCat_th1.Scale(1/subCat_th1.Integral()) # normalize to one
     rooHist_name = "shapModifier_hist"
-    roo_hist_shapModifier = rt.RooDataHist(rooHist_name, rooHist_name, rt.RooArgSet(x_rebinned), subCat_th1) 
+    roo_hist_shapModifier = rt.RooDataHist(rooHist_name, rooHist_name, rt.RooArgSet(x), subCat_th1) 
     return roo_hist_shapModifier
 
-def plot_6_23(x, roo_histData_allCat, subCat_dataHists, save_fname, normalize=False, nbins=100):
+def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, normalize=True, nbins=100):
     x_name = x.GetName()
-    x_rebinned = rt.RooRealVar(x.GetName(), x.GetName(), x.getVal(), x.getMin(), x.getMax())
-    x_rebinned.setBins(nbins)
     for ix in range(len(subCat_dataHists)):
     # for ix in range(1):
-        canvas = rt.TCanvas("canvas","canvas",800, 800) # giving a specific name for each canvas prevents segfault?
+        canvas = rt.TCanvas("canvas","canvas",800, 800) # giving a specific name for each canvas prevents segfault
         canvas.cd()
+        # Define upper and lower pads
+        pad1 = ROOT.TPad("pad1", "Distribution", 0, 0.3, 1, 1.0)
+        pad2 = ROOT.TPad("pad2", "Ratio", 0, 0.0, 1, 0.3)
         
-        # frame = x.frame(110, 150, nbins)
-        frame = x.frame(Bins=nbins)
-        roo_hist_shapModifier = getShapeModifierHist(x, x_rebinned, roo_histData_allCat, subCat_dataHists[ix], normalize=normalize)
+        # Adjust margins
+        pad1.SetBottomMargin(0)  # Upper plot does not need bottom margin
+        pad2.SetTopMargin(0)     # Lower plot does not need top margin
+        pad2.SetBottomMargin(0.3)
+
+        pad1.SetTicks(2, 2)
+        pad2.SetTicks(2, 2)
+        pad1.Draw() # value plot
+        pad2.Draw() # ratio plot
+
+        # Top pad start
+        pad1.cd()
+        frame = x.frame()
+        roo_hist_shapModifier = getShapeModifierHist(x, roo_histData_allCat, subCat_dataHists[ix], normalize=normalize, nbins=nbins)
+        # plot the SMF fit function first
+        roo_hist_shapModifier.plotOn(frame, Invisible=True) # Invisible plot for SMF functions to plot over
+        SMF_func = SMF_func_l[ix]
+        SMF_func.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=rt.kCyan, Components=SMF_func.GetName()) # don't need the specify component name, but I guess it's good practice
+        SMF_func.plotOn(frame, LineColor=rt.kRed)
+        
+        # plot the shape modifier data
+
         roo_hist_shapModifier.plotOn(frame)
+        
+
+        # plot settings
         frame.Draw()
+        # frame.GetYaxis().SetLabelSize(0.08)
+        # frame.GetYaxis().SetRangeUser(0.98, 1.02)
+        if normalize:
+            frame.GetYaxis().SetTitle("A.U.")
+        else:
+            frame.GetYaxis().SetTitle("Events")
+        frame.SetTitle("")
+        
+        # Bottom pad start
+        pad2.cd()
+        ratio_frame= x.frame()
+        
         canvas.Update()
         canvas.Draw()
         canvas.SaveAs(f"{save_fname}_subCat{ix}.pdf")
     raise ValueError
+
+

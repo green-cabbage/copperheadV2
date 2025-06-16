@@ -1180,7 +1180,14 @@ if __name__ == "__main__":
         roo_histData_subCat3,
         roo_histData_subCat4,
     ]
-    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, save_fname)
+    SMF_func_l = [
+        subCat0_SMF,
+        subCat1_SMF,
+        subCat2_SMF,
+        subCat3_SMF,
+        subCat4_SMF,
+    ]
+    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname)
     
 
     # ---------------------------------------------------
