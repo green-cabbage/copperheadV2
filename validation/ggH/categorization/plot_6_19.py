@@ -27,7 +27,7 @@ sys.path.insert(0, parent_dir)
 from src.lib.histogram.plotting import plotFig_6_13
 
 
-nSubCats = 5
+# nSubCats = 5
 
 def createUnitHistogram(name, nbins, xmin, xmax):
     hist = ROOT.TH1D(name, name, nbins, xmin, xmax)
@@ -453,33 +453,33 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
 
         # -----------------------------------------------------------
         # BWZxBern
-        ratio_bwzxBern = rt.RooGenericPdf("BWZxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreBWZxBern))
+        ratio_bwzxBern = rt.RooGenericPdf("BWZxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZxBern,coreBWZRedux,))
         color, style = getColor(ratio_bwzxBern.GetName())
         ratio_bwzxBern.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         # -----------------------------------------------------------
         # Sum Exp
-        ratio_sumExp = rt.RooGenericPdf("S-Exponential ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumExp))
+        ratio_sumExp = rt.RooGenericPdf("S-Exponential ratio", "@0/@1", rt.RooArgList(coreSumExp,coreBWZRedux))
         color, style = getColor(ratio_sumExp.GetName())
         ratio_sumExp.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         # -----------------------------------------------------------
         # Sum Power
-        ratio_sumPow = rt.RooGenericPdf("S-Power-Law ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreSumPow))
+        ratio_sumPow = rt.RooGenericPdf("S-Power-Law ratio", "@0/@1", rt.RooArgList(coreSumPow,coreBWZRedux))
         color, style = getColor(ratio_sumPow.GetName())
         ratio_sumPow.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
 
         # -----------------------------------------------------------
         # BWZxGamma
-        ratio_bwzGamma = rt.RooGenericPdf("BWZGamma ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreBWZGamma))
+        ratio_bwzGamma = rt.RooGenericPdf("BWZGamma ratio", "@0/@1", rt.RooArgList(coreBWZGamma,coreBWZRedux))
         color, style = getColor(ratio_bwzGamma.GetName())
         ratio_bwzGamma.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         # -----------------------------------------------------------
         # FEWZxBern
-        ratio_FEWZxBern = rt.RooGenericPdf("FEWZxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreFEWZxBern))
+        ratio_FEWZxBern = rt.RooGenericPdf("FEWZxBernstein ratio", "@0/@1", rt.RooArgList(coreFEWZxBern,coreBWZRedux))
         color, style = getColor(ratio_FEWZxBern.GetName())
         ratio_FEWZxBern.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
         # -----------------------------------------------------------
         # LandxBern
-        ratio_landXBern = rt.RooGenericPdf("LandauxBernstein ratio", "@0/@1", rt.RooArgList(coreBWZRedux,coreLandxBern))
+        ratio_landXBern = rt.RooGenericPdf("LandauxBernstein ratio", "@0/@1", rt.RooArgList(coreLandxBern,coreBWZRedux))
         color, style = getColor(ratio_landXBern.GetName())
         ratio_landXBern.plotOn(ratio_frame, DataError="SumW2", LineColor=color, LineStyle=style)
 
