@@ -122,6 +122,35 @@ def getRatioHist(x, hist, pdf):
     ratio_hist.SetMarkerColor(ROOT.kBlack)
     ratio_hist.SetLineColor(ROOT.kBlack)  # Error bars in black
     return ratio_hist
+
+
+def getUnityHistBand(x, pdf, fitResult, hist2copy):
+    """
+    from roofit histogram, generate a histogram with value one with relative fit errors from pdf and paste them in the same TH1 format as hist2copy
+    """
+    h_band = hist2copy.Clone("h_band")
+    for i in range(1, h_band.GetNbinsX()+1):
+        xval = h_band.GetXaxis().GetBinCenter(i)
+        x.setVal(xval)
+    
+        # get uncertainty on PDF at this point from fit result
+        val = pdf.getVal(ROOT.RooArgSet(x))
+        err = pdf.getPropagatedError(fitResult)
+    
+        # rel_err = err / val if val != 0 else 0
+        rel_err = err
+        h_band.SetBinContent(i, 1.0)  # ratio = 1
+        h_band.SetBinError(i, rel_err)
+        # print(f"bin {i} rel_err: {rel_err}")
+        # print(f"bin {i} val: {val}")
+        # print(f"bin {i} err: {err}")
+        
+
+    # Style
+    h_band.SetFillColor(ROOT.kBlue - 9)
+    h_band.SetMarkerSize(0)
+    h_band.SetLineWidth(0)
+    return h_band
     
 def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, save_fname, normalize=True, nbins=100):
     # normalize=False
@@ -151,7 +180,7 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         # plot the SMF fit function first
         roo_hist_shapModifier.plotOn(frame, Invisible=True) # Invisible plot for SMF functions to plot over
         SMF_pdf = SMF_pdf_l[ix]
-        SMF_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=rt.kCyan, Components=SMF_pdf.GetName()) # don't need the specify component name, but I guess it's good practice
+        SMF_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kBlue - 9), Components=SMF_pdf.GetName()) # don't need the specify component name, but I guess it's good practice
         pull_hist = frame.pullHist() # to be used later
         SMF_pdf.plotOn(frame, LineColor=rt.kRed)
         
@@ -183,6 +212,9 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         ratio_hist = getRatioHist(x, shapeModifier_hist, SMF_pdf)
         ratio_hist.GetYaxis().SetRangeUser(0.9, 1.1)
         ratio_hist.Draw("E1")
+
+        h_band = getUnityHistBand(x, SMF_pdf, fitResult, ratio_hist)
+        h_band.Draw("E2 SAME")
 
         # ratio_hist = rt.RooDataHist("ratio_hist", "ratio_hist", rt.RooArgSet(x), ratio_hist) 
         # ratio_hist.plotOn(ratio_frame)
