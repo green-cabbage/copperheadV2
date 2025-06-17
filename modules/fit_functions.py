@@ -211,10 +211,20 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         shapeModifier_hist = roo_hist_shapModifier.createHistogram(x.GetName())
         ratio_hist = getRatioHist(x, shapeModifier_hist, SMF_pdf)
         ratio_hist.GetYaxis().SetRangeUser(0.9, 1.1)
-        ratio_hist.Draw("E1")
+        ratio_hist.SetTitle("")
 
         h_band = getUnityHistBand(x, SMF_pdf, fitResult, ratio_hist)
-        h_band.Draw("E2 SAME")
+
+        # start draw
+        h_band.Draw("E2") # draw h band first
+        # change style to add a straight red line
+        h_band_line = h_band.Clone("h_bandClone")
+        h_band_line.SetLineColor(ROOT.kRed)
+        h_band_line.SetLineWidth(2)
+        h_band_line.SetFillStyle(0)  # No fill
+        h_band_line.Draw("HIST L SAME")
+        ratio_hist.Draw("E1 SAME")
+        
 
         # ratio_hist = rt.RooDataHist("ratio_hist", "ratio_hist", rt.RooArgSet(x), ratio_hist) 
         # ratio_hist.plotOn(ratio_frame)
