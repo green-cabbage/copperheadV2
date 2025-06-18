@@ -152,7 +152,7 @@ def getUnityHistBand(x, pdf, fitResult, hist2copy):
     h_band.SetLineWidth(0)
     return h_band
     
-def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, save_fname, normalize=True, nbins=100):
+def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, save_fname, normalize=True, nbins=100, y_range_l=None):
     # normalize=False
     x_name = x.GetName()
     for ix in range(len(subCat_dataHists)):
@@ -175,22 +175,29 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
 
         # Top pad start
         pad1.cd()
+        legend = rt.TLegend(0.65,0.75,0.9,0.9)
         frame = x.frame()
         roo_hist_shapModifier = getShapeModifierHist(x, roo_histData_allCat, subCat_dataHists[ix], normalize=normalize, nbins=nbins)
         # plot the SMF fit function first
         roo_hist_shapModifier.plotOn(frame, Invisible=True) # Invisible plot for SMF functions to plot over
         SMF_pdf = SMF_pdf_l[ix]
         SMF_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kBlue - 9), Components=SMF_pdf.GetName()) # don't need the specify component name, but I guess it's good practice
-        pull_hist = frame.pullHist() # to be used later
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Uncertainty", "F")
+        
         SMF_pdf.plotOn(frame, LineColor=rt.kRed)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Polynomial fit", "L")
+        
         
         # plot the shape modifier data
 
         roo_hist_shapModifier.plotOn(frame)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Shape Modifier", "PE")
+        
         
 
         # plot settings
         frame.Draw()
+        legend.Draw()
         # frame.GetYaxis().SetLabelSize(0.08)
         # frame.GetYaxis().SetRangeUser(0.98, 1.02)
         if normalize:
@@ -198,6 +205,9 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         else:
             frame.GetYaxis().SetTitle("Events")
         frame.SetTitle("")
+        if y_range_l is not None:
+            x_min, x_max = y_range_l[ix]
+            frame.GetYaxis().SetRangeUser(x_min, x_max)
         
         # Bottom pad start
         pad2.cd()
@@ -212,7 +222,10 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         ratio_hist = getRatioHist(x, shapeModifier_hist, SMF_pdf)
         ratio_hist.GetYaxis().SetRangeUser(0.9, 1.1)
         ratio_hist.SetTitle("")
-
+        ratio_hist.GetYaxis().SetTitle("Data/Pred")
+        ratio_hist.GetXaxis().SetTitle("m_{\mu\mu} [GeV]")
+        
+            
         h_band = getUnityHistBand(x, SMF_pdf, fitResult, ratio_hist)
 
         # start draw
@@ -226,21 +239,6 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         ratio_hist.Draw("E1 SAME")
         
 
-        # ratio_hist = rt.RooDataHist("ratio_hist", "ratio_hist", rt.RooArgSet(x), ratio_hist) 
-        # ratio_hist.plotOn(ratio_frame)
-        
-        # ratio_frame.addPlotable(pull_hist, "P")
-        # ratio_smf_pdf = rt.RooGenericPdf("ratio_smf_pdf", "0.5*@0-0.5*@0 +1", rt.RooArgList(SMF_pdf))
-        # ratio_smf_pdf = rt.RooGenericPdf("ratio_smf_pdf", "@0/@0", rt.RooArgList(SMF_pdf))
-
-        
-        # ratio_smf_pdf.plotOn(ratio_frame, VisualizeError=(fitResult, 1), FillColor=rt.kCyan, Components=SMF_pdf.GetName()) # don't need the specify component name, but I guess it's good practice
-        # # ratio_smf_pdf.plotOn(ratio_frame, VisualizeError=(fitResult, 1), FillColor=rt.kCyan) # don't need the specify component name, but I guess it's good practice
-        # ratio_smf_pdf.plotOn(ratio_frame, LineColor=rt.kRed)
-        
-        # ratio_frame.GetYaxis().SetTitle("Data/Pred")
-        # ratio_frame.GetXaxis().SetTitle("m_{\mu\mu} [GeV]")
-        # ratio_frame.Draw()
         
         canvas.Update()
         canvas.Draw()
