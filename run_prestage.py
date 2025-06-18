@@ -123,6 +123,30 @@ def getDatasetRootFiles(single_dataset_name: str, allowlist_sites: list)-> list:
 
     return fnames
 
+def getBadFileParallelizeDask(filelist):
+    """
+    We assume that the dask client has already been initialized
+    """
+    lazy_results = []
+    for fname in filelist:
+        lazy_result = dask.delayed(getBadFile)(fname)
+        lazy_results.append(lazy_result)
+    results = dask.compute(*lazy_results)
+
+    bad_file_l = []
+    for result in results:
+        if result != "":
+            # print(result)
+            bad_file_l.append(result)
+    print(f"bad_file_l: {bad_file_l}")
+    return bad_file_l
+
+
+def removeBadFiles(filelist):
+    bad_filelist = getBadFileParallelizeDask(filelist)
+    clean_filelist = list(set(filelist) - set(bad_filelist))
+    return clean_filelist
+
 def get_Xcache_filelist(fnames: list):
     new_fnames = []
     logger.debug(f"fnames: {fnames}")
@@ -387,7 +411,12 @@ if __name__ == "__main__":
             # convert to xcachce paths if requested
                 if args.xcache:
                     fnames = get_Xcache_filelist(fnames)
-
+            if args.skipBadFiles:
+                # quick check to see if root files are corrupt
+                print("removing bad files!")
+                print(f"len(fnames) b4 bad files: {len(fnames)}")
+                fnames = removeBadFiles(fnames)
+                print(f"len(fnames) after bad files: {len(fnames)}")
             logger.debug(f"file names: {fnames}")
             logger.debug(f"sample_name: {sample_name}")
             logger.debug(f"len(fnames): {len(fnames)}")

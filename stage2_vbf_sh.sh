@@ -6,13 +6,13 @@ model_label="test"
 
 
 # stage1_label="V2_Dec22_HEMVetoOnZptOn_RerecoBtagSF_XS_Rereco_BtagWPsFixed"
-# stage1_label="V2_Dec22_HEMVetoOnZptOn_ULBtagSF_XS_Rereco_BtagWPsFixed"
+stage1_label="V2_Dec22_HEMVetoOnZptOn_ULBtagSF_XS_Rereco_BtagWPsFixed"
 # stage1_label="test_test"
 # stage1_label="V2_Jan09_test_test"
-stage1_label="April19_NanoV12"
+# stage1_label="April19_NanoV12"
 
-# stage1_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${stage1_label}"
-stage1_path="/depot/cms/users/shar1172/hmm/copperheadV1clean/${stage1_label}"
+stage1_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${stage1_label}"
+# stage1_path="/depot/cms/users/shar1172/hmm/copperheadV1clean/${stage1_label}"
 # model_path="/work/users/yun79/valerie/fork/copperheadV2/MVA_training/VBF/dnn/trained_models"
 model_path="/depot/cms/private/users/shar1172/copperheadV2_MergeFW/MVA_training/VBF/dnn/trained_models"
 

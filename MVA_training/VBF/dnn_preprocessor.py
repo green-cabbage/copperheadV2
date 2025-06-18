@@ -503,11 +503,33 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         # "pt_centrality",
     #     "year",
     # ]
-    training_features = [
-        'dimuon_mass', 'dimuon_pt', 'dimuon_pt_log', 'dimuon_rapidity', \
-         'dimuon_cos_theta_cs', 'dimuon_phi_cs',
-         'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_qgl',\
-         'jj_mass', 'jj_mass_log', 'jj_dEta', 'rpt', 'll_zstar_log', 'mmj_min_dEta', 'nsoftjets5', 'htsoft2'
+    training_features = [ # this is the full list of Run2 VBF category DNN training features
+        "dimuon_mass",
+        "dimuon_pt",
+        "dimuon_pt_log",
+        "dimuon_rapidity",
+        "dimuon_ebe_mass_res",
+        "dimuon_ebe_mass_res_rel",
+        "dimuon_cos_theta_cs",
+        "dimuon_phi_cs",
+        "jet1_pt",
+        "jet1_eta",
+        "jet1_phi",
+        "jet1_qgl",
+        "jet2_pt",
+        "jet2_eta",
+        "jet2_phi",
+        "jet2_qgl",
+        "jj_mass",
+        "jj_mass_log",
+        "jj_dEta",
+        "rpt",
+        "ll_zstar_log",
+        "mmj_min_dEta",
+        "nsoftjets5", 
+        "htsoft2",
+        "pt_centrality",
+        "year",
     ]
     # generate directory to save training_features
     save_path = f"dnn/trained_models/{run_label}"

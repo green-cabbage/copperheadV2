@@ -1,6 +1,19 @@
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l vbf_dy_validationMay30_2025 -y 2018 -m all -d 1)
 
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l fullRun_May30_2025 -y 2018 -m all -d 1)
 
-bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv9.yaml -v 9 -l test_test -y 2018 -m 1 -d 1
+# 30 May 2025 Synch test
+
+```bash
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l synchMay30_2025_b4PR -y 2018 -m 0 -d 1)
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l synchMay30_2025_b4PR -y 2018 -m 0 -d 1 -f 1)
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l synchMay30_2025_b4PR -y 2018 -m 1 -f 1)
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l synchMay30_2025_afterPR -y 2018 -m 1 -f 1)
+```
+# 22 May 2025
+bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l test -y 2018 -m 0
+bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv9.yaml -v 9 -l May14_2025_nanoV12_JecOnJerStrat1n2 -y 2018 -m 1 -d 1
+bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l May14_2025_nanoV12_JecOnJerStrat1n2 -y 2018 -m 1
 
 # 06 May 2025
 

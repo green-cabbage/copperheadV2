@@ -5,7 +5,8 @@ import argparse
 from omegaconf import OmegaConf
 import time
 import pandas as pd
-
+import concurrent
+import copy
 
 def calculate_AMS(sig_yields, bkg_yields):
     """
@@ -35,10 +36,13 @@ def obtain_BDT_edges(target_sig_effs, years, load_path):
 
         # full_load_path = f"{sysargs.load_path}/{sysargs.year}/processed_events_sig*.parquet"
         full_load_path = f"{load_path}/{year}/processed_events_sigMC_ggh.parquet" # ignore VBF signal sample
-        events = dak.from_parquet(full_load_path)
+        # events = dak.from_parquet(full_load_path)
         
-        signal_score = ak.to_numpy(events.BDT_score.compute())
-        signal_wgt = ak.to_numpy(events.wgt_nominal.compute())
+        # signal_score = ak.to_numpy(events.BDT_score.compute())
+        # signal_wgt = ak.to_numpy(events.wgt_nominal.compute())
+        events = ak.from_parquet(full_load_path)
+        signal_score = ak.to_numpy(events.BDT_score)
+        signal_wgt = ak.to_numpy(events.wgt_nominal)
         signal_wgt = signal_wgt /np.sum(signal_wgt) # normalize wgt
         
         
@@ -70,8 +74,7 @@ def obtain_BDT_edges(target_sig_effs, years, load_path):
             bin_edges.append(1.1) # add the last bin edge to maximum value and a bit
         else:
             bin_edges[-1] = 1.1 # switch the last bin edge to maximum value and a bit
-        print("Bin edges:", bin_edges)
-        # raise ValueError
+        # print("Bin edges:", bin_edges)
         hist, _ = np.histogram(signal_score, bins=bin_edges, weights=signal_wgt)
 
         
@@ -89,28 +92,36 @@ def obtain_BDT_edges(target_sig_effs, years, load_path):
     # print(f"score_edge_dict: {score_edge_dict}")
     return score_edge_dict
 
-
+def getCatWgtSum(bdt_score_edges, subCat_idx, wgt_arr):
+    """
+    helper function
+    """
+    out_arr = np.zeros(len(bdt_score_edges)-1)
+    for ix in range(len(out_arr)):
+        cat_filter = (ix == subCat_idx)
+        cat_wgt_sum = np.sum(wgt_arr[cat_filter])
+        out_arr[ix] = cat_wgt_sum
+    return out_arr
+    
 def get_signal_yields(bdt_score_edges, year:str, load_path:str):
     """
 
     return: out_arr of size len(bdt_score_edges) -1, value in each bin represnting signal yield in that category
     """
     full_load_path = f"{load_path}/{year}/processed_events_sigMC*.parquet"  # include all signal
-    events = dak.from_parquet(full_load_path)
-    signal_score = ak.to_numpy(events.BDT_score.compute())
-    signal_wgt = ak.to_numpy(events.wgt_nominal.compute())
+    # events = dak.from_parquet(full_load_path)
+    # signal_score = ak.to_numpy(events.BDT_score.compute())
+    # signal_wgt = ak.to_numpy(events.wgt_nominal.compute())
+    events = ak.from_parquet(full_load_path)
+    signal_score = ak.to_numpy(events.BDT_score)
+    signal_wgt = ak.to_numpy(events.wgt_nominal)
 
     subCat_idx = np.digitize(signal_score, bdt_score_edges) -1 # idx starts with 0
     # print(f"np.max(subCat_idx): {np.max(subCat_idx)}")
     # print(f"np.min(subCat_idx): {np.min(subCat_idx)}")
 
-    out_arr = np.zeros(len(bdt_score_edges)-1)
 
-    for ix in range(len(out_arr)):
-        cat_filter = (ix == subCat_idx)
-        cat_wgt_sum = np.sum(signal_wgt[cat_filter])
-        out_arr[ix] = cat_wgt_sum
-        
+    out_arr = getCatWgtSum(bdt_score_edges, subCat_idx, signal_wgt)
     # print(f"{year} np.sum(out_arr): {np.sum(out_arr)}")
     return out_arr
 
@@ -119,23 +130,68 @@ def get_background_yields(bdt_score_edges, year:str, load_path:str):
     return: out_arr of size len(bdt_score_edges) -1, value in each bin represnting signal yield in that category
     """
     full_load_path = f"{load_path}/{year}/processed_events_data.parquet"  # use data for bkg
-    events = dak.from_parquet(full_load_path)
-    background_score = ak.to_numpy(events.BDT_score.compute())
-    background_wgt = ak.to_numpy(events.wgt_nominal.compute())
+    # events = dak.from_parquet(full_load_path)
+    # background_score = ak.to_numpy(events.BDT_score.compute())
+    # background_wgt = ak.to_numpy(events.wgt_nominal.compute())
+    events = ak.from_parquet(full_load_path)
+    background_score = ak.to_numpy(events.BDT_score)
+    background_wgt = ak.to_numpy(events.wgt_nominal)
 
     subCat_idx = np.digitize(background_score, bdt_score_edges) -1 # idx starts with 0
     # print(f"np.max(subCat_idx): {np.max(subCat_idx)}")
     # print(f"np.min(subCat_idx): {np.min(subCat_idx)}")
 
-    out_arr = np.zeros(len(bdt_score_edges)-1)
+    out_arr = getCatWgtSum(bdt_score_edges, subCat_idx, background_wgt)
 
-    for ix in range(len(out_arr)):
-        cat_filter = (ix == subCat_idx)
-        cat_wgt_sum = np.sum(background_wgt[cat_filter])
-        out_arr[ix] = cat_wgt_sum
-        
     # print(f"{year} np.sum(out_arr): {np.sum(out_arr)}")
     return out_arr
+
+
+def getAMS_df(sig_effs2iterate, final_sig_effs):
+    AMS_df = pd.DataFrame({})
+    for sig_eff in sig_effs2iterate:
+        target_sig_effs = final_sig_effs + [sig_eff]
+        target_sig_effs = np.sort(np.array(target_sig_effs))
+    
+        
+        # print(f"target_sig_effs: {target_sig_effs}")
+    
+        BDT_score_edge_dict = obtain_BDT_edges(target_sig_effs, years, load_path)
+        # print(f"BDT_score_edge_dict: {BDT_score_edge_dict}")
+    
+        signal_arrs = []
+        background_arrs = []
+        for year, bdt_score_edges in BDT_score_edge_dict.items():
+            signal_arr = get_signal_yields(bdt_score_edges, year, load_path)
+            signal_arrs.append(signal_arr)
+            background_arr = get_background_yields(bdt_score_edges, year, load_path)
+            background_arrs.append(background_arr)
+    
+        
+        signal_yields = sum(signal_arrs)
+        background_yields = sum(background_arrs)
+        AMS = calculate_AMS(signal_yields, background_yields)
+        results = {
+            "sig_eff" : [sig_eff],
+            "Significance" : [AMS]
+        }
+        # print(f"results: {results}")
+        results = pd.DataFrame(results)
+        AMS_df = pd.concat([AMS_df, results], ignore_index=True)
+        # print(f"sig eff {sig_eff} AMS: {AMS}")
+    return AMS_df
+    
+def getAMS_df_parallelize(sig_effs2iterate_l, final_sig_effs_l, max_workers=60):
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit each file check to the executor
+        AMS_df_l = list(executor.map(getAMS_df, sig_effs2iterate_l, final_sig_effs_l))
+    
+    # print(AMS_df_l)
+    AMS_df_combined = pd.concat(AMS_df_l, ignore_index=True)
+    AMS_df_combined = AMS_df_combined.sort_values(by='sig_eff', ascending=True)
+    
+    # print(AMS_df_combined)
+    return AMS_df_combined
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -186,58 +242,19 @@ if __name__ == "__main__":
     # print(f"target_sig_effs len: {len(target_sig_effs)}")
     
     sig_effs2iterate = np.arange(0.01, 1.00, 0.01).tolist() # from 0.01 to 0.99
-    # target_sig_effs = np.array([0.5,1.0])
+    
     final_sig_effs = [1.0]
 
     years = sysargs.years
     print(f"years: {years}")
+    n_parts = 8 # number of parallelized chunks
     
-    # for iter_idx in range(1, 8):
     for iter_idx in range(1, 7):
+    # for iter_idx in range(1, 2):
         AMS_df = pd.DataFrame({})
-        for sig_eff in sig_effs2iterate:
-            target_sig_effs = final_sig_effs + [sig_eff]
-            target_sig_effs = np.sort(np.array(target_sig_effs))
-        
-            
-            print(f"target_sig_effs: {target_sig_effs}")
-        
-            BDT_score_edge_dict = obtain_BDT_edges(target_sig_effs, years, load_path)
-            print(f"BDT_score_edge_dict: {BDT_score_edge_dict}")
-        
-            signal_arrs = []
-            background_arrs = []
-            for year, bdt_score_edges in BDT_score_edge_dict.items():
-                signal_arr = get_signal_yields(bdt_score_edges, year, load_path)
-                signal_arrs.append(signal_arr)
-                background_arr = get_background_yields(bdt_score_edges, year, load_path)
-                background_arrs.append(background_arr)
-        
-            
-            signal_yields = sum(signal_arrs)
-            background_yields = sum(background_arrs)
-    
-    
-            # sanity check
-            # print(f"signal_arrs: {signal_arrs}")
-            # print(f"signal_yields: {signal_yields}")
-            # print(f"signal_yields sum: {np.sum(signal_yields)}")
-            # print(f"background_arrs: {background_arrs}")
-            # print(f"background_yields: {background_yields}")
-            # print(f"background_yields sum: {np.sum(background_yields)}")
-    
-    
-            
-            AMS = calculate_AMS(signal_yields, background_yields)
-            results = {
-                "sig_eff" : [sig_eff],
-                "Significance" : [AMS]
-            }
-            # print(f"results: {results}")
-            results = pd.DataFrame(results)
-            AMS_df = pd.concat([AMS_df, results], ignore_index=True)
-            # print(f"sig eff {sig_eff} AMS: {AMS}")
-
+        split_sig_effs2iterate = np.array_split(sig_effs2iterate, n_parts)
+        final_sig_effs_l = [copy.deepcopy(final_sig_effs) for _ in range(n_parts)]
+        AMS_df = getAMS_df_parallelize(split_sig_effs2iterate, final_sig_effs_l)
 
         max_ix = np.argmax(AMS_df["Significance"])
         sig_eff_max = AMS_df["sig_eff"][max_ix]
@@ -245,6 +262,7 @@ if __name__ == "__main__":
         final_sig_effs.append(sig_eff_max)
         final_sig_effs = sorted(final_sig_effs)
         
+        print(f"final_sig_effs: {final_sig_effs}")
         print(f"sigsig_eff_max: {sig_eff_max}")
         print(f"sig_effs2iterate b4 remove: {sig_effs2iterate}")
 

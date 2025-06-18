@@ -25,9 +25,15 @@
 # - 0.25
 # - 0.06
 # - 0.01
-target_yields:  # DYMiNNLO_11Apr2025_X_V2_UL_Apr11_2025_DyMinnloTtStVvEwkGghVbf
-- 0.22
-- 0.28
-- 0.21
+# target_yields:  # DYMiNNLO_11Apr2025_X_V2_UL_Apr11_2025_DyMinnloTtStVvEwkGghVbf
+# - 0.22
+# - 0.28
+# - 0.21
+# - 0.2
+# - 0.09
+target_yields:  # fullRun_May30_2025_X_V2_UL_Jun09_2025
+- 0.24
+- 0.27
+- 0.19
 - 0.2
-- 0.09
+- 0.1
