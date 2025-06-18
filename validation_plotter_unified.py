@@ -32,6 +32,7 @@ group_DY_processes = [
     "dy_M-50",
     "dy_M-100To200",
     "dy_M-50_aMCatNLO",
+    "dy_M-100To200_aMCatNLO",
     "dy_m105_160_amc",
     "dy_m105_160_vbf_amc",
     "dy_VBF_filter_customJMEoff",
@@ -697,10 +698,10 @@ if __name__ == "__main__":
                                         )
                                     else:
                                         print("dy_M-100To200 extra!")
-                                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+                                        invVbf_filter = ak.fill_none((events.gjj_mass <= 350), value=False) 
                                         prod_cat_cut =  (
                                             prod_cat_cut  
-                                            & ~vbf_filter 
+                                            & invVbf_filter 
                                         )
                                 else:
                                     print(f"no extra processing for {process}")
@@ -784,7 +785,7 @@ if __name__ == "__main__":
                         group_data_hists.append(var_hist_data)
                     #-------------------------------------------------------
                     elif process in group_DY_processes:
-                        print("DY activated")
+                        print(f"DY activated for {process}")
                         # var_hist_DY = ROOT.TH1F( var+'_hist_DY', var, len(binning)-1, min(binning), max(binning))
                         var_hist_DY = ROOT.TH1F( process, var, len(binning)-1, min(binning), max(binning))
                         var_hist_DY.Sumw2()
@@ -1259,6 +1260,7 @@ if __name__ == "__main__":
                         # print(f"fraction_weight: {fraction_weight.compute()}")
                         # print(f"weights after: {weights.compute()}")
                     group_name = find_group_name(process, group_dict)
+                    # print(f"group_name for {process}: {group_name}")
                     to_fill_setting = {
                     "region" : region_name,
                     "channel" : args.category,

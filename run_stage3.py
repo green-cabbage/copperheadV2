@@ -1187,7 +1187,14 @@ if __name__ == "__main__":
         subCat3_SMF,
         subCat4_SMF,
     ]
-    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname)
+    y_range_l = [
+        (7e-3, 13e-3),
+        (7e-3, 13e-3),
+        (7e-3, 14e-3),
+        (5.6e-3, 18.5e-3),
+        (5.6e-3, 18.5e-3),
+    ]
+    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
     
 
     # ---------------------------------------------------

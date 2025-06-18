@@ -152,10 +152,10 @@ if __name__ == "__main__":
     print(f"args.samples: {args.samples}")
 
     lumi_dict = {
-        "2018" : 59.97,
-        "2017" : 41.5,
-        "2016postVFP": 19.5,
-        "2016preVFP": 16.8,
+        "2018" : 59.83,
+        "2017" : 41.48,
+        "2016postVFP": 19.50,
+        "2016preVFP": 16.81,
         "all" : 137,
     }
     lumi_val = lumi_dict[year]

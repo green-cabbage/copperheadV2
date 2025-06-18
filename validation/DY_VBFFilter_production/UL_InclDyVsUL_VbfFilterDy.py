@@ -40,9 +40,17 @@ def applyVBF_phaseCut(events):
     return events[gjj_mass_cut]
 
 def applyVBF_invPhaseCut(events):
-    gjj_mass_cut = (events.gjj_mass <= 350)
+    # gjj_mass_cut = (events.gjj_mass <= 350)
+    gjj_mass_cut = (events.gjj_mass > 350)
     gjj_mass_cut = ak.fill_none(gjj_mass_cut, value=False)
+    gjj_mass_cut = ~gjj_mass_cut
     return events[gjj_mass_cut]
+
+
+def stitch_twoSamples(events_vbf, events_100To200):
+    events_vbf = applyVBF_phaseCut(events_vbf)
+    events_100To200 = applyVBF_invPhaseCut(events_100To200)
+    return ak.concatenate([events_vbf, events_100To200], axis=0)
 
 def applyVBF_cutV1(events):
     btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
@@ -168,7 +176,7 @@ def filterRegion(events, region="h-peak"):
     return events
 
 
-def plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, nbins=50, xmin=None, xmax=None, title="2018 UL", xlabel="Observable", save_fname = "normalized_hist_signWgt"):
+def plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, nbins=50, xmin=None, xmax=None, title="2018 UL", xlabel="Observable", save_fname = "normalized_hist_signWgt", normalize=True):
 
     # Auto range if not given
     all_data = np.concatenate([dy100To200, dy_vbf])
@@ -194,8 +202,9 @@ def plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf
     h2.FillN(len(dy_vbf), dy_vbf, weights)
     
     # Normalize
-    # h1.Scale(1/h1.Integral())
-    # h2.Scale(1/h2.Integral())
+    if normalize:
+        h1.Scale(1/h1.Integral())
+        h2.Scale(1/h2.Integral())
 
     # Set styles
     h1.SetLineColor(ROOT.kBlue)
@@ -204,7 +213,8 @@ def plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf
     h2.SetLineWidth(2)
 
     h1.GetXaxis().SetTitle(xlabel)
-    h1.GetYaxis().SetTitle("A.U.")
+    if normalize:
+        h1.GetYaxis().SetTitle("A.U.")
     h1.SetTitle(title)
 
     # Draw
@@ -291,49 +301,49 @@ if __name__ == "__main__":
     # fields2plot = list(plot_bins.keys())
     # fields2plot.remove
     variables2plot = [
+         'gjj_mass',
          'njets_nominal',
          'jet1_pt_nominal',
          'jet2_pt_nominal',
          'jet1_eta_nominal',
          'jet2_eta_nominal',
-         'jet1_phi_nominal',
-         'jet2_phi_nominal',
-         'jet1_qgl_nominal',
-         'jet2_qgl_nominal',
+         # 'jet1_phi_nominal',
+         # 'jet2_phi_nominal',
+         # 'jet1_qgl_nominal',
+         # 'jet2_qgl_nominal',
          'jj_dEta_nominal',
          'jj_mass_nominal',
-         'jj_pt_nominal',
-         'jj_dPhi_nominal',
-         'zeppenfeld_nominal',
-         'rpt_nominal',
-         'pt_centrality_nominal',
-         'nsoftjets2_nominal',
-         'htsoft2_nominal',
-         'nsoftjets5_nominal',
-         'htsoft5_nominal',
-         'dimuon_mass',
-         'dimuon_pt',
-         'dimuon_eta',
-         'dimuon_phi',
-         'dimuon_cos_theta_cs',
-         'dimuon_phi_cs',
-         'dimuon_cos_theta_eta',
-         'dimuon_phi_eta',
-         'mmj_min_dPhi_nominal',
-         'mmj_min_dEta_nominal',
-         'll_zstar_log_nominal',
-         'dimuon_ebe_mass_res',
-         'dimuon_ebe_mass_res_rel',
-         'dimuon_rapidity',
-         'mu1_pt',
-         'mu2_pt',
-         'mu1_eta',
-         'mu2_eta',
-         'mu1_phi',
-         'mu2_phi',
-         'mu1_pt_over_mass',
-         'mu2_pt_over_mass',
-         'gjj_mass'
+         # 'jj_pt_nominal',
+         # 'jj_dPhi_nominal',
+         # 'zeppenfeld_nominal',
+         # 'rpt_nominal',
+         # 'pt_centrality_nominal',
+         # 'nsoftjets2_nominal',
+         # 'htsoft2_nominal',
+         # 'nsoftjets5_nominal',
+         # 'htsoft5_nominal',
+         # 'dimuon_mass',
+         # 'dimuon_pt',
+         # 'dimuon_eta',
+         # 'dimuon_phi',
+         # 'dimuon_cos_theta_cs',
+         # 'dimuon_phi_cs',
+         # 'dimuon_cos_theta_eta',
+         # 'dimuon_phi_eta',
+         # 'mmj_min_dPhi_nominal',
+         # 'mmj_min_dEta_nominal',
+         # 'll_zstar_log_nominal',
+         # 'dimuon_ebe_mass_res',
+         # 'dimuon_ebe_mass_res_rel',
+         # 'dimuon_rapidity',
+         # 'mu1_pt',
+         # 'mu2_pt',
+         # 'mu1_eta',
+         # 'mu2_eta',
+         # 'mu1_phi',
+         # 'mu2_phi',
+         # 'mu1_pt_over_mass',
+         # 'mu2_pt_over_mass',
     ]
     variables2plot.append("wgt_nominal")
     print(f"variables2plot: {variables2plot}")
@@ -341,10 +351,10 @@ if __name__ == "__main__":
     label="vbf_dy_validationMay30_2025"
 
     year = "2018"
-    # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{label}/stage1_output/{year}/f1_0"
-    load_path = "/depot/cms/users/shar1172/hmm/copperheadV1clean/Run2_nanoAODv12_08June/stage1_output/2018/f1_0/"
-    # region="signal"
-    region="h-sidebands"
+    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{label}/stage1_output/{year}/f1_0"
+    # load_path = "/depot/cms/users/shar1172/hmm/copperheadV1clean/Run2_nanoAODv12_08June/stage1_output/2018/f1_0/"
+    region="signal"
+    # region="h-sidebands"
     # target_chunksize = 150_000
     target_chunksize = 300_000
     # target_chunksize = 500_000
@@ -352,28 +362,31 @@ if __name__ == "__main__":
     # target_len = 4_000_000
     
     # dy 100To200
-    # load_path_100To200 = f"{load_path}/dy_M-100To200"
-    load_path_100To200 = f"{load_path}/dy_M-100To200_aMCatNLO"
+    load_path_100To200 = f"{load_path}/dy_M-100To200"
+    # load_path_100To200 = f"{load_path}/dy_M-100To200_aMCatNLO"
     
     # events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")[:target_len]
     events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
     events_100To200 = events_100To200.repartition(rows_per_partition=target_chunksize)
     events_100To200 = filterRegion(events_100To200, region=region)
-    events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
+    # events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
     # events_100To200 = applyVBF_invPhaseCut(events_100To200) # gjj mass cut
-    events_100To200 = applyVBF_cutV1(events_100To200)
+    events_100To200_orig = events_100To200
+    # events_100To200 = applyVBF_cutV1(events_100To200)
     events_100To200 = ak.zip({var: events_100To200[var] for var in variables2plot}) # add only variables to plot
     
     # vbf-filter
-    # load_path_vbf = f"{load_path}/dy_m105_160_vbf_amc"
-    load_path_vbf = f"{load_path}/dy_VBF_filter_NewZWgt"
+    load_path_vbf = f"{load_path}/dy_m105_160_vbf_amc"
+    
+    # load_path_vbf = f"{load_path}/dy_VBF_filter_NewZWgt"
     # events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")[:target_len]
     events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
     events_vbf = events_vbf.repartition(rows_per_partition=target_chunksize)
     events_vbf = filterRegion(events_vbf, region=region)
-    events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
+    events_vbf = stitch_twoSamples(events_vbf, events_100To200_orig)
+    # events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
     # events_vbf = applyVBF_invPhaseCut(events_vbf) # gjj mass cut
-    events_vbf = applyVBF_cutV1(events_vbf)
+    # events_vbf = applyVBF_cutV1(events_vbf)
     events_vbf = ak.zip({var: events_vbf[var] for var in variables2plot}) # add only variables to plot
 
     # now compute
@@ -401,5 +414,5 @@ if __name__ == "__main__":
         dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
         # dy_vbf_wgt = np.sign(dy_vbf_wgt)
         save_fname = f"DY2018UL_{var}_"
-        plot_normalized_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname)
+        plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname, normalize=False)
     
