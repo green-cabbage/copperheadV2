@@ -243,6 +243,94 @@ def plot_6_23(x, roo_histData_allCat, subCat_dataHists, SMF_pdf_l, fitResult, sa
         canvas.Update()
         canvas.Draw()
         canvas.SaveAs(f"{save_fname}_subCat{ix}.pdf")
+    # raise ValueError
+
+
+
+def getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict, nSubCats=5):
+    parameters = []
+    sim_sigBkg_pdf = {}
+    for ix in range(nSubCats):
+        name = f"frac_subCat{ix}"
+        frac = rt.RooRealVar(name,name,0.5, 0.0, 1.0) 
+
+        bwz_redux = bkg_pdf_dict[f"subCat{ix}_BWZRedux"]
+        sum_exp = bkg_pdf_dict[f"subCat{ix}_sumExp"]
+        fewzXbern = bkg_pdf_dict[f"subCat{ix}_FEWZxBern"]
+        signal_ggh = sig_pdf_dict[f"signal_subCat{ix}"]
+        
+        name = f"sigBkg_subCat{ix}_BWZRedux"
+        sigBkg_BWZRedux = rt.RooAddPdf(name, name, [signal_ggh, bwz_redux], [frac])
+        name = f"sigBkg_subCat{ix}_sumExp"
+        sigBkg_sumExp = rt.RooAddPdf(name, name, [signal_ggh, sum_exp], [frac])
+        name = f"sigBkg_subCat{ix}_FEWZxBern"
+        sigBkg_FEWZxBern = rt.RooAddPdf(name, name, [signal_ggh, fewzXbern], [frac])
+        
+        parameters.append(frac)
+        
+        sim_sigBkg_pdf[f"subCat{ix}_BWZRedux"] = sigBkg_BWZRedux
+        sim_sigBkg_pdf[f"subCat{ix}_sumExp"] = sigBkg_sumExp
+        sim_sigBkg_pdf[f"subCat{ix}_FEWZxBern"] = sigBkg_FEWZxBern
+
+    return sim_sigBkg_pdf, parameters
+        
+
+def rebinHist(x, roofitHist,  nbins, normalize=False,):
+    x_name = x.GetName()
+    nbins_old = x.getBins()
+    nbins_new = nbins
+    reBinFactor = int(nbins_old/nbins_new)
+    # print(f"nbins_old : {nbins_old}")
+    # print(f"nbins_new : {nbins_new}")
+    # print(f"reBinFactor : {reBinFactor}")
+    roofit_th1 = roofitHist.createHistogram(x_name).Clone("subCat_clone").Rebin(reBinFactor) # clone it just in case
+    if normalize:
+        roofit_th1.Scale(1/roofit_th1.Integral()) # normalize to one
+    rooHist_name = roofitHist.GetName() + f"rebinned_{nbins}"
+    roofitHist_rebinned = rt.RooDataHist(rooHist_name, rooHist_name, rt.RooArgSet(x), roofit_th1) 
+    return roofitHist_rebinned
+
+def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
+    x_name = x.GetName()
+    target_nbins = 50
+    
+    for ix in range(len(subCat_dataHists)):
+    # for ix in range(1):
+        canvas = rt.TCanvas("canvas","canvas",800, 800) # giving a specific name for each canvas prevents segfault
+        canvas.cd()
+        # Define upper and lower pads
+        pad1 = ROOT.TPad("pad1", "Distribution", 0, 0.3, 1, 1.0)
+        pad2 = ROOT.TPad("pad2", "Ratio", 0, 0.0, 1, 0.3)
+        
+        # Adjust margins
+        pad1.SetBottomMargin(0)  # Upper plot does not need bottom margin
+        pad2.SetTopMargin(0)     # Lower plot does not need top margin
+        pad2.SetBottomMargin(0.3)
+
+        pad1.SetTicks(2, 2)
+        pad2.SetTicks(2, 2)
+        pad1.Draw() # value plot
+        pad2.Draw() # ratio plot
+
+        # Top pad start
+        pad1.cd()
+        legend = rt.TLegend(0.65,0.75,0.9,0.9)
+        frame = x.frame()
+        subCat_dataHist = subCat_dataHists[ix]
+        subCat_dataHist = rebinHist(x, subCat_dataHist, target_nbins) # rebin
+        multi_pdf = multi_pdf_l[ix]
+        
+        subCat_dataHist.plotOn(frame)
+        # multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kBlue - 9), Components="model_SubCat0_SMFxBWZRedux") # don't need the specify component name, but I guess it's good practice
+        # multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kBlue - 9), Components=multi_pdf.GetName()) # don't need the specify component name, but I guess it's good practice
+        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange)) # don't need the specify component name, but I guess it's good practice
+        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen)) # don't need the specify component name, but I guess it's good practice
+        
+        multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2)
+        frame.Draw()
+
+        canvas.Update()
+        canvas.Draw()
+        canvas.SaveAs(f"{save_fname}_subCat{ix}.pdf")
+    fitResult.Print()
     raise ValueError
-
-

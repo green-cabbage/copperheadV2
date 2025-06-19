@@ -10,7 +10,7 @@ from typing import Tuple, List, Dict
 import ROOT as rt
 import ROOT
 # from src.lib.fit_functions import MakeFEWZxBernDof3
-from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23
+from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23, plot_6_26, getSigBkgPdf
 import argparse
 import os
 import copy
@@ -1197,6 +1197,8 @@ if __name__ == "__main__":
     plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
     
 
+
+
     # ---------------------------------------------------
     # Make CORE-PDF
     # ---------------------------------------------------
@@ -1365,6 +1367,57 @@ if __name__ == "__main__":
     
     print(f"yield_df after Data: \n {yield_df}")
 
+    
+
+    # #----------------------------------------------------------------------------
+    # # Now do multi-Pdf 
+    # # ---------------------------------------------------------------------------
+     
+    # # Define category to distinguish physics and control samples events
+    # sample = rt.RooCategory("sample", "sample")
+    # sample.defineType("subCat0_BWZRedux")
+    # sample.defineType("subCat1_BWZRedux")
+    # sample.defineType("subCat2_BWZRedux")
+    # sample.defineType("subCat3_BWZRedux")
+    # sample.defineType("subCat4_BWZRedux")
+
+     
+    # # Construct combined dataset in (x,sample)
+    # combData = rt.RooDataSet(
+    #     "combData",
+    #     "combined data",
+    #     {mass},
+    #     Index=sample,
+    #     Import={
+    #         "subCat0_BWZRedux": data_subCat0_BWZRedux, 
+    #         "subCat1_BWZRedux": data_subCat1_BWZRedux,
+    #         "subCat2_BWZRedux": data_subCat2_BWZRedux,
+    #         "subCat3_BWZRedux": data_subCat3_BWZRedux,
+    #         "subCat4_BWZRedux": data_subCat4_BWZRedux,
+    #     },
+    # )
+    # # ---------------------------------------------------
+    # # Construct a simultaneous pdf in (x, sample)
+    # # -----------------------------------------------------------------------------------
+     
+    # simPdf = rt.RooSimultaneous(
+    #                             "simPdf", 
+    #                             "simultaneous pdf", 
+    #                             {
+    #                                 "subCat0_BWZRedux": corePdf_subCat0, 
+    #                                 "subCat1_BWZRedux": corePdf_subCat1,
+    #                                 "subCat2_BWZRedux": corePdf_subCat2,
+    #                                 "subCat3_BWZRedux": corePdf_subCat3,
+    #                                 "subCat4_BWZRedux": corePdf_subCat4,
+    #                             }, 
+    #                             sample,
+    # )
+    # # ---------------------------------------------------
+    # # Perform a simultaneous fit
+    # # ---------------------------------------------------
+    # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
+    # raise ValueError
     
 
     # ---------------------------------------------------
@@ -2280,7 +2333,9 @@ if __name__ == "__main__":
     # print(f"yield_df after all: \n {yield_df}")
     yield_df = yield_df.sort_values(by=["dataset", "category"], ascending=[False, True])
     yield_df.to_csv(f"{base_path}/yield_df.csv")
-    
+
+
+
     # -------------------------------------------------------------------------
     # Plotting
     # -------------------------------------------------------------------------
@@ -2716,11 +2771,76 @@ if __name__ == "__main__":
     wout.Import(roo_histData_subCat4_vbf_signal);
     # wout.Print();
     wout.Write();
+
     
     # ---------------------------------------------------
     # Group plotting start here
     # ---------------------------------------------------
-    
+
+    # ---------------------------------------------------
+    # Plot 6.26
+    # ---------------------------------------------------
+
+    # perform fit over full 110, 150
+    # CAUTION: make the parameters in the workspace is saved and closed
+    # bkg_pdf_dict = {
+    #     "subCat0_BWZRedux": model_subCat0_BWZRedux, 
+    #     "subCat1_BWZRedux": model_subCat1_BWZRedux,
+    #     "subCat2_BWZRedux": model_subCat2_BWZRedux,
+    #     "subCat3_BWZRedux": model_subCat3_BWZRedux,
+    #     "subCat4_BWZRedux": model_subCat4_BWZRedux,
+    #     "subCat0_sumExp": model_subCat0_sumExp, 
+    #     "subCat1_sumExp": model_subCat1_sumExp,
+    #     "subCat2_sumExp": model_subCat2_sumExp,
+    #     "subCat3_sumExp": model_subCat3_sumExp,
+    #     "subCat4_sumExp": model_subCat4_sumExp,
+    #     "subCat0_FEWZxBern": model_subCat0_FEWZxBern, 
+    #     "subCat1_FEWZxBern": model_subCat1_FEWZxBern,
+    #     "subCat2_FEWZxBern": model_subCat2_FEWZxBern,
+    #     "subCat3_FEWZxBern": model_subCat3_FEWZxBern,
+    #     "subCat4_FEWZxBern": model_subCat4_FEWZxBern,
+    # }
+    # sig_pdf_dict = {
+    #     "signal_subCat0" : signal_subCat0,
+    #     "signal_subCat1" : signal_subCat1,
+    #     "signal_subCat2" : signal_subCat2,
+    #     "signal_subCat3" : signal_subCat3,
+    #     "signal_subCat4" : signal_subCat4,
+    # }
+    # sim_sigBkg_pdf, parameters_sigBkg = getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict)
+    # simPdf = rt.RooSimultaneous(
+    #                             "simPdf", 
+    #                             "simultaneous pdf", 
+    #                             sim_sigBkg_pdf,
+    #                             sample,
+    # )
+    # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
+    # raise ValuError
+    save_fname = f"{plot_save_path}/fig6_26"
+    subCat_dataHists = [
+        roo_histData_subCat0,
+        roo_histData_subCat1,
+        roo_histData_subCat2,
+        roo_histData_subCat3,
+        roo_histData_subCat4,
+    ]
+    multi_pdf_l = [
+        corePdf_subCat0,
+        corePdf_subCat1,
+        corePdf_subCat2,
+        corePdf_subCat3,
+        corePdf_subCat4,
+    ]
+    # multi_pdf_l = [
+    #     model_subCat0_BWZRedux,
+    #     model_subCat1_BWZRedux,
+    #     model_subCat2_BWZRedux,
+    #     model_subCat3_BWZRedux,
+    #     model_subCat4_BWZRedux,
+    # ]
+
+    plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname)
     
     # -------------------------------------------------------------------------
     # do signal plotting for all sub-Cats in one plot
