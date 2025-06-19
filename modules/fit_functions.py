@@ -252,7 +252,7 @@ def getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict, nSubCats=5):
     sim_sigBkg_pdf = {}
     for ix in range(nSubCats):
         name = f"frac_subCat{ix}"
-        frac = rt.RooRealVar(name,name,0.5, 0.0, 1.0) 
+        frac = rt.RooRealVar(name,name,0.01, 0.0, 1.0) 
 
         bwz_redux = bkg_pdf_dict[f"subCat{ix}_BWZRedux"]
         sum_exp = bkg_pdf_dict[f"subCat{ix}_sumExp"]
@@ -290,9 +290,64 @@ def rebinHist(x, roofitHist,  nbins, normalize=False,):
     roofitHist_rebinned = rt.RooDataHist(rooHist_name, rooHist_name, rt.RooArgSet(x), roofit_th1) 
     return roofitHist_rebinned
 
+def get_pdf_by_name(add_pdf, name):
+    """
+    Extracts a sub-PDF from a RooAddPdf by its name.
+
+    Args:
+        add_pdf (ROOT.RooAddPdf): The RooAddPdf instance.
+        name (str): The name of the sub-PDF to extract.
+
+    Returns:
+        ROOT.RooAbsPdf or None: The extracted RooAbsPdf if found, otherwise None.
+    """
+    if not isinstance(add_pdf, ROOT.RooAddPdf):
+        print("Error: Input is not a RooAddPdf instance.")
+        return None
+
+    # Get the list of component PDFs
+    pdf_list = add_pdf.pdfList()
+
+    # Iterate through the list and find the PDF by name
+    # In PyROOT, you can iterate directly over RooArgList
+    for i in range(pdf_list.getSize()):
+        current_pdf = pdf_list.at(i) # Use at(i) to get the element
+        if current_pdf and current_pdf.GetName() == name:
+            return current_pdf
+
+    print(f"Warning: PDF with name '{name}' not found in RooAddPdf '{add_pdf.GetName()}'.")
+    return None
+
+def get_fracFromAddPdf(add_pdf, frac_name):
+    """
+    Extracts the fraction (yield) RooAbsReal for a specific sub-PDF by its name
+    from a RooAddPdf.
+    """
+    if not isinstance(add_pdf, ROOT.RooAddPdf):
+        print("Error: Input is not a RooAddPdf instance.")
+        return None
+
+    coeff_list = add_pdf.coefList()
+
+    for i in range(coeff_list.getSize()):
+        current_frac = coeff_list.at(i) # Use at(i) to get the element
+        if current_frac.GetName() == frac_name:
+            return current_frac
+
+    else:
+        print(f"Warning: coeff with name '{frac_name}' not found in RooAddPdf '{add_pdf.GetName()}'.")
+        return None
+
 def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
     x_name = x.GetName()
     target_nbins = 50
+    sig_yield_multiply_l = [
+        50,
+        50,
+        30,
+        30,
+        20
+    ]
     
     for ix in range(len(subCat_dataHists)):
     # for ix in range(1):
@@ -321,16 +376,69 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
         multi_pdf = multi_pdf_l[ix]
         
         subCat_dataHist.plotOn(frame)
-        # multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kBlue - 9), Components="model_SubCat0_SMFxBWZRedux") # don't need the specify component name, but I guess it's good practice
-        # multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kBlue - 9), Components=multi_pdf.GetName()) # don't need the specify component name, but I guess it's good practice
-        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange)) # don't need the specify component name, but I guess it's good practice
-        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen)) # don't need the specify component name, but I guess it's good practice
+        bkg_pdf_name = f"model_SubCat{ix}_SMFxBWZRedux"
+        multi_pdf.plotOn(frame, Components=bkg_pdf_name, Invisible=True) 
+        hresid_bkg_only = frame.residHist() # obtain residual for later
+
+        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange), Components=bkg_pdf_name) 
+        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen), Components=bkg_pdf_name) 
+        multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2, Components=bkg_pdf_name, LineStyle=rt.kDashed)
+        
+        
         
         multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2)
+        # multi_pdf.Print("v")
+        
+        add_pdf = multi_pdf
+        sig_frac = get_fracFromAddPdf(add_pdf, f"frac_subCat{ix}")
+        sig_frac.Print("v")
+        original_frac_val = sig_frac.getVal()
+        multipy_val = sig_yield_multiply_l[ix]
+        sig_frac.setVal(original_frac_val*multipy_val)
+        # raise ValueError
+        multi_pdf.plotOn(frame, LineColor=rt.kBlue, LineWidth=2, Components=f"ggH_cat{ix}_ggh_pdf")
         frame.Draw()
 
+        
+        print(f"original_frac_val: {original_frac_val}")
+        print(f"subCat {ix} dataHist sumentries: {subCat_dataHist.sumEntries()}")
+        print(f"subCat {ix} signal yield: {subCat_dataHist.sumEntries()*original_frac_val}")
+        # done with pad1
+        
+        # Bottom pad start
+        pad2.cd()
+        frame_resid = x.frame()
+        frame_resid.addPlotable(hresid_bkg_only, "P")
+
+
+        # set fraction back to normal
+        sig_frac.setVal(original_frac_val)
+
+        bkg_pdf = get_pdf_by_name(multi_pdf, bkg_pdf_name)
+        # print(f"bkg_pdf.GetName(): {bkg_pdf.GetName()}")
+        # raise ValueError
+        bkgOnly_resid_pdf = rt.RooGenericPdf("bkg_resid_pdf", "@0-@0", rt.RooArgList(bkg_pdf))
+        # bkg_resid_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange)) 
+        # bkg_resid_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen)) 
+        
+        bkgOnly_resid_pdf.plotOn(frame_resid, LineColor=rt.kRed, LineStyle=rt.kDashed, LineWidth=2)
+
+        # multi_pdf.Print("V")
+        # sigBkg_resid_pdf = rt.RooGenericPdf("sigBkg_resid_pdf", "@0-@1", rt.RooArgList(multi_pdf,bkg_pdf))
+
+        sig_pdf_name = f"ggH_cat{ix}_ggh_pdf"
+        sigBkg_resid_pdf = get_pdf_by_name(multi_pdf, sig_pdf_name)
+        
+        sigBkg_resid_pdf.plotOn(frame_resid, LineColor=rt.kRed, LineStyle=rt.kSolid, LineWidth=2)
+        
+
+        # draw frame
+        frame_resid.Draw()
+        # done with pad2
+        
         canvas.Update()
         canvas.Draw()
         canvas.SaveAs(f"{save_fname}_subCat{ix}.pdf")
+    
     fitResult.Print()
-    raise ValueError
+    # raise ValueError
