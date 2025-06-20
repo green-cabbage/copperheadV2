@@ -47,9 +47,12 @@ def applyVBF_invPhaseCut(events):
     return events[gjj_mass_cut]
 
 
-def stitch_twoSamples(events_vbf, events_100To200):
+def stitch_twoSamples(events_vbf, events_100To200, keepTwo=False):
     events_vbf = applyVBF_phaseCut(events_vbf)
     events_100To200 = applyVBF_invPhaseCut(events_100To200)
+    if keepTwo: # have a field that indicates whether which is VBF-filtered MC
+        events_vbf["is_VBFfilter_mc"] = ak.ones_like(events_vbf.wgt_nominal, dtype="bool")
+        events_100To200["is_VBFfilter_mc"] = ak.zeros_like(events_100To200.wgt_nominal, dtype="bool")
     return ak.concatenate([events_vbf, events_100To200], axis=0)
 
 def applyVBF_cutV1(events):
@@ -262,7 +265,101 @@ def plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, nbins
     c.SaveAs(f"plots/{save_fname}.pdf")
 
     return c, h1, h2  # Useful if you want to save or manipulate further
- 
+
+
+def plotStitchedHStack(dy100To200_val, dy_vbf_val, dy100To200_wgt, dy_vbf_wgt, dy_vbf_isVBF_sample, nbins=50, xmin=None, xmax=None, title="2018 UL", xlabel="Observable", save_fname = "normalized_hist_signWgt"):
+
+    # Auto range if not given
+    all_data = np.concatenate([dy100To200, dy_vbf])
+    if xmin is None:
+        xmin = float(np.min(all_data))
+    if xmax is None:
+        xmax = float(np.max(all_data))
+
+    
+    # Create histograms
+    print(f"xlabel: {xlabel}")
+    
+    if "gen" in xlabel:
+        # bin_edges = np.linspace(0,600,61).tolist()
+        bin_edges = np.linspace(0,600,61)
+        bin_edges = array('d', bin_edges)
+        # bin_edges = [float(bin_edge) for bin_edge in bin_edges] # convert to float values
+        h100_nc = ROOT.TH1F("dy100To200 nc", "DY 100-200 no cut", len(bin_edges)-1, bin_edges)
+        h100 = ROOT.TH1F("dy100To200", "DY 100-200", len(bin_edges)-1, bin_edges)
+        hVBF = ROOT.TH1F("dy_vbf",     "DY VBF",     len(bin_edges)-1, bin_edges)
+    else:
+        h100_nc = ROOT.TH1F("dy100To200 nc", "DY 100-200 no cut", nbins, xmin, xmax)
+        h100 = ROOT.TH1F("dy100To200", "DY 100-200", nbins, xmin, xmax)
+        hVBF = ROOT.TH1F("dy_vbf",     "DY VBF",     nbins, xmin, xmax)
+    # raise ValueError
+    # Fill histograms
+    # h100_nc
+    dy100To200_val = array('d', dy100To200_val) # make the array double
+    weights = array('d', dy100To200_wgt) # make the array double
+    # print(f"dy100To200_val: {dy100To200_val[:10]}")
+    # print(f"weights: {weights[:10]}")
+    h100_nc.FillN(len(dy100To200_val), dy100To200_val, weights)
+
+    # h100
+    is_VBFfilter_mc = dy_vbf_isVBF_sample
+    dy_vbf_val_fromDy100To200 = dy_vbf_val[~is_VBFfilter_mc]
+    dy_vbf_val_fromDy100To200_wgt = dy_vbf_wgt[~is_VBFfilter_mc]
+    dy_vbf_val_fromDy100To200 = array('d', dy_vbf_val_fromDy100To200) # make the array double
+    weights = array('d', dy_vbf_val_fromDy100To200_wgt) # make the array double
+    h100.FillN(len(dy_vbf_val_fromDy100To200), dy_vbf_val_fromDy100To200, weights)
+
+    
+    # hVBF
+    is_VBFfilter_mc = dy_vbf_isVBF_sample
+    dy_vbf_val_fromVBFFiltered = dy_vbf_val[is_VBFfilter_mc]
+    dy_vbf_val_fromVBFFiltered_wgt = dy_vbf_wgt[is_VBFfilter_mc]
+    dy_vbf_val_fromVBFFiltered = array('d', dy_vbf_val_fromVBFFiltered) # make the array double
+    weights = array('d', dy_vbf_val_fromVBFFiltered_wgt) # make the array double
+    hVBF.FillN(len(dy_vbf_val_fromVBFFiltered), dy_vbf_val_fromVBFFiltered, weights)
+    
+
+    
+
+    # ── STACK HISTOGRAMS ────────────────────────────────────────────────
+    # h100_nc.SetFillColor(ROOT.kBlue-7)
+    h100.SetFillColor(ROOT.kGreen-7)
+    hVBF.SetFillColor(ROOT.kRed-7)
+    
+    stack = ROOT.THStack("stack",f"2018UL Drell-Yan stitching;{xlabel};Events")
+    
+    stack.Add(h100)
+    stack.Add(hVBF)
+    
+    hSum = h100_nc.Clone("hSum")
+    # hSum.Add(h100_nc)
+    hSum.SetLineColor(ROOT.kBlack)
+    hSum.SetLineWidth(2)
+    
+    # ── DRAW ────────────────────────────────────────────────────────────────
+    c = ROOT.TCanvas("c","Stitching Validation",800,600)
+    c.SetLogy()
+    ROOT.gStyle.SetOptStat(0)
+    # stack.Draw("HIST")
+    # hSum.Draw("HIST SAME")
+
+    # stack.Draw("HIST")
+    # hSum.Draw("E SAME")
+    rp = ROOT.TRatioPlot(stack, hSum)
+    rp.Draw()
+    
+    # leg = ROOT.TLegend(0.65,0.65,0.9,0.9)
+    leg = ROOT.TLegend(0.75,0.75,1.0,1.0)
+    # leg.AddEntry(h50,  "DY-M50, gjj_mass ≤ 350","f")
+    leg.AddEntry(h100, "DY-M100-200, gjj_mass < 350","f")
+    leg.AddEntry(hVBF,  "DY_VBF_Filter, gjj_mass > 350","f")
+    leg.AddEntry(hSum,  "DY-M100-200 (no cut)","l")
+    leg.Draw()
+    c.SetGrid()
+    c.Update()
+    c.Draw()
+    c.SaveAs(f"plots/{save_fname}.pdf")
+    c.SaveAs(f"plots/{save_fname}.root")
 
 if __name__ == "__main__":
     client =  Client(n_workers=63,  threads_per_worker=1, processes=True, memory_limit='8 GiB') 
@@ -302,16 +399,16 @@ if __name__ == "__main__":
     # fields2plot.remove
     variables2plot = [
          'gjj_mass',
-         'njets_nominal',
-         'jet1_pt_nominal',
-         'jet2_pt_nominal',
-         'jet1_eta_nominal',
-         'jet2_eta_nominal',
+         # 'njets_nominal',
+         # 'jet1_pt_nominal',
+         # 'jet2_pt_nominal',
+         # 'jet1_eta_nominal',
+         # 'jet2_eta_nominal',
          # 'jet1_phi_nominal',
          # 'jet2_phi_nominal',
          # 'jet1_qgl_nominal',
          # 'jet2_qgl_nominal',
-         'jj_dEta_nominal',
+         # 'jj_dEta_nominal',
          'jj_mass_nominal',
          # 'jj_pt_nominal',
          # 'jj_dPhi_nominal',
@@ -323,7 +420,7 @@ if __name__ == "__main__":
          # 'nsoftjets5_nominal',
          # 'htsoft5_nominal',
          # 'dimuon_mass',
-         # 'dimuon_pt',
+         'dimuon_pt',
          # 'dimuon_eta',
          # 'dimuon_phi',
          # 'dimuon_cos_theta_cs',
@@ -358,41 +455,47 @@ if __name__ == "__main__":
     # target_chunksize = 150_000
     target_chunksize = 300_000
     # target_chunksize = 500_000
-    target_len = 400_000
+    # target_len = 400_000
+    target_len = 200_000
     # target_len = 4_000_000
     
     # dy 100To200
     load_path_100To200 = f"{load_path}/dy_M-100To200"
     # load_path_100To200 = f"{load_path}/dy_M-100To200_aMCatNLO"
     
-    # events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")[:target_len]
-    events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
+    events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")[:target_len]
+    # events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
     events_100To200 = events_100To200.repartition(rows_per_partition=target_chunksize)
     events_100To200 = filterRegion(events_100To200, region=region)
+    events_100To200["wgt_nominal"] = events_100To200.wgt_nominal * 247.9 / 233.8592627 # change the cross section
     # events_100To200 = applyVBF_phaseCut(events_100To200) # gjj mass cut
     # events_100To200 = applyVBF_invPhaseCut(events_100To200) # gjj mass cut
     events_100To200_orig = events_100To200
     # events_100To200 = applyVBF_cutV1(events_100To200)
     events_100To200 = ak.zip({var: events_100To200[var] for var in variables2plot}) # add only variables to plot
-    
     # vbf-filter
     load_path_vbf = f"{load_path}/dy_m105_160_vbf_amc"
     
     # load_path_vbf = f"{load_path}/dy_VBF_filter_NewZWgt"
-    # events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")[:target_len]
-    events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
+    events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")[:target_len]
+    # events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
     events_vbf = events_vbf.repartition(rows_per_partition=target_chunksize)
     events_vbf = filterRegion(events_vbf, region=region)
-    events_vbf = stitch_twoSamples(events_vbf, events_100To200_orig)
+    # events_vbf = stitch_twoSamples(events_vbf, events_100To200_orig
+    keepTwo = True
+    events_vbf = stitch_twoSamples(events_vbf, events_100To200_orig, keepTwo=keepTwo)
     # events_vbf = applyVBF_phaseCut(events_vbf) # gjj mass cut
     # events_vbf = applyVBF_invPhaseCut(events_vbf) # gjj mass cut
     # events_vbf = applyVBF_cutV1(events_vbf)
+    if keepTwo:
+        variables2plot = variables2plot + ["is_VBFfilter_mc"]
     events_vbf = ak.zip({var: events_vbf[var] for var in variables2plot}) # add only variables to plot
 
     # now compute
     events_100To200, events_vbf = dask.compute((events_100To200, events_vbf))[0]
 
-    variables2plot += ["jj_mass_nominal_range2"]
+    if "jj_mass_nominal" in variables2plot:
+        variables2plot += ["jj_mass_nominal_range2"]
     
     for var in variables2plot:
         if ("_range2" in var):
@@ -412,7 +515,10 @@ if __name__ == "__main__":
         # dy100To200_wgt = np.sign(dy100To200_wgt)
         dy_vbf = ak.to_numpy(events_vbf[var_reduced])
         dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
+        dy_vbf_isVBF_sample = ak.to_numpy(events_vbf.is_VBFfilter_mc)
         # dy_vbf_wgt = np.sign(dy_vbf_wgt)
         save_fname = f"DY2018UL_{var}_"
-        plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname, normalize=False)
+        # plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname, normalize=False)
+        save_fname = f"DY2018UL_{var}_Ram"
+        plotStitchedHStack(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, dy_vbf_isVBF_sample, nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname)
     
