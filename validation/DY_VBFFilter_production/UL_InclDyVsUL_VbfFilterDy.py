@@ -59,21 +59,20 @@ def applyVBF_cutV1(events):
     btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
     vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
     vbf_cut = ak.fill_none(vbf_cut, value=False)
-    dimuon_mass = events.dimuon_mass
     VBF_filter = (
         vbf_cut & 
         ~btag_cut # btag cut is for VH and ttH categories
     )
-    trues = ak.ones_like(dimuon_mass, dtype="bool")
-    falses = ak.zeros_like(dimuon_mass, dtype="bool")
-    events["vbf_filter"] = ak.where(VBF_filter, trues,falses)
+    # dimuon_mass = events.dimuon_mass
+    # trues = ak.ones_like(dimuon_mass, dtype="bool")
+    # falses = ak.zeros_like(dimuon_mass, dtype="bool")
+    # events["vbf_filter"] = ak.where(VBF_filter, trues,falses)
     return events[VBF_filter]
 
 def applyGGH_cutV1(events):
     btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
     vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
     vbf_cut = ak.fill_none(vbf_cut, value=False)
-    dimuon_mass = events.dimuon_mass
     ggH_filter = (
         ~vbf_cut & 
         ~btag_cut # btag cut is for VH and ttH categories
@@ -127,7 +126,6 @@ def applyGGH_cutflow(events):
     btag_cut = btagLoose_filter | btagMedium_filter
     vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
     vbf_cut = ak.fill_none(vbf_cut, value=False)
-    dimuon_mass = events.dimuon_mass
     ggH_filter = (
         ~vbf_cut & 
         ~btag_cut # btag cut is for VH and ttH categories
@@ -138,7 +136,6 @@ def applyGGH_noJetPt(events):
     btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
     vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5)
     vbf_cut = ak.fill_none(vbf_cut, value=False)
-    dimuon_mass = events.dimuon_mass
     ggH_filter = (
         ~vbf_cut & 
         ~btag_cut # btag cut is for VH and ttH categories
@@ -270,7 +267,7 @@ def plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, nbins
 def plotStitchedHStack(dy100To200_val, dy_vbf_val, dy100To200_wgt, dy_vbf_wgt, dy_vbf_isVBF_sample, nbins=50, xmin=None, xmax=None, title="2018 UL", xlabel="Observable", save_fname = "normalized_hist_signWgt"):
 
     # Auto range if not given
-    all_data = np.concatenate([dy100To200, dy_vbf])
+    all_data = np.concatenate([dy100To200_val, dy_vbf_val])
     if xmin is None:
         xmin = float(np.min(all_data))
     if xmax is None:
@@ -361,6 +358,30 @@ def plotStitchedHStack(dy100To200_val, dy_vbf_val, dy100To200_wgt, dy_vbf_wgt, d
     c.SaveAs(f"plots/{save_fname}.pdf")
     c.SaveAs(f"plots/{save_fname}.root")
 
+
+def plotVarsTHStack(events_100To200, events_vbf, variables2plot, plot_bins, save_fname="DY2018UL_THStack"):
+    for var in variables2plot:
+        if ("_range2" in var):
+            var_reduced = var.replace("_range2","")
+        else:
+            var_reduced = var
+        plot_var = getPlotVar(var)
+            
+        print(f"plot_var: {plot_var}, var: {var}")
+        if plot_var not in plot_bins.keys():
+            print(f"{plot_var} not available in plot_bins. skipping!")
+            continue
+        xmin, xmax, _ = plot_bins[plot_var]["binning_linspace"]
+        xlabel = plot_bins[plot_var].get("xlabel").replace("$","")
+        dy100To200 = ak.to_numpy(events_100To200[var_reduced])
+        dy100To200_wgt = ak.to_numpy(events_100To200.wgt_nominal)
+        dy_vbf = ak.to_numpy(events_vbf[var_reduced])
+        dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
+        dy_vbf_isVBF_sample = ak.to_numpy(events_vbf.is_VBFfilter_mc)
+        # save_fname_var = f"DY2018UL_{var}_Ram"
+        save_fname_var = f"{save_fname}_{var}"
+        plotStitchedHStack(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, dy_vbf_isVBF_sample, nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname_var)
+
 if __name__ == "__main__":
     client =  Client(n_workers=63,  threads_per_worker=1, processes=True, memory_limit='8 GiB') 
 
@@ -397,6 +418,14 @@ if __name__ == "__main__":
     # ]
     # fields2plot = list(plot_bins.keys())
     # fields2plot.remove
+    fields2compute = [
+        "nBtagLoose_nominal",
+        "nBtagMedium_nominal",
+        "jj_mass_nominal",
+        "jj_dEta_nominal",
+        "jet1_pt_nominal",
+        "wgt_nominal",
+    ]
     variables2plot = [
          'gjj_mass',
          # 'njets_nominal',
@@ -442,8 +471,13 @@ if __name__ == "__main__":
          # 'mu1_pt_over_mass',
          # 'mu2_pt_over_mass',
     ]
-    variables2plot.append("wgt_nominal")
+    # variables2plot.append("wgt_nominal")
+    fields2compute = variables2plot + fields2compute
+    fields2compute = list(set(fields2compute)) # remove redundant fields
+
+    
     print(f"variables2plot: {variables2plot}")
+    print(f"fields2compute: {fields2compute}")
 
     label="vbf_dy_validationMay30_2025"
 
@@ -463,8 +497,8 @@ if __name__ == "__main__":
     load_path_100To200 = f"{load_path}/dy_M-100To200"
     # load_path_100To200 = f"{load_path}/dy_M-100To200_aMCatNLO"
     
-    events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")[:target_len]
-    # events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
+    # events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")[:target_len]
+    events_100To200 = dak.from_parquet(f"{load_path_100To200}/*/*.parquet")
     events_100To200 = events_100To200.repartition(rows_per_partition=target_chunksize)
     events_100To200 = filterRegion(events_100To200, region=region)
     events_100To200["wgt_nominal"] = events_100To200.wgt_nominal * 247.9 / 233.8592627 # change the cross section
@@ -472,13 +506,13 @@ if __name__ == "__main__":
     # events_100To200 = applyVBF_invPhaseCut(events_100To200) # gjj mass cut
     events_100To200_orig = events_100To200
     # events_100To200 = applyVBF_cutV1(events_100To200)
-    events_100To200 = ak.zip({var: events_100To200[var] for var in variables2plot}) # add only variables to plot
+    events_100To200 = ak.zip({var: events_100To200[var] for var in fields2compute}) # add only variables to plot
     # vbf-filter
     load_path_vbf = f"{load_path}/dy_m105_160_vbf_amc"
     
     # load_path_vbf = f"{load_path}/dy_VBF_filter_NewZWgt"
-    events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")[:target_len]
-    # events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
+    # events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")[:target_len]
+    events_vbf = dak.from_parquet(f"{load_path_vbf}/*/*.parquet")
     events_vbf = events_vbf.repartition(rows_per_partition=target_chunksize)
     events_vbf = filterRegion(events_vbf, region=region)
     # events_vbf = stitch_twoSamples(events_vbf, events_100To200_orig
@@ -488,37 +522,51 @@ if __name__ == "__main__":
     # events_vbf = applyVBF_invPhaseCut(events_vbf) # gjj mass cut
     # events_vbf = applyVBF_cutV1(events_vbf)
     if keepTwo:
-        variables2plot = variables2plot + ["is_VBFfilter_mc"]
-    events_vbf = ak.zip({var: events_vbf[var] for var in variables2plot}) # add only variables to plot
+        fields2compute = fields2compute + ["is_VBFfilter_mc"]
+    events_vbf = ak.zip({var: events_vbf[var] for var in fields2compute}) # add only variables to plot
 
     # now compute
     events_100To200, events_vbf = dask.compute((events_100To200, events_vbf))[0]
 
     if "jj_mass_nominal" in variables2plot:
         variables2plot += ["jj_mass_nominal_range2"]
-    
-    for var in variables2plot:
-        if ("_range2" in var):
-            var_reduced = var.replace("_range2","")
-        else:
-            var_reduced = var
-        plot_var = getPlotVar(var)
+
+    # my old stitching code start ------------------------------------------
+    # for var in variables2plot:
+    #     if ("_range2" in var):
+    #         var_reduced = var.replace("_range2","")
+    #     else:
+    #         var_reduced = var
+    #     plot_var = getPlotVar(var)
             
-        print(f"plot_var: {plot_var}, var: {var}")
-        if plot_var not in plot_bins.keys():
-            print(f"{plot_var} not available in plot_bins. skipping!")
-            continue
-        xmin, xmax, _ = plot_bins[plot_var]["binning_linspace"]
-        xlabel = plot_bins[plot_var].get("xlabel").replace("$","")
-        dy100To200 = ak.to_numpy(events_100To200[var_reduced])
-        dy100To200_wgt = ak.to_numpy(events_100To200.wgt_nominal)
-        # dy100To200_wgt = np.sign(dy100To200_wgt)
-        dy_vbf = ak.to_numpy(events_vbf[var_reduced])
-        dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
-        dy_vbf_isVBF_sample = ak.to_numpy(events_vbf.is_VBFfilter_mc)
-        # dy_vbf_wgt = np.sign(dy_vbf_wgt)
-        save_fname = f"DY2018UL_{var}_"
-        # plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname, normalize=False)
-        save_fname = f"DY2018UL_{var}_Ram"
-        plotStitchedHStack(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt, dy_vbf_isVBF_sample, nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname)
+    #     print(f"plot_var: {plot_var}, var: {var}")
+    #     if plot_var not in plot_bins.keys():
+    #         print(f"{plot_var} not available in plot_bins. skipping!")
+    #         continue
+    #     xmin, xmax, _ = plot_bins[plot_var]["binning_linspace"]
+    #     xlabel = plot_bins[plot_var].get("xlabel").replace("$","")
+    #     dy100To200 = ak.to_numpy(events_100To200[var_reduced])
+    #     dy100To200_wgt = ak.to_numpy(events_100To200.wgt_nominal)
+    #     # dy100To200_wgt = np.sign(dy100To200_wgt)
+    #     dy_vbf = ak.to_numpy(events_vbf[var_reduced])
+    #     dy_vbf_wgt = ak.to_numpy(events_vbf.wgt_nominal)
+    #     # dy_vbf_wgt = np.sign(dy_vbf_wgt)
+    #     save_fname = f"DY2018UL_{var}_"
+    #     plot_histograms_pyroot(dy100To200, dy_vbf, dy100To200_wgt, dy_vbf_wgt,nbins=64, xmin=xmin, xmax=xmax, xlabel=xlabel, save_fname=save_fname, normalize=False)
+    # my old stitching code end ------------------------------------------
+
+    # stage1 plot
+    save_fname = "DY2018UL_THStackSignalFitReg_stage1"
+    plotVarsTHStack(events_100To200, events_vbf, variables2plot, plot_bins, save_fname=save_fname)
+
+
+    # VBF cat plot
+    events_100To200 = applyVBF_cutV1(events_100To200)
+    events_vbf = applyVBF_cutV1(events_vbf)
+    save_fname = "DY2018UL_THStackSignalFitReg_VbfCat"
+    plotVarsTHStack(events_100To200, events_vbf, variables2plot, plot_bins, save_fname=save_fname)
+    
+    
+
+        
     
