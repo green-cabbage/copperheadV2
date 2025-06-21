@@ -612,4 +612,3 @@ def do_jer_smear(jets, config, syst, event_id):
     jets["pt"] = jer_smearing * pt_jec # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
     # logger.debug(f"jets.pt after JER smear: {jets.pt[:20].compute()}")
     return jets
-

@@ -156,6 +156,119 @@ def getZptWgts_2016postVFP(dimuon_pt, njets, nbins, year, config_path):
     zpt_wgt = ak.where(cutOff_mask, zpt_wgt, ak.ones_like(dimuon_pt))
     return zpt_wgt
 
+def getZptWgts_3region(dimuon_pt, njets, nbins, year, config_path):
+    # config_path = "./data/zpt_rewgt/fitting/zpt_rewgt_params.yaml"
+    # config_path = config["new_zpt_wgt"]
+    logger.info(f"zpt config file: {config_path}")
+    wgt_config = OmegaConf.load(config_path)
+    max_order = 5 #9
+    zpt_wgt = ak.ones_like(dimuon_pt)
+    jet_multiplicies = [0,1,2]
+    # logger.info(f"zpt_wgt: {zpt_wgt}")
+
+    for jet_multiplicity in jet_multiplicies:
+
+        zpt_wgt_by_jet = ak.zeros_like(dimuon_pt)
+        # zpt_wgt_by_jet = ak.ones_like(dimuon_pt) * -1 # debugging
+        # first polynomial fit
+        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
+        for order in range(2+1): # FIXME: Hardcoded polynomial order
+            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"fp{order}"]
+            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
+            polynomial_term = coeff*dimuon_pt**order
+            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
+            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
+            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
+        poly_fit_cutoff_min = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["x_min"]
+        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_min >= dimuon_pt), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
+
+        # polynomial fit
+        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
+        for order in range(max_order+1): # p goes from 0 to max_order
+            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"p{order}"]
+            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
+            polynomial_term = coeff*dimuon_pt**order
+            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
+            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
+            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
+        poly_fit_cutoff_max = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["x_max"]
+        zpt_wgt_by_jet = ak.where(((poly_fit_cutoff_min < dimuon_pt) & (poly_fit_cutoff_max >= dimuon_pt)), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
+
+        # horizontal line beyond poly_fit_cutoff_max
+        coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"horizontal_c0"]
+        zpt_wgt_by_jet_horizontal = ak.ones_like(dimuon_pt) * coeff
+        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_max < dimuon_pt), zpt_wgt_by_jet_horizontal, zpt_wgt_by_jet)
+        # logger.info(f"zpt_wgt_by_jet testing: {ak.all(zpt_wgt_by_jet != -1).compute()}")
+        # raise ValueError
+
+        if jet_multiplicity != 2:
+            njet_mask = njets == jet_multiplicity
+        else:
+            njet_mask = njets >= 2 # njet 2 is inclusive
+        # logger.info(f"njet{jet_multiplicity} order  zpt_wgt_by_jet: {zpt_wgt_by_jet}")
+        zpt_wgt = ak.where(njet_mask, zpt_wgt_by_jet, zpt_wgt) # if matching jet multiplicity, apply the values
+        # logger.info(f"zpt_wgt after njet {jet_multiplicity}: {zpt_wgt}")
+
+    cutOff_mask = dimuon_pt < 200 # ignore wgts from dimuon pT > 200
+    zpt_wgt = ak.where(cutOff_mask, zpt_wgt, ak.ones_like(dimuon_pt))
+    return zpt_wgt
+
+def getZptWgts_3region_new(dimuon_pt, njets, nbins, year, config_path):
+    # config_path = "./data/zpt_rewgt/fitting/zpt_rewgt_params.yaml"
+    # config_path = config["new_zpt_wgt"]
+    logger.info(f"zpt config file: {config_path}")
+    wgt_config = OmegaConf.load(config_path)
+    max_order = 5 #9
+    zpt_wgt = ak.ones_like(dimuon_pt)
+    jet_multiplicies = [0,1,2]
+    # logger.info(f"zpt_wgt: {zpt_wgt}")
+
+    for jet_multiplicity in jet_multiplicies:
+
+        zpt_wgt_by_jet = ak.zeros_like(dimuon_pt)
+        # zpt_wgt_by_jet = ak.ones_like(dimuon_pt) * -1 # debugging
+        # first polynomial fit
+        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
+        for order in range(max_order + 1):  # Dynamically use max_order from the configuration
+            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"f0_p{order}"]
+            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
+            polynomial_term = coeff*dimuon_pt**order
+            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
+            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
+            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
+        poly_fit_cutoff_min = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["xmin1"]
+        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_min >= dimuon_pt), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
+
+        # polynomial fit
+        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
+        for order in range(max_order+1): # p goes from 0 to max_order
+            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"f1_p{order}"]
+            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
+            polynomial_term = coeff*dimuon_pt**order
+            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
+            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
+            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
+        poly_fit_cutoff_max = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["xmax1"]
+        zpt_wgt_by_jet = ak.where(((poly_fit_cutoff_min < dimuon_pt) & (poly_fit_cutoff_max >= dimuon_pt)), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
+
+        # horizontal line beyond poly_fit_cutoff_max
+        coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"horizontal_c0"]
+        zpt_wgt_by_jet_horizontal = ak.ones_like(dimuon_pt) * coeff
+        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_max < dimuon_pt), zpt_wgt_by_jet_horizontal, zpt_wgt_by_jet)
+        # logger.info(f"zpt_wgt_by_jet testing: {ak.all(zpt_wgt_by_jet != -1).compute()}")
+        # raise ValueError
+
+        if jet_multiplicity != 2:
+            njet_mask = njets == jet_multiplicity
+        else:
+            njet_mask = njets >= 2 # njet 2 is inclusive
+        # logger.info(f"njet{jet_multiplicity} order  zpt_wgt_by_jet: {zpt_wgt_by_jet}")
+        zpt_wgt = ak.where(njet_mask, zpt_wgt_by_jet, zpt_wgt) # if matching jet multiplicity, apply the values
+        # logger.info(f"zpt_wgt after njet {jet_multiplicity}: {zpt_wgt}")
+
+    cutOff_mask = dimuon_pt < 200 # ignore wgts from dimuon pT > 200
+    zpt_wgt = ak.where(cutOff_mask, zpt_wgt, ak.ones_like(dimuon_pt))
+    return zpt_wgt
 
 def merge_zpt_wgt(yun_wgt, valerie_wgt, njets, year):
     """
@@ -1405,16 +1518,20 @@ class EventProcessor(processor.ProcessorABC):
         # do zpt weight at the very end
         dataset = events.metadata["dataset"]
         do_zpt = ('dy' in dataset) and is_mc
-        # do_zpt = False # temporary overwrite to obtain for zpt re-wgt
         if do_zpt:
             logger.info("doing zpt!")
-            # we explicitly don't directly add zpt weights to the weights variables
-            # due weirdness of btag weight implementation. I suspect it's due to weights being evaluated
-            # once kind of screws with the dak awkward array
-
-            logger.info("======================= old zpt method =======================")
+            # logger.info("======================= old zpt method =======================")
             
-            zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            # zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+
+            logger.info("=======================  apply zpt weights =======================")
+            if year == "2018": # FIXME
+                if "MiNNLO" in dataset: # FIXME: temporary fix for MiNNLO samples
+                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+                else:
+                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
+            else:
+                zpt_weight_mine_nbins100 = getZptWgts_3region(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
             
             # logger.info("======================= old zpt weights are commented out =======================")
             # if year == "2016postVFP" or year=="2018": #FIXME: This is temporary, we need to sync the zpt strategy and update it.
