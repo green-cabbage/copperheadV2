@@ -27,7 +27,6 @@ sys.path.insert(0, parent_dir)
 from src.lib.histogram.plotting import plotFig_6_13
 
 
-# nSubCats = 5
 
 def createUnitHistogram(name, nbins, xmin, xmax):
     hist = ROOT.TH1D(name, name, nbins, xmin, xmax)
@@ -552,6 +551,8 @@ if __name__ == "__main__":
     action="store",
     help="region value to plot, available regions are: h_peak, h_sidebands, z_peak and signal (h_peak OR h_sidebands)",
     )
+    nSubCats = 5
+    
     args = parser.parse_args()
     # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/*/"
     year = args.year
