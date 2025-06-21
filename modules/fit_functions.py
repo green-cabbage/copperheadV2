@@ -338,9 +338,89 @@ def get_fracFromAddPdf(add_pdf, frac_name):
         print(f"Warning: coeff with name '{frac_name}' not found in RooAddPdf '{add_pdf.GetName()}'.")
         return None
 
-def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
+
+# def getResidHistBand(x, pdf, fitResult, hist2copy):
+#     """
+#     from roofit histogram, generate a histogram with value one with relative fit errors from pdf and paste them in the same TH1 format as hist2copy
+#     """
+#     h_band = hist2copy.Clone("h_band")
+#     for i in range(1, h_band.GetNbinsX()+1):
+#         xval = h_band.GetXaxis().GetBinCenter(i)
+#         x.setVal(xval)
+    
+#         # get uncertainty on PDF at this point from fit result
+#         val = pdf.getVal(ROOT.RooArgSet(x))
+#         err = pdf.getPropagatedError(fitResult)
+        
+#         rel_err = err * val 
+#         hist_val = hist2copy.GetBinContent(i) 
+#         h_band.SetBinContent(i, 0.0)  # ratio = 1
+#         h_band.SetBinError(i, rel_err*2*hist_val)
+#         print(f"bin {i} rel_err: {rel_err}")
+#         print(f"bin {i} val: {val}")
+#         print(f"bin {i} err: {err}")
+#         print(f"bin {i} hist_val: {hist_val}")
+        
+
+#     # Style
+#     h_band.SetFillColor(ROOT.kOrange)
+#     h_band.SetMarkerSize(0)
+#     h_band.SetLineWidth(0)
+#     # raise ValueError
+#     return h_band
+
+
+def getResidHistBand(x, pdf, fitResult, dataHist, n_sigma=1, color=rt.kGreen):
+    """
+    Source: https://root-forum.cern.ch/t/problems-with-errors-for-residhist/51455/5
+    """
+    nbins=dataHist.numEntries() # match the nbins from dataHist
+    old_nbins = x.getBins()
+    x.setBins(nbins) 
+    # h_band = hist2copy.Clone("h_band")
+    nBkg = rt.RooRealVar("nBkg", "nBkg", 5000, 0, 10000)
+    binning = x.getBinning()
+    h_band = dataHist.createHistogram(x.GetName()).Clone("h_band")
+    for i in range(dataHist.numEntries()):
+        # xval = h_band.GetXaxis().GetBinCenter(i)
+        # x.setVal(xval)
+        x.setRange("range_for_bin", binning.binLow(i), binning.binHigh(i))
+        bkgPdfIntegral = pdf.createIntegral(x, rt.RooFit.NormSet(x), rt.RooFit.Range("range_for_bin"))
+        bkgYield = rt.RooProduct("bkgYield", "bkgYield", [bkgPdfIntegral, nBkg])
+        one_sigma_err = bkgYield.getPropagatedError(fitResult)
+        # print(f"bin {i} dataHist->weight(): {dataHist.weight()}")
+        # print(f"bin {i} dataHist->weightError(): {dataHist.weightError()}")
+        # print(f"bin {i} bkgYield.getPropagatedError(fitResult): {one_sigma_err}")
+        # print(f"bin {i} binning.binLow(i): {binning.binLow(i)}")
+        # print(f"bin {i} binning.binHigh(i): {binning.binHigh(i)}")
+
+        h_band.SetBinContent(i+1, 0.0) 
+        h_band.SetBinError(i+1, one_sigma_err*n_sigma)
+
+    # Style
+    h_band.SetFillColor(color)
+    h_band.SetMarkerSize(0)
+    h_band.SetLineWidth(0)
+
+    # convert to RooDataHist
+    # x_name = x.GetName()
+    # h_band = rt.RooDataHist(x_name, x_name, rt.RooArgSet(x), h_band) 
+
+    # for i in range(h_band.numEntries()):
+    #     coord = h_band.get(i)  # returns RooArgSet
+    #     yval = h_band.weight(i)  # bin content
+    #     yerr = h_band.weightError(i)  # bin error
+    #     print(f"Bin {i}:val = {yval:.2f} ± {yerr:.2f}")
+
+
+    x.setBins(old_nbins) 
+    # print(f"old_nbins: {old_nbins}")
+    # raise ValueError
+    return h_band
+
+
+def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nbins=50):
     x_name = x.GetName()
-    target_nbins = 50
     sig_yield_multiply_l = [
         50,
         50,
@@ -373,6 +453,8 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
         frame = x.frame()
         subCat_dataHist = subCat_dataHists[ix]
         subCat_dataHist = rebinHist(x, subCat_dataHist, target_nbins) # rebin
+         
+        
         multi_pdf = multi_pdf_l[ix]
         
         subCat_dataHist.plotOn(frame)
@@ -408,8 +490,9 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
         # Bottom pad start
         pad2.cd()
         frame_resid = x.frame()
-        frame_resid.addPlotable(hresid_bkg_only, "P")
-
+        frame_resid.addPlotable(hresid_bkg_only, "P", invisible=True)
+        frame_resid.Draw() # draw invisible residual to set y range in pad2
+        
 
         # set fraction back to normal
         sig_frac.setVal(original_frac_val)
@@ -430,10 +513,24 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname):
         sigBkg_resid_pdf = get_pdf_by_name(multi_pdf, sig_pdf_name)
         
         sigBkg_resid_pdf.plotOn(frame_resid, LineColor=rt.kRed, LineStyle=rt.kSolid, LineWidth=2)
-        
 
-        # draw frame
-        frame_resid.Draw()
+        # Get the Erro bands
+        # h_band_sig2 = getResidHistBand(x, bkg_pdf, fitResult, subCat_dataHist, n_sigma=2, color=rt.kOrange)
+        # h_band_sig1 = getResidHistBand(x, bkg_pdf, fitResult, subCat_dataHist, n_sigma=1, color=rt.kGreen)
+        h_band_sig2 = getResidHistBand(x, multi_pdf, fitResult, subCat_dataHist, n_sigma=2, color=rt.kOrange)
+        h_band_sig1 = getResidHistBand(x, multi_pdf, fitResult, subCat_dataHist, n_sigma=1, color=rt.kGreen)
+        
+        # plot the residual data points again, but visible this time
+        frame_resid.addPlotable(hresid_bkg_only, "P")
+        
+        # draw 
+        h_band_sig2.Draw("E2 SAME")
+        h_band_sig1.Draw("E2 SAME")
+        frame_resid.Draw("SAME")
+        # frame_resid.Draw()
+        
+        # continue
+        
         # done with pad2
         
         canvas.Update()

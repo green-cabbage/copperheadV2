@@ -1454,7 +1454,7 @@ if __name__ == "__main__":
     # MH_subCat0.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
     # MH_subCat0 = rt.RooRealVar("MH" , "MH", 124.805, 120,130) # matching AN
-    MH_subCat0 = rt.RooRealVar("MH" , "MH", 125, 124,126) # matching AN
+    MH_subCat0 = rt.RooRealVar("MH" , "MH", 125, 124,126)
     # MH_subCat0.setConstant(True)
     
     # sigma_subCat0 = rt.RooRealVar("sigma_subCat0" , "sigma_subCat0", 2, .1, 4.0)
@@ -1826,12 +1826,12 @@ if __name__ == "__main__":
     sig_norm_subCat4.setConstant(True)
     
     # ---------------------------------------------------
-    # Fit signal model individually, not simultaneous. Sigma, and left and right tails are different for each category
+    # Fit signal model simultaneously. Sigma, and left and right tails are different for each category
     # ---------------------------------------------------
 
+    
+
     # subCat 0
-    # _ = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True,)
-    # fit_result = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True,)
     _ = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat0.fitTo(data_subCat0_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1847,8 +1847,6 @@ if __name__ == "__main__":
     
 
     # subCat 1
-    # _ = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat1.fitTo(data_subCat1_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1864,8 +1862,6 @@ if __name__ == "__main__":
     
 
     # subCat 2
-    # _ = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat2.fitTo(data_subCat2_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1881,8 +1877,6 @@ if __name__ == "__main__":
     
     
     # subCat 3
-    # _ = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat3.fitTo(data_subCat3_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1902,8 +1896,6 @@ if __name__ == "__main__":
 
 
     # subCat 4
-    # _ = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -2805,18 +2797,18 @@ if __name__ == "__main__":
 
 
     # SMF coeffs
-    # a0_subCat0.setConstant(True)
-    # a1_subCat0.setConstant(True)
-    # a3_subCat0.setConstant(True)
+    a0_subCat0.setConstant(True)
+    a1_subCat0.setConstant(True)
+    a3_subCat0.setConstant(True)
 
-    # a0_subCat1.setConstant(True)
-    # a1_subCat1.setConstant(True)
-    # a0_subCat2.setConstant(True)
-    # a1_subCat2.setConstant(True)
-    # a0_subCat3.setConstant(True)
-    # a1_subCat3.setConstant(True)
-    # a0_subCat4.setConstant(True)
-    # a1_subCat4.setConstant(True)
+    a0_subCat1.setConstant(True)
+    a1_subCat1.setConstant(True)
+    a0_subCat2.setConstant(True)
+    a1_subCat2.setConstant(True)
+    a0_subCat3.setConstant(True)
+    a1_subCat3.setConstant(True)
+    a0_subCat4.setConstant(True)
+    a1_subCat4.setConstant(True)
 
 
     MH_subCat0.setConstant(True) # all other MH subcat refers to MH_subCat0
@@ -2903,6 +2895,10 @@ if __name__ == "__main__":
     ]
 
     plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname)
+    print(f"data_subCat0_signal sumentries: {data_subCat0_signal.sumEntries()}")
+    print(f"data_subCat1_signal sumentries: {data_subCat1_signal.sumEntries()}")
+    print(f"data_subCat2_signal sumentries: {data_subCat2_signal.sumEntries()}")
+    print(f"data_subCat3_signal sumentries: {data_subCat3_signal.sumEntries()}")
     print(f"data_subCat4_signal sumentries: {data_subCat4_signal.sumEntries()}")
     raise ValueError
 
