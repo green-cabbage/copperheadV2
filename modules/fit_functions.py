@@ -449,7 +449,7 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
 
         # Top pad start
         pad1.cd()
-        legend = rt.TLegend(0.65,0.75,0.9,0.9)
+        legend = rt.TLegend(0.55,0.65,0.9,0.9)
         frame = x.frame()
         subCat_dataHist = subCat_dataHists[ix]
         subCat_dataHist = rebinHist(x, subCat_dataHist, target_nbins) # rebin
@@ -457,19 +457,27 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
         
         multi_pdf = multi_pdf_l[ix]
         
-        subCat_dataHist.plotOn(frame)
+        subCat_dataHist.plotOn(frame, Invisible=True)
         bkg_pdf_name = f"model_SubCat{ix}_SMFxBWZRedux"
         multi_pdf.plotOn(frame, Components=bkg_pdf_name, Invisible=True) 
         hresid_bkg_only = frame.residHist() # obtain residual for later
 
         multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange), Components=bkg_pdf_name) 
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"+/ 2\sigma", "F")
+        
         multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen), Components=bkg_pdf_name) 
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"+/ 1\sigma", "F")
+        
         multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2, Components=bkg_pdf_name, LineStyle=rt.kDashed)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Fitted background", "L")
         
         
         
         multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2)
-        # multi_pdf.Print("v")
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"S+B fit", "L")
+        subCat_dataHist.plotOn(frame)
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "PE")
+        
         
         add_pdf = multi_pdf
         sig_frac = get_fracFromAddPdf(add_pdf, f"frac_subCat{ix}")
@@ -477,9 +485,11 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
         original_frac_val = sig_frac.getVal()
         multipy_val = sig_yield_multiply_l[ix]
         sig_frac.setVal(original_frac_val*multipy_val)
-        # raise ValueError
         multi_pdf.plotOn(frame, LineColor=rt.kBlue, LineWidth=2, Components=f"ggH_cat{ix}_ggh_pdf")
+        legend.AddEntry(frame.getObject(int(frame.numItems())-1),f"Post-fit signal x {multipy_val}, m_H = 125 GeV", "L")
+
         frame.Draw()
+        legend.Draw()
 
         
         print(f"original_frac_val: {original_frac_val}")
