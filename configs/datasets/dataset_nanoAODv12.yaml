@@ -229,9 +229,9 @@ years:
         VVV:
             www:
                 - /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8_RunIISummer20UL16NanoAODAPVv9
-            wwz: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/
-            wzz: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/
-            zzz: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/
+            wwz: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8
+            wzz: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/WZZ_TuneCP5_13TeV-amcatnlo-pythia8
+            zzz: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/ZZZ_TuneCP5_13TeV-amcatnlo-pythia8
         EWK:
             ewk_lljj_mll50_mjj120: /eos/purdue/store/user/rasharma/customNanoAOD_Gautschi_2016APV/UL2016APV/
         Higgs:
