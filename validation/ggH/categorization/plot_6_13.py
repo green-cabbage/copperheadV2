@@ -200,8 +200,10 @@ if __name__ == "__main__":
     # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/*/"
     year = args.year
     if year == "all":
-        year = "*"
-    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year}/"
+        year_param = "*"
+    else:
+        year_param = year
+    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year_param}/"
     # events = dak.from_parquet(f"{load_path}/*data.parquet")
     # print(events.fields)
     print(f"load_path : {load_path}")
@@ -255,6 +257,9 @@ if __name__ == "__main__":
     print(f"sig_MC: {sig_MC}")
     # status = "Private"
     status = "Simulation"
+    if year =="all": # temporarily overwrite load paths and year to get 2018 bdt edges
+        year="2018"
+        load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/2018/"
     bdt_edges = OmegaConf.load(f"{load_path}/BDT_edges.yaml")[year]
     # print(f"bdt_edges b4 transform: {bdt_edges}")
     
