@@ -1171,10 +1171,14 @@ class EventProcessor(processor.ProcessorABC):
                     logger.debug("JEC factory not recognized!")
                     raise ValueError
 
+            jet_default = ak.pad_none(jets, target=2) # save pre jec and jer Jet for comparison
+            jet1_default = jet_default[:, 0]
+            jet2_default = jet_default[:, 1]
+            
             # -------------------------------------
             jets = do_jec_scale(jets, self.config, is_mc, dataset)
             if is_mc: # JER smearing
-                jets = do_jer_smear(jets, self.config, "nom", events.event)
+                jets = do_jer_smear(jets, self.config, "nom", events.event, year=year)
             sorted_args = ak.argsort(jets.pt, ascending=False)
             jets = (jets[sorted_args])
             # -------------------------------------
@@ -1435,6 +1439,11 @@ class EventProcessor(processor.ProcessorABC):
             "event": events.event,
             "luminosityBlock": events.luminosityBlock,
             "fraction": ak.ones_like(events.event) * events.metadata["fraction"],
+            # add jet default kinematics here
+            "jet1_default_pt_nominal" : jet1_default.pt,
+            "jet1_default_eta_nominal" : jet1_default.eta,
+            "jet2_default_pt_nominal" : jet2_default.pt,
+            "jet2_default_eta_nominal" : jet2_default.eta,
         }
         if is_mc:
             mc_dict = {
@@ -1526,12 +1535,14 @@ class EventProcessor(processor.ProcessorABC):
 
             logger.info("=======================  apply zpt weights =======================")
             if year == "2018": # FIXME
+                zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            else:
                 if "MiNNLO" in dataset: # FIXME: temporary fix for MiNNLO samples
                     zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
                 else:
                     zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
-            else:
-                zpt_weight_mine_nbins100 = getZptWgts_3region(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            # else:
+                # zpt_weight_mine_nbins100 = getZptWgts_3region(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
             
             # logger.info("======================= old zpt weights are commented out =======================")
             # if year == "2016postVFP" or year=="2018": #FIXME: This is temporary, we need to sync the zpt strategy and update it.
