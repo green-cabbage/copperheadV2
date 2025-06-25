@@ -528,8 +528,26 @@ def applyStrat1n2(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta):
     apply_stat2 = abs(jet_eta) < 3
     return ak.where(apply_stat2, jer_smearing2, jer_smearing1)
 
+# def applyStrat1n2Revised(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta, year:str):
+#     jer_smearing1 = applyStrat1(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta)
+#     jer_smearing2 = applyStrat2(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta)
+#     if "2018" in year:
+#         apply_stat2 = abs(jet_eta) < 3.0
+#     else:
+#         apply_stat2 = abs(jet_eta) < 2.5
+#     return ak.where(apply_stat2, jer_smearing2, jer_smearing1)
 
-def do_jer_smear(jets, config, syst, event_id):
+def applyStrat1n2Revised(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta, year:str):
+    jer_smearing1 = applyStrat1(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta)
+    jer_smearing2 = applyStrat2(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta)
+    if ("2018" in year) or ("2017" in year):
+    # if ("2018" in year):
+        apply_stat2 = abs(jet_eta) < 3.0
+    else:
+        apply_stat2 = abs(jet_eta) < 2.5
+    return ak.where(apply_stat2, jer_smearing2, jer_smearing1)
+
+def do_jer_smear(jets, config, syst, event_id, year="2018"):
     """
     we assume that jec has been applied (we need pt_jec and pt_raw)
 
@@ -605,7 +623,8 @@ def do_jer_smear(jets, config, syst, event_id):
     # logger.debug(f"jets.pt b4 JER smear: {jets.pt[:20].compute()}")
     # jer_smearing = applyStrat1(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
     # jer_smearing = applyStrat2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
-    jer_smearing = applyStrat1n2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
+    # jer_smearing = applyStrat1n2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
+    jer_smearing = applyStrat1n2Revised(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta, year)
 
     # print("JER smearing : {}".format(jer_smearing[:20].compute()))
     # print(f"jets.pt b4 JER smear: {jets.pt[:20].compute()}")
