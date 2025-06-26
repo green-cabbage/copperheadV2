@@ -243,7 +243,7 @@ if __name__ == "__main__":
         sample_dict[group] = field_dict
 
     plot_setting_fname = "../../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
-    plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
+    # plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
     with open(plot_setting_fname, "r") as file:
         plot_settings = json.load(file)
     plot_var = "BDT_score"

@@ -18,9 +18,9 @@ from src.lib.histogram.plotting import plotDataMC_compare_eager
 def filterRegion(events, region="h-peak"):
     dimuon_mass = events.dimuon_mass
     if region =="h-peak":
-        region = (dimuon_mass > 115.03) & (dimuon_mass < 135.03)
+        region = (dimuon_mass > 115) & (dimuon_mass < 135)
     elif region =="h-sidebands":
-        region = ((dimuon_mass > 110) & (dimuon_mass < 115.03)) | ((dimuon_mass > 135.03) & (dimuon_mass < 150))
+        region = ((dimuon_mass > 110) & (dimuon_mass < 115)) | ((dimuon_mass > 135) & (dimuon_mass < 150))
     elif region =="signal":
         region = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
     elif region =="z-peak":
@@ -84,6 +84,29 @@ def fillSampleValues(events, sample_dict, sample_groups, sample: str):
     #     full_load_path = load_path+f"*bkgMC_wz.parquet" 
     # elif sample.lower() == "zz":
     #     full_load_path = load_path+f"*bkgMC_zz.parquet" 
+
+def getPlotVar(var):
+    plot_var = var.replace("_blinded", "").replace("_unblinded", "")
+    return plot_var
+
+
+def getDataDict(data_sample_dict, plot_var, apply_blind=True):
+    data_val = np.concatenate(data_sample_dict[plot_var], axis=0)
+    data_wgt = np.concatenate(sample_dict["data"]["wgt_nominal"], axis=0)
+
+    if apply_blind:
+        dimuon_mass = np.concatenate(data_sample_dict["dimuon_mass"], axis=0)
+        h_peak = (dimuon_mass > 115) & (dimuon_mass < 135)
+        blind_filter = ~h_peak
+        data_val = data_val[blind_filter]
+        data_wgt = data_wgt[blind_filter]
+
+    data_dict = {
+        "values" : data_val,
+        "weights": data_wgt
+    }
+    return data_dict
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -177,9 +200,11 @@ if __name__ == "__main__":
     
     sub_cats = ["all", 0,1,2,3,4]
     # sub_cats = range(5)
-    plot_vars = ["BDT_score", "dimuon_mass"]
+    variables = ["BDT_score", "dimuon_mass_unblinded", "dimuon_mass_blinded"]
+    # variables = ["dimuon_mass_blinded"]
 
-    for plot_var in plot_vars:
+    for var in variables:
+        plot_var = getPlotVar(var)
         for sub_cat in sub_cats:
             # initialize empty dictionaries that will contain the values
             sample_dict = {
@@ -240,15 +265,21 @@ if __name__ == "__main__":
             # plot_var = "dimuon_mass"
             # plot_var = "BDT_score"
             # define data dict
-            data_dict = {
-                "values" :np.concatenate(sample_dict["data"][plot_var], axis=0),
-                "weights":np.concatenate(sample_dict["data"]["wgt_nominal"], axis=0)
-            }
-            # print(f"sample_dict: {sample_dict.keys()}")
-            # raise ValueError
+                      
+            # data_dict = {
+            #     "values" :np.concatenate(sample_dict["data"][plot_var], axis=0),
+            #     "weights":np.concatenate(sample_dict["data"]["wgt_nominal"], axis=0)
+            # }
+            apply_blind =  "_blinded" in var
+            data_dict = getDataDict(sample_dict["data"], plot_var, apply_blind=apply_blind)
+            
             
             # define Bkg MC dict
             bkg_MC_dict = OrderedDict()
+            other_sample_len = len(sample_dict["other"]["wgt_nominal"])
+            other_sample = (sample_dict["other"]["wgt_nominal"])
+            print(f"other_sample_len: {other_sample_len}")
+            print(f"other_sample: {other_sample}")
             # start from lowest yield to highest yield
             if len(sample_dict["other"]["wgt_nominal"]) > 0:
                 group_name = "other"
@@ -280,7 +311,8 @@ if __name__ == "__main__":
                     "values" :np.concatenate(sample_dict[group_name][plot_var], axis=0),
                     "weights":np.concatenate(sample_dict[group_name]["wgt_nominal"], axis=0)
                 }
-            
+
+            print(f"bkg_MC_dict: {bkg_MC_dict}")
             
         
             # define Sig MC dict
@@ -315,12 +347,11 @@ if __name__ == "__main__":
             
             if not os.path.exists(full_save_path):
                 os.makedirs(full_save_path)
-            # full_save_fname = f"{full_save_path}/dimuon_mass_cat{sub_cat}.pdf"
-            full_save_fname = f"{full_save_path}/{plot_var}_cat{sub_cat}.pdf"
+            full_save_fname = f"{full_save_path}/{var}_cat{sub_cat}.pdf"
         
         
             plot_setting_fname = "../../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
-            plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
+            # plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
             with open(plot_setting_fname, "r") as file:
                 plot_settings = json.load(file)
             
@@ -331,6 +362,8 @@ if __name__ == "__main__":
                 binning = np.linspace(70, 110, 51)
             status = "Private"
 
+
+            print(f"binning: {binning}")
             # print(f"bkg_MC_dict: {bkg_MC_dict}")
             
             do_logscale = True

@@ -42,16 +42,19 @@ category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields"
 # year="2016preVFP"
 year="all"
 
-region="z-peak"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-region="signal"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="signal"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
 # plot Fig 6.13 from AN-19-124
 region="signal"
 python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 
 
 # year="2017"
