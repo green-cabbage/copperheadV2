@@ -10,7 +10,9 @@ sample_l="data ggh vbf dy ewk tt st ww wz zz other"
 # label="UpdatedDY_100_200_CrossSection_24Feb_jetpuidOff_newZptWgt25Mar2025"
 # label="DYMiNNLO_jetpuidOff_newZptWgt25Mar2025"
 # label="DYMiNNLO_30Mar2025"
-label="fullRun_May30_2025"
+# label="fullRun_May30_2025"
+# label="fullRun_Jun21_2025"
+label="fullRun_Jun23_2025_1n2Revised"
 
 stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_output"
 
@@ -26,20 +28,29 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_UL_Mar30_2025_DyMiNNLOGghVbf_onlyMuVar"
 # model_name="V2_UL_Mar30_2025_DyMiNNLOGghVbf_onlyMuVar_ZeppenJjMass_DeltaVars"
 # model_name="V2_UL_Apr09_2025_DyMinnloTtStVvEwkGghVbf_hyperParamOnScaleWgt0_75"
-model_name="V2_UL_Jun09_2025"
+# model_name="V2_UL_Jun09_2025"
+# model_name="V2_fullRun_Jun21_2025_allYear"
+model_name="V2_fullRun_Jun21_2025_1n2Revised"
 
-category="${model_name}_ggh"
-year="2018"
+# category="${model_name}_ggh"
+# category="${model_name}_ggh_w_allYearBDT"
+category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields"
 
-# region="z-peak"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-# region="signal"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# year="2018"
+# year="2016postVFP"
+# year="2016preVFP"
+year="all"
+
+region="z-peak"
+python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+region="signal"
+python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
 # plot Fig 6.13 from AN-19-124
 region="signal"
-# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
 python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 
 

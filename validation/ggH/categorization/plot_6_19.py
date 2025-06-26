@@ -598,7 +598,8 @@ if __name__ == "__main__":
         plot_settings = json.load(file)
     plot_var = "BDT_score"
     binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-    save_fname = "plots/Fig6_19"
+    # save_fname = "plots/Fig6_19"
+    save_fname = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_19"
     # status = "Private"
     status = "Simulation"
     dataDict_by_subCat = getDimuMassBySubCat(sample_dict, sample="data", nSubCats=nSubCats)
