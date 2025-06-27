@@ -201,6 +201,8 @@ if __name__ == "__main__":
     year = args.year
     if year == "all":
         year_param = "*"
+    elif year == "2016":
+        year_param = "2016*"
     else:
         year_param = year
     load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year_param}/"
@@ -212,6 +214,7 @@ if __name__ == "__main__":
         "2017" : 41.48,
         "2016postVFP": 19.50,
         "2016preVFP": 16.81,
+        "2016": 36.3,
         "all" : 137,
     }
     lumi_val = lumi_dict[year]
@@ -261,6 +264,11 @@ if __name__ == "__main__":
     if year =="all": # temporarily overwrite load paths and year to get 2018 bdt edges
         year="2018"
         load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/2018/"
+    elif year == "2016":
+        year="2016preVFP"
+        load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/2016preVFP/"
+
+    
     bdt_edges = OmegaConf.load(f"{load_path}/BDT_edges.yaml")[year]
     # print(f"bdt_edges b4 transform: {bdt_edges}")
     
