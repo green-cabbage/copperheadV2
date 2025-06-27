@@ -158,7 +158,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
     else:
         year_param = year
 
-        
+    year_param="all" #FIXME    
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
     print(f"trainig_feat_path: {training_feat_path}")
@@ -175,7 +175,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
     # ----------------------------------
    
     # load fields to load
-    fields2load = ["nBtagLoose", "nBtagMedium", "dimuon_mass", "wgt_nominal", "mmj2_dEta", "mmj2_dPhi", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal"]
+    fields2load = ["nBtagLoose", "nBtagMedium", "dimuon_mass", "wgt_nominal", "mmj2_dEta", "mmj2_dPhi", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal"]
     fields2load = prepare_features(events, fields2load) # add variation to the name
     fields2load = list(set(fields2load + training_features)) # remove redundant fields
 
@@ -210,14 +210,14 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
             none_val = 0.0
         events[field] = ak.fill_none(events[field], value=none_val)
     print(f"process4gghCategory year: {year}")
-    if year == "2016_RERECO": # I didn't train a separate BDT for rereco eras
-        year_param = "2016preVFP"
-    elif "RERECO" in year: # ie 2017_RERECO
-        year_param = year.replace("_RERECO", "")
-    elif "2016" in year: # we merge 2016preVFP and 2016postVFP into one 2016 for BDT training
-        year_param = "2016"
-    else:
-        year_param = year
+    # if year == "2016_RERECO": # I didn't train a separate BDT for rereco eras
+    #     year_param = "2016preVFP"
+    # elif "RERECO" in year: # ie 2017_RERECO
+    #     year_param = year.replace("_RERECO", "")
+    # elif "2016" in year: # we merge 2016preVFP and 2016postVFP into one 2016 for BDT training
+    #     year_param = "2016"
+    # else:
+    #     year_param = year
     parameters = {
     # "models_path" : "/depot/cms/hmm/vscheure/data/trained_models/",
         # 
