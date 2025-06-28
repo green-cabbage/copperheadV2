@@ -972,8 +972,13 @@ if __name__ == "__main__":
     fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
     fitResult.Print()
     
-    
-    # freeze core pdf params
+    # fit FEWZxBern separately
+    _ = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
+    fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
+    fitResult.Print()
+
+
+    # freeze core pdf params b4 SMF fitting
     # BWZ redux
     a_coeff.setConstant(True)
     b_coeff.setConstant(True)
@@ -983,11 +988,6 @@ if __name__ == "__main__":
     a1_coeff.setConstant(True)
     a2_coeff.setConstant(True)
     f_coeff.setConstant(True)
-
-    # fit FEWZxBern separately
-    _ = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
-    fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
-    fitResult.Print()
 
     # FEWZxBern
     c1.setConstant(True)
@@ -1074,6 +1074,26 @@ if __name__ == "__main__":
     start = time.time()
 
     _ = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0,SumW2Error=True)
+
+    # ---------------------------------------------------
+    # # unfreeze the core function params b4 fitting again
+    # # BWZ redux
+    # a_coeff.setConstant(False)
+    # b_coeff.setConstant(False)
+    # c_coeff.setConstant(False)
+    
+    # # sumExp
+    # a1_coeff.setConstant(False)
+    # a2_coeff.setConstant(False)
+    # f_coeff.setConstant(False)
+
+    # # FEWZxBern
+    # c1.setConstant(False)
+    # c2.setConstant(False)
+    # c3.setConstant(False)
+    # c4.setConstant(False)
+    # ---------------------------------------------------
+
     fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     end = time.time()
     
@@ -1169,32 +1189,6 @@ if __name__ == "__main__":
     
     print(f"runtime: {end-start} seconds")
 
-    # ---------------------------------------------------
-    # Plot 6.23
-    # ---------------------------------------------------
-    save_fname = f"{plot_save_path}/fig6_23"
-    subCat_dataHists = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-    SMF_func_l = [
-        subCat0_SMF,
-        subCat1_SMF,
-        subCat2_SMF,
-        subCat3_SMF,
-        subCat4_SMF,
-    ]
-    y_range_l = [
-        (7e-3, 13e-3),
-        (7e-3, 13e-3),
-        (7e-3, 14e-3),
-        (5.6e-3, 18.5e-3),
-        (5.6e-3, 18.5e-3),
-    ]
-    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
     
 
 
@@ -1454,8 +1448,7 @@ if __name__ == "__main__":
     # MH_subCat0.setConstant(True) # this shouldn't change, I think
     # original end ------------------------------------------------------
     # MH_subCat0 = rt.RooRealVar("MH" , "MH", 124.805, 120,130) # matching AN
-    MH_subCat0 = rt.RooRealVar("MH" , "MH", 125, 124,126)
-    # MH_subCat0.setConstant(True)
+    MH_subCat0 = rt.RooRealVar("MH" , "MH", 124.805, 124,126)
     
     # sigma_subCat0 = rt.RooRealVar("sigma_subCat0" , "sigma_subCat0", 2, .1, 4.0)
     # alpha1_subCat0 = rt.RooRealVar("alpha1_subCat0" , "alpha1_subCat0", 2, 0.01, 65)
@@ -2236,6 +2229,11 @@ if __name__ == "__main__":
     # if fit_result is not None:
         # fit_result.Print()
 
+
+    # Freeze the MH parameters. Source: "Crucially, we need to freeze the fit parameters of the signal mode" https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/latest/tutorial2023/parametric_exercise/#signal-modelling
+    MH_subCat0.setConstant(True)
+    
+
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat0_vbf.setConstant(True)
     alpha1_subCat0_vbf.setConstant(True)
@@ -2577,7 +2575,26 @@ if __name__ == "__main__":
     
     CMS_hmm_sigma_cat4_ggh.setConstant(False)
     CMS_hmm_peak_cat4_ggh.setConstant(False)
+
+    # ----------------------------------------------------------------
+    # # freeze back the core function before saving to workspace
+    # # BWZ redux
+    # a_coeff.setConstant(True)
+    # b_coeff.setConstant(True)
+    # c_coeff.setConstant(True)
     
+    # # sumExp
+    # a1_coeff.setConstant(True)
+    # a2_coeff.setConstant(True)
+    # f_coeff.setConstant(True)
+
+    # # FEWZxBern
+    # c1.setConstant(True)
+    # c2.setConstant(True)
+    # c3.setConstant(True)
+    # c4.setConstant(True)
+    # ----------------------------------------------------------------
+
     # subCat 0 
     fout = rt.TFile(f"{workspace_path}/workspace_bkg_cat0_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2772,7 +2789,35 @@ if __name__ == "__main__":
     # ---------------------------------------------------
 
     # ---------------------------------------------------
-    # Plot 6.26
+    # Plot 6.23 blinded
+    # ---------------------------------------------------
+    save_fname = f"{plot_save_path}/fig6_23"
+    subCat_dataHists = [
+        roo_histData_subCat0,
+        roo_histData_subCat1,
+        roo_histData_subCat2,
+        roo_histData_subCat3,
+        roo_histData_subCat4,
+    ]
+    SMF_func_l = [
+        subCat0_SMF,
+        subCat1_SMF,
+        subCat2_SMF,
+        subCat3_SMF,
+        subCat4_SMF,
+    ]
+    y_range_l = [
+        (7e-3, 13e-3),
+        (7e-3, 13e-3),
+        (7e-3, 14e-3),
+        (5.6e-3, 18.5e-3),
+        (5.6e-3, 18.5e-3),
+    ]
+    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
+    
+
+    # ---------------------------------------------------
+    # Unblinded fitting
     # ---------------------------------------------------
 
     # perform fit over full 110, 150
@@ -2796,21 +2841,21 @@ if __name__ == "__main__":
     c4.setConstant(True)
 
 
-    # SMF coeffs
-    a0_subCat0.setConstant(True)
-    a1_subCat0.setConstant(True)
-    a3_subCat0.setConstant(True)
+    # # SMF coeffs
+    # a0_subCat0.setConstant(True)
+    # a1_subCat0.setConstant(True)
+    # a3_subCat0.setConstant(True)
 
-    a0_subCat1.setConstant(True)
-    a1_subCat1.setConstant(True)
-    a0_subCat2.setConstant(True)
-    a1_subCat2.setConstant(True)
-    a0_subCat3.setConstant(True)
-    a1_subCat3.setConstant(True)
-    a0_subCat4.setConstant(True)
-    a1_subCat4.setConstant(True)
+    # a0_subCat1.setConstant(True)
+    # a1_subCat1.setConstant(True)
+    # a0_subCat2.setConstant(True)
+    # a1_subCat2.setConstant(True)
+    # a0_subCat3.setConstant(True)
+    # a1_subCat3.setConstant(True)
+    # a0_subCat4.setConstant(True)
+    # a1_subCat4.setConstant(True)
 
-
+    # MH_subCat0.setConstant(False)
     MH_subCat0.setConstant(True) # all other MH subcat refers to MH_subCat0
     # MH_subCat0.Print("v")
     # print(f"MH_subCat0: {MH_subCat0.getVal()}")
@@ -2855,15 +2900,69 @@ if __name__ == "__main__":
         "signal_subCat4" : signal_subCat4,
     }
     sim_sigBkg_pdf, parameters_sigBkg = getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict)
+    # ------------------------
+    sim_sigBkg_pdf = {
+        "subCat0_BWZRedux": sim_sigBkg_pdf["subCat0_BWZRedux"], 
+        "subCat1_BWZRedux": sim_sigBkg_pdf["subCat1_BWZRedux"],
+        "subCat2_BWZRedux": sim_sigBkg_pdf["subCat2_BWZRedux"],
+        "subCat3_BWZRedux": sim_sigBkg_pdf["subCat3_BWZRedux"],
+        "subCat4_BWZRedux": sim_sigBkg_pdf["subCat4_BWZRedux"],
+        # ----------------------------
+        "subCat0_sumExp": sim_sigBkg_pdf["subCat0_sumExp"], 
+        "subCat1_sumExp": sim_sigBkg_pdf["subCat1_sumExp"],
+        "subCat2_sumExp": sim_sigBkg_pdf["subCat2_sumExp"],
+        "subCat3_sumExp": sim_sigBkg_pdf["subCat3_sumExp"],
+        "subCat4_sumExp": sim_sigBkg_pdf["subCat4_sumExp"],
+        #----------------------------
+        "subCat0_FEWZxBern": sim_sigBkg_pdf["subCat0_FEWZxBern"], 
+        "subCat1_FEWZxBern": sim_sigBkg_pdf["subCat1_FEWZxBern"],
+        "subCat2_FEWZxBern": sim_sigBkg_pdf["subCat2_FEWZxBern"],
+        "subCat3_FEWZxBern": sim_sigBkg_pdf["subCat3_FEWZxBern"],
+        "subCat4_FEWZxBern": sim_sigBkg_pdf["subCat4_FEWZxBern"],
+        
+    }
+    # ------------------------
     simPdf = rt.RooSimultaneous(
                                 "simPdf", 
                                 "simultaneous pdf", 
                                 sim_sigBkg_pdf,
                                 sample,
     )
-    fitResult = simPdf.fitTo(combData, EvalBackend=device, PrintLevel=0 ,Save=True)
-    fitResult.Print()
+    # fitResult = simPdf.fitTo(combData, EvalBackend=device, PrintLevel=0 ,Save=True)
+    # fitResult.Print()
     # raise ValueError
+    # ---------------------------------------------------
+    # Plot 6.23 unblinded
+    # ---------------------------------------------------
+    save_fname = f"{plot_save_path}/fig6_23_unblinded"
+    subCat_dataHists = [
+        roo_histData_subCat0,
+        roo_histData_subCat1,
+        roo_histData_subCat2,
+        roo_histData_subCat3,
+        roo_histData_subCat4,
+    ]
+    SMF_func_l = [
+        subCat0_SMF,
+        subCat1_SMF,
+        subCat2_SMF,
+        subCat3_SMF,
+        subCat4_SMF,
+    ]
+    y_range_l = [
+        (7e-3, 13e-3),
+        (7e-3, 13e-3),
+        (7e-3, 14e-3),
+        (5.6e-3, 18.5e-3),
+        (5.6e-3, 18.5e-3),
+    ]
+    # plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
+    
+
+    # ---------------------------------------------------
+    # plot Fig 6.26
+    # ---------------------------------------------------
+    
     save_fname = f"{plot_save_path}/fig6_26"
     subCat_dataHists = [
         roo_histData_subCat0,
@@ -2886,21 +2985,37 @@ if __name__ == "__main__":
     #     model_subCat3_BWZRedux,
     #     model_subCat4_BWZRedux,
     # ]
+    # multi_pdf_l = [
+    #     sim_sigBkg_pdf["subCat0_BWZRedux"],
+    #     sim_sigBkg_pdf["subCat1_BWZRedux"],
+    #     sim_sigBkg_pdf["subCat2_BWZRedux"],
+    #     sim_sigBkg_pdf["subCat3_BWZRedux"],
+    #     sim_sigBkg_pdf["subCat4_BWZRedux"],
+    # ]
+    # plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName="BWZRedux")
+    # multi_pdf_l = [
+    #     sim_sigBkg_pdf["subCat0_sumExp"],
+    #     sim_sigBkg_pdf["subCat1_sumExp"],
+    #     sim_sigBkg_pdf["subCat2_sumExp"],
+    #     sim_sigBkg_pdf["subCat3_sumExp"],
+    #     sim_sigBkg_pdf["subCat4_sumExp"],
+    # ]
+    # plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName="SumExp")
     multi_pdf_l = [
-        sim_sigBkg_pdf["subCat0_BWZRedux"],
-        sim_sigBkg_pdf["subCat1_BWZRedux"],
-        sim_sigBkg_pdf["subCat2_BWZRedux"],
-        sim_sigBkg_pdf["subCat3_BWZRedux"],
-        sim_sigBkg_pdf["subCat4_BWZRedux"],
+        sim_sigBkg_pdf["subCat0_FEWZxBern"],
+        sim_sigBkg_pdf["subCat1_FEWZxBern"],
+        sim_sigBkg_pdf["subCat2_FEWZxBern"],
+        sim_sigBkg_pdf["subCat3_FEWZxBern"],
+        sim_sigBkg_pdf["subCat4_FEWZxBern"],
     ]
-
-    plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname)
-    print(f"data_subCat0_signal sumentries: {data_subCat0_signal.sumEntries()}")
-    print(f"data_subCat1_signal sumentries: {data_subCat1_signal.sumEntries()}")
-    print(f"data_subCat2_signal sumentries: {data_subCat2_signal.sumEntries()}")
-    print(f"data_subCat3_signal sumentries: {data_subCat3_signal.sumEntries()}")
-    print(f"data_subCat4_signal sumentries: {data_subCat4_signal.sumEntries()}")
-    raise ValueError
+    # plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName="FEWZxBern")
+    
+    # print(f"data_subCat0_signal sumentries: {data_subCat0_signal.sumEntries()}")
+    # print(f"data_subCat1_signal sumentries: {data_subCat1_signal.sumEntries()}")
+    # print(f"data_subCat2_signal sumentries: {data_subCat2_signal.sumEntries()}")
+    # print(f"data_subCat3_signal sumentries: {data_subCat3_signal.sumEntries()}")
+    # print(f"data_subCat4_signal sumentries: {data_subCat4_signal.sumEntries()}")
+    # # raise ValueError
 
     # -------------------------------------------------------------------------
     # do signal plotting for all sub-Cats in one plot
