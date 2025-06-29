@@ -1182,7 +1182,7 @@ if __name__ == "__main__":
     f_coeff.setConstant(False)
 
     # FEWZxBern
-    c1.setConstant(False)
+    c1.setConstant(True) # first parameter must be frozen
     c2.setConstant(False)
     c3.setConstant(False)
     c4.setConstant(False)
@@ -1213,7 +1213,8 @@ if __name__ == "__main__":
         model_subCat0_FEWZxBern,
     )
     corePdf_subCat0 = rt.RooMultiPdf("CorePdf_subCat0","CorePdf_subCat0",cat_subCat0,pdf_list_subCat0)
-    penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
+    # penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
+    penalty = 0.5
     corePdf_subCat0.setCorrectionFactor(penalty) 
     nevents = roo_datasetData_subCat0.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
     print(f"roo_datasetData_subCat0 sumentries: {nevents}")
