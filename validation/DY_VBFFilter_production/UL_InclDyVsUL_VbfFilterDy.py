@@ -344,8 +344,8 @@ def plotStitchedHStack(dy100To200_val, dy_vbf_val, dy100To200_wgt, dy_vbf_wgt, d
     # hSum.Draw("E SAME")
     rp = ROOT.TRatioPlot(stack, hSum)
     rp.Draw()
-    if "m_{jj}" in xlabel:
-        rp.GetLowerRefYaxis().SetRangeUser(0.5, 1.5)
+    # if "m_{jj}" in xlabel:
+    rp.GetLowerRefYaxis().SetRangeUser(0.5, 1.5)
     
     # leg = ROOT.TLegend(0.65,0.65,0.9,0.9)
     leg = ROOT.TLegend(0.75,0.75,1.0,1.0)
