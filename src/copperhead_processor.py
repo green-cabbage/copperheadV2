@@ -1158,6 +1158,10 @@ class EventProcessor(processor.ProcessorABC):
         # cache = events.caches[0]
         factory = None
         useclib = False
+        jet_default = ak.pad_none(jets, target=2) # save pre jec and jer Jet for comparison
+        jet1_default = jet_default[:, 0]
+        jet2_default = jet_default[:, 1]
+        
         if do_jec: # old method
             if is_mc:
                 factory = self.jec_factories_mc["jec"]
@@ -1171,12 +1175,12 @@ class EventProcessor(processor.ProcessorABC):
                     logger.debug("JEC factory not recognized!")
                     raise ValueError
 
-            jet_default = ak.pad_none(jets, target=2) # save pre jec and jer Jet for comparison
-            jet1_default = jet_default[:, 0]
-            jet2_default = jet_default[:, 1]
+            
             
             # -------------------------------------
+            print("doing JEC + SMEARing!")
             jets = do_jec_scale(jets, self.config, is_mc, dataset)
+            
             if is_mc: # JER smearing
                 jets = do_jer_smear(jets, self.config, "nom", events.event, year=year)
             sorted_args = ak.argsort(jets.pt, ascending=False)
@@ -1529,13 +1533,12 @@ class EventProcessor(processor.ProcessorABC):
         do_zpt = ('dy' in dataset) and is_mc
         if do_zpt:
             logger.info("doing zpt!")
-            # logger.info("======================= old zpt method =======================")
-            
-            # zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-
             logger.info("=======================  apply zpt weights =======================")
-            if year == "2018": # FIXME
-                zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            if year == "2018": 
+                if "MiNNLO" in dataset: # old zpt weights
+                    zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+                else:
+                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
             else:
                 if "MiNNLO" in dataset: # FIXME: temporary fix for MiNNLO samples
                     zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
