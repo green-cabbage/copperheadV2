@@ -16,6 +16,7 @@ import copy
 import hist.dask as hda
 from hist import Hist
 import dask
+from modules.utils import ensure_compacted
 
 def get_scalar_ptCentrality(events):
     pt_centrality_scalar = events.dimuon_pt - abs(events.jet1_pt_nominal + events.jet2_pt_nominal)/2
@@ -100,7 +101,7 @@ def getPlotVar(var: str):
     return plot_var
 
 
-def applyRegionCatCuts(events, category: str, region_name: str):
+def applyRegionCatCuts(events, category: str, region_name: str, njets: str, process: str, do_vbf_filter_study: bool):
     # do mass region cut
     mass = events.dimuon_mass
     z_peak = ((mass > 70) & (mass < 110))
@@ -133,26 +134,6 @@ def applyRegionCatCuts(events, category: str, region_name: str):
             # print("vbf mode!")
             prod_cat_cut =  vbf_cut
             prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-            if args.do_vbf_filter_study:
-                # print("applying VBF filter gen cut!")
-                if "dy_" in process:
-                    if ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc"):
-                        print("dy_VBF_filter extra!")
-                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
-                        prod_cat_cut =  (prod_cat_cut  
-                                    & vbf_filter
-                        )
-                    elif process == "dy_m105_160_amc":
-                        print("dy_M-100To200 extra!")
-                        vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
-                        prod_cat_cut =  (
-                            prod_cat_cut  
-                            & ~vbf_filter 
-                        )
-                    else:
-                        print(f"no extra processing for {process}")
-                        pass
-        # else: # we're interested in ggH category
         elif category == "ggh":
             # print("ggH mode!")
             prod_cat_cut =  ~vbf_cut 
@@ -160,6 +141,27 @@ def applyRegionCatCuts(events, category: str, region_name: str):
         else:
             print("Error: invalid category option!")
             raise ValueError
+
+    if do_vbf_filter_study:
+        if "dy_" in process:
+            is_vbf_filter = ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc")
+            if is_vbf_filter:
+                print(f"applying VBF filter cut on: {process}")
+                
+                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
+                prod_cat_cut =  (prod_cat_cut  
+                            & vbf_filter
+                )
+            else:
+                print(f"cutting off inclusive dy: {process}")
+                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+                prod_cat_cut =  (
+                    prod_cat_cut  
+                    & ~vbf_filter 
+                )
+        else:
+            print(f"no extra processing for {process}")
+            pass
     
     category_selection = (
         prod_cat_cut & 
@@ -173,7 +175,7 @@ def applyRegionCatCuts(events, category: str, region_name: str):
     return events
 
 
-def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty, var, plot_settings):
+def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty, var, plot_settings, category, args):
     # for process in available_processes:
     if "_nominal" in var:
         plot_var = var.replace("_nominal", "")
@@ -225,8 +227,9 @@ def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty
 
             
             # events = applyRegionCatCuts(events, args.category, region_name)
-            events = dak.map_partitions(applyRegionCatCuts,events, args.category, region_name)
-            
+            njets = "inclusive"
+            events = dak.map_partitions(applyRegionCatCuts,events, category, region_name, njets, process, args.do_vbf_filter_study)
+            # applyRegionCatCuts(events, category: str, region_name: str, njets: str, process: str, do_vbf_filter_study: bool
             # print(f"len(events) {process} after selection: {len(events)}")
             
             # category_selection = ak.to_numpy(category_selection) # this will be multiplied with weights
@@ -274,16 +277,101 @@ def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty
             # print(f"group_name for {process}: {group_name}")
             to_fill_setting = {
             "region" : region_name,
-            "channel" : args.category,
+            "channel" : category,
             "variation" : "nominal",
             "sample_group": group_name,
             }
             sample_hist = fillHist(sample_hist, to_fill_setting, values, weights)
             
         sample_hist_l.append(sample_hist)
-
+    # print(f"sample_hist_l: {sample_hist_l}")
     sample_hist_dictByVar2compute[var] = sample_hist_l
     return sample_hist_dictByVar2compute
+
+
+def plotComputedHistograms(sample_hist_dictByVarComputed, var, plot_settings, full_save_path, sample_groups, region_name, category, do_logscale=True):
+    data_dict = {}
+    bkg_MC_dict = {}
+    sig_MC_dict = {}
+    plot_var = getPlotVar(var)
+    if plot_var not in plot_settings.keys():
+        print(f"variable {var} not configured in plot settings!")
+        return
+    # for process in available_processes: 
+    # print(f"sample_hist_dictByVarComputed: {sample_hist_dictByVarComputed.keys()}")
+    
+    for group_name in sample_groups: 
+        sample_hist_l = sample_hist_dictByVarComputed[var]
+        sample_hist = sum(sample_hist_l)
+        to_project_setting = {
+            "region" : region_name,
+            "channel" : category,
+            "variation" : "nominal",
+            "sample_group": group_name,
+        }
+        
+        to_project_setting_val = to_project_setting.copy()
+        to_project_setting_val["val_sumw2"] = "value"
+        hist_val = sample_hist[to_project_setting_val].project(var).values()
+        #------------------------------------------------------
+        to_project_setting_w2 = to_project_setting.copy()
+        to_project_setting_w2["val_sumw2"] = "sumw2"
+        hist_w2 = sample_hist[to_project_setting_w2].project(var).values()
+        # print(f"to_project_setting: {to_project_setting}")
+        # print(f"hist_val: {hist_val}")
+        # print(f"hist_w2: {hist_w2}")
+        if np.sum(hist_val)==0:
+            print(f"Empty hist from {group_name}. Skipping!")
+            continue 
+        hist_dict = {
+            "hist_arr" : hist_val,
+            "hist_w2_arr": hist_w2
+        }
+        
+        
+        if "data" in group_name: # data
+            data_dict = hist_dict
+        elif "ggH" in group_name or "VBF" in group_name: # signal
+            sig_MC_dict[group_name] = hist_dict
+        else: # bkg MC
+            bkg_MC_dict[group_name] = hist_dict
+    # order bkg_MC_dict in a specific way for plotting, smallest yielding process first:
+    bkg_MC_order = ["other", "VV", "Ewk", "Top", "DY"]
+    bkg_MC_dict = {process: bkg_MC_dict[process] for process in bkg_MC_order if process in bkg_MC_dict}
+    if len(data_dict) ==0:
+        print(f"empty histograms for {var} skipping!")
+        return
+
+    # -------------------------------------------------------
+    # All data are prepped, now plot Data/MC histogram
+    # -------------------------------------------------------
+    # full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{region_name}/Cat_{args.category}/{args.label}"
+    # print(f"full_save_path: {full_save_path}")
+    
+    
+    if not os.path.exists(full_save_path):
+        os.makedirs(full_save_path)
+    full_save_fname = f"{full_save_path}/{var}.pdf"
+    print(f"full_save_fname: {full_save_fname}")
+    # raise ValueError
+
+    plot_var = getPlotVar(var)
+    binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+      
+    plotDataMC_compare(
+        binning, 
+        data_dict, 
+        bkg_MC_dict, 
+        full_save_fname,
+        sig_MC_dict=sig_MC_dict,
+        title = "", 
+        x_title = plot_settings[plot_var].get("xlabel"), 
+        y_title = plot_settings[plot_var].get("ylabel"),
+        lumi = args.lumi,
+        status = status,
+        log_scale = do_logscale,
+    )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -429,13 +517,23 @@ if __name__ == "__main__":
     # action=argparse.BooleanOptionalAction,
     # help="If true, apply vbf cut for vbf category, else, ggH category cut",
     # )
+    # parser.add_argument(
+    # "-cat",
+    # "--category",
+    # dest="category",
+    # default="nocat",
+    # action="store",
+    # help="define production mode category. optionsare ggh, vbf and nocat (no category cut)",
+    # )
     parser.add_argument(
     "-cat",
-    "--category",
-    dest="category",
-    default="nocat",
+    "--categories",
+    dest="categories",
+    default=[],
+    nargs="*",
+    type=str,
     action="store",
-    help="define production mode category. optionsare ggh, vbf and nocat (no category cut)",
+    help="region value to plot, available regions are: h_peak, h_sidebands, z_peak and signal (h_peak OR h_sidebands)",
     )
     parser.add_argument(
     "--vbf_filter_study",
@@ -450,8 +548,8 @@ if __name__ == "__main__":
     available_processes = []
     # if doing VBF filter study, add the vbf filter sample to the DY group
     if args.do_vbf_filter_study:
-        # vbf_filter_sample =  "dy_m105_160_vbf_amc"
-        vbf_filter_sample =  "dy_VBF_filter_NewZWgt"
+        vbf_filter_sample =  "dy_m105_160_vbf_amc"
+        # vbf_filter_sample =  "dy_VBF_filter_NewZWgt"
         # vbf_filter_sample =  "dy_VBF_filter_customJMEoff"
         # vbf_filter_sample =  "dy_VBF_filter_fromGridpack"
         available_processes.append(vbf_filter_sample)
@@ -478,7 +576,7 @@ if __name__ == "__main__":
                 # available_processes.append("dyTo2L_M-50_incl")
                 # available_processes.append("dy_m105_160_vbf_amc")
                 available_processes.append("dy_M-100To200_MiNNLO")
-                available_processes.append("dy_M-50_MiNNLO")
+                # available_processes.append("dy_M-50_MiNNLO")
                 # available_processes.append("dy_M-100To200_aMCatNLO")
             
             elif bkg_sample.upper() == "TT": # enforce upper case to prevent confusion
@@ -588,19 +686,9 @@ if __name__ == "__main__":
     # obtain plot settings from config file
 
     
-    if args.category == "ggh":
-        plot_setting_fname = "./src/lib/histogram/plot_settings_gghCat_BDT_input.json"
-    else: # in no cat case, just use vbfCat plot settings
-        plot_setting_fname = "./src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
-
-    print(f"plot_setting_fname: {plot_setting_fname}")
     
-    with open(plot_setting_fname, "r") as file:
-        plot_settings = json.load(file)
     status = args.status.replace("_", " ")
 
-    # print(f"plot_settings.keys(): {plot_settings.keys()}")
-    # raise ValueError
     
     # define client for parallelization 
     if args.use_gateway:
@@ -624,22 +712,34 @@ if __name__ == "__main__":
     for process in tqdm.tqdm(available_processes):
         print(f"loading process {process}..")
         # full_load_path = args.load_path+f"/{process}/*.parquet"
-        full_load_path = args.load_path+f"/{process}/*/*.parquet"
-        if len(glob.glob(full_load_path)) ==0: # check if there's files in the load path
-            full_load_path = args.load_path+f"/{process}/*.parquet" # try coppperheadV1 path, if this also is empty, then skip
+        full_load_path = args.load_path+f"/{process}"
+        # if len(glob.glob(full_load_path)) ==0: # check if there's files in the load path
+            # full_load_path = args.load_path+f"/{process}/*.parquet" # try coppperheadV1 path, if this also is empty, then skip
         print(f"full_load_path: {full_load_path}")
+        full_compact_path = args.load_path+f"/compacted/{process}/0"
+        full_compact_path = full_compact_path.replace("/f1_0", "") # remove fraction when doing full compatct path
         try:
-            events = dak.from_parquet(full_load_path)
-            # target_chunksize = 150_000
-            # target_chunksize = 500_000
-            target_chunksize = 250_000
-            # target_chunksize = 1_000_000
-            events = events.repartition(rows_per_partition=target_chunksize)
-        except:
-            print(f"full_load_path: {full_load_path} Not available. Skipping")
+            events = dak.from_parquet(f"{full_load_path}/*/*.parquet")
+            # # target_chunksize = 150_000
+            # # target_chunksize = 500_000
+            # target_chunksize = 250_000
+            # # target_chunksize = 150_000
+            # # target_chunksize = 1_000_000
+            # events = events.repartition(rows_per_partition=target_chunksize)
+
+            # check if compacted version of the input parquet files exist, if not, make compacted version
+            ensure_compacted(events, full_compact_path)
+            # raise ValueError
+            # reread the parquet from the compact
+            events = dak.from_parquet(f"{full_compact_path}/*.parquet") # all parquet files should be saved  ../0/ directory
+            
+        except Exception as e:
+            # print(f"full_load_path: {full_load_path} Not available. Skipping")
+            print(f"loading samples failed with Error: {e}")
             continue
         # print(f"events.fields: {events.fields}")
-
+        # raise ValueError
+        
         # ------------------------------------------------------
         # select only needed variables to load to save run time
         # ------------------------------------------------------
@@ -721,137 +821,86 @@ if __name__ == "__main__":
             # .StrCat(years, name="year")
     )
     # add axis for systematic variation
-    sample_hist_dictByVar = {} 
+    # sample_hist_dictByVar = {} 
     sample_hist = sample_hist.StrCat(variations, name="variation")
-    for var in variables2plot:
-        # for process in available_processes:
-        if "_nominal" in var:
-            plot_var = var.replace("_nominal", "")
-        else:
-            plot_var = var
-        if plot_var not in plot_settings.keys():
-            print(f"variable {var} not configured in plot settings!")
-            continue
-        binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-        print(f"var: {var}")
-        sample_hist_dictByVar[var] = sample_hist.Var(binning, name=var).Double()
-    # sample_hist_empty = sample_hist.Double()
-    # sample_hist_l = []
-    # fill the histograms
-    sample_hist_dictByVar2compute = {}
-    for var in tqdm.tqdm(variables2plot):
-    
-        sample_hist_empty = sample_hist_dictByVar[var]
-        sample_hist_l = []
-        var_step = time.time()
-        if "_nominal" in var:
-            plot_var = var.replace("_nominal", "")
-        else:
-            plot_var = var
-        if plot_var not in plot_settings.keys():
-            print(f"variable {var} not configured in plot settings!")
-            continue
-        
-            
-        sample_hist_dictByVar2compute = getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty, var, plot_settings)
 
+    hist_dictByVar2compute = {}
     
-    # done with looping over process and variables we now compute
-    sample_hist_dictByVarComputed = dask.compute(sample_hist_dictByVar2compute)[0]
-    # print(f"sample_hist_dictByVarComputed: {sample_hist_dictByVarComputed}")
-    # print(f"args.regions: {args.regions}")
-    for region_name in args.regions:
-        for var in tqdm.tqdm(variables2plot):
-            if args.linear_scale:
-                do_logscale = False
+
+    for category in args.categories:
+        sample_hist_dictByVar_byCat = {}
+        print(f"category: {category}")
+        # if args.category == "ggh":
+        if category == "ggh":
+            plot_setting_fname = "./src/lib/histogram/plot_settings_gghCat_BDT_input.json"
+        else: # in no cat case, just use vbfCat plot settings
+            plot_setting_fname = "./src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
+        print(f"plot_setting_fname: {plot_setting_fname}")
+        with open(plot_setting_fname, "r") as file:
+            plot_settings = json.load(file)
+        for var in variables2plot:
+            # for process in available_processes:
+            if "_nominal" in var:
+                plot_var = var.replace("_nominal", "")
             else:
-                do_logscale = True  
-            full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{region_name}/Cat_{args.category}/{args.label}"
-            # plotVars(sample_hist_dictByVarComputed, var, full_save_path, do_logscale=do_logscale)
-            data_dict = {}
-            bkg_MC_dict = {}
-            sig_MC_dict = {}
-            # for process in available_processes: 
-            for group_name in sample_groups: 
-                sample_hist_l = sample_hist_dictByVarComputed[var]
-                sample_hist = sum(sample_hist_l)
-                # print(f"sample_hist: {sample_hist}")
-                to_project_setting = {
-                    "region" : region_name,
-                    "channel" : args.category,
-                    "variation" : "nominal",
-                    "sample_group": group_name,
-                }
-                
-                to_project_setting_val = to_project_setting.copy()
-                to_project_setting_val["val_sumw2"] = "value"
-                hist_val = sample_hist[to_project_setting_val].project(var).values()
-                #------------------------------------------------------
-                to_project_setting_w2 = to_project_setting.copy()
-                to_project_setting_w2["val_sumw2"] = "sumw2"
-                hist_w2 = sample_hist[to_project_setting_w2].project(var).values()
-                # print(f"to_project_setting: {to_project_setting}")
-                # print(f"hist_val: {hist_val}")
-                # print(f"hist_w2: {hist_w2}")
-                if np.sum(hist_val)==0: # skip processes that doesn't have anything
-                    continue
-                hist_dict = {
-                    "hist_arr" : hist_val,
-                    "hist_w2_arr": hist_w2
-                }
-                
-                
-                if "data" in group_name: # data
-                    data_dict = hist_dict
-                elif "ggH" in group_name or "VBF" in group_name: # signal
-                    sig_MC_dict[group_name] = hist_dict
-                else: # bkg MC
-                    bkg_MC_dict[group_name] = hist_dict
-            # order bkg_MC_dict in a specific way for plotting, smallest yielding process first:
-            bkg_MC_order = ["other", "VV", "Ewk", "Top", "DY"]
-            bkg_MC_dict = {process: bkg_MC_dict[process] for process in bkg_MC_order if process in bkg_MC_dict}
-            if len(data_dict) ==0:
-                print(f"empty histograms for {var} skipping!")
-                continue
-
-            # -------------------------------------------------------
-            # All data are prepped, now plot Data/MC histogram
-            # -------------------------------------------------------
-            full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{region_name}/Cat_{args.category}/{args.label}"
-            # print(f"full_save_path: {full_save_path}")
-            
-            
-            if not os.path.exists(full_save_path):
-                os.makedirs(full_save_path)
-            full_save_fname = f"{full_save_path}/{var}.pdf"
-
-
-            plot_var = getPlotVar(var)
+                plot_var = var
             if plot_var not in plot_settings.keys():
                 print(f"variable {var} not configured in plot settings!")
                 continue
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-              
-            plotDataMC_compare(
-                binning, 
-                data_dict, 
-                bkg_MC_dict, 
-                full_save_fname,
-                sig_MC_dict=sig_MC_dict,
-                title = "", 
-                x_title = plot_settings[plot_var].get("xlabel"), 
-                y_title = plot_settings[plot_var].get("ylabel"),
-                lumi = args.lumi,
-                status = status,
-                log_scale = do_logscale,
-            )
-            
-
-
+            print(f"var: {var}")
+            sample_hist_byVar = sample_hist.Var(binning, name=var).Double()
+            sample_hist_dictByVar_byCat[var] = sample_hist.Var(binning, name=var).Double()
+        # sample_hist_empty = sample_hist.Double()
+        # sample_hist_l = []
+        # fill the histograms
+        hist_dictByVar2compute_by_cat = {}
+        for var in tqdm.tqdm(variables2plot):
         
-
-        # var_elapsed = round(time.time() - var_step, 3)
-        # print(f"Finished processing {var} in {var_elapsed} s.")
+            sample_hist_empty = sample_hist_dictByVar_byCat[var]
+            sample_hist_l = []
+            var_step = time.time()
+            # if "_nominal" in var:
+            #     plot_var = var.replace("_nominal", "")
+            # else:
+            #     plot_var = var
+            plot_var = getPlotVar(var)
+            
+            if plot_var not in plot_settings.keys():
+                print(f"variable {var} not configured in plot settings!")
+                continue
+            hist_dictByVar2compute_by_cat = getDaskHist2Compute(hist_dictByVar2compute_by_cat, events, sample_hist_empty, var, plot_settings, category, args)
+        # var loop is done, add the outputt to the category
+        # print(f"hist_dictByVar2compute_by_cat: {hist_dictByVar2compute_by_cat}")
+        hist_dictByVar2compute[category] = hist_dictByVar2compute_by_cat
+        
+    
+    # done with looping over process and variables we now compute
+    sample_hist_dictByVarComputed = dask.compute(hist_dictByVar2compute)[0]
+    # print(f"sample_hist_dictByVarComputed: {sample_hist_dictByVarComputed}")
+    # print(f"args.regions: {args.regions}")
+    for category in args.categories:
+        sample_hist_dictByVarComputed_byCat = sample_hist_dictByVarComputed[category]
+        if category == "ggh":
+            plot_setting_fname = "./src/lib/histogram/plot_settings_gghCat_BDT_input.json"
+        else: # in no cat case, just use vbfCat plot settings
+            plot_setting_fname = "./src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
+        # print(f"plot_setting_fname: {plot_setting_fname}")
+        print(f"sample_hist_dictByVarComputed_byCat: {sample_hist_dictByVarComputed_byCat}")
+        with open(plot_setting_fname, "r") as file:
+            plot_settings = json.load(file)
+        
+        for region_name in args.regions:
+            for var in tqdm.tqdm(variables2plot):
+                if args.linear_scale:
+                    do_logscale = False
+                else:
+                    do_logscale = True  
+                full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{region_name}/Cat_{category}/{args.label}"
+                plotComputedHistograms(sample_hist_dictByVarComputed_byCat, var, plot_settings, full_save_path, sample_groups, region_name, category, do_logscale=do_logscale)
+            
+        var_elapsed = round(time.time() - var_step, 3)
+        print(f"Finished processing {var} in {var_elapsed} s.")
     # ROOT style or mplhep style ends here --------------------------------------
     
     time_elapsed = round(time.time() - time_step, 3)
