@@ -547,7 +547,7 @@ def applyStrat1n2Revised(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta,
         apply_stat2 = abs(jet_eta) < 2.5
     return ak.where(apply_stat2, jer_smearing2, jer_smearing1)
 
-def do_jer_smear(jets, config, syst, event_id, year="2018"):
+def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down"]):
     """
     we assume that jec has been applied (we need pt_jec and pt_raw)
 
@@ -561,7 +561,8 @@ def do_jer_smear(jets, config, syst, event_id, year="2018"):
 
     jersmear_load_path = jec_parameters["jersmear_load_path"]
     cset_jersmear = correctionlib.CorrectionSet.from_file(jersmear_load_path)
-
+    print(f"jerc_load_path: {jerc_load_path}")
+    print(f"jersmear_load_path: {jersmear_load_path}")
 
     # jer_tag = "Summer20UL16_JRV3_MC"
     jer_tag = jec_parameters["jer_tags"]
@@ -571,63 +572,74 @@ def do_jer_smear(jets, config, syst, event_id, year="2018"):
     key = "{}_{}_{}".format(jer_tag, "ScaleFactor", algo)
     sf = cset[key]
     sf_input_names = [inp.name for inp in sf.inputs]
-    logger.debug(f"JER SF input: {sf_input_names}")
+    print(f"JER SF input: {sf_input_names}")
 
-    # Second, get JER resolution
-    inputs = (
-        jets.eta, # == JetEta
-        syst, # == systematic
-    )
-    jer_sf = sf.evaluate(*inputs)
-    # logger.debug("JER SF : {}".format(jer_sf.compute()))
-
+    # print("printing sf inputs:")
+    # print([input.name for input in sf.inputs])
 
     key = "{}_{}_{}".format(jer_tag, "PtResolution", algo)
-    sf = cset[key]
+    sf_ptres = cset[key]
 
-    sf_input_names = [inp.name for inp in sf.inputs]
-    logger.debug(f"JER resolution input: {sf_input_names}")
+    sf_input_names = [inp.name for inp in sf_ptres.inputs]
+    print(f"JER resolution input: {sf_input_names}")
 
-    inputs = ( # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L107C73-L107C75
-        jets.eta, # == JetEta
-        jets.pt_raw, # == systematic
-        jets.PU_rho, # == Rho
-    )
-    # inputs = get_corr_inputs(example_value_dict, sf)
-    jer_res = sf.evaluate(*inputs)
-    # logger.debug("JER Res : {}".format(jer_res.compute()))
-
-    key_jersmear = "JERSmear"
-    sf_jersmear = cset_jersmear[key_jersmear]
-    sf_input_names = [inp.name for inp in sf_jersmear.inputs]
-    logger.debug(f"JER smear input: {sf_input_names}")
-
-    pt_gen = ak.fill_none(jets.matched_gen.pt, value=-1.0) # if no match, fill with -1.0. Source https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/jercExample.py?ref_type=heads#L45
-    pt_jec = jets.pt_jec
-    pt_gen_filter  = abs(pt_jec - pt_gen) < (3*pt_jec*jer_res) # Source https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L108C1-L108C66
-    false_cond_val = -1*ak.ones_like(jets.pt_jec)
-    pt_gen = ak.where(pt_gen_filter, pt_gen, false_cond_val)
-    apply_scaling = pt_gen != -1.0
-    inputs = (
-        pt_jec, # == JetPt
-        jets.eta, # == JetEta
-        pt_gen, # == GenPt
-        jets.PU_rho, # == Rho
-        event_id, # == EventID
-        jer_res, # == JERs
-        jer_sf, # == JERSF
-
-    )
-    jer_smearing = sf_jersmear.evaluate(*inputs)
-    # logger.debug("JER smearing : {}".format(jer_smearing[:20].compute()))
-    # logger.debug(f"jets.pt b4 JER smear: {jets.pt[:20].compute()}")
-    # jer_smearing = applyStrat1(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
-    # jer_smearing = applyStrat2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
-    # jer_smearing = applyStrat1n2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
-    jer_smearing = applyStrat1n2Revised(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta, year)
-
-    # print("JER smearing : {}".format(jer_smearing[:20].compute()))
-    # print(f"jets.pt b4 JER smear: {jets.pt[:20].compute()}")
-    jets["pt"] = jer_smearing * pt_jec # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
-    # logger.debug(f"jets.pt after JER smear: {jets.pt[:20].compute()}")
+    for syst in syst_l:
+        # Second, get JER resolution
+        inputs = (
+            jets.eta, # == JetEta
+            syst, # == systematic
+        )
+        jer_sf = sf.evaluate(*inputs)
+        # logger.debug("JER SF : {}".format(jer_sf.compute()))
+    
+    
+        
+    
+        inputs = ( # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L107C73-L107C75
+            jets.eta, # == JetEta
+            jets.pt_raw,
+            jets.PU_rho, # == Rho
+        )
+        # inputs = get_corr_inputs(example_value_dict, sf)
+        jer_res = sf_ptres.evaluate(*inputs)
+        # logger.debug("JER Res : {}".format(jer_res.compute()))
+    
+        key_jersmear = "JERSmear"
+        sf_jersmear = cset_jersmear[key_jersmear]
+        sf_input_names = [inp.name for inp in sf_jersmear.inputs]
+        logger.debug(f"JER smear input: {sf_input_names}")
+    
+        pt_gen = ak.fill_none(jets.matched_gen.pt, value=-1.0) # if no match, fill with -1.0. Source https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/jercExample.py?ref_type=heads#L45
+        pt_jec = jets.pt_jec
+        pt_gen_filter  = abs(pt_jec - pt_gen) < (3*pt_jec*jer_res) # Source https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L108C1-L108C66
+        false_cond_val = -1*ak.ones_like(jets.pt_jec)
+        pt_gen = ak.where(pt_gen_filter, pt_gen, false_cond_val)
+        apply_scaling = pt_gen != -1.0
+        inputs = (
+            pt_jec, # == JetPt
+            jets.eta, # == JetEta
+            pt_gen, # == GenPt
+            jets.PU_rho, # == Rho
+            event_id, # == EventID
+            jer_res, # == JERs
+            jer_sf, # == JERSF
+    
+        )
+        jer_smearing = sf_jersmear.evaluate(*inputs)
+        # logger.debug("JER smearing : {}".format(jer_smearing[:20].compute()))
+        # logger.debug(f"jets.pt b4 JER smear: {jets.pt[:20].compute()}")
+        # jer_smearing = applyStrat1(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
+        # jer_smearing = applyStrat2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
+        # jer_smearing = applyStrat1n2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
+        jer_smearing = applyStrat1n2Revised(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta, year)
+    
+        # print("JER smearing : {}".format(jer_smearing[:20].compute()))
+        # print(f"jets.pt b4 JER smear: {jets.pt[:20].compute()}")
+        # jets["pt"] = jer_smearing * pt_jec # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
+        jets[f"pt_jer_{syst}"] = jer_smearing * pt_jec  # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
+        
+    jets["pt"] = jets[f"pt_jer_nom"]
     return jets
+
+
+# def separate_jer_unc(jets):
