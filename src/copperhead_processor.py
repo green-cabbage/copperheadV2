@@ -1179,10 +1179,12 @@ class EventProcessor(processor.ProcessorABC):
             
             # -------------------------------------
             print("doing JEC + SMEARing!")
-            jets = do_jec_scale(jets, self.config, is_mc, dataset)
+            # jets = do_jec_scale(jets, self.config, is_mc, dataset)
+            jets["mass_jec"] = jets.mass
+            jets["pt_jec"] = jets.pt
             
             if is_mc: # JER smearing
-                jets = do_jer_smear(jets, self.config, "nom", events.event, year=year)
+                jets = do_jer_smear(jets, self.config, events.event, year=year, get_unc=True)
             sorted_args = ak.argsort(jets.pt, ascending=False)
             jets = (jets[sorted_args])
             # -------------------------------------

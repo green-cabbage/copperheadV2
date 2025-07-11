@@ -547,7 +547,42 @@ def applyStrat1n2Revised(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta,
         apply_stat2 = abs(jet_eta) < 2.5
     return ak.where(apply_stat2, jer_smearing2, jer_smearing1)
 
-def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down"]):
+
+def apply_jer_unc(jets):
+    """
+    we assume do_jer_smear has been applied
+    Taken from Dmitry's commented out code, with eta bins updates from https://cms-jerc.web.cern.ch/Recommendations/#run-2_1
+    source:  https://github.com/green-cabbage/copperhead_fork2/blob/97a0fcd7668927b46931e6334de4bbf25d3d2031/stage1/corrections/jec.py#L212C14-L242C69
+    """
+    has_matchedGenJet = jets.genJetIdx != -1
+    # print(f"has_matchedGenJet: {has_matchedGenJet.compute()}")
+    print(f"jets.genJetIdx: {jets.genJetIdx[:100].compute()}")
+    jer_categories = {
+       'jer1': (abs(jets.eta) < 1.93),
+       'jer2': (abs(jets.eta) > 1.93) & (abs(jets.eta) < 2.5),
+       'jer3': ((abs(jets.eta) > 2.5) &
+                (abs(jets.eta) < 3.0) &
+                (jets.pt < 50)),
+       'jer4': ((abs(jets.eta) > 2.5) &
+                (abs(jets.eta) < 3.0) &
+                (jets.pt > 50)),
+       'jer5': (abs(jets.eta) > 3.0) & (abs(jets.eta) < 5.0) & (jets.pt < 50),
+       'jer6': (abs(jets.eta) > 3.0) & (abs(jets.eta) < 5.0) & (jets.pt > 50),
+    }
+    for jer_unc_name, jer_cut in jer_categories.items():
+        jer_cut = jer_cut & (has_matchedGenJet)
+        pt_name_up = f"pt_{jer_unc_name}_up"
+        pt_name_down = f"pt_{jer_unc_name}_down"
+        jer_pt_nom = jets["pt_jer_nom"]
+        jer_pt_up = ak.where(jer_cut, jets["pt_jer_up"], jer_pt_nom)
+        jer_pt_down = ak.where(jer_cut, jets["pt_jer_down"], jer_pt_nom)
+        jets[pt_name_up] = jer_pt_up
+        jets[pt_name_down] = jer_pt_down
+
+    return jets
+
+
+def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down"], get_unc=True):
     """
     we assume that jec has been applied (we need pt_jec and pt_raw)
 
@@ -639,7 +674,16 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down
         jets[f"pt_jer_{syst}"] = jer_smearing * pt_jec  # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         
     jets["pt"] = jets[f"pt_jer_nom"]
+    print(f"jet pt: {jets.pt[:100].compute()}")
+    print(f"jet pt_jer_up: {jets.pt_jer_up[:100].compute()}")
+    print(f"jet pt_jer_down: {jets.pt_jer_down[:100].compute()}")
+    jets = apply_jer_unc(jets)
+    for i in range(1,7):
+        print(f"pt_jer{i}_up: {jets[f'pt_jer{i}_up'][:100].compute()}")
+        print(f"pt_jer{i}_down: {jets[f'pt_jer{i}_down'][:100].compute()}")
+    
+    raise ValueError
     return jets
 
 
-# def separate_jer_unc(jets):
+
