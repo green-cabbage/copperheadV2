@@ -28,22 +28,6 @@ def getHistAndErrs(
     return np_hist, np_hist_err
 
 
-def plotDataMC_compare_hda(
-    binning: np.array, 
-    data: Dict[str, np.array], 
-    bkg_MC_dict: Dict[str, Dict[str, np.array]], 
-    save_full_path: str,
-    sig_MC_dict = {},
-    title="default title", 
-    x_title="Mass (GeV)", 
-    y_title="Events",
-    plot_ratio=True,
-    log_scale=True,
-    lumi = "",
-    status = "Private Work",
-    CenterOfMass = 13,
-    ):
-    raise ValueError
 
 def plotDataMC_compare(
     binning: np.array, 
