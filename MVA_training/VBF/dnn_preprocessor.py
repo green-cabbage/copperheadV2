@@ -9,20 +9,20 @@ import argparse
 import os 
 import copy
 import pickle
+from modules.utils import fillEventNans
 
 # def getParquetFiles(path):
     # return glob.glob(path)
 
-def fillEventNans(events):
-    """
-    checked that this function is unnecssary for vbf category, but have it for robustness
-    """
-    for field in events.fields:
-        if "phi" in field:
-            events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
-        else: # for all other fields (this may need to be changed)
-            events[field] = ak.fill_none(events[field], value=0)
-    return events
+# def fillEventNans(events):
+#     """
+#     """
+#     for field in events.fields:
+#         if "phi" in field:
+#             events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
+#         else: # for all other fields (this may need to be changed)
+#             events[field] = ak.fill_none(events[field], value=0)
+#     return events
 
 # def replaceSidebandMass(events):
 #     for field in events.fields:
@@ -544,24 +544,40 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
     
     # TODO: add mixup
     # sig and bkg processes defined at line 1976 of AN-19-124. IDK why ggH is not included here
-    sig_processes = ["vbf_powheg_dipole", "ggh_powhegPS"]
-    bkg_processes = ["dy_M-100To200", "ewk_lljj_mll105_160_ptj0","ttjets_dl","ttjets_sl"]
+    # sig_processes = ["vbf_powheg_dipole", "ggh_powhegPS"]
+    sig_processes = ["vbf_powheg_dipole"]
+    # bkg_processes = ["dy_M-100To200", "ewk_lljj_mll105_160_ptj0","ttjets_dl","ttjets_sl"]
+    bkg_processes = ["dy_M-100To200_MiNNLO", "ewk_lljj_mll50_mjj120","ttjets_dl","ttjets_sl"]
+
+    
     # sig_processes = ["ggh_powhegPS"] # testing
     # bkg_processes = ["ewk_lljj_mll105_160_ptj0"] # testing
 
+    print(f"base_path: {base_path}")
     sig_events_dict = {}
     for process in sig_processes:
+        print(f"process: {process}")
+        
         filenames = glob.glob(f"{base_path}/{process}/*/*.parquet")
+        if len(filenames) == 0:
+            continue
         sig_events = dak.from_parquet(filenames)
         sig_events_dict[process] = sig_events
-    
+        print(f"sig_events.year: {sig_events.year[:10].compute()}")
+        
     bkg_events_dict = {}
     for process in bkg_processes:
+        print(f"process: {process}")
         filenames = glob.glob(f"{base_path}/{process}/*/*.parquet")
+        if len(filenames) == 0:
+            continue
         bkg_events = dak.from_parquet(filenames)
+        # print(f"bkg_events: {bkg_events.fields}")
+        print(f"bkg_events.year: {bkg_events.year[:10].compute()}")
+        
         bkg_events_dict[process] = bkg_events
 
-    
+    # raise ValueError
     
     training_features = prepare_features(sig_events, training_features) # add variation to features
     # print(f"training_features: {training_features}")
@@ -621,17 +637,18 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         df_val = df_total[val_filter]
         df_eval = df_total[eval_filter]
 
-        
+        # print(f"df_train: {df_train}")
         
         # scale data, save the mean and std. This has to be done b4 mixup
         x_train = df_train[training_features].values
-        print(f"x_train shape b4 mixup: {x_train.shape}")
+        # print(f"x_train shape b4 mixup: {x_train.shape}")
         label_train = df_train.label.values
         wgt_train = df_train.wgt_nominal.values
         x_mean = np.average(x_train,axis=0, weights=wgt_train)
         x_std = weighted_std(x_train, wgt_train)
-        print(f"x_mean: {x_mean}")
-        print(f"x_std: {x_std}")
+        # print(f"x_mean: {x_mean}")
+        # print(f"x_std: {x_std}")
+        print(f"x_train.isnan(): {np.any(np.isnan(x_train))}")
         # np.save(f"output/trained_models/{model}/scalers_{fold_idx}", [x_mean, x_std])
         
         np.save(f"{save_path}/scalers_{i}", [x_mean, x_std])
@@ -648,8 +665,8 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
             for process in processes2keep:
                 proc_filter = proc_filter | (df_mixup.process == process)
             df_mixup = df_mixup[proc_filter]
-            print(f"df_mixup process: {df_mixup.process}")
-            print(f"df_mixup label: {np.all(df_mixup.label==1)}")
+            # print(f"df_mixup process: {df_mixup.process}")
+            # print(f"df_mixup label: {np.all(df_mixup.label==1)}")
 
             # drop process column. can't have non-numeric value for mixup, We don't need it for training anyways
             df_mixup = df_mixup.drop("process", axis=1)
@@ -695,6 +712,9 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         df_val[training_features] = x_val
         df_eval[training_features] = x_eval
 
+        print(f"df_train b4: {df_train}")
+        df_train = df_train.fillna(-1)
+        print(f"df_train after: {df_train}")
         # save the df
         data_dict = {
             "train": df_train,
@@ -706,31 +726,34 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         
     
     
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-l",
-    "--label",
-    dest="label",
-    default="test",
-    action="store",
-    help="Unique run label (to create output path)",
-)
-parser.add_argument(
-    "-cat",
-    "--category",
-    dest="category",
-    default="vbf",
-    action="store",
-    help="production mode category. Options: vbf or ggh",
-)
-args = parser.parse_args()
+
     
 if __name__ == "__main__":  
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-l",
+        "--label",
+        dest="label",
+        default="test",
+        action="store",
+        help="Unique run label (to create output path)",
+    )
+    parser.add_argument(
+        "-cat",
+        "--category",
+        dest="category",
+        default="vbf",
+        action="store",
+        help="production mode category. Options: vbf or ggh",
+    )
+    args = parser.parse_args()
+    
     from distributed import LocalCluster, Client
     cluster = LocalCluster(processes=True)
     cluster.adapt(minimum=8, maximum=31) #min: 8 max: 32
     client = Client(cluster)
     
-    base_path = f"/depot/cms/users/yun79/hmm/copperheadV1clean/V2_Dec22_HEMVetoOnZptOn_RerecoBtagSF_XS_Rereco/stage1_output/2018/f1_0/"
+    base_path = f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/2018/f1_0/"
+    # base_path = f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/*/f1_0/"
     preprocess(base_path, run_label=args.label, category=args.category)
     print("Success!")

@@ -34,6 +34,7 @@ import itertools
 from functools import reduce
 import copy
 from dask.dot import dot_graph
+from modules.utils import fillEventNans
 
 def get_variation(wgt_variation, sys_variation):
     if "nominal" in wgt_variation:
@@ -48,20 +49,33 @@ def get_variation(wgt_variation, sys_variation):
             return None
 
 
-def fillEventNans(events, category="vbf"):
+def get_compactedPath(stage1_path):
     """
-    checked that this function is unnecssary for vbf category, but have it for robustness
+    check if we have another directory, but with "compacted" in the name.
+    if so, then return that instead
+    NOTE: this is a lazy method that just looks if compacted directory exists. 
+    It doesn't check if all the necessary samples are in the directory.
     """
-    if category == "vbf":
-        for field in events.fields:
-            if "phi" in field:
-                events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
-            else: # for all other fields (this may need to be changed)
-                events[field] = ak.fill_none(events[field], value=0)
+    compacted_stage1_path = stage1_path.replace("/f1_0", "/compacted")
+    print(f"compacted_stage1_path: {compacted_stage1_path}")
+    if os.path.isdir(compacted_stage1_path):
+        return compacted_stage1_path
     else:
-        print("ERROR: unsupported category!")
-        raise ValueError
-    return events
+        return stage1_path
+        
+# def fillEventNans(events, category="vbf"):
+#     """
+#     """
+#     if category == "vbf":
+#         for field in events.fields:
+#             if "phi" in field:
+#                 events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
+#             else: # for all other fields (this may need to be changed)
+#                 events[field] = ak.fill_none(events[field], value=0)
+#     else:
+#         print("ERROR: unsupported category!")
+#         raise ValueError
+#     return events
 
 def applyCatAndFeatFilter(events, region="h-peak", category="vbf"):
     """
@@ -70,11 +84,11 @@ def applyCatAndFeatFilter(events, region="h-peak", category="vbf"):
     # apply category filter
     dimuon_mass = events.dimuon_mass
     if region =="h-peak":
-        region = (dimuon_mass > 115.03) & (dimuon_mass < 135.03)
+        region_filter = (dimuon_mass > 115.03) & (dimuon_mass < 135.03)
     elif region =="h-sidebands":
-        region = ((dimuon_mass > 110) & (dimuon_mass < 115.03)) | ((dimuon_mass > 135.03) & (dimuon_mass < 150))
+        region_filter = ((dimuon_mass > 110) & (dimuon_mass < 115.03)) | ((dimuon_mass > 135.03) & (dimuon_mass < 150))
     elif region =="signal":
-        region = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
+        region_filter = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
     
     if category.lower() == "vbf":
         btag_cut =ak.fill_none((events.nBtagLoose_nominal >= 2), value=False) | ak.fill_none((events.nBtagMedium_nominal >= 1), value=False)
@@ -90,13 +104,24 @@ def applyCatAndFeatFilter(events, region="h-peak", category="vbf"):
     cat_cut = ak.fill_none(cat_cut, value=False)
     cat_filter = (
         cat_cut & 
-        region 
+        region_filter 
     )
     events = events[cat_filter] # apply the category filter
     # print(f"events dimuon_mass: {events.dimuon_mass.compute()}")
     # apply the feature filter (so the ak zip only contains features we are interested)
     # print(f"features: {features}")
     # events = ak.zip({field : events[field] for field in features}) 
+    # NOTE: we overwrite dimuon mass as 125 if region is h-siebands
+    if region =="h-sidebands":
+        events["dimuon_mass"] = 125 * ak.ones_like(events.dimuon_mass)
+
+    # print(test_avar)
+    # print(events.dimuon_mass)
+    # print(events)
+    # events["dimuon_mass"] = test_avar
+    print("REGION: "+region)
+    
+    # raise ValueError
     return events
 
 class DNNWrapper(torch_wrapper):
@@ -208,9 +233,11 @@ def getStage1Samples(stage1_path, data_samples=[], sig_samples=[], bkg_samples=[
     # ------------------------------------
     bkg_sample_dict = {
         "DY" : [ 
-            "dy_M-100To200",
-            # "dy_m105_160_vbf_amc", 
             # "dy_M-50", 
+            # "dy_M-100To200",
+            "dy_M-50_MiNNLO",
+            "dy_M-100To200_MiNNLO",
+            # "dy_m105_160_vbf_amc", 
         ],
         "TT" : [
             "ttjets_dl",
@@ -223,6 +250,7 @@ def getStage1Samples(stage1_path, data_samples=[], sig_samples=[], bkg_samples=[
         "EWK" : [
             "ewk_lljj_mll105_160_ptj0", # herwig
             "ewk_lljj_mll105_160_py_dipole", # pythia dipole
+            "ewk_lljj_mll50_mjj120",
         ],
         "VV" : [
             "ww_2l2nu",
@@ -353,8 +381,13 @@ if __name__ == "__main__":
     print(f"data_samples: {data_samples}")
 
     stage1_path = f"{base_path}/stage1_output/{args.year}/f1_0"
-    # full_sample_dict = getStage1Samples(stage1_path, data_samples=data_samples, sig_samples=sig_samples, bkg_samples=bkg_samples)
+    stage1_path = get_compactedPath(stage1_path)# get compacted stage1 output if they exist
+    # raise ValueError
     full_sample_dict = getStage1Samples(stage1_path, data_samples=data_samples, sig_samples=sig_samples, bkg_samples=bkg_samples)
+    print(f"full_sample_dict: {full_sample_dict.keys()}")
+    print(f"stage1_path: {stage1_path}")
+    print(f"sig_samples: {sig_samples}")
+    # raise ValueError
     
     for sample_type, sample_l in tqdm(full_sample_dict.items(), desc="Processing Samples"):
         if len(sample_l) ==0:
@@ -362,8 +395,8 @@ if __name__ == "__main__":
             continue
             
         events_stage1 = dak.from_parquet(sample_l)
-        target_chunksize = 150_000
-        events_stage1 = events_stage1.repartition(rows_per_partition=target_chunksize)
+        # target_chunksize = 150_000
+        # events_stage1 = events_stage1.repartition(rows_per_partition=target_chunksize)
 
         # reparitition events if npartitions are too little to decrease memory usage (ie histograming vbf requires > 10 GB per worker otherwise) ----------------------
         # min_partition_size = 50
@@ -395,9 +428,9 @@ if __name__ == "__main__":
         if "data" in sample_type:
             wgt_variations = ["wgt_nominal"] 
         else:
-            wgt_variations = [w for w in events_stage1.fields if ("wgt_" in w)]
+            # wgt_variations = [w for w in events_stage1.fields if ("wgt_" in w)]
             # wgt_variations = wgt_variations[:10] # FIXME
-            # wgt_variations = ["wgt_nominal"]  # FIXME
+            wgt_variations = ["wgt_nominal"]  # FIXME
             
         print(f"wgt_variations: {wgt_variations}")
         syst_variations = []
@@ -421,7 +454,22 @@ if __name__ == "__main__":
         # add axis for systematic variation
         score_hist = score_hist.StrCat(variations, name="variation")
         # add score category
-        bins = np.linspace(0, 1, num=13) # TODO: update this
+        bins = np.array([
+            0,
+            0.07,
+            0.432,
+            0.71,
+            0.926,
+            1.114,
+            1.28,
+            1.428,
+            1.564,
+            1.686,
+            1.798,
+            1.9,
+            2.0,
+            2.8,
+        ])
         score_name = f"score_{args.model_label}"
         score_hist = score_hist.Var(bins, name=score_name)
         
@@ -508,8 +556,6 @@ if __name__ == "__main__":
             )
             dnn_score = nan_val*ak.ones_like(events.event)
             # graph =dnn_score[:5].__dask_graph__()
-            # print(f"graph: {graph}")
-            # dot_graph(graph, filename="hist.svg") # FIXME
             for fold in range(nfolds): 
                 eval_folds = [(fold+f)%nfolds for f in [3]]
                 eval_filter = getFoldFilter(events, eval_folds, nfolds)
@@ -525,8 +571,10 @@ if __name__ == "__main__":
                 # print(f"{fold} fold dnn_score_fold after flatten: {dnn_score_fold.compute()}")
                 # print(f"{fold} fold dnn_score: {dnn_score.compute()}")
 
+            # transform dnn_score
+            dnn_score = np.arctanh(dnn_score)
+            # print(f"{region} dnn_score: {dnn_score[:20].compute()}")
             # dnn_score.visualize(filename='hist.svg',optimize_graph=True) # FIXME
-            # raise ValueError
             # print(f"dnn_score b4 after: {dnn_score.compute()}")
             # # debug:
             # any_nan = ak.any(dnn_score ==nan_val)
@@ -542,7 +590,7 @@ if __name__ == "__main__":
             
             
             to_fill = {
-                "region" : "h-peak",
+                "region" : region,
                 "channel" : "vbf",
                 "variation" : variation,
                 score_name : dnn_score
@@ -574,9 +622,6 @@ if __name__ == "__main__":
         print(f"loop_args len: {len(loop_args)}")
         print(f"score_hist_l len: {len(score_hist_l)}")
         # score_hist_l = [hist.compute() for hist in score_hist_l]
-        # score_hist_l[0].visualize(filename='hist.svg') # FIXME
-        # score_hist_l[0].visualize(filename='hist_optimized.svg', optimize_graph=True) # FIXME
-        # raise ValueError
         score_hist_l = dask.compute(score_hist_l)[0]
         print(f"score_hist_l len after compute: {len(score_hist_l)}")
         score_hist = reduce(lambda a, b: a + b, score_hist_l)

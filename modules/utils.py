@@ -133,3 +133,64 @@ def getDimuMassBySubCat(sample_dict, sample="", nSubCats=5):
         }
         dict_by_subCat[target_subCat] = subCat_dict
     return dict_by_subCat
+
+
+
+def ensure_compacted(df, compacted_dir_path, exception_samples=[]):
+    compacted_dir = compacted_dir_path
+    if not os.path.exists(compacted_dir):
+        print(f"Compacted path for {compacted_dir_path} not found. Creating compacted dataset...")
+        # Read original data
+        # orig_path = orig_dir_path
+        # df = dd.read_parquet(orig_path)
+        # print(f"Original rows = {len(df)}")
+        # if len(df) == 0:
+            # print(f"WARNING: {orig_path} is empty!")
+        # Repartition and write to compacted path if not in exception samples
+        keep_npartitions = False
+        for sample_name in exception_samples:
+            if sample_name in compacted_dir_path:
+                keep_npartitions = True # if sample name is mentioned in the new directory path, then skip reparitioning. Typically this is for signal MC samples that have high efficiency in our selection in signal region
+        if not keep_npartitions:
+            target_chunksize = 250_000
+            df_repart = df.repartition(rows_per_partition=target_chunksize)
+        else:
+            df_repart = df
+            
+        df_repart.to_parquet(compacted_dir)
+        print(f"Compacted dataset created at {compacted_dir}")
+    else:
+        # Optionally, could check if compacted_dir is empty or incomplete, but skipping for now
+        pass
+
+
+
+
+def filterRegion(events, region="h-peak"):
+    dimuon_mass = events.dimuon_mass
+    if region =="h-peak":
+        region = (dimuon_mass > 115) & (dimuon_mass < 135)
+    elif region =="h-sidebands":
+        region = ((dimuon_mass > 110) & (dimuon_mass < 115)) | ((dimuon_mass > 135) & (dimuon_mass < 150))
+    elif region =="signal":
+        region = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
+    elif region =="z-peak":
+        region = (dimuon_mass >= 70) & (dimuon_mass <= 110.0)
+
+    events = events[region]
+    return events
+
+
+def fillEventNans(events, category="vbf"):
+    """
+    """
+    if category == "vbf":
+        for field in events.fields:
+            if "phi" in field:
+                events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
+            else: # for all other fields (this may need to be changed)
+                events[field] = ak.fill_none(events[field], value=0)
+    else:
+        print("ERROR: unsupported category!")
+        raise ValueError
+    return events

@@ -268,10 +268,10 @@ def customROC_curve_AN(label, pred, weight):
         
 
 
-        # effBkg = TN / (TN + FP) # Dmitry PhD thesis definition
-        # effSig = FN / (FN + TP) # Dmitry PhD thesis definition
-        effBkg = FP / (TN + FP) # AN-19-124 ggH Cat definition
-        effSig = TP / (FN + TP) # AN-19-124 ggH Cat definition
+        effBkg = TN / (TN + FP) # Dmitry PhD thesis definition
+        effSig = FN / (FN + TP) # Dmitry PhD thesis definition
+        # effBkg = FP / (TN + FP) # AN-19-124 ggH Cat definition
+        # effSig = TP / (FN + TP) # AN-19-124 ggH Cat definition
         effBkg_total[ix] = effBkg
         effSig_total[ix] = effSig
 
@@ -295,16 +295,45 @@ def customROC_curve_AN(label, pred, weight):
     return (effBkg_total, effSig_total, thresholds)
 
 
+# def plotROC(score_dict, plt_save_path):
+#     """
+#     """
+#     fig, ax_main = plt.subplots()
+#     status = "Private Work 2018"
+#     CenterOfMass = "13"
+#     hep.cms.label(data=True, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+#     plt.yscale('log')
+#     plt.ylim((0.001, 1e3))
+#     for stage, output_dict in score_dict.items():
+#         pred_total = output_dict["prediction"]
+#         label_total = output_dict["label"]
+#         wgt_total = output_dict["weight"]
+#         eff_bkg, eff_sig, thresholds = customROC_curve_AN(label_total, pred_total, wgt_total)
+#         plt.plot(eff_sig, eff_bkg, label=f"{stage}")
+
+#     plt.vlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
+#     plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
+#     # plt.hlines(eff_bkg, 0, eff_sig, linestyle="dashed")
+#     plt.xlim([0.0, 1.0])
+#     plt.ylim([0.0001, 1.0])
+#     plt.xlabel('$\\epsilon_{sig}$')
+#     plt.ylabel('$\\epsilon_{bkg}$')
+#     plt.yscale("log")
+#     plt.ylim([0.0001, 1.0])
+    
+#     plt.legend(loc="lower right")
+#     # plt.title(f'ROC curve for ggH BDT {year}')
+#     plt.savefig(plt_save_path)
+#     plt.clf()
+
+
 def plotROC(score_dict, plt_save_path):
     """
-    TODO: add weights
     """
     fig, ax_main = plt.subplots()
     status = "Private Work 2018"
     CenterOfMass = "13"
     hep.cms.label(data=True, loc=0, label=status, com=CenterOfMass, ax=ax_main)
-    plt.yscale('log')
-    plt.ylim((0.001, 1e3))
     for stage, output_dict in score_dict.items():
         pred_total = output_dict["prediction"]
         label_total = output_dict["label"]
@@ -313,14 +342,13 @@ def plotROC(score_dict, plt_save_path):
         plt.plot(eff_sig, eff_bkg, label=f"{stage}")
 
     plt.vlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
-    plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
+    plt.hlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
+    # plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
     # plt.hlines(eff_bkg, 0, eff_sig, linestyle="dashed")
     plt.xlim([0.0, 1.0])
-    plt.ylim([0.0001, 1.0])
+    plt.ylim([0.0, 1.0])
     plt.xlabel('$\\epsilon_{sig}$')
     plt.ylabel('$\\epsilon_{bkg}$')
-    plt.yscale("log")
-    plt.ylim([0.0001, 1.0])
     
     plt.legend(loc="lower right")
     # plt.title(f'ROC curve for ggH BDT {year}')
@@ -394,6 +422,9 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
     label_arr_valid = df_valid.label.values
     input_arr_eval = df_eval[training_features].values
     label_arr_eval = df_eval.label.values
+
+    print(f"input_arr_train: {input_arr_train}")
+    
     
     loss_fn = torch.nn.BCELoss()
     # loss_fn = FocalLoss(alpha=1, gamma=2)
@@ -401,8 +432,8 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
     
     # Iterating through the DataLoader
     # 
-    device = "cuda"
-    # device = "cpu"
+    # device = "cuda"
+    device = "cpu"
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     dataset_train = NumpyDataset(input_arr_train, label_arr_train)
@@ -423,13 +454,16 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
             inputs = inputs.to(device)
             labels = labels.to(device).reshape((-1,1))
             
-    
             
             optimizer.zero_grad()
     
             # Make predictions for this batch
             pred = model(inputs)
-    
+
+
+            print(f"labels: {labels}")
+            print(f"inputs: {inputs}")
+            print(f"pred: {pred}")
             # Compute the loss and its gradients
             loss = loss_fn(pred, labels)
             loss.backward()
@@ -794,10 +828,12 @@ if __name__ == "__main__":
     with open(f'{save_path}/training_features.pkl', 'rb') as f:
         training_features = pickle.load(f)
     
-    nfolds = 1 #4 
+    nfolds = 4 #4 
     # model = Net(22)
-    model = Net(26)
+    # model = Net(26)
     for i in range(nfolds):       
+        model = Net(26)
+        
         # input_arr_train = np.load(f"{save_path}/data_input_train_{i}.npy")
         # label_arr_train = np.load(f"{save_path}/data_label_train_{i}.npy")
         # input_arr_valid = np.load(f"{save_path}/data_input_validation_{i}.npy")
@@ -813,6 +849,7 @@ if __name__ == "__main__":
 
         training_features = prepare_features(df_train, training_features) # add variation to the name
         print(f"new training_features: {training_features}")
+        print(f"df_train: {df_train}")
         data_dict = {
             "train": df_train,
             "validation": df_valid,
