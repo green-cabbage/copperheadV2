@@ -461,9 +461,6 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
             pred = model(inputs)
 
 
-            print(f"labels: {labels}")
-            print(f"inputs: {inputs}")
-            print(f"pred: {pred}")
             # Compute the loss and its gradients
             loss = loss_fn(pred, labels)
             loss.backward()

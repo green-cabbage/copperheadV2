@@ -244,17 +244,13 @@ def mixup(data, alpha=4, concat=False, batch_size=None, seed=1352):
         # print(f"mixup index with no replacement: {index2}")
     else:
         # with replacement
-        # index = np.random.randint(0, data_len, size=batch_size)
         index1 = np.random.randint(0, data_len, size=batch_size)
         index2 = np.random.randint(0, data_len, size=batch_size)
-        # print(f"mixup index with replacement: {index1}")
-        # print(f"mixup index with replacement: {index2}")
 
 
     # data = data.sample(frac=1)
     data_orig = data
 
-    # print(f"data_orig: {data_orig}")
     # Cut data into specified size
     # data1 = resize_data(data, batch_size).reset_index(drop=True)
     data1 = data_orig.iloc[index1]
@@ -278,9 +274,6 @@ def mixup(data, alpha=4, concat=False, batch_size=None, seed=1352):
     if concat is True:
         data_new = pd.concat([data_orig, data_mix])
 
-    # print(f"data1: {data1.head()}")
-    # print(f"data2: {data2.head()}")
-    # print(f"data_mix: {data_mix.head()}")
     return data_new
 
 def cartesian(arrays, out=None):
@@ -637,7 +630,6 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         df_val = df_total[val_filter]
         df_eval = df_total[eval_filter]
 
-        # print(f"df_train: {df_train}")
         
         # scale data, save the mean and std. This has to be done b4 mixup
         x_train = df_train[training_features].values
@@ -646,10 +638,9 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         wgt_train = df_train.wgt_nominal.values
         x_mean = np.average(x_train,axis=0, weights=wgt_train)
         x_std = weighted_std(x_train, wgt_train)
-        # print(f"x_mean: {x_mean}")
-        # print(f"x_std: {x_std}")
-        print(f"x_train.isnan(): {np.any(np.isnan(x_train))}")
-        # np.save(f"output/trained_models/{model}/scalers_{fold_idx}", [x_mean, x_std])
+        # replace zero std dev with one, since we will divide input by x_std) 
+        where_cond = np.isclose(np.zeros_like(x_std), x_std)
+        x_std = np.where(where_cond, np.ones_like(x_std), x_std)
         
         np.save(f"{save_path}/scalers_{i}", [x_mean, x_std])
 
@@ -665,8 +656,6 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
             for process in processes2keep:
                 proc_filter = proc_filter | (df_mixup.process == process)
             df_mixup = df_mixup[proc_filter]
-            # print(f"df_mixup process: {df_mixup.process}")
-            # print(f"df_mixup label: {np.all(df_mixup.label==1)}")
 
             # drop process column. can't have non-numeric value for mixup, We don't need it for training anyways
             df_mixup = df_mixup.drop("process", axis=1)
@@ -712,11 +701,7 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         df_val[training_features] = x_val
         df_eval[training_features] = x_eval
 
-        print(f"df_train b4: {df_train}")
-        df_train = df_train.fillna(-1)
-        df_val = df_val.fillna(-1)
-        df_eval = df_eval.fillna(-1)
-        print(f"df_train after: {df_train}")
+
         # save the df
         data_dict = {
             "train": df_train,
