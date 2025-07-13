@@ -714,6 +714,8 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
 
         print(f"df_train b4: {df_train}")
         df_train = df_train.fillna(-1)
+        df_val = df_val.fillna(-1)
+        df_eval = df_eval.fillna(-1)
         print(f"df_train after: {df_train}")
         # save the df
         data_dict = {
