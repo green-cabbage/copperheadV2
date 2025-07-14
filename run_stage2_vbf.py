@@ -77,10 +77,15 @@ def get_compactedPath(stage1_path):
 #         raise ValueError
 #     return events
 
-def applyCatAndFeatFilter(events, region="h-peak", category="vbf"):
+def applyCatAndFeatFilter(events, region="h-peak", category="vbf", process=None):
     """
     
     """
+    if process is None:
+        print("please give appropriate sample name!")
+        raise ValueError
+    # print(f"process: {process}")
+    # raise ValueError
     # apply category filter
     dimuon_mass = events.dimuon_mass
     if region =="h-peak":
@@ -102,6 +107,25 @@ def applyCatAndFeatFilter(events, region="h-peak", category="vbf"):
         cat_cut = ak.ones_like(dimuon_mass, dtype="bool")
         
     cat_cut = ak.fill_none(cat_cut, value=False)
+
+
+    if "dy_" in process:
+        is_vbf_filter = ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc")
+        if is_vbf_filter:
+            print(f"applying VBF filter cut on: {process}")
+            
+            vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
+            cat_cut =  (cat_cut  
+                        & vbf_filter
+            )
+        else:
+            print(f"cutting off inclusive dy: {process}")
+            vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+            cat_cut =  (
+                cat_cut  
+                & ~vbf_filter 
+                )
+    
     cat_filter = (
         cat_cut & 
         region_filter 
@@ -235,8 +259,11 @@ def getStage1Samples(stage1_path, data_samples=[], sig_samples=[], bkg_samples=[
         "DY" : [ 
             # "dy_M-50", 
             # "dy_M-100To200",
-            "dy_M-50_MiNNLO",
-            "dy_M-100To200_MiNNLO",
+            # "dy_M-50_MiNNLO",
+            # "dy_M-100To200_MiNNLO",
+            "dy_M-100To200_aMCatNLO",
+            "dy_M-50_aMCatNLO",
+            "dy_VBF_filter_NewZWgt",
             # "dy_m105_160_vbf_amc", 
         ],
         "TT" : [
@@ -422,6 +449,7 @@ if __name__ == "__main__":
         print(f"training_features: {training_features}")
         print(f"len training_features: {len(training_features)}")
         
+        
         # ------------------------------------------
         # Initialize sample histograme to save later
         # ------------------------------------------
@@ -504,13 +532,12 @@ if __name__ == "__main__":
                 print(f"skipping variation {variation} from {wgt_variation} and {syst_variation}")
                 continue
             
-            events = applyCatAndFeatFilter(events_stage1, region=region, category=category)
+            events = applyCatAndFeatFilter(events_stage1, region=region, category=category, process=sample_type)
             events = fillEventNans(events, category=category) # for vbf category, this may be unncessary
 
             training_features = prepare_features(events, training_features, variation=variation) # add variations where applicable
             print(f"new training_features: {training_features}")
             print(f"new training_features: {len(training_features)}")
-            
             
             
             nfolds = 4 #4 
@@ -526,14 +553,33 @@ if __name__ == "__main__":
                 eval_filter = getFoldFilter(events, eval_folds, nfolds)
         
         
-
                 
-                for feat in training_features:
+                
+                
+                for ix in range(len(training_features)):
+                    feat = training_features[ix]
                     input_arr_fold = input_arr_dict[feat] 
-                    input_arr_fold = ak.where(eval_filter, events[feat], input_arr_fold)
+
+                    # scale the events feature
+                    in_feat = events[feat]
+                    # if feat=="year":
+                        # print(f"in_feat b4 scaling: {in_feat[:20].compute()}")
+                    scalers_path = f"{model_trained_path}/scalers_{fold}.npy"
+                    scaler_mean, scaler_mean_std = np.load(scalers_path)
+                    scaler_mean = scaler_mean[ix] # get feature relecant mean & std dev
+                    scaler_mean_std = scaler_mean_std[ix] # get feature relecant mean & std dev
+                    in_feat = (in_feat - scaler_mean) / scaler_mean_std
+                    # if feat=="year":
+                    #     print(f"scaler_mean: {scaler_mean}")
+                    #     print(f"scaler_mean_std: {scaler_mean_std}")
+                    #     print(f"in_feat after scaling: {in_feat[:20].compute()}")
+                    
+                    
+                    input_arr_fold = ak.where(eval_filter, in_feat, input_arr_fold)
                     input_arr_dict[feat] = input_arr_fold
         
-
+            # print(f"input_arr_dict: {dask.compute(input_arr_dict)}")
+            
             print(f"len(training_features): {len(training_features)}")
             # # debug:
             # for feat in training_features:
@@ -565,6 +611,7 @@ if __name__ == "__main__":
                 dnn_score_fold = dnnWrap(input_arr)
                 # print(f"{fold} fold dnn_score_fold b4 flatten: {dnn_score_fold.compute()}")
                 dnn_score_fold = ak.flatten(dnn_score_fold, axis=1) # DNN outpout is 2 dimensional
+                # print(f"{region} fold dnn_score_fold: {dnn_score_fold[:20].compute()}")
                 
                 
                 dnn_score = ak.where(eval_filter, dnn_score, dnn_score_fold)
@@ -574,12 +621,10 @@ if __name__ == "__main__":
             # transform dnn_score
             dnn_score = np.arctanh(dnn_score)
             # print(f"{region} dnn_score: {dnn_score[:20].compute()}")
+            # print(f"{region} dnn_score: {ak.max(dnn_score).compute()}")
+            # raise ValueError
             # dnn_score.visualize(filename='hist.svg',optimize_graph=True) # FIXME
             # print(f"dnn_score b4 after: {dnn_score.compute()}")
-            # # debug:
-            # any_nan = ak.any(dnn_score ==nan_val)
-            # print(f"dnn_score any_nan: {any_nan.compute()}")
-            # raise ValueError
         
                 
             # ---------------------------------------------------
