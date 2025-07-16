@@ -407,16 +407,10 @@ def dnnEvaluateLoop(model, dataloader, loss_fn, device="cpu"):
 
 
 
-def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=101, save_path=""):
-    if save_path == "save_path":
-        print("ERROR: please define the save path for the results")
-        raise ValueError
-    if len(training_features) == 0:
-        print("ERROR: please define the training features the DNN will train on")
-        raise ValueError
 
+def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs, save_path):
     # nWorkers = 30
-    nWorkers = 3
+    nWorkers = 2
     pin_memory_flag = True # True
     # divide our data into 4 folds
     # input_arr_train, label_arr_train = data_dict["train"]
@@ -438,8 +432,8 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
     
     # Iterating through the DataLoader
     # 
-    # device = "cuda"
-    device = "cpu"
+    device = "cuda"
+    # device = "cpu"
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     dataset_train = NumpyDataset(input_arr_train, label_arr_train)
@@ -549,6 +543,7 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
             valid_loss = valid_loop_dict["total_loss"]
             batch_losses = valid_loop_dict["batch_losses"]
             auc_score = roc_auc_score(label_total, pred_total)
+            i = fold_idx
             print(f"fold {i} epoch {epoch} validation total loss: {valid_loss}")
             print(f"fold {i} epoch {epoch} validation average batch loss: {np.mean(batch_losses)}")
             print(f"fold {i} epoch {epoch} validation AUC: {auc_score}")
@@ -840,19 +835,17 @@ if __name__ == "__main__":
     nfolds = 4 #4 
     # model = Net(22)
     # model = Net(26)
-    # for i in range(nfolds):       
-    for i in range(2, nfolds):       
+    #Parallelization list intitializtation
+    model_l = []
+    data_dict_l = []
+    fold_l = []
+    training_features_l = []
+    save_path_l = []
+    batch_size_l = []
+    nepochs_l = []
+    for i in range(nfolds):       
         model = Net(26)
         
-        # input_arr_train = np.load(f"{save_path}/data_input_train_{i}.npy")
-        # label_arr_train = np.load(f"{save_path}/data_label_train_{i}.npy")
-        # input_arr_valid = np.load(f"{save_path}/data_input_validation_{i}.npy")
-        # label_arr_valid = np.load(f"{save_path}/data_label_validation_{i}.npy")
-        # data_dict = {
-        #     "train": (input_arr_train, label_arr_train),
-        #     "validation": (input_arr_valid, label_arr_valid)
-        # }
-        # dnn_train(model, data_dict, save_path=save_path)
         df_train = pd.read_parquet(f"{save_path}/data_df_train_{i}") # these have been already scaled
         df_valid = pd.read_parquet(f"{save_path}/data_df_validation_{i}") # these have been already scaled
         df_eval = pd.read_parquet(f"{save_path}/data_df_evaluation_{i}") # these have been already scaled
@@ -867,8 +860,29 @@ if __name__ == "__main__":
         }
         nepochs = 100 # 100
         batch_size = 65536
-        # batch_size = int(2*65536)
-        dnn_train(model, data_dict,training_features=training_features, save_path=save_path,batch_size=batch_size,nepochs=nepochs)
+        # dnn_train(model, data_dict, i, training_features, batch_size, nepochs, save_path)
 
+        # collect the input parameters
+        model_l.append(model)
+        data_dict_l.append(data_dict)
+        fold_l.append(i)
+        training_features_l.append(training_features)
+        save_path_l.append(save_path)
+        batch_size_l.append(batch_size)
+        nepochs_l.append(nepochs)
 
+    with concurrent.futures.ProcessPoolExecutor(max_workers=nfolds) as executor:
+        # Submit each file check to the executor
+        result_l = list(executor.map(
+            dnn_train, 
+            model_l,
+            data_dict_l,
+            fold_l,
+            training_features_l,
+            batch_size_l,
+            nepochs_l,
+            save_path_l,
+        ))
+        print(f"result_l: {result_l}")
+        print("Success!")
 
