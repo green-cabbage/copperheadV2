@@ -16,7 +16,7 @@ from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 import mplhep as hep
 plt.style.use(hep.style.CMS)
-# hep.style.use("CMS")
+import concurrent
 torch.multiprocessing.set_sharing_strategy('file_descriptor') # reason: https://discuss.pytorch.org/t/training-crashes-due-to-insufficient-shared-memory-shm-nn-dataparallel/26396/44
 
 def transformDnnScore(dnn_scores):
@@ -239,7 +239,7 @@ def plotSigVsBkg(score_dict, bins, plt_save_path, transformPrediction=False, nor
     plt.clf()
 
 
-def customROC_curve_AN(label, pred, weight):
+def customROC_curve_AN(label, pred, weight, ucsd_mode=False):
     """
     generates signal and background efficiency consistent with the AN,
     as described by Fig 4.6 of Dmitry's PhD thesis
@@ -267,11 +267,14 @@ def customROC_curve_AN(label, pred, weight):
 
         
 
-
-        effBkg = TN / (TN + FP) # Dmitry PhD thesis definition
-        effSig = FN / (FN + TP) # Dmitry PhD thesis definition
-        # effBkg = FP / (TN + FP) # AN-19-124 ggH Cat definition
-        # effSig = TP / (FN + TP) # AN-19-124 ggH Cat definition
+        
+        if ucsd_mode:
+            effBkg = FP / (TN + FP) # AN-19-124 ggH Cat definition
+            effSig = TP / (FN + TP) # AN-19-124 ggH Cat definition
+        else:
+            effBkg = TN / (TN + FP) # Dmitry PhD thesis definition
+            effSig = FN / (FN + TP) # Dmitry PhD thesis definition
+            
         effBkg_total[ix] = effBkg
         effSig_total[ix] = effSig
 
@@ -330,6 +333,7 @@ def customROC_curve_AN(label, pred, weight):
 def plotROC(score_dict, plt_save_path):
     """
     """
+    ucsd_mode = "ucsd" in plt_save_path
     fig, ax_main = plt.subplots()
     status = "Private Work 2018"
     CenterOfMass = "13"
@@ -338,15 +342,20 @@ def plotROC(score_dict, plt_save_path):
         pred_total = output_dict["prediction"]
         label_total = output_dict["label"]
         wgt_total = output_dict["weight"]
-        eff_bkg, eff_sig, thresholds = customROC_curve_AN(label_total, pred_total, wgt_total)
+        eff_bkg, eff_sig, thresholds = customROC_curve_AN(label_total, pred_total, wgt_total, ucsd_mode=ucsd_mode)
         plt.plot(eff_sig, eff_bkg, label=f"{stage}")
 
     plt.vlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
-    plt.hlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
     # plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
     # plt.hlines(eff_bkg, 0, eff_sig, linestyle="dashed")
     plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
+    if ucsd_mode:
+        plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
+        plt.yscale('log')
+        plt.ylim([0.001, 1.0])
+    else:
+        plt.ylim([0.0, 1.0])
+        plt.hlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
     plt.xlabel('$\\epsilon_{sig}$')
     plt.ylabel('$\\epsilon_{bkg}$')
     
@@ -406,9 +415,9 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
         print("ERROR: please define the training features the DNN will train on")
         raise ValueError
 
-    # nWorkers = 10
+    # nWorkers = 30
     nWorkers = 3
-    pin_memory_flag = True
+    pin_memory_flag = True # True
     # divide our data into 4 folds
     # input_arr_train, label_arr_train = data_dict["train"]
     # input_arr_valid, label_arr_valid = data_dict["validation"]
@@ -423,9 +432,6 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
     input_arr_eval = df_eval[training_features].values
     label_arr_eval = df_eval.label.values
 
-    print(f"input_arr_train: {input_arr_train}")
-    
-    
     loss_fn = torch.nn.BCELoss()
     # loss_fn = FocalLoss(alpha=1, gamma=2)
     # loss_fn = HingeLoss()
@@ -460,6 +466,9 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
             # Make predictions for this batch
             pred = model(inputs)
 
+            # print(f"inputs: {inputs}")
+            # print(f"labels: {labels}")
+            # print(f"pred: {pred}")
 
             # Compute the loss and its gradients
             loss = loss_fn(pred, labels)
@@ -576,6 +585,9 @@ def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=
             # plot ROC curve 
             plt_save_path = f"{fold_save_path}/epoch{epoch}_ROC.png"
             plotROC(score_dict, plt_save_path)
+            plt_save_path = f"{fold_save_path}/epoch{epoch}_ROC_ucsd.png" # plot with sig eff and bkg eff in AN-19-124
+            plotROC(score_dict, plt_save_path)
+            
 
             bins = np.linspace(0, 1, 30) 
             plt_save_path = f"{fold_save_path}/epoch{epoch}_DNN_combined_dist_bySigBkg.png"
@@ -828,7 +840,8 @@ if __name__ == "__main__":
     nfolds = 4 #4 
     # model = Net(22)
     # model = Net(26)
-    for i in range(nfolds):       
+    # for i in range(nfolds):       
+    for i in range(2, nfolds):       
         model = Net(26)
         
         # input_arr_train = np.load(f"{save_path}/data_input_train_{i}.npy")
