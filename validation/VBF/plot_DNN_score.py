@@ -217,7 +217,6 @@ if __name__ == "__main__":
     help="string value of integrated luminosity to label",
     )
     args = parser.parse_args()
-    # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/*/"
     year = args.year
     if year == "all":
         year_param = "*"
@@ -226,6 +225,7 @@ if __name__ == "__main__":
     else:
         year_param = year
     load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage2_histograms/score_{args.mva_name}/{year_param}/"
+    # load_path = "/depot/cms/users/shar1172/hmm/copperheadV1clean/Run2_nanoAODv12_UpdatedQGL_17July/stage2_histograms/score_Run2_nanoAODv12_UpdatedQGL_17July/2018_h-peak_vbf_2018_UpdatedQGL_17July_Test/2018/" # FIXME
     pickled_filelist = glob.glob(f"{load_path}/*.pkl")
     print(f"load_path : {load_path}")
     # print(f"pickled_hists : {pickled_filelist}")
