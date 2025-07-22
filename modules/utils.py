@@ -100,6 +100,16 @@ def get_git_info_str():
         return f"Commit: {commit_hash}, Branch: {branch_name}, Diff: {diff}"
 
 def fillSampleValues(events, sample_dict, sample: str, fields2load=None):
+    """
+    inputs:
+    sample_dict: dictionary with sample name as keys, lazy dask awkward zip as values
+
+    return
+    computed sample_dict: dictionary with sample name as keys, eager dask awkward zip as values
+
+    Description:
+    takes lazy dask awkward zips from sample_dict and computes only fields specified in fields2load. This is then returned
+    """
     # find which sample group sample_name belongs to
     if fields2load is None:
         fields2load = ["wgt_nominal", "BDT_score", "dimuon_mass", "subCategory_idx"]

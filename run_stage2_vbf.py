@@ -387,13 +387,14 @@ if __name__ == "__main__":
             "http://dask-gateway-k8s.geddes.rcac.purdue.edu/",
             proxy_address="traefik-dask-gateway-k8s.cms.geddes.rcac.purdue.edu:8786",
         )
-        cluster_info = gateway.list_clusters()[0]# get the first cluster by default. There only should be one anyways
+        # cluster_info = gateway.list_clusters()[0]# get the first cluster by default. There only should be one anyways
+        cluster_info = gateway.list_clusters()[-1]# get the first cluster by default. There only should be one anyways
         client = gateway.connect(cluster_info.name).get_client()
         print("Gateway Client created")
     # # #-----------------------------------------------------------
     else:
         from distributed import LocalCluster, Client
-        cluster = LocalCluster(processes=True, memory_limit="10GB")
+        cluster = LocalCluster(processes=True, memory_limit="20GB")
         cluster.adapt(minimum=8, maximum=63) #min: 8 max: 32
         client = Client(cluster)
         print("Local scale Client created")
@@ -407,7 +408,8 @@ if __name__ == "__main__":
     data_samples = args.data_samples
     print(f"data_samples: {data_samples}")
 
-    stage1_path = f"{base_path}/stage1_output/{args.year}/f1_0"
+    # stage1_path = f"{base_path}/stage1_output/{args.year}/f1_0"
+    stage1_path = "/depot/cms/users/shar1172/hmm/copperheadV1clean/Run2_nanoAODv12_UpdatedQGL_17July/stage1_output/2018/compacted" # FIXME
     stage1_path = get_compactedPath(stage1_path)# get compacted stage1 output if they exist
     # raise ValueError
     full_sample_dict = getStage1Samples(stage1_path, data_samples=data_samples, sig_samples=sig_samples, bkg_samples=bkg_samples)
@@ -442,7 +444,8 @@ if __name__ == "__main__":
         
         # model_trained_path = f"MVA_training/VBF/dnn/trained_models/{args.model_label}"
         # model_trained_path = f"/work/users/yun79/valerie/fork/copperheadV2/MVA_training/VBF/dnn/trained_models/{args.model_label}"
-        model_trained_path = f"{args.model_path}/{args.model_label}"
+        # model_trained_path = f"{args.model_path}/{args.model_label}" 
+        model_trained_path = "/depot/cms/private/users/shar1172/copperheadV2_main/dnn/trained_models/Run2_nanoAODv12_UpdatedQGL_17July/2018_h-peak_vbf_2018_UpdatedQGL_17July_Test" #FIXME
         
         with open(f'{model_trained_path}/training_features.pkl', 'rb') as f:
             training_features = pickle.load(f)
