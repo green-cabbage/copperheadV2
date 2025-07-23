@@ -31,13 +31,36 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_UL_Jun09_2025"
 # model_name="V2_fullRun_Jun21_2025_allYear"
 model_name="V2_fullRun_Jun21_2025_1n2Revised"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoJ1Eta_MinMmjdEta"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_DimuVarsOnly"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoSingleJet_Mu2_MinMmjdEta"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoSingleJet_MinMmjVars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoJet_Mu2_MinMmjVars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_MinMmjdEta_Vars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_Vars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_jet1Pt_Vars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
 
 # category="${model_name}_ggh"
 # category="${model_name}_ggh_w_allYearBDT"
 category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields"
-
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_NoJ1Eta_MinMmjdEta"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_DimuVarsOnly"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_NoSingleJet_Mu2_MinMmjdEta"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_NoSingleJet_MinMmjVars"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_NoJet_Mu2_MinMmjVars"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_MinMmjdEta_Vars"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_Vars"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_jet1Pt_Vars"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
+# category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
 
 # year="2018"
+# year="2017"
+# year="2016"
 # year="2016postVFP"
 # year="2016preVFP"
 year="all"
@@ -51,24 +74,80 @@ year="all"
 # region="h-sidebands"
 # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-# plot Fig 6.13 from AN-19-124
+# # plot Fig 6.13 from AN-19-124
 region="signal"
-python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
 # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
 
+# # -----------------------------------------------------
+# year="2016postVFP"
 
-# year="2017"
 # region="z-peak"
 # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
 # region="signal"
 # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-# year="2016postVFP"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year
 
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # plot Fig 6.13 from AN-19-124
+# region="signal"
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+
+# # -----------------------------------------------------
 # year="2016preVFP"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year
+
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="signal"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # plot Fig 6.13 from AN-19-124
+# region="signal"
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 
 
+# # -----------------------------------------------------
+# year="2016"
+
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="signal"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # plot Fig 6.13 from AN-19-124
+# region="signal"
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+
+
+# # -----------------------------------------------------
 # year="all"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year
+
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="signal"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # plot Fig 6.13 from AN-19-124
+# region="signal"
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+
