@@ -168,7 +168,6 @@ def pu_evaluator(parameters, ntrueint, onTheSpot=False, Run=2, is_rereco=False):
             pu_weights[var] = lookup(ntrueint)
             pu_weights[var] = ak.where((ntrueint > 100), 1, pu_weights[var])
             pu_weights[var] = ak.where((ntrueint < 1), 1, pu_weights[var])
-            # print(f"pu_weights[{var}]: {pu_weights[var].compute()}")
     elif Run==3:
         jsonGz_path = parameters["pu_file_mc"]
         print(f"jsonGz_path: {jsonGz_path}")
@@ -258,7 +257,6 @@ class NNLOPS_Evaluator(object):
             njet1_interp,
             ak.where((hig_pt < 625), hig_pt, 625.0)
         )
-        # print(f"njet1_interp_out: {njet1_interp_out.compute()}")
         # njet1_interp_out =  np.interp(
         #     ak.where((hig_pt < 800), hig_pt, 800.0),
         #     self.ratio_1jet[mode].member("fX"),
@@ -504,7 +502,6 @@ def musf_evaluator(lookups, year, mu1, mu2):
         cut_val = sf[f"trig_num_{how}"] / sf[f"trig_denom_{how}"]
         # sf[f"muTrig_{how}"] = ak.where(cut, cut_val, ak.ones_like(mu1.pt))
         sf[f"muTrig_{how}"] = ak.where(cut, cut_val, sf[f"muTrig_{how}"])
-    # print(f'sf[f"muTrig_nom"]: {sf[f"muTrig_nom"].compute()}')
     muID = {"nom": sf["muID_nom"], "up": sf["muID_up"], "down": sf["muID_down"]}
     muIso = {"nom": sf["muIso_nom"], "up": sf["muIso_up"], "down": sf["muIso_down"]}
     muTrig = {"nom": sf["muTrig_nom"], "up": sf["muTrig_up"], "down": sf["muTrig_down"]}
@@ -950,9 +947,7 @@ def add_pdf_variations(events, config, dataset):
         "down": (1 - 2 * pdf_std),
     }
     # pdf_wgts = events.LHEPdfWeight[:, 0 : config["n_pdf_variations"]][0]
-    # # print(f"pdf_wgts: {pdf_wgts.compute()}")
     # pdf_std = ak.std(pdf_wgts, axis=0)
-    # print(f"pdf_std: {pdf_std.compute()}")
     # pdf_vars = {
     #     # "up": (1 + 2 * pdf_wgts.std()),
     #     # "down": (1 - 2 * pdf_wgts.std()),
@@ -972,7 +967,6 @@ def qgl_weights_V2(jets, config, isHerwig):
     """
     source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/QuarkGluonLikelihood#Recommendation_for_13_TeV_data_a
     """
-    # print(f"qgl jets: {jets.compute()}")
     # fname = config["jmar_sf_file"]
     # jmar_evaluator = correctionlib.CorrectionSet.from_file(fname)
     # map_name = "Gluon_Pythia"
@@ -991,14 +985,10 @@ def qgl_weights_V2(jets, config, isHerwig):
     #     input_dict["systematic"] = systematic
     #     inputs = get_corr_inputs(input_dict, sf)
     #     sf_val = sf.evaluate(*inputs)
-    #     print(f"qgl sf_val: {sf_val.compute()}")
     #     sf_val = ak.prod(sf_val, axis=1)
-    #     print(f"qgl sf_val after prod: {sf_val.compute()}")
     #     sf_val = ak.fill_none(sf_val, value=1)
-    #     print(f"qgl {systematic} weight: {sf_val.compute()}")
     #     out_wgts[systematic] = sf_val
     print(f"isHerwig: {isHerwig}")
-    # print(f"jets.qgl: {jets.qgl.compute()}")
 
     wgt_mask = (jets.partonFlavour != 0) & (abs(jets.eta) < 2) & (jets.qgl > 0)
     lightOrGluon = (abs(jets.partonFlavour) < 4) | (jets.partonFlavour == 21)
@@ -1006,8 +996,6 @@ def qgl_weights_V2(jets, config, isHerwig):
     njets = ak.num(jets, axis=1)
     nevents_selected = ak.ones_like(jets.pt[:, :1]) # if there's no jets, you select nothing 
     nevents_selected = (ak.sum(jets.pt,axis=1) > 0) # if there's no jets, you select nothing 
-    # print(f"jets: {jets.compute()}")
-    # print(f"nevents_selected: {nevents_selected.compute()}")
     nevents_selected = dak.map_partitions(np.sum, nevents_selected, keepdims=True) # needed due to "Check that the total normalization is unchanged (the scope of this sf is not to change the production cross section)"
     # reinitialize light and gluon masks
     light = (abs(jets.partonFlavour) < 4)
@@ -1057,19 +1045,14 @@ def qgl_weights_V2(jets, config, isHerwig):
     qgl_weights = ak.where(gluon, gluon_val, qgl_weights)
     # apply SF, then normalize
     qgl_weights = ak.prod(qgl_weights, axis=1) 
-    # print(f"qgl_weights b4 norm: {ak.to_numpy(qgl_weights.compute())}")
 
     # now we need to normalize the qgl weights to be same as before as a whole
     # my method start -----------------------------------------------------------------
     qgl_wgt_applied = qgl_weights!= 1.0 # we assume if one, then the sf weren't applied
     sf_values = qgl_weights[qgl_wgt_applied] 
-    # print(f"sf_values: {sf_values.compute()}")
     current_normalization = dak.map_partitions(np.sum, sf_values, keepdims=True)
     norm_factor = nevents_selected/current_normalization 
     
-    # print(f"nevents_selected: {nevents_selected.compute()}")
-    # print(f"current_normalization: {current_normalization.compute()}")
-    # print(f"norm_factor: {norm_factor.compute()}")
     qgl_weights = ak.where(qgl_wgt_applied, (qgl_weights * norm_factor), qgl_weights)
     # my method end -----------------------------------------------------------------
 
@@ -1078,21 +1061,15 @@ def qgl_weights_V2(jets, config, isHerwig):
     # sf_values = qgl_weights[(njets > 2)] 
     # norm_factor = 1/dak.map_partitions(np.mean, sf_values, keepdims=True) # change norm factor to mean, which is what Dmitry uses
     # qgl_wgt_applied = qgl_weights!= 1.0 
-    # print(f"sf_values: {sf_values.compute()}")
-    # print(f"qgl mean: {1/norm_factor.compute()}")
-    # # print(f"qgl_weights b4 norm: {qgl_weights.compute()}")
     # qgl_weights = ak.where(qgl_wgt_applied, (qgl_weights * norm_factor), qgl_weights)
     # Dmitry's method end -----------------------------------------------------------------
-    # print(f"qgl_weights after norm: {qgl_weights.compute()}")
 
     # debug 
     sf_values = qgl_weights[qgl_wgt_applied] 
     sanity_check_norm = dak.map_partitions(np.sum, sf_values, keepdims=True)
-    # print(f"sanity_check_norm: {sanity_check_norm.compute()}")
     
     # padd events with no jets with ones
     # qgl_weights = ak.fill_none(ak.pad_none(qgl_weights, target=1), value=1.0) 
-    # print(f"qgl_weights after pad and fill none: {qgl_weights.compute()}")
     qgl_down = ak.ones_like(qgl_weights) # temporary overwrite
     wgts = {"nom": qgl_weights, "up": qgl_weights * qgl_weights, "down": qgl_down}
     # print(f"wgts: {wgts}")
@@ -1107,31 +1084,20 @@ def qgl_weights_keepDim(jet1, jet2, njets, isHerwig):
     """
 
     qgl1 = get_qgl_weights(jet1, isHerwig)
-    # print(f"qgl1 b4: {ak.to_numpy(qgl1.compute())}")
     # qgl1 = ak.fill_none(qgl1, value=1.0)
     qgl2 = get_qgl_weights(jet2, isHerwig)
 
     
     qgl_nom = (qgl1*qgl2)
-    # print(f"njets: {ak.to_numpy(njets.compute())}")
     
-    # print(f"qgl1: {ak.to_numpy(qgl1.compute())}")
-    # print(f"qgl2: {ak.to_numpy(qgl2.compute())}")
-    # print(f"jet1.pt: {ak.to_numpy(jet1.pt.compute())}")
-    # print(f"len jet1.pt: {len(jet1.pt.compute())}")
-    # print(f"qgl_nom: {ak.to_numpy(qgl_nom.compute())}")
     ones = ak.ones_like(qgl1) # qgl1 is picked bc we assume there's no none values in it. ones_like function copies None values as well
     qgl_nom = ak.where((njets==1), ones, qgl_nom)  # 1D array
 
 
     njet_selection = njets > 2 # think this is a bug, but have to double check
     qgl_mean = dak.map_partitions(np.mean, qgl_nom[njet_selection], keepdims=True)
-    # print(f"qgl_mean: {ak.to_numpy(qgl_mean.compute())}")
-    # print(f"qgl nom b4: {ak.to_numpy(qgl_nom[njet_selection].compute())}")
     qgl_nom = qgl_nom/ qgl_mean
-    # print(f"qgl nom after: {ak.to_numpy(qgl_nom[njet_selection].compute())}")
     qgl_nom = ak.fill_none(qgl_nom, value=1.0) # we got rid of jet2==None case, but jet1 could still be None
-    # qgl_final = ak.to_numpy(qgl_nom.compute())
     # print(f"qgl nom final: {qgl_final}")
     # print(f"qgl nom final sum: {np.sum(qgl_final)}")
 
@@ -1157,14 +1123,11 @@ def qgl_weights_keepDim(jet1, jet2, njets, isHerwig):
 #     qgl1 = get_qgl_weights(jet1, isHerwig)
 #     qgl1 = ak.fill_none(qgl1, value=1.0)
 #     qgl2 = get_qgl_weights(jet2, isHerwig)
-#     # print(f"qgl_weights jet1: {qgl1.compute()}")
-#     # print(f"qgl_weights jet2: {qgl2.compute()}")
     
 #     qgl_nom = (qgl1*qgl2)
 #     ones = ak.ones_like(qgl1) # qgl1 is picked bc we assume there's no none values in it. ones_like function copies None values as well
 #     qgl_nom = ak.where((njets==1), ones, qgl_nom)  # 1D array
 
-#     # print(f"qgl_weights qgl_nom b4: {qgl_nom.compute()}")
 #     # qgl.wgt[variables.njets == 1] = 1.0 # fill_none does this
 #     # qgl.wgt = qgl.wgt / qgl.wgt[selected].mean()
 #     # selected = output.event_selection & (njets > 2)
@@ -1179,7 +1142,6 @@ def qgl_weights_keepDim(jet1, jet2, njets, isHerwig):
 #     # print(f"qgl_weights qgl_nom after after: {ak.to_numpy(qgl_nom)}")
 #     # print(f"qgl_weights qgl_nom[njet_selection]: {ak.to_numpy(qgl_nom[njet_selection])}")
 
-#     # print(f"qgl_nom: {ak.to_numpy(qgl_nom.compute())}")
 
 #     qgl_down = ak.ones_like(qgl_nom, dtype="float")
 
@@ -1198,25 +1160,19 @@ def qgl_weights_keepDim(jet1, jet2, njets, isHerwig):
 #     qgl_nom = (qgl1*qgl2)
     
 #     # qgl_nom = ak.fill_none(qgl_nom, value=1.0)
-#     print(f"(qgl1*qgl2): {ak.to_numpy((qgl1*qgl2).compute())}")
-#     print(f"ak.sum(njets==1): {ak.sum(njets==1).compute()}")
-#     print(f"(njets==1): {ak.to_numpy((njets==1).compute())}")
 #     ones = ak.ones_like(qgl1) # qgl1 is picked bc we assume there's no none values in it. ones_like function copies None values as well
 #     qgl_nom = ak.where((njets==1), ones, qgl_nom) 
-#     print(f"qgl_nom after njet==1 selection: {ak.to_numpy((qgl_nom).compute())}")
 #     return qgl_nom
 
 def get_qgl_weights(jet, isHerwig):
     # df = pd.DataFrame(index=jet.index, columns=["weights"])
     qgl_weights = ak.ones_like(jet.pt, dtype="float") 
-    # print(f"qgl_weights: {qgl_weights.compute()}")
 
     wgt_mask = (jet.partonFlavour != 0) & (abs(jet.eta) < 2) & (jet.qgl > 0)
     light = wgt_mask & (abs(jet.partonFlavour) < 4)
     gluon = wgt_mask & (jet.partonFlavour == 21)
 
     qgl = jet.qgl
-    # print(f"get qgl: {ak.to_numpy(qgl.compute())}")
 
     if isHerwig:
         # df.weights[light] = (
@@ -1329,7 +1285,6 @@ def btag_weights_jsonKeepDim(processor, systs, jets, weights, bjet_sel_mask, bta
 
     btag_wgt = ak.prod(correctionlib_out, axis=1) # for events with no qualified jets(empty row), the value is 1.0
     btag_wgt = ak.where((btag_wgt < 0.01), 1.0, btag_wgt)
-    # print(f"btag_wgt b4 normalization: {ak.to_numpy(btag_wgt.compute())}")
 
     flavors = {
         0: ["jes", "lf", "lfstats1", "lfstats2"],
@@ -1426,11 +1381,9 @@ def btag_weights_json(processor, systs, jets, weights, bjet_sel_mask, btag_file)
         # jets.btagDeepFlavB,
         jets.btagDeepB,
     )
-    # print(f"correctionlib_out: {correctionlib_out.compute()}")
     # correctionlib_out = ak.pad_none(correctionlib_out, target=1)
     btag_wgt = ak.prod(correctionlib_out, axis=1) # for events with no qualified jets(empty row), the value is 1.0
     btag_wgt = ak.where((btag_wgt < 0.01), 1.0, btag_wgt)
-    # print(f"btag_wgt b4 normalization: {ak.to_numpy(btag_wgt.compute())}")
 
     flavors = {
         0: ["jes", "lf", "lfstats1", "lfstats2"],
@@ -1469,7 +1422,6 @@ def btag_weights_json(processor, systs, jets, weights, bjet_sel_mask, btag_file)
                     jets.pt,
                     jets.btagDeepB,
                 )
-                # print(f"sys_wgts up: {sys_wgts.compute()}")
                 btag_wgt_up = ak.where(btag_mask, sys_wgts, btag_wgt_up)
                 # jets.loc[btag_mask, f"btag_{sys}_up"] = onedimeval(partial(btag_json[0].evaluate,
                 #     f"up_{sys}"),
@@ -1486,7 +1438,6 @@ def btag_weights_json(processor, systs, jets, weights, bjet_sel_mask, btag_file)
                     jets.pt,
                     jets.btagDeepB,
                 )
-                # print(f"sys_wgts down: {sys_wgts.compute()}")
                 btag_wgt_down = ak.where(btag_mask, sys_wgts, btag_wgt_down)
                 # jets.loc[btag_mask, f"btag_{sys}_down"] = onedimeval(partial(btag_json[0].evaluate,
                 #     f"down_{sys}"),
@@ -1498,15 +1449,12 @@ def btag_weights_json(processor, systs, jets, weights, bjet_sel_mask, btag_file)
                 # )
         btag_wgt_up = ak.prod(btag_wgt_up, axis=1)
         btag_wgt_down = ak.prod(btag_wgt_down, axis=1)
-        # print(f"btag_wgt_up: {ak.to_numpy(btag_wgt_up.compute())}")
-        # print(f"btag_wgt_down: {ak.to_numpy(btag_wgt_down.compute())}")
         btag_syst[sys] = {"up": btag_wgt_up, "down": btag_wgt_down}
 
     weights = weights.weight()
     sum_before = ak.sum(weights, axis=None)
     sum_after = ak.sum(weights*btag_wgt, axis=None)
     btag_wgt = btag_wgt * sum_before / sum_after
-    # print(f"btag_wgt after normalization: {ak.to_numpy(btag_wgt.compute())}")
     return btag_wgt, btag_syst
     # sum_before = weights.df["nominal"][bjet_sel_mask].sum()
     # sum_after = (
@@ -1604,7 +1552,6 @@ def get_jetpuid_weights(year, jets, config):
     Source: https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/jmarExample.py?ref_type=heads#L47-52
     """
     jet_puid_wp = config["jet_puid"]
-    # print(f"jet puid jets: {jets.compute()}")
 
     # no need to re-weight jets with pt>= 50
     jets = jets[jets.pt < 50]
@@ -1639,11 +1586,8 @@ def get_jetpuid_weights(year, jets, config):
     inputs = get_corr_inputs(input_dict, sf)
     sf_val = sf.evaluate(*inputs)
     # print(f"jet puid sf_val: {sf_val}")
-    # print(f"jet puid sf_val: {sf_val.compute()}")
     sf_val = ak.prod(sf_val, axis=1)
-    # print(f"jet puid sf_val after prod: {sf_val.compute()}")
     sf_val = ak.fill_none(sf_val, value=1) # unncessary, but just in case
-    # print(f"jet puid weight: {sf_val.compute()}")
     return sf_val
 
 
@@ -1704,34 +1648,7 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
             & (~jet_puid)
             & ((abs(jets.eta) > 2.6) & (abs(jets.eta) < 3.0))
         )
-        # original start ---------------------------------------------------------
-        # obtain the Loose jet puid 
-        # oneminuspuid_eff_L = 1.0 - puid_eff_L
-        # pMC_L = (
-        #     ak.prod(ak.to_packed(puid_eff_L[jets_passed_L]), axis=1) *
-        #     (ak.prod(ak.to_packed(oneminuspuid_eff_L[jets_failed_L]), axis=1))
-        # )
         
-        # oneminuspuid_effNSF_L = 1.0 - puid_eff_L * puid_sf_L
-        # pData_L = (
-        #     ak.prod(ak.to_packed(puid_eff_L[jets_passed_L]), axis=1)
-        #     * ak.prod(ak.to_packed(puid_sf_L[jets_passed_L]), axis=1)
-        #     * ak.prod(ak.to_packed(oneminuspuid_effNSF_L[jets_failed_L]), axis=1)
-        # )
-        
-        # # obtain the Tight jet puid 
-        # oneminuspuid_eff_T = 1.0 - puid_eff_T
-        # pMC_T = (
-        #     ak.prod(ak.to_packed(puid_eff_T[jets_passed_T]), axis=1) * 
-        #     (ak.prod(ak.to_packed(oneminuspuid_eff_T[jets_failed_T]), axis=1))
-        # )
-        # oneminuspuid_effNSF_T = 1.0 - puid_eff_T * puid_sf_T
-        # pData_T = (
-        #     ak.prod(ak.to_packed(puid_eff_T[jets_passed_T]), axis=1)
-        #     * ak.prod(ak.to_packed(puid_sf_T[jets_passed_T]), axis=1)
-        #     * ak.prod(ak.to_packed((oneminuspuid_effNSF_T[jets_failed_T])), axis=1)
-        # )
-        # original end ---------------------------------------------------------
         
         # obtain the Loose jet puid 
         pMC_failed_L = ak.ones_like(ones)
@@ -1741,7 +1658,6 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
         pMC_failed_L = ak.ones_like(ones)
         pMC_passed_L = pMC_passed_bare_L
         pMC_failed_L = pMC_failed_bare_L
-        # print(f"pMC_failed_L: {ak.to_numpy(pMC_failed_L.compute())}")
         pSF_L = ak.ones_like(ones)
         pfailSF_L = ak.ones_like(ones)
         pSF_bare_L = ak.prod(ak.to_packed(puid_sf_L[jets_passed_L==True]), axis=1)
@@ -1759,7 +1675,6 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
         pMC_failed_T = ak.ones_like(ones)
         pMC_passed_T = pMC_passed_bare_T
         pMC_failed_T = pMC_failed_bare_T
-        # print(f"pMC_failed_T: {ak.to_numpy(pMC_failed_T.compute())}")
         pSF_T = ak.ones_like(ones)
         pfailSF_T = ak.ones_like(ones)
         pSF_bare_T = ak.prod(ak.to_packed(puid_sf_T[jets_passed_T==True]), axis=1)
@@ -1775,7 +1690,6 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
         pData = pData_L * pData_T
         puid_weight = ak.ones_like(ones)
         # print(f"puid_weight b4: {puid_weight}")
-        # print(f"(pData/pMC): {ak.to_numpy((pData/pMC).compute())}")
         puid_weight = ak.where((pMC != 0), (pData/pMC), puid_weight)
         puid_weight = ak.to_packed(puid_weight) # this saves a bit of memory from a very superficial testing
 
@@ -1788,7 +1702,6 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
         jeteta = jets.eta
         puid_eff = evaluator[h_eff_name](jetpt, jeteta)
         puid_sf = evaluator[h_sf_name](jetpt, jeteta)
-        # print(f"ones: {ak.to_numpy(ones.compute())}")
         # jets["puid_eff"] = puid_eff
         # jets["oneminuspuid_eff"] = 1.0-puid_eff
         # jets["puid_sf"] = puid_sf
@@ -1809,7 +1722,6 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
         pMC_failed = ak.ones_like(ones)
         pMC_passed = pMC_passed_bare
         pMC_failed = pMC_failed_bare
-        # print(f"pMC_failed: {ak.to_numpy(pMC_failed.compute())}")
         pSF = ak.ones_like(ones)
         pfailSF = ak.ones_like(ones)
         pSF_bare = ak.prod(ak.to_packed(puid_sf[jets_passed==True]), axis=1)
@@ -1818,21 +1730,10 @@ def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_pu
         pfailSF = pfailSF_bare
         pMC = pMC_passed * pMC_failed
         pData = pMC_passed * pSF * pfailSF
-        # print(f"pMC: {ak.to_numpy((pMC).compute())}")
-        # print(f"pData: {ak.to_numpy((pData).compute())}")
         puid_weight = ak.ones_like(ones)
         # print(f"puid_weight b4: {puid_weight}")
-        # print(f"(pData/pMC): {ak.to_numpy((pData/pMC).compute())}")
         puid_weight = ak.where((pMC != 0), (pData/pMC), puid_weight)
         puid_weight = ak.to_packed(puid_weight) # this saves a bit of memory from a very superficial testing
         # puid_weight[pMC != 0] = np.divide(pData[pMC != 0], pMC[pMC != 0])
         # print(f"puid_weight after: {puid_weight}")
-        # print(f"puid_weight: {ak.to_numpy(puid_weight.compute())}")
     return puid_weight
-
-
-
-
-
-
-
