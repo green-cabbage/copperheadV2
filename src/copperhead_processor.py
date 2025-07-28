@@ -9,7 +9,7 @@ import correctionlib
 from src.corrections.rochester import apply_roccor, apply_roccorRun3
 from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
-from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear
+from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, get_jet_variation
 # from src.corrections.weight import Weights
 from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old
 import json
@@ -1179,7 +1179,7 @@ class EventProcessor(processor.ProcessorABC):
             
             # -------------------------------------
             print("doing JEC + SMEARing!")
-            # jets = do_jec_scale(jets, self.config, is_mc, dataset)
+            jets = do_jec_scale(jets, self.config, is_mc, dataset)
             jets["mass_jec"] = jets.mass
             jets["pt_jec"] = jets.pt
             
@@ -1482,7 +1482,8 @@ class EventProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # Loop over JEC variations and fill jet variables
         # ------------------------------------------------------------#
-        logger.debug(f"pt_variations: {pt_variations}")
+        logger.info(f"pt_variations: {pt_variations}")
+        pt_variations = ["nominal", "jer1_up", "jer1_down"]
         for variation in pt_variations:
             jet_loop_dict = self.jet_loop(
                 events,
@@ -1500,8 +1501,13 @@ class EventProcessor(processor.ProcessorABC):
             )
 
             out_dict.update(jet_loop_dict)
-        # logger.info(f"out_dict.keys() after jet loop: {out_dict.keys()}")
-
+        logger.info(f"out_dict.keys() after jet loop: {out_dict.keys()}")
+        # logger.info(f"jets.fields: {jets.fields}")
+        logger.info(f"out_dict jet1_pt_nominal: {out_dict['jet1_pt_nominal'][:50].compute()}")
+        logger.info(f"out_dict jet1_pt_jer1_up: {out_dict['jet1_pt_jer1_up'][:50].compute()}")
+        logger.info(f"out_dict jet1_pt_jer1_down: {out_dict['jet1_pt_jer1_down'][:50].compute()}")
+        
+        raise ValueError
         # logger.info(f"out_dict.persist 2: {ak.zip(out_dict).persist().to_parquet(save_path)}")
         # logger.info(f"out_dict.compute 2: {ak.zip(out_dict).to_parquet(save_path)}")
 
@@ -1782,6 +1788,7 @@ class EventProcessor(processor.ProcessorABC):
         do_jerunc = False,
         event_match = None
     ):
+        logger.info(f'variation: {variation}')
         is_mc = events.metadata["is_mc"]
         dataset = events.metadata["dataset"]
         year = self.config["year"]
@@ -1846,6 +1853,18 @@ class EventProcessor(processor.ProcessorABC):
         clean = ak.fill_none(clean, value=True)
 
         # # Select particular JEC variation
+
+        if variation != "nominal":
+            fields2add = [
+                "puId",
+                "jetId",
+                "qgl",
+                "rho",
+                "area",
+                "btagDeepB",
+            ]
+            jets =  get_jet_variation(jets, variation, fields2add)
+        
         # if "jer" in variation: # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution#JER_Scaling_factors_and_Uncertai
         #     logger.info("doing JER unc!")
         #     jer_mask_dict ={
@@ -1920,12 +1939,7 @@ class EventProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # Select jets
         # ------------------------------------------------------------#
-        # get QGL cut
-        if NanoAODv == 9 :
-            qgl_cut = (jets.qgl >= -2)
-        else: # NanoAODv12
-            qgl_cut = (jets.btagPNetQvG >= -2) # TODO: find out if -2 is the actual threshold for run3
-            jets["qgl"] = jets.btagPNetQvG # this is for saving btagPNetQvG as "qgl" for stage1 outputs
+        
 
 
         jet_pt_cut = (jets.pt > self.config["jet_pt_cut"])
@@ -1943,21 +1957,18 @@ class EventProcessor(processor.ProcessorABC):
         jet_selection = (
             pass_jet_id
             & pass_jet_puid
-            & qgl_cut
             & clean
             & jet_pt_cut
             & (abs(jets.eta) < self.config["jet_eta_cut"])
         )
 
 
-        # jets = jets[jet_selection] # this causes huuuuge memory overflow close to 100 GB. Without it, it goes to around 20 GB
         jets = jets[jet_selection]
-        # jets = ak.to_layout(jets)
         jets = ak.to_packed(jets)
 
         # apply jetpuid if not have done already
         if not is_2017 and is_mc:
-            jetpuid_weight =get_jetpuid_weights(year, jets, self.config)
+            jetpuid_weight = get_jetpuid_weights(year, jets, self.config)
 
         if is_mc:
             # now we add jetpuid_wgt
@@ -2069,18 +2080,10 @@ class EventProcessor(processor.ProcessorABC):
             f"jet2_eta_{variation}" : jet2.eta,
             f"jet1_mass_{variation}" : jet1.mass,
             f"jet2_mass_{variation}" : jet2.mass,
-            f"jet1_pt_raw_{variation}" : jet1.pt_raw,
-            f"jet2_pt_raw_{variation}" : jet2.pt_raw,
-            f"jet1_mass_raw_{variation}" : jet1.mass_raw,
-            f"jet2_mass_raw_{variation}" : jet2.mass_raw,
             f"jet1_rho_{variation}" : jet1.rho,
             f"jet2_rho_{variation}" : jet2.rho,
             f"jet1_area_{variation}" : jet1.area,
             f"jet2_area_{variation}" : jet2.area,
-            f"jet1_pt_jec_{variation}" : jet1.pt_jec,
-            f"jet2_pt_jec_{variation}" : jet2.pt_jec,
-            f"jet1_mass_jec_{variation}" : jet1.mass_jec,
-            f"jet2_mass_jec_{variation}" : jet2.mass_jec,
             #-------------------------
             f"jet2_rapidity_{variation}" : jet2_rapidity,  # max rel err: 0.781
             f"jet2_phi_{variation}" : jet2.phi,
@@ -2114,20 +2117,21 @@ class EventProcessor(processor.ProcessorABC):
             f"njets_{variation}" : njets,
 
         }
-        if is_mc:
-            mc_dict = {
+        if is_mc and (variation == "nominal"):
+            nominal_dict = {
                 f"jet1_pt_gen_{variation}" : jet1.pt_gen,
                 f"jet2_pt_gen_{variation}" : jet2.pt_gen,
+                f"jet1_pt_raw_{variation}" : jet1.pt_raw,
+                f"jet2_pt_raw_{variation}" : jet2.pt_raw,
+                f"jet1_mass_raw_{variation}" : jet1.mass_raw,
+                f"jet2_mass_raw_{variation}" : jet2.mass_raw,
+                f"jet1_mass_jec_{variation}" : jet1.mass_jec,
+                f"jet2_mass_jec_{variation}" : jet2.mass_jec,
+                f"jet1_pt_jec_{variation}" : jet1.pt_jec,
+                f"jet2_pt_jec_{variation}" : jet2.pt_jec,
             }
-            jet_loop_out_dict.update(mc_dict)
+            jet_loop_out_dict.update(nominal_dict)
 
-        # jet_loop_out_dict = {
-        #     key: ak.to_numpy(val) for key, val in jet_loop_out_dict.items()
-        # }
-        # jet_loop_placeholder =  pd.DataFrame(
-        #     jet_loop_out_dict
-        # )
-        # jet_loop_placeholder.to_csv("./V2jet_loop.csv")
 
         # ------------------------------------------------------------#
         # Fill soft activity jet variables

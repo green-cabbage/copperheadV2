@@ -9,6 +9,8 @@ import correctionlib
 
 import logging
 from modules.utils import logger
+import coffea.nanoevents.methods.candidate as candidate
+
 
 # def jec_names_and_sources_yaml(jec_pars, year):
 #     localdir = os.path.dirname(os.path.abspath("__file__"))
@@ -556,7 +558,7 @@ def apply_jer_unc(jets):
     """
     has_matchedGenJet = jets.genJetIdx != -1
     # print(f"has_matchedGenJet: {has_matchedGenJet.compute()}")
-    print(f"jets.genJetIdx: {jets.genJetIdx[:100].compute()}")
+    # print(f"jets.genJetIdx: {jets.genJetIdx[:100].compute()}")
     jer_categories = {
        'jer1': (abs(jets.eta) < 1.93),
        'jer2': (abs(jets.eta) > 1.93) & (abs(jets.eta) < 2.5),
@@ -674,16 +676,35 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down
         jets[f"pt_jer_{syst}"] = jer_smearing * pt_jec  # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         
     jets["pt"] = jets[f"pt_jer_nom"]
-    print(f"jet pt: {jets.pt[:100].compute()}")
-    print(f"jet pt_jer_up: {jets.pt_jer_up[:100].compute()}")
-    print(f"jet pt_jer_down: {jets.pt_jer_down[:100].compute()}")
+    # print(f"jet pt: {jets.pt[:100].compute()}")
+    # print(f"jet pt_jer_up: {jets.pt_jer_up[:100].compute()}")
+    # print(f"jet pt_jer_down: {jets.pt_jer_down[:100].compute()}")
     jets = apply_jer_unc(jets)
-    for i in range(1,7):
-        print(f"pt_jer{i}_up: {jets[f'pt_jer{i}_up'][:100].compute()}")
-        print(f"pt_jer{i}_down: {jets[f'pt_jer{i}_down'][:100].compute()}")
+    # for i in range(1,7):
+    #     print(f"pt_jer{i}_up: {jets[f'pt_jer{i}_up'][:100].compute()}")
+    #     print(f"pt_jer{i}_down: {jets[f'pt_jer{i}_down'][:100].compute()}")
     
-    raise ValueError
     return jets
 
 
-
+def get_jet_variation(jets_orig, variation, fields2add):
+    new_jets_pt = jets_orig[f"pt_{variation}"]
+    new_jets = ak.zip( # source: https://mattermost.web.cern.ch/cms-exp/pl/fu9kemtazi8rznucdf57ug1xac
+        {
+            "pt": new_jets_pt,
+            "eta": jets_orig.eta,
+            "phi": jets_orig.phi,
+            "mass": jets_orig.mass,
+            "charge": jets_orig.charge,
+        },
+        with_name="PtEtaPhiMCandidate",
+        behavior=candidate.behavior,
+    )
+    for field in fields2add:
+        # new_jets[field] = jets_orig[field]
+        new_jets[field] = getattr(jets_orig, field)
+    # new_jets["puId"] = jets_orig.puId
+    # new_jets["jetId"] = jets_orig.jetId
+    # new_jets["qgl"] = jets_orig.qgl
+    print(f"get_jet_variation: {get_jet_variation}")
+    return new_jets
