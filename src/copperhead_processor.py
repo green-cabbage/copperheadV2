@@ -84,38 +84,32 @@ def convertVectorType4D(vector, vector_name):
 
 def get_jet_variation(jets_orig, variation, fields2add):
     new_jets_pt = jets_orig[f"pt_{variation}"]
-    new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets_pt.compute(), target=4, clip=True))
-    print(f"{variation} new_jets_pt: {new_jets_pt2print}")
-    # test_scale = 1000*random.random()
-    # print(f"{variation} test_scale: {test_scale}")
-    # print(f"{variation} test_scale: {test_scale}")
-    # px_ = obj.pt * np.cos(obj.phi)
-    #     py_ = obj.pt * np.sin(obj.phi)
-    #     pz_ = obj.pt * np.sinh(obj.eta)
-    # test_scale = 1000
+    # new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets_pt.compute(), target=4, clip=True))
+    # print(f"{variation} new_jets_pt: {new_jets_pt2print}")
+    new_jets_mass2print = ak.to_numpy(ak.pad_none(jets_orig.energy.compute(), target=4, clip=True))
+    print(f"{variation} jets_orig.mass: {new_jets_mass2print}")
+    
     new_jets = ak.zip( # bahviour setup source: https://mattermost.web.cern.ch/cms-exp/pl/fu9kemtazi8rznucdf57ug1xac
         {
             "x": new_jets_pt * np.cos(jets_orig.phi),
             "y": new_jets_pt * np.sin(jets_orig.phi),
             "z": new_jets_pt * np.sinh(jets_orig.eta),
-            "mass": jets_orig.energy,
+            "mass": jets_orig.mass,
             "charge": jets_orig.charge,
         },
-        # with_name="Momentum4D",
         with_name="PtEtaPhiMCandidate",
         # with_name="PtEtaPhiMLorentzVector",
         # behavior=vector.behavior,
         behavior=candidate.behavior,
-    )
+    ) # NOTE: if you use pt, eta, phi, or t variables to initialize, it doesn't work. It's quite finnicky in that way.
     for field in fields2add:
-        # new_jets[field] = jets_orig[field]
         new_jets[field] = getattr(jets_orig, field)
-    # new_jets["puId"] = jets_orig.puId
-    # new_jets["jetId"] = jets_orig.jetId
-    # new_jets["qgl"] = jets_orig.qgl
-    cartesian_new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets.pt.compute(), target=4, clip=True))
+    # cartesian_new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets.pt.compute(), target=4, clip=True))
     
-    print(f"{variation} cartesian new_jets.pt: {cartesian_new_jets_pt2print}")
+    # print(f"{variation} cartesian new_jets.pt: {cartesian_new_jets_pt2print}")
+    cartesian_new_jets_mass2print = ak.to_numpy(ak.pad_none(new_jets.energy.compute(), target=4, clip=True))
+    print(f"{variation} cartesian new_jets.mass: {cartesian_new_jets_mass2print}")
+    # raise ValueError
     
     return new_jets
 
@@ -1625,6 +1619,42 @@ class EventProcessor(processor.ProcessorABC):
             "jj_mass_nominal" : out_dict['jj_mass_nominal'][:],
             "jj_mass_jer1_up" : out_dict['jj_mass_jer1_up'][:],
             "jj_mass_jer1_down" : out_dict['jj_mass_jer1_down'][:],
+            f"mmj1_dEta_nominal" : out_dict["mmj1_dEta_nominal"], 
+            f"mmj1_dPhi_nominal" : out_dict["mmj1_dPhi_nominal"], 
+            f"mmj1_dR_nominal" : out_dict["mmj1_dR_nominal"], 
+            f"mmj2_dEta_nominal" : out_dict["mmj2_dEta_nominal"], 
+            f"mmj2_dPhi_nominal" : out_dict["mmj2_dPhi_nominal"], 
+            f"mmj2_dR_nominal" : out_dict["mmj2_dR_nominal"], 
+            f"mmj_min_dEta_nominal" : out_dict["mmj_min_dEta_nominal"], 
+            f"mmj_min_dPhi_nominal" : out_dict["mmj_min_dPhi_nominal"], 
+            f"mmjj_pt_nominal" : out_dict["mmjj_pt_nominal"], 
+            f"mmjj_eta_nominal" : out_dict["mmjj_eta_nominal"], 
+            f"mmjj_phi_nominal" : out_dict["mmjj_phi_nominal"], 
+            f"mmjj_mass_nominal" : out_dict["mmjj_mass_nominal"], 
+            f"mmj1_dEta_jer1_up" : out_dict["mmj1_dEta_jer1_up"], 
+            f"mmj1_dPhi_jer1_up" : out_dict["mmj1_dPhi_jer1_up"], 
+            f"mmj1_dR_jer1_up" : out_dict["mmj1_dR_jer1_up"], 
+            f"mmj2_dEta_jer1_up" : out_dict["mmj2_dEta_jer1_up"], 
+            f"mmj2_dPhi_jer1_up" : out_dict["mmj2_dPhi_jer1_up"], 
+            f"mmj2_dR_jer1_up" : out_dict["mmj2_dR_jer1_up"], 
+            f"mmj_min_dEta_jer1_up" : out_dict["mmj_min_dEta_jer1_up"], 
+            f"mmj_min_dPhi_jer1_up" : out_dict["mmj_min_dPhi_jer1_up"], 
+            f"mmjj_pt_jer1_up" : out_dict["mmjj_pt_jer1_up"], 
+            f"mmjj_eta_jer1_up" : out_dict["mmjj_eta_jer1_up"], 
+            f"mmjj_phi_jer1_up" : out_dict["mmjj_phi_jer1_up"], 
+            f"mmjj_mass_jer1_up" : out_dict["mmjj_mass_jer1_up"], 
+            f"mmj1_dEta_jer1_down" : out_dict["mmj1_dEta_jer1_down"], 
+            f"mmj1_dPhi_jer1_down" : out_dict["mmj1_dPhi_jer1_down"], 
+            f"mmj1_dR_jer1_down" : out_dict["mmj1_dR_jer1_down"], 
+            f"mmj2_dEta_jer1_down" : out_dict["mmj2_dEta_jer1_down"], 
+            f"mmj2_dPhi_jer1_down" : out_dict["mmj2_dPhi_jer1_down"], 
+            f"mmj2_dR_jer1_down" : out_dict["mmj2_dR_jer1_down"], 
+            f"mmj_min_dEta_jer1_down" : out_dict["mmj_min_dEta_jer1_down"], 
+            f"mmj_min_dPhi_jer1_down" : out_dict["mmj_min_dPhi_jer1_down"], 
+            f"mmjj_pt_jer1_down" : out_dict["mmjj_pt_jer1_down"], 
+            f"mmjj_eta_jer1_down" : out_dict["mmjj_eta_jer1_down"], 
+            f"mmjj_phi_jer1_down" : out_dict["mmjj_phi_jer1_down"], 
+            f"mmjj_mass_jer1_down" : out_dict["mmjj_mass_jer1_down"], 
             # "jet1_x_nominal" : out_dict['jet1_x_nominal'][:],
             # "jet1_x_jer1_up" : out_dict['jet1_x_jer1_up'][:],
             # "jet1_x_jer1_down" : out_dict['jet1_x_jer1_down'][:],
