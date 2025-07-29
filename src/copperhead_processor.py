@@ -2146,9 +2146,6 @@ class EventProcessor(processor.ProcessorABC):
         jet2_rapidity = getRapidity(jet2)
         zeppenfeld = dimuon_rapidity - 0.5 * (jet1_rapidity + jet2_rapidity)
         zeppenfeld = zeppenfeld / np.abs(jet1_rapidity - jet2_rapidity)
-        # if is_mc and (variation != "nominal"):
-        #     # when computing with variation, dijet as type PtEtaPhiMLorentzVector, so re-initialize dimuon with the type
-        #     dimuon = convertVectorType4D(dimuon, "PtEtaPhiMLorentzVector")
         mmjj = dimuon + dijet
 
         rpt = mmjj.pt / (
