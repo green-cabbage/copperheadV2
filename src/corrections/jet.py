@@ -10,7 +10,7 @@ import correctionlib
 import logging
 from modules.utils import logger
 import coffea.nanoevents.methods.candidate as candidate
-
+import random
 
 # def jec_names_and_sources_yaml(jec_pars, year):
 #     localdir = os.path.dirname(os.path.abspath("__file__"))
@@ -689,22 +689,30 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down
 
 def get_jet_variation(jets_orig, variation, fields2add):
     new_jets_pt = jets_orig[f"pt_{variation}"]
-    new_jets = ak.zip( # source: https://mattermost.web.cern.ch/cms-exp/pl/fu9kemtazi8rznucdf57ug1xac
+    # new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets_pt.compute(), target=4, clip=True))
+    # print(f"{variation} new_jets_pt: {new_jets_pt2print}")
+    # new_jets_mass2print = ak.to_numpy(ak.pad_none(jets_orig.energy.compute(), target=4, clip=True))
+    # print(f"{variation} jets_orig.mass: {new_jets_mass2print}")
+    
+    new_jets = ak.zip( # bahviour setup source: https://mattermost.web.cern.ch/cms-exp/pl/fu9kemtazi8rznucdf57ug1xac
         {
-            "pt": new_jets_pt,
-            "eta": jets_orig.eta,
-            "phi": jets_orig.phi,
+            "x": new_jets_pt * np.cos(jets_orig.phi),
+            "y": new_jets_pt * np.sin(jets_orig.phi),
+            "z": new_jets_pt * np.sinh(jets_orig.eta),
             "mass": jets_orig.mass,
             "charge": jets_orig.charge,
         },
         with_name="PtEtaPhiMCandidate",
+        # with_name="PtEtaPhiMLorentzVector",
+        # behavior=vector.behavior,
         behavior=candidate.behavior,
-    )
+    ) # NOTE: if you use pt, eta, phi, or t variables to initialize, it doesn't work. It's quite finnicky in that way.
     for field in fields2add:
-        # new_jets[field] = jets_orig[field]
         new_jets[field] = getattr(jets_orig, field)
-    # new_jets["puId"] = jets_orig.puId
-    # new_jets["jetId"] = jets_orig.jetId
-    # new_jets["qgl"] = jets_orig.qgl
-    print(f"get_jet_variation: {get_jet_variation}")
+    # cartesian_new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets.pt.compute(), target=4, clip=True))
+    
+    # print(f"{variation} cartesian new_jets.pt: {cartesian_new_jets_pt2print}")
+    # cartesian_new_jets_mass2print = ak.to_numpy(ak.pad_none(new_jets.energy.compute(), target=4, clip=True))
+    # print(f"{variation} cartesian new_jets.mass: {cartesian_new_jets_mass2print}")
+    
     return new_jets
