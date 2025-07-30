@@ -275,6 +275,7 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
     hist_pdf_orig = pdf.createHistogram(var_name, nbins)
 
 
+    plot_line_width = 0.5
     # -------------------------------------------
     # Sanity check: plot the pdf and cdf of signal region PDF
     # -------------------------------------------
@@ -320,11 +321,17 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
         pdf_counts = np.array([pdf_hist_new.GetBinContent(i) for i in range(1, pdf_hist_new.GetNbinsX()+1)])
         # print(f"data_counts: {data_counts}")
         # print(f"pdf_counts: {pdf_counts}")
+        # nevents=np.sum(data_counts)
         data_cdf = np.cumsum(data_counts) / np.sum(data_counts)
         pdf_cdf = np.cumsum(pdf_counts) / np.sum(pdf_counts)
         ks_statistic = np.max(np.abs(data_cdf - pdf_cdf))
         print(f"ks_statistic {cat_name} {test_range_name}: {ks_statistic}")
-        return_dict[test_range_name] = ks_statistic
+        nevents = data_hist_new.Integral()
+        
+        return_dict[test_range_name] = {
+            "ks_statistic": ks_statistic,
+            "nevents" : nevents,
+                                       }
         
     
         # Draw the cdf histogram
@@ -335,8 +342,8 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
             center = hist.GetBinCenter(i)
             bin_centers.append(center)
         bin_centers = np.array(bin_centers)
-        plt.plot(bin_centers, data_cdf, label='Data CDF')
-        plt.plot(bin_centers, pdf_cdf, label='PDF CDF')
+        plt.plot(bin_centers, data_cdf, label='Data CDF', linewidth=plot_line_width)
+        plt.plot(bin_centers, pdf_cdf, label='PDF CDF', linewidth=plot_line_width)
         plt.xlabel('mass')
         plt.ylabel('')
         # plt.title('Simple NumPy Plot')
@@ -344,18 +351,10 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
         plt.grid(True)
         plt.savefig(f"{save_path}/GoF_cdfs_{test_range_name}_{cat_name}.pdf")
         plt.clf()
-        # canvas = ROOT.TCanvas("canvas", "canvas", 800, 600)
-        # hist_data.Draw("HIST")  # use "E" for error bars, "HIST" for line, "HISTE" for both
-        
-        # canvas = ROOT.TCanvas("canvas", "canvas", 800, 600)
-        # hist_pdf.Draw("HIST SAME")  # use "E" for error bars, "HIST" for line, "HISTE" for both
-        
-        # Save or show the plot
-        # canvas.SaveAs(f"GoF_cdfs_{test_range_name}_{cat_name}.png")
 
         # Draw the normalized pdf histogram:
-        plt.plot(bin_centers, data_counts/np.sum(data_counts), label='Data PDF')
-        plt.plot(bin_centers, pdf_counts/np.sum(pdf_counts), label='PDF PDF')
+        plt.plot(bin_centers, data_counts/np.sum(data_counts), label='Data PDF', linewidth=plot_line_width)
+        plt.plot(bin_centers, pdf_counts/np.sum(pdf_counts), label='PDF PDF', linewidth=plot_line_width)
         plt.xlabel('mass')
         plt.ylabel('')
         # plt.title('Simple NumPy Plot')

@@ -1434,7 +1434,7 @@ if __name__ == "__main__":
     }
     gof_save_path = f"{plot_save_path}/gof"
     os.makedirs(gof_save_path, exist_ok=True)
-    gof_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic"])
+    gof_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass"])
     for i in range(len(corePDF_subCats)):
         hist_data = hist_datas[i]
         corePDF_subCat = corePDF_subCats[i]
@@ -1444,12 +1444,23 @@ if __name__ == "__main__":
             print(f"multi_pdf_cat.getIndex(): {multi_pdf_cat.getIndex()}")
             core_func_name = pdf_cat_name_dict[cat_ix]
             gof_test_name = f"ggh_cat{i}_{core_func_name}"
-            KS_dict = getGOF_KS(mass, hist_data, multi_pdf_cat, gof_test_name, gof_save_path)
-            for region, ks_stat in KS_dict.items():
+            KS_dict = getGOF_KS(mass, hist_data, corePDF_subCat, gof_test_name, gof_save_path)
+            for region, ks_stat_dict in KS_dict.items():
+                nevents = ks_stat_dict["nevents"]
+                ks_stat = ks_stat_dict["ks_statistic"]
+                # alpha = 0.05
+                # pass_threshold = 1.358 / (nevents**(0.5))
+                alpha = 0.1
+                pass_threshold = 1.22385 / (nevents**(0.5))
+                
                 gof_df.loc[len(gof_df)] = {
                     "pdf category": gof_test_name,
                     "region": region,
-                    "KS statistic": ks_stat
+                    "KS statistic": ks_stat,
+                    "nevents": nevents,
+                    "alpha": alpha,
+                    "pass threshold": pass_threshold,
+                    "test pass": ks_stat<pass_threshold,
                 }
     gof_df.to_csv(f"{gof_save_path}/KS_stats.csv")
 
