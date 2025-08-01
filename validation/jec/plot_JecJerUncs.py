@@ -67,17 +67,16 @@ def compute_variations(events, hist_empty, sample, categories, regions, variable
                 print(f"variable {var} not configured in plot settings!")
                 continue
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-            # print(f"{var} {category} {region_name} binning: {binning}")
+            # binning = np.append(binning, [8000])
+            # print(f"{var} {category} binning: {binning}")
             
             sample_hist_byVar = hist_empty.Var(binning, name=plot_var).Double() 
-        # for region_name in regions:
-            # events = filterRegion(events, region=region_name)
             
             for region_name in regions:
-            # for var in variables:
-                for variation in (variations + ["nominal"]):
+                # for variation in (variations + ["nominal"]):
+                for variation in ["nominal"]:
                     add_vbfFiltered_DY = False
-                    events = applyRegionCatCuts(events, category, region_name, sample, variation, add_vbfFiltered_DY)
+                    events_filtered = applyRegionCatCuts(events, category, region_name, sample, variation, add_vbfFiltered_DY)
                     to_fill_setting = {
                     "region" : region_name,
                     "channel" : category,
@@ -86,8 +85,8 @@ def compute_variations(events, hist_empty, sample, categories, regions, variable
                     }
                     variation_var = getVariationVariable(var, variation)
                     print(f"{region_name} variation_var: {variation_var}")
-                    values = ak.fill_none(events[variation_var], value=-999.0)
-                    weights = events["wgt_nominal"]
+                    values = ak.fill_none(events_filtered[variation_var], value=-999.0)
+                    weights = events_filtered["wgt_nominal"]
 
                     # print(f"var: {var}")
                     # print(f"events: {events}")
@@ -96,16 +95,15 @@ def compute_variations(events, hist_empty, sample, categories, regions, variable
                     # print(f"{var} {category} {variation} {region_name} weights: {weights.compute()}")
                     
                     sample_hist_byVar = fillHist(sample_hist_byVar, to_fill_setting, plot_var, values, weights)
-            hist_dictByVar[var] = sample_hist_byVar
+                    
+            hist_dictByVar[plot_var] = sample_hist_byVar
         hist_dictByCat[category] = hist_dictByVar
     hist_dictByCat = dask.compute(hist_dictByCat)[0]
     
-                
 
-    
-    
-    print(f"hist_dictByVar.keys(): {hist_dictByVar.keys()}")
-    print(f"hist_dictByVar.values(): {hist_dictByVar.values()}")
+    # print(f"hist_dictByCat.keys(): {hist_dictByCat.keys()}")
+    # print(f"hist_dictByCat.values(): {hist_dictByCat.values()}")
+    # raise ValueError
     return hist_dictByCat
 
 
@@ -115,9 +113,10 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
         for region_name in regions:
             for var in variables:
                 plot_var = getPlotVar(var)
-                computed_hist = computed_hist_dict[category][var]
+                computed_hist = computed_hist_dict[category][plot_var]
                 for variation_base in variations2validate:
-                    variations = ["nominal"] + [f"{variation_base}_up", f"{variation_base}_down"]
+                    # variations = ["nominal"] + [f"{variation_base}_up", f"{variation_base}_down"]
+                    variations = ["nominal"]
                     print(f"variations: {variations}")
                     print(f"{var} {category} {region_name} computed_hist: {computed_hist}")
                     
@@ -131,6 +130,10 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
                         }
                         hist_val = computed_hist[to_project_setting_val].project(plot_var).values()
                         print(f"{category} {region_name} {variation} {var} hist_val: {hist_val}")
+                        print(f"{category} {region_name} {variation} {var} hist_val: {len(hist_val)}")
+                        # hist_val = computed_hist[to_project_setting_val].project(plot_var).values(flow=True)
+                        # print(f"{category} {region_name} {variation} {var} hist_val with flow: {hist_val}")
+                        # print(f"{category} {region_name} {variation} {var} hist_val with flow: {len(hist_val)}")
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -307,7 +310,9 @@ if __name__ == "__main__":
     # ----------------------------------
     regions = args.regions
     categories = args.categories
-    categories = ["nocat"] #FIXME
+    # categories = ["vbf"] #FIXME
+    print(f"categories: {categories}")
+    
     
     for sample in samples:
         full_load_path = load_path+f"/{sample}*/*/*.parquet" 
