@@ -15,6 +15,7 @@ from hist import Hist
 import dask
 import glob
 import copy
+import matplotlib.pyplot as plt
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -73,8 +74,8 @@ def compute_variations(events, hist_empty, sample, categories, regions, variable
             sample_hist_byVar = hist_empty.Var(binning, name=plot_var).Double() 
             
             for region_name in regions:
-                # for variation in (variations + ["nominal"]):
-                for variation in ["nominal"]:
+                for variation in (variations + ["nominal"]):
+                # for variation in ["nominal"]:
                     add_vbfFiltered_DY = False
                     events_filtered = applyRegionCatCuts(events, category, region_name, sample, variation, add_vbfFiltered_DY)
                     to_fill_setting = {
@@ -113,10 +114,22 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
         for region_name in regions:
             for var in variables:
                 plot_var = getPlotVar(var)
+                plot_var = getPlotVar(var)
+                if plot_var not in plot_settings.keys():
+                    print(f"variable {var} not configured in plot settings!")
+                    continue
+                binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
                 computed_hist = computed_hist_dict[category][plot_var]
+                
+                # Create plot
+                plt.figure(figsize=(6, 4))
+                
+                
+                
+                
                 for variation_base in variations2validate:
-                    # variations = ["nominal"] + [f"{variation_base}_up", f"{variation_base}_down"]
-                    variations = ["nominal"]
+                    variations = ["nominal"] + [f"{variation_base}_up", f"{variation_base}_down"]
+                    # variations = ["nominal"]
                     print(f"variations: {variations}")
                     print(f"{var} {category} {region_name} computed_hist: {computed_hist}")
                     
@@ -129,11 +142,27 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
                             "val_sumw2" : "value"
                         }
                         hist_val = computed_hist[to_project_setting_val].project(plot_var).values()
-                        print(f"{category} {region_name} {variation} {var} hist_val: {hist_val}")
-                        print(f"{category} {region_name} {variation} {var} hist_val: {len(hist_val)}")
+                        # print(f"{category} {region_name} {variation} {var} hist_val: {hist_val}")
+                        # print(f"{category} {region_name} {variation} {var} hist_val: {len(hist_val)}")
                         # hist_val = computed_hist[to_project_setting_val].project(plot_var).values(flow=True)
                         # print(f"{category} {region_name} {variation} {var} hist_val with flow: {hist_val}")
                         # print(f"{category} {region_name} {variation} {var} hist_val with flow: {len(hist_val)}")
+
+                        # Plot step-style histograms
+                        midpoints = (binning[1:] + binning[:-1]) / 2
+                        plt.step(midpoints, hist_val, where='mid', label=f'{plot_var} {variation}', linewidth=0.2)
+                    # Axis labels and title
+                    plt.xlabel(plot_var)
+                    plt.ylabel('Counts')
+                    plt.title('Comparison of 3 Histograms')
+                    plt.legend()
+                    
+                    # Optional: grid
+                    plt.grid(True, linestyle='--', alpha=0.6)
+                    
+                    # Save to PDF
+                    plt.savefig(f'plots/{plot_var}_Reg{region_name}Cat{category}Var{variation_base}.pdf')
+                    plt.clf()
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -281,8 +310,8 @@ if __name__ == "__main__":
     
     variables = ["jet1_pt_nominal", "jet2_pt_nominal"]
     # variables = ["jet1_pt", "jet2_pt"]
-    # n_jer_vars = 6
-    n_jer_vars = 1
+    n_jer_vars = 6
+    # n_jer_vars = 1 #FIXME
     variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)] # we need to keep this separate
     # add up and down
     variations_with_shifts = [f"{variation}_up" for variation in variations2validate] + [f"{variation}_down" for variation in variations2validate] # TODO: extract the variations from config (use the same method from run_stage1.py)
@@ -331,25 +360,7 @@ if __name__ == "__main__":
         # print(f"events.fields: {events.fields}")
 
         
-        # # Create plot
-        # plt.figure(figsize=(6, 4))
         
-        # # Plot step-style histograms
-        # plt.step(bin_edges[:-1], hist1, where='mid', label='Hist 1', linewidth=2)
-        # plt.step(bin_edges[:-1], hist2, where='mid', label='Hist 2', linewidth=2)
-        # plt.step(bin_edges[:-1], hist3, where='mid', label='Hist 3', linewidth=2)
-        
-        # # Axis labels and title
-        # plt.xlabel('X-axis')
-        # plt.ylabel('Counts')
-        # plt.title('Comparison of 3 Histograms')
-        # plt.legend()
-        
-        # # Optional: grid
-        # plt.grid(True, linestyle='--', alpha=0.6)
-        
-        # # Save to PDF
-        # plt.savefig('test.pdf')
 
     print("Success!")
     # for category in args.categories:
