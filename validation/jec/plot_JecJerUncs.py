@@ -6,7 +6,7 @@ import os
 import numpy as np
 import json
 from collections import OrderedDict
-from modules.utils import filterRegion
+from modules.utils import filterRegion, applyRegionCatCuts
 from distributed import Client
 import time    
 import tqdm
@@ -33,50 +33,105 @@ def getPlotVar(var: str):
         plot_var = var
     return plot_var
 
+def getPlotSettings(category):
+    """
+    helper function
+    """
+    if category == "ggh":
+        plot_setting_fname = "../../src/lib/histogram/plot_settings_gghCat_BDT_input.json"
+    else: # in no cat case, just use vbfCat plot settings
+        plot_setting_fname = "../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
+    print(f"plot_setting_fname: {plot_setting_fname}")
+    with open(plot_setting_fname, "r") as file:
+        plot_settings = json.load(file)
+    return plot_settings
 
-def compute_N_plot_variations(events, sample, categories, regions, variables):
-    hist_dictByVar = {}
 
+def getVariationVariable(variable : str, variation : str):
+    """
+    helper function
+    """
+    variation_var = variable.replace("nominal", variation)
+    return variation_var
+
+def compute_variations(events, hist_empty, sample, categories, regions, variables, variations):
+    hist_dictByCat = {}
     for category in categories:
         # add axis for systematic variation
         # sample_hist_dictByVar = {} 
-        if category == "ggh":
-            plot_setting_fname = "../../src/lib/histogram/plot_settings_gghCat_BDT_input.json"
-        else: # in no cat case, just use vbfCat plot settings
-            plot_setting_fname = "../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
-        print(f"plot_setting_fname: {plot_setting_fname}")
-        with open(plot_setting_fname, "r") as file:
-            plot_settings = json.load(file)
+        plot_settings = getPlotSettings(category)
+        hist_dictByVar = {}
+        for var in variables:
+            plot_var = getPlotVar(var)
+            if plot_var not in plot_settings.keys():
+                print(f"variable {var} not configured in plot settings!")
+                continue
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+            # print(f"{var} {category} {region_name} binning: {binning}")
+            
+            sample_hist_byVar = hist_empty.Var(binning, name=plot_var).Double() 
+        # for region_name in regions:
+            # events = filterRegion(events, region=region_name)
+            
+            for region_name in regions:
+            # for var in variables:
+                for variation in (variations + ["nominal"]):
+                    add_vbfFiltered_DY = False
+                    events = applyRegionCatCuts(events, category, region_name, sample, variation, add_vbfFiltered_DY)
+                    to_fill_setting = {
+                    "region" : region_name,
+                    "channel" : category,
+                    "variation" : variation,
+                    "sample_group": sample,
+                    }
+                    variation_var = getVariationVariable(var, variation)
+                    print(f"{region_name} variation_var: {variation_var}")
+                    values = ak.fill_none(events[variation_var], value=-999.0)
+                    weights = events["wgt_nominal"]
+
+                    # print(f"var: {var}")
+                    # print(f"events: {events}")
+                    # print(f"variation: {variation}")
+                    # print(f"{var} {category} {variation} {region_name} values: {values.compute()}")
+                    # print(f"{var} {category} {variation} {region_name} weights: {weights.compute()}")
+                    
+                    sample_hist_byVar = fillHist(sample_hist_byVar, to_fill_setting, plot_var, values, weights)
+            hist_dictByVar[var] = sample_hist_byVar
+        hist_dictByCat[category] = hist_dictByVar
+    hist_dictByCat = dask.compute(hist_dictByCat)[0]
+    
+                
+
+    
+    
+    print(f"hist_dictByVar.keys(): {hist_dictByVar.keys()}")
+    print(f"hist_dictByVar.values(): {hist_dictByVar.values()}")
+    return hist_dictByCat
+
+
+def plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate):
+    for category in categories:
+        plot_settings = getPlotSettings(category)
         for region_name in regions:
-            # events = copy.deepcopy(events)
-            events = filterRegion(events, region=region_name)
             for var in variables:
                 plot_var = getPlotVar(var)
-                hist_dictBySample = {}
-                
-                # for process in available_processes:
-                if plot_var not in plot_settings.keys():
-                    print(f"variable {var} not configured in plot settings!")
-                    continue
-                binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-                # print(f"var: {var}")
-                # print(f"events: {events}")
-                sample_hist_byVar = sample_hist.Var(binning, name=var).Double()
-                to_fill_setting = {
-                "region" : region_name,
-                "channel" : category,
-                "variation" : "nominal",
-                "sample_group": sample,
-                }
-                values = ak.fill_none(events[var], value=-999.0)
-                weights = events["wgt_nominal"]
-                
-                sample_hist_byVar = fillHist(sample_hist_byVar, to_fill_setting, var, values, weights)
-                hist_dictByVar[var] = sample_hist_byVar
-
-    hist_dictByVar = dask.compute(hist_dictByVar)[0]
-    return hist_dictByVar
-                
+                computed_hist = computed_hist_dict[category][var]
+                for variation_base in variations2validate:
+                    variations = ["nominal"] + [f"{variation_base}_up", f"{variation_base}_down"]
+                    print(f"variations: {variations}")
+                    print(f"{var} {category} {region_name} computed_hist: {computed_hist}")
+                    
+                    for variation in variations:
+                        to_project_setting_val = {
+                            "region" : region_name,
+                            "channel" : category,
+                            "variation" : variation,
+                            "sample_group": sample,
+                            "val_sumw2" : "value"
+                        }
+                        hist_val = computed_hist[to_project_setting_val].project(plot_var).values()
+                        print(f"{category} {region_name} {variation} {var} hist_val: {hist_val}")
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -223,8 +278,9 @@ if __name__ == "__main__":
     
     variables = ["jet1_pt_nominal", "jet2_pt_nominal"]
     # variables = ["jet1_pt", "jet2_pt"]
-    n_jer_vars = 6
-    variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)]
+    # n_jer_vars = 6
+    n_jer_vars = 1
+    variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)] # we need to keep this separate
     # add up and down
     variations_with_shifts = [f"{variation}_up" for variation in variations2validate] + [f"{variation}_down" for variation in variations2validate] # TODO: extract the variations from config (use the same method from run_stage1.py)
     # print(f"variations2validate: {variations2validate}")
@@ -233,22 +289,26 @@ if __name__ == "__main__":
     # ----------------------------------
     # initialize histograms
     # ----------------------------------
-    regions = ["z-peak", "signal", "h-peak", "h-sidebands"] # full list of possible regions to loop over
-    channels = ["nocat", "vbf", "ggh"] # full list of possible channels to loop over
-    variations = ["nominal"] + variations_with_shifts
+    possible_regions = ["z-peak", "signal", "h-peak", "h-sidebands"] # full list of possible regions to loop over
+    possible_channels = ["nocat", "vbf", "ggh"] # full list of possible channels to loop over
+    possible_variations = ["nominal"] + variations_with_shifts
     sample_groups = samples
-    sample_hist = (
-            hda.Hist.new.StrCat(regions, name="region")
-            .StrCat(channels, name="channel")
+    sample_hist_empty = (
+            hda.Hist.new.StrCat(possible_regions, name="region")
+            .StrCat(possible_channels, name="channel")
             .StrCat(["value", "sumw2"], name="val_sumw2")
             .StrCat(sample_groups, name="sample_group")
-            .StrCat(variations, name="variation")
+            .StrCat(possible_variations, name="variation")
             # .StrCat(years, name="year")
     )
 
     # ----------------------------------
     # begin plotting
     # ----------------------------------
+    regions = args.regions
+    categories = args.categories
+    categories = ["nocat"] #FIXME
+    
     for sample in samples:
         full_load_path = load_path+f"/{sample}*/*/*.parquet" 
         print(f"full_load_path: {full_load_path}")
@@ -260,11 +320,33 @@ if __name__ == "__main__":
         
         events = dak.from_parquet(filelist)
 
-        computed_hists = compute_N_plot_variations(events, sample, args.categories, regions, variables)
+        computed_hist_dict = compute_variations(events, sample_hist_empty, sample, categories, regions, variables, variations_with_shifts)
+        plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate)
         # print(f"computed_hists: {computed_hists}")
         # print(f"events.fields: {events.fields}")
+
         
-    
+        # # Create plot
+        # plt.figure(figsize=(6, 4))
+        
+        # # Plot step-style histograms
+        # plt.step(bin_edges[:-1], hist1, where='mid', label='Hist 1', linewidth=2)
+        # plt.step(bin_edges[:-1], hist2, where='mid', label='Hist 2', linewidth=2)
+        # plt.step(bin_edges[:-1], hist3, where='mid', label='Hist 3', linewidth=2)
+        
+        # # Axis labels and title
+        # plt.xlabel('X-axis')
+        # plt.ylabel('Counts')
+        # plt.title('Comparison of 3 Histograms')
+        # plt.legend()
+        
+        # # Optional: grid
+        # plt.grid(True, linestyle='--', alpha=0.6)
+        
+        # # Save to PDF
+        # plt.savefig('test.pdf')
+
+    print("Success!")
     # for category in args.categories:
     #     sample_hist_dictByVarComputed_byCat = sample_hist_dictByVarComputed[category]
     #     if category == "ggh":
@@ -284,6 +366,5 @@ if __name__ == "__main__":
                 # plotComputedHistograms(sample_hist_dictByVarComputed_byCat, var, plot_settings, full_save_path, sample_groups, region_name, category, do_logscale=do_logscale)
                     
 
-    raise ValueError
 
             
