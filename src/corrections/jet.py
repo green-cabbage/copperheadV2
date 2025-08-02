@@ -457,12 +457,38 @@ def getJecDataTag(run, jec_data_tags):
 
     return None # return none if nothing matches
 
-def do_jec_scale(jets, config, is_mc, dataset):
+def applyUpDown(variation_base_l: list):
+    """
+    helper function that adds _up and _down to the variations
+    """
+    variation_up_l = [f"{variation}_up" for variation in variation_base_l]
+    variation_down_l = [f"{variation}_down" for variation in variation_base_l]
+    combined_variation_l = variation_up_l + variation_down_l
+    # print(f"combined_variation_l: {combined_variation_l}")
+    return combined_variation_l
+
+def get_baseVariations(variation_shifts : list):
+    """
+    helper function that removes _up and _down and removed redundant lists
+    """
+    variation_base_l = [variation.replace("_up","").replace("_down","") for variation in variation_shifts]
+    variation_base_l = list(set(variation_base_l)) # remove repetitions
+    # print(f"variation_base_l: {variation_base_l}")
+    return variation_base_l
+
+def do_jec_scale(jets, config, is_mc, dataset, uncs=["nominal"]):
+# def do_jec_scale(jets, config, is_mc, dataset):
     jec_parameters = config["jec_parameters"]
+    # uncs = ["nominal"] + jec_parameters["jec_unc_to_consider"]
+    print(f"uncs: {uncs}")
+    
+    # uncs = ["nominal"] + get_baseVariations(jec_parameters["jec_variations"]) # use jec_variations bc that's what we do in stage1
+    # uncs = ["nominal", "Absolute"] #FIXME
 
     jerc_load_path = jec_parameters["jerc_load_path"]
     cset = correctionlib.CorrectionSet.from_file(jerc_load_path)
-
+    # logger.info(f"jerc_load_path: {jerc_load_path}")
+    # logger.info(f"cset.keys(): {cset.keys()}")
 
     if is_mc:
         jec_tag = jec_parameters["jec_tags"]
@@ -481,31 +507,60 @@ def do_jec_scale(jets, config, is_mc, dataset):
 
     # algo = "AK4PFchs"
     algo = jec_parameters["jet_algorithm"]
-    lvl_compound = "L1L2L3Res"
+    for unc in uncs: # NOTE: we assume that "nominal" run was already done
+        if unc == "nominal":
+            lvl_compound = "L1L2L3Res"
+        else:
+            lvl_compound = f"Regrouped_{unc}"
+    
+        key = "{}_{}_{}".format(jec_tag, lvl_compound, algo)
+        logger.info(f"jec key: {key}")
+        if unc == "nominal":
+            sf = cset.compound[key]
+        else:
+            sf = cset[key]
+            
+        sf_input_names = [inp.name for inp in sf.inputs]
+        logger.info(f"{unc} JEC input: {sf_input_names}") # use this a reference to add inputs
 
-    key = "{}_{}_{}".format(jec_tag, lvl_compound, algo)
-    logger.debug(f"jec key: {key}")
-    sf = cset.compound[key]
-
-    sf_input_names = [inp.name for inp in sf.inputs]
-    logger.debug(f"JEC input: {sf_input_names}")
-
-
-    inputs = (
-        jets.area, # == JetA
-        jets.eta, # == JetEta
-        jets.pt_raw, # == JetPt
-        jets.PU_rho, # == Rho
-    )
-    # inputs = get_corr_inputs(example_value_dict, sf)
-    new_jec_scale = sf.evaluate(*inputs)
-    # logger.debug("JSON result AK4: {}".format(new_jec_scale[:20].compute()))
-    jet_pt_jec = new_jec_scale*jets.pt_raw
-    jet_mass_jec = new_jec_scale*jets.mass_raw
-    jets["pt"] = jet_pt_jec
-    jets["mass"] = jet_mass_jec
-    jets["pt_jec"] = jet_pt_jec
-    jets["mass_jec"] = jet_mass_jec
+        if unc == "nominal":
+            inputs = (
+                jets.area, # == JetA
+                jets.eta, # == JetEta
+                jets.pt_raw, # == JetPt
+                jets.PU_rho, # == Rho
+            )
+        else:
+            inputs = ( # raw pt is used in JEC unc. Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L50-L52
+                jets.eta, # == JetEta
+                jets.pt_raw, # == JetPt
+            )
+        # inputs = get_corr_inputs(example_value_dict, sf)
+        new_jec_scale = sf.evaluate(*inputs)
+        # print(f"new_jec_scale: {new_jec_scale}")
+        # logger.info(f"new_jec_scale {unc}: {new_jec_scale.compute()}")
+        
+        # logger.debug("JSON result AK4: {}".format(new_jec_scale[:20].compute()))
+        
+        if unc == "nominal":
+            jet_pt_jec = new_jec_scale*jets.pt_raw
+            jet_mass_jec = new_jec_scale*jets.mass_raw
+            jets["pt"] = jet_pt_jec
+            jets["mass"] = jet_mass_jec
+            jets["pt_jec"] = jet_pt_jec
+            jets["mass_jec"] = jet_mass_jec
+        else:
+            # up
+            jet_pt_jec = (1+new_jec_scale)*jets.pt_raw
+            jet_mass_jec = (1+new_jec_scale)*jets.mass_raw
+            jets[f"pt_{unc}_up"] = jet_pt_jec
+            jets[f"mass_{unc}_up"] = jet_mass_jec
+            # down
+            jet_pt_jec = (1-new_jec_scale)*jets.pt_raw
+            jet_mass_jec = (1-new_jec_scale)*jets.mass_raw
+            jets[f"pt_{unc}_down"] = jet_pt_jec
+            jets[f"mass_{unc}_down"] = jet_mass_jec
+    
     return jets
 
 
@@ -575,7 +630,7 @@ def apply_jer_unc(jets):
         jer_cut = jer_cut & (has_matchedGenJet)
         pt_name_up = f"pt_{jer_unc_name}_up"
         pt_name_down = f"pt_{jer_unc_name}_down"
-        jer_pt_nom = jets["pt_jer_nom"]
+        jer_pt_nom = jets["pt_jer_nominal"]
         jer_pt_up = ak.where(jer_cut, jets["pt_jer_up"], jer_pt_nom)
         jer_pt_down = ak.where(jer_cut, jets["pt_jer_down"], jer_pt_nom)
         jets[pt_name_up] = jer_pt_up
@@ -584,7 +639,7 @@ def apply_jer_unc(jets):
     return jets
 
 
-def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down"]):
+def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nominal", "up", "down"]):
     """
     we assume that jec has been applied (we need pt_jec and pt_raw)
 
@@ -619,6 +674,7 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down
 
     sf_input_names = [inp.name for inp in sf_ptres.inputs]
     print(f"JER resolution input: {sf_input_names}")
+    print(f"JER syst_l: {syst_l}")
 
     for syst in syst_l:
         # Second, get JER resolution
@@ -673,44 +729,35 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down
         # jets["pt"] = jer_smearing * pt_jec # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         jets[f"pt_jer_{syst}"] = jer_smearing * pt_jec  # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         
-    jets["pt"] = jets[f"pt_jer_nom"]
-    # print(f"jet pt: {jets.pt[:100].compute()}")
-    # print(f"jet pt_jer_up: {jets.pt_jer_up[:100].compute()}")
-    # print(f"jet pt_jer_down: {jets.pt_jer_down[:100].compute()}")
+    jets["pt"] = jets[f"pt_jer_nominal"]
     jets = apply_jer_unc(jets)
-    # for i in range(1,7):
-    #     print(f"pt_jer{i}_up: {jets[f'pt_jer{i}_up'][:100].compute()}")
-    #     print(f"pt_jer{i}_down: {jets[f'pt_jer{i}_down'][:100].compute()}")
     
     return jets
 
 
 def get_jet_variation(jets_orig, variation, fields2add):
+    logger.info(f"get_jet_variation variation: {variation}")
     new_jets_pt = jets_orig[f"pt_{variation}"]
-    # new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets_pt.compute(), target=4, clip=True))
-    # print(f"{variation} new_jets_pt: {new_jets_pt2print}")
-    # new_jets_mass2print = ak.to_numpy(ak.pad_none(jets_orig.energy.compute(), target=4, clip=True))
-    # print(f"{variation} jets_orig.mass: {new_jets_mass2print}")
-    
+    print(f"{variation} jets_orig.fields: {jets_orig.fields}")
+    print(f"{variation} new_jets_pt: {new_jets_pt.compute()}")
+    if "jer" in variation:
+        new_jets_mass = jets_orig.mass
+    else: # jec unc impacts mass, but jer uncs do not
+        new_jets_mass = jets_orig[f"mass_{variation}"]
+        
     new_jets = ak.zip( # bahviour setup source: https://mattermost.web.cern.ch/cms-exp/pl/fu9kemtazi8rznucdf57ug1xac
         {
             "x": new_jets_pt * np.cos(jets_orig.phi),
             "y": new_jets_pt * np.sin(jets_orig.phi),
             "z": new_jets_pt * np.sinh(jets_orig.eta),
-            "mass": jets_orig.mass,
+            "mass": new_jets_mass,
             "charge": jets_orig.charge,
         },
         with_name="PtEtaPhiMCandidate",
-        # with_name="PtEtaPhiMLorentzVector",
-        # behavior=vector.behavior,
         behavior=candidate.behavior,
     ) # NOTE: if you use pt, eta, phi, or t variables to initialize, it doesn't work. It's quite finnicky in that way.
     for field in fields2add:
         new_jets[field] = getattr(jets_orig, field)
-    # cartesian_new_jets_pt2print = ak.to_numpy(ak.pad_none(new_jets.pt.compute(), target=4, clip=True))
     
-    # print(f"{variation} cartesian new_jets.pt: {cartesian_new_jets_pt2print}")
-    # cartesian_new_jets_mass2print = ak.to_numpy(ak.pad_none(new_jets.energy.compute(), target=4, clip=True))
-    # print(f"{variation} cartesian new_jets.mass: {cartesian_new_jets_mass2print}")
     
     return new_jets
