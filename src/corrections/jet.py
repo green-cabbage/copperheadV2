@@ -456,7 +456,7 @@ def getJecDataTag(run, jec_data_tags):
                 return jec_tag
 
     return None # return none if nothing matches
-
+    
 def applyUpDown(variation_base_l: list):
     """
     helper function that adds _up and _down to the variations
@@ -479,16 +479,10 @@ def get_baseVariations(variation_shifts : list):
 def do_jec_scale(jets, config, is_mc, dataset, uncs=["nominal"]):
 # def do_jec_scale(jets, config, is_mc, dataset):
     jec_parameters = config["jec_parameters"]
-    # uncs = ["nominal"] + jec_parameters["jec_unc_to_consider"]
-    print(f"uncs: {uncs}")
-    
-    # uncs = ["nominal"] + get_baseVariations(jec_parameters["jec_variations"]) # use jec_variations bc that's what we do in stage1
-    # uncs = ["nominal", "Absolute"] #FIXME
 
     jerc_load_path = jec_parameters["jerc_load_path"]
     cset = correctionlib.CorrectionSet.from_file(jerc_load_path)
-    # logger.info(f"jerc_load_path: {jerc_load_path}")
-    # logger.info(f"cset.keys(): {cset.keys()}")
+
 
     if is_mc:
         jec_tag = jec_parameters["jec_tags"]
@@ -505,9 +499,8 @@ def do_jec_scale(jets, config, is_mc, dataset, uncs=["nominal"]):
         raise ValueError
 
 
-    # algo = "AK4PFchs"
     algo = jec_parameters["jet_algorithm"]
-    for unc in uncs: # NOTE: we assume that "nominal" run was already done
+    for unc in uncs: # NOTE: we assume that "nominal" is the first element list
         if unc == "nominal":
             lvl_compound = "L1L2L3Res"
         else:
@@ -551,16 +544,15 @@ def do_jec_scale(jets, config, is_mc, dataset, uncs=["nominal"]):
             jets["mass_jec"] = jet_mass_jec
         else:
             # up
-            jet_pt_jec = (1+new_jec_scale)*jets.pt_raw
-            jet_mass_jec = (1+new_jec_scale)*jets.mass_raw
+            jet_pt_jec = (1+new_jec_scale)*jets.pt_jec
+            jet_mass_jec = (1+new_jec_scale)*jets.mass_jec
             jets[f"pt_{unc}_up"] = jet_pt_jec
             jets[f"mass_{unc}_up"] = jet_mass_jec
             # down
-            jet_pt_jec = (1-new_jec_scale)*jets.pt_raw
-            jet_mass_jec = (1-new_jec_scale)*jets.mass_raw
+            jet_pt_jec = (1-new_jec_scale)*jets.pt_jec
+            jet_mass_jec = (1-new_jec_scale)*jets.mass_jec
             jets[f"pt_{unc}_down"] = jet_pt_jec
             jets[f"mass_{unc}_down"] = jet_mass_jec
-    
     return jets
 
 
@@ -630,7 +622,7 @@ def apply_jer_unc(jets):
         jer_cut = jer_cut & (has_matchedGenJet)
         pt_name_up = f"pt_{jer_unc_name}_up"
         pt_name_down = f"pt_{jer_unc_name}_down"
-        jer_pt_nom = jets["pt_jer_nominal"]
+        jer_pt_nom = jets["pt_jer_nom"] # NOTE: if I name this "pt_jer_nominal", sorting jets by jet.pt breaks
         jer_pt_up = ak.where(jer_cut, jets["pt_jer_up"], jer_pt_nom)
         jer_pt_down = ak.where(jer_cut, jets["pt_jer_down"], jer_pt_nom)
         jets[pt_name_up] = jer_pt_up
@@ -639,7 +631,7 @@ def apply_jer_unc(jets):
     return jets
 
 
-def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nominal", "up", "down"]):
+def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down"]):
     """
     we assume that jec has been applied (we need pt_jec and pt_raw)
 
@@ -674,7 +666,6 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nominal", "up", "
 
     sf_input_names = [inp.name for inp in sf_ptres.inputs]
     print(f"JER resolution input: {sf_input_names}")
-    print(f"JER syst_l: {syst_l}")
 
     for syst in syst_l:
         # Second, get JER resolution
@@ -729,8 +720,14 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nominal", "up", "
         # jets["pt"] = jer_smearing * pt_jec # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         jets[f"pt_jer_{syst}"] = jer_smearing * pt_jec  # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         
-    jets["pt"] = jets[f"pt_jer_nominal"]
+    jets["pt"] = jets[f"pt_jer_nom"]
+    # print(f"jet pt: {jets.pt[:100].compute()}")
+    # print(f"jet pt_jer_up: {jets.pt_jer_up[:100].compute()}")
+    # print(f"jet pt_jer_down: {jets.pt_jer_down[:100].compute()}")
     jets = apply_jer_unc(jets)
+    # for i in range(1,7):
+    #     print(f"pt_jer{i}_up: {jets[f'pt_jer{i}_up'][:100].compute()}")
+    #     print(f"pt_jer{i}_down: {jets[f'pt_jer{i}_down'][:100].compute()}")
     
     return jets
 
@@ -738,8 +735,8 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nominal", "up", "
 def get_jet_variation(jets_orig, variation, fields2add):
     logger.info(f"get_jet_variation variation: {variation}")
     new_jets_pt = jets_orig[f"pt_{variation}"]
-    print(f"{variation} jets_orig.fields: {jets_orig.fields}")
-    print(f"{variation} new_jets_pt: {new_jets_pt.compute()}")
+    # print(f"{variation} jets_orig.fields: {jets_orig.fields}")
+    # print(f"{variation} new_jets_pt: {new_jets_pt.compute()}")
     if "jer" in variation:
         new_jets_mass = jets_orig.mass
     else: # jec unc impacts mass, but jer uncs do not
