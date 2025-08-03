@@ -544,17 +544,38 @@ def do_jec_scale(jets, config, is_mc, dataset, uncs=["nominal"]):
             jets["mass_jec"] = jet_mass_jec
         else:
             # up
-            jet_pt_jec = (1+new_jec_scale)*jets.pt_jec
-            jet_mass_jec = (1+new_jec_scale)*jets.mass_jec
+            # jet_pt_jec = (1+new_jec_scale)*jets.pt_jec
+            # jet_mass_jec = (1+new_jec_scale)*jets.mass_jec
+            jet_pt_jec = (1+new_jec_scale) # apply these corrections after JER
+            jet_mass_jec = (1+new_jec_scale) # apply these corrections after JER
             jets[f"pt_{unc}_up"] = jet_pt_jec
             jets[f"mass_{unc}_up"] = jet_mass_jec
             # down
-            jet_pt_jec = (1-new_jec_scale)*jets.pt_jec
-            jet_mass_jec = (1-new_jec_scale)*jets.mass_jec
+            # jet_pt_jec = (1-new_jec_scale)*jets.pt_jec
+            # jet_mass_jec = (1-new_jec_scale)*jets.mass_jec
+            jet_pt_jec = (1-new_jec_scale) # apply these corrections after JER
+            jet_mass_jec = (1-new_jec_scale) # apply these corrections after JER
             jets[f"pt_{unc}_down"] = jet_pt_jec
             jets[f"mass_{unc}_down"] = jet_mass_jec
     return jets
 
+
+def applyJetUncertaintyKinematics(jets, uncs):
+    """
+    we assume do_jec_scale function with the uncertainties have already been applied to jets nanoEvent
+    """
+    # grab the latest correct mass and pt
+    jet_pt = jets["pt"] 
+    jet_mass = jets["mass"]
+    # apply the jec uncertainty coeffs that you obtained previously to the latest corrected mass and pt
+    for unc in uncs:
+        # up
+        jets[f"pt_{unc}_up"] = jets[f"pt_{unc}_up"] * jet_pt
+        jets[f"mass_{unc}_up"] = jets[f"mass_{unc}_up"] * jet_mass
+        # down
+        jets[f"pt_{unc}_down"] = jets[f"pt_{unc}_down"] * jet_pt
+        jets[f"mass_{unc}_down"] = jets[f"mass_{unc}_down"] * jet_mass
+    return jets
 
 def applyStrat1(apply_scaling, jer_smearing, jet_puId, jet_pt, jet_eta):
     is_tightPuId = (jet_puId >= 7)
