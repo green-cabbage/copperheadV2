@@ -143,11 +143,6 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
                             "val_sumw2" : "value"
                         }
                         hist_val = computed_hist[to_project_setting_val].project(plot_var).values()
-                        # print(f"{category} {region_name} {variation} {var} hist_val: {hist_val}")
-                        # print(f"{category} {region_name} {variation} {var} hist_val: {len(hist_val)}")
-                        # hist_val = computed_hist[to_project_setting_val].project(plot_var).values(flow=True)
-                        # print(f"{category} {region_name} {variation} {var} hist_val with flow: {hist_val}")
-                        # print(f"{category} {region_name} {variation} {var} hist_val with flow: {len(hist_val)}")
 
                         # Plot step-style histograms
                         midpoints = (binning[1:] + binning[:-1]) / 2
@@ -291,7 +286,6 @@ if __name__ == "__main__":
         print("Local scale Client created")
 
     
-    # possible_samples = ["data", "ggh", "vbf", "dy", "ewk", "tt", "st", "ww", "wz", "zz","other"]
     # sample_groups = {
     #     "data": ["data"],
     #     "ggh": ["ggh"],
@@ -305,17 +299,25 @@ if __name__ == "__main__":
     samples = ["vbf_powheg"]
     
     variables = ["jet1_pt_nominal", "jet2_pt_nominal"]
-    # variables = ["jet1_pt", "jet2_pt"]
+
+    # ----------------------------------
+    # Add JER uncertainties
+    # ----------------------------------
+    
     n_jer_vars = 6
-    # n_jer_vars = 1 #FIXME
-    # variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)] # we need to keep this separate
+    variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)] 
+
+    # ----------------------------------
+    # Add JEC uncertainties
+    # ----------------------------------
     # variations2validate = ["Absolute"] # FIXME
-    variations2validate = config["jec_parameters"]["jec_unc_to_consider"]
+    variations2validate = variations2validate + config["jec_parameters"]["jec_unc_to_consider"]
+
+    
     print(f"variations2validate: {variations2validate}")
-    # add up and down
-    variations_with_shifts = [f"{variation}_up" for variation in variations2validate] + [f"{variation}_down" for variation in variations2validate] # TODO: extract the variations from config (use the same method from run_stage1.py)
-    # print(f"variations2validate: {variations2validate}")
-    # print(f"variations_with_shifts: {variations_with_shifts}")
+    
+    # apply up and down variations
+    variations_with_shifts = [f"{variation}_up" for variation in variations2validate] + [f"{variation}_down" for variation in variations2validate] 
 
     # ----------------------------------
     # initialize histograms
@@ -365,24 +367,5 @@ if __name__ == "__main__":
         
 
     print("Success!")
-    # for category in args.categories:
-    #     sample_hist_dictByVarComputed_byCat = sample_hist_dictByVarComputed[category]
-    #     if category == "ggh":
-    #         plot_setting_fname = "./src/lib/histogram/plot_settings_gghCat_BDT_input.json"
-    #     else: # in no cat case, just use vbfCat plot settings
-    #         plot_setting_fname = "./src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
-    #     with open(plot_setting_fname, "r") as file:
-    #         plot_settings = json.load(file)
-        
-    #     for region_name in args.regions:
-    #         for var in tqdm.tqdm(variables2plot):
-    #             if args.linear_scale:
-    #                 do_logscale = False
-    #             else:
-    #                 do_logscale = True  
-    #             full_save_path = args.save_path+f"/{args.year}/mplhep/Reg_{region_name}/Cat_{category}/{args.label}"
-                # plotComputedHistograms(sample_hist_dictByVarComputed_byCat, var, plot_settings, full_save_path, sample_groups, region_name, category, do_logscale=do_logscale)
-                    
-
 
             

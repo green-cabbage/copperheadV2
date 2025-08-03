@@ -1288,9 +1288,8 @@ class EventProcessor(processor.ProcessorABC):
         if do_jec_unc:
             pt_variations = (
                 ["nominal"]
-                # + jec_pars["jec_variations"]
                 + applyUpDown(jec_pars["jec_unc_to_consider"])
-                # + jec_pars["jer_variations"]
+                + jec_pars["jer_variations"]
             )
         else:
             pt_variations = ["nominal"]
