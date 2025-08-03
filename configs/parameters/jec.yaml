@@ -114,214 +114,214 @@ jec_parameters:
     - RelativeBal
     - RelativeSample_2018
     - FlavorQCD
-  jec_variations:
-    2016preVFP:
-    - Absolute_up
-    - Absolute_down
-    - Absolute2016_up
-    - Absolute2016_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12016_up
-    - BBEC12016_down
-    - EC2_up
-    - EC2_down
-    - EC22016_up
-    - EC22016_down
-    - HF_up
-    - HF_down
-    - HF2016_up
-    - HF2016_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2016_up
-    - RelativeSample2016_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    2016postVFP:
-    - Absolute_up
-    - Absolute_down
-    - Absolute2016_up
-    - Absolute2016_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12016_up
-    - BBEC12016_down
-    - EC2_up
-    - EC2_down
-    - EC22016_up
-    - EC22016_down
-    - HF_up
-    - HF_down
-    - HF2016_up
-    - HF2016_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2016_up
-    - RelativeSample2016_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    '2017':
-    - Absolute_up
-    - Absolute_down
-    - Absolute2017_up
-    - Absolute2017_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12017_up
-    - BBEC12017_down
-    - EC2_up
-    - EC2_down
-    - EC22017_up
-    - EC22017_down
-    - HF_up
-    - HF_down
-    - HF2017_up
-    - HF2017_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2017_up
-    - RelativeSample2017_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    '2018':
-    - Absolute_up
-    - Absolute_down
-    - Absolute2018_up
-    - Absolute2018_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12018_up
-    - BBEC12018_down
-    - EC2_up
-    - EC2_down
-    - EC22018_up
-    - EC22018_down
-    - HF_up
-    - HF_down
-    - HF2018_up
-    - HF2018_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2018_up
-    - RelativeSample2018_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    2016_RERECO:
-    - Absolute_up
-    - Absolute_down
-    - Absolute2016_up
-    - Absolute2016_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12016_up
-    - BBEC12016_down
-    - EC2_up
-    - EC2_down
-    - EC22016_up
-    - EC22016_down
-    - HF_up
-    - HF_down
-    - HF2016_up
-    - HF2016_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2016_up
-    - RelativeSample2016_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    '2017_RERECO':
-    - Absolute_up
-    - Absolute_down
-    - Absolute2017_up
-    - Absolute2017_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12017_up
-    - BBEC12017_down
-    - EC2_up
-    - EC2_down
-    - EC22017_up
-    - EC22017_down
-    - HF_up
-    - HF_down
-    - HF2017_up
-    - HF2017_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2017_up
-    - RelativeSample2017_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    '2018_RERECO':
-    - Absolute_up
-    - Absolute_down
-    - Absolute2018_up
-    - Absolute2018_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12018_up
-    - BBEC12018_down
-    - EC2_up
-    - EC2_down
-    - EC22018_up
-    - EC22018_down
-    - HF_up
-    - HF_down
-    - HF2018_up
-    - HF2018_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2018_up
-    - RelativeSample2018_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    2022preEE:
-    - Absolute_up
-    - Absolute_down
-    - Absolute2018_up
-    - Absolute2018_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12018_up
-    - BBEC12018_down
-    - EC2_up
-    - EC2_down
-    - EC22018_up
-    - EC22018_down
-    - HF_up
-    - HF_down
-    - HF2018_up
-    - HF2018_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2018_up
-    - RelativeSample2018_down
-    - FlavorQCD_up
-    - FlavorQCD_down
-    2022postEE:
-    - Absolute_up
-    - Absolute_down
-    - Absolute2018_up
-    - Absolute2018_down
-    - BBEC1_up
-    - BBEC1_down
-    - BBEC12018_up
-    - BBEC12018_down
-    - EC2_up
-    - EC2_down
-    - EC22018_up
-    - EC22018_down
-    - HF_up
-    - HF_down
-    - HF2018_up
-    - HF2018_down
-    - RelativeBal_up
-    - RelativeBal_down
-    - RelativeSample2018_up
-    - RelativeSample2018_down
-    - FlavorQCD_up
-    - FlavorQCD_down
+  # jec_variations:
+  #   2016preVFP:
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2016_up
+  #   - Absolute2016_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12016_up
+  #   - BBEC12016_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22016_up
+  #   - EC22016_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2016_up
+  #   - HF2016_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2016_up
+  #   - RelativeSample2016_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   2016postVFP:
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2016_up
+  #   - Absolute2016_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12016_up
+  #   - BBEC12016_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22016_up
+  #   - EC22016_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2016_up
+  #   - HF2016_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2016_up
+  #   - RelativeSample2016_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   '2017':
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2017_up
+  #   - Absolute2017_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12017_up
+  #   - BBEC12017_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22017_up
+  #   - EC22017_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2017_up
+  #   - HF2017_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2017_up
+  #   - RelativeSample2017_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   '2018':
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2018_up
+  #   - Absolute2018_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12018_up
+  #   - BBEC12018_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22018_up
+  #   - EC22018_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2018_up
+  #   - HF2018_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2018_up
+  #   - RelativeSample2018_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   2016_RERECO:
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2016_up
+  #   - Absolute2016_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12016_up
+  #   - BBEC12016_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22016_up
+  #   - EC22016_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2016_up
+  #   - HF2016_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2016_up
+  #   - RelativeSample2016_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   '2017_RERECO':
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2017_up
+  #   - Absolute2017_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12017_up
+  #   - BBEC12017_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22017_up
+  #   - EC22017_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2017_up
+  #   - HF2017_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2017_up
+  #   - RelativeSample2017_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   '2018_RERECO':
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2018_up
+  #   - Absolute2018_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12018_up
+  #   - BBEC12018_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22018_up
+  #   - EC22018_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2018_up
+  #   - HF2018_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2018_up
+  #   - RelativeSample2018_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   2022preEE:
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2018_up
+  #   - Absolute2018_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12018_up
+  #   - BBEC12018_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22018_up
+  #   - EC22018_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2018_up
+  #   - HF2018_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2018_up
+  #   - RelativeSample2018_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
+  #   2022postEE:
+  #   - Absolute_up
+  #   - Absolute_down
+  #   - Absolute2018_up
+  #   - Absolute2018_down
+  #   - BBEC1_up
+  #   - BBEC1_down
+  #   - BBEC12018_up
+  #   - BBEC12018_down
+  #   - EC2_up
+  #   - EC2_down
+  #   - EC22018_up
+  #   - EC22018_down
+  #   - HF_up
+  #   - HF_down
+  #   - HF2018_up
+  #   - HF2018_down
+  #   - RelativeBal_up
+  #   - RelativeBal_down
+  #   - RelativeSample2018_up
+  #   - RelativeSample2018_down
+  #   - FlavorQCD_up
+  #   - FlavorQCD_down
   runs:
     2016preVFP:
     - B
