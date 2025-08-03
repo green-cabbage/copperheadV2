@@ -9,7 +9,7 @@ import correctionlib
 from src.corrections.rochester import apply_roccor, apply_roccorRun3
 from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
-from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear,  get_jet_variation
+from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, get_jet_variation, applyUpDown, applyJetUncertaintyKinematics
 # from src.corrections.weight import Weights
 from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old
 import json
@@ -517,7 +517,7 @@ class EventProcessor(processor.ProcessorABC):
             "do_trigger_match" : True, # False
             "do_roccor" : True,# True
             "do_fsr" : True, # True
-            "do_geofit" : False, # True # FIXME: Make it false for always
+            "do_geofit" : False, 
             "do_beamConstraint": True, # if True, override do_geofit
             "do_nnlops" : True,
             "do_pdf" : True,
@@ -1182,7 +1182,11 @@ class EventProcessor(processor.ProcessorABC):
             
             # -------------------------------------
             print("doing JEC + SMEARing!")
-            jets = do_jec_scale(jets, self.config, is_mc, dataset)
+            variation_l = ["nominal"] + self.config["jec_parameters"]["jec_unc_to_consider"]
+            # variation_l = ["nominal", "Absolute"] # FIXME
+            jets = do_jec_scale(jets, self.config, is_mc, dataset, uncs=variation_l)
+            # jets = do_jec_scale(jets, self.config, is_mc, dataset)
+            # print(f"jets test: {jets.pt_Absolute_up.compute()}")
             jets["mass_jec"] = jets.mass
             jets["pt_jec"] = jets.pt
             
@@ -1190,14 +1194,16 @@ class EventProcessor(processor.ProcessorABC):
                 jets = do_jer_smear(jets, self.config, events.event, year=year)
             sorted_args = ak.argsort(jets.pt, ascending=False)
             jets = (jets[sorted_args])
+
+            # now JER has been applied, we apply unc coeefficients to the latest value
+            variation_l.remove("nominal")
+            jets = applyJetUncertaintyKinematics(jets, variation_l) 
+            
             # -------------------------------------
 
 
             # testJetVector(jets)
             # logger.info(f"jets pt b4 jec: {jets.pt.compute()}")
-            # -------------------------------------
-            # logger.info("do old jec!")
-            # jets = factory.build(jets)
             # -------------------------------------
             # logger.info(f"jets pt after jec: {jets.pt.compute()}")
             # testJetVector(jets)
@@ -1283,17 +1289,13 @@ class EventProcessor(processor.ProcessorABC):
             pt_variations = (
                 ["nominal"]
                 # + jec_pars["jec_variations"]
-                + jec_pars["jer_variations"]
+                + applyUpDown(jec_pars["jec_unc_to_consider"])
+                # + jec_pars["jer_variations"]
             )
         else:
             pt_variations = ["nominal"]
-            
-        if is_mc:
-            pass
-            # pt_variations += self.config["jec_parameters"]["jec_variations"]
-            # pt_variations += self.config["jec_parameters"]["jer_variations"]
-            # pt_variations += ['Absolute_up', 'Absolute_down',]
 
+        # pt_variations = ["nominal", "Absolute_up", "Absolute_down"]#FIXME
         if is_mc:
             # moved nnlops reweighting outside of dak process and to run_stage1-----------------
             do_nnlops = self.config["do_nnlops"] and ("ggh" in events.metadata["dataset"])
@@ -1485,7 +1487,12 @@ class EventProcessor(processor.ProcessorABC):
         # Loop over JEC variations and fill jet variables
         # ------------------------------------------------------------#
         logger.info(f"pt_variations: {pt_variations}")
+        # pt_variations = ["nominal", "Absolute_up", "Absolute_down"] #FIXME
+        # print(f"jets test2: {jets.pt_Absolute_up.compute()}")
+        
         for variation in pt_variations:
+            # print(f"jets test3: {jets.pt_Absolute_up.compute()}")
+            
             jet_loop_dict = self.jet_loop(
                 events,
                 jets,
@@ -1502,97 +1509,99 @@ class EventProcessor(processor.ProcessorABC):
             )
 
             out_dict.update(jet_loop_dict)
-        logger.info(f"out_dict.keys() after jet loop: {out_dict.keys()}")
+        logger.debug(f"out_dict.keys() after jet loop: {out_dict.keys()}")
         # debugging -------------------------------
-        # logger.info(f"jets.fields: {jets.fields}")
-        # logger.info(f"out_dict jet1_pt_nominal: {out_dict['jet1_pt_nominal'][:50].compute()}")
-        # logger.info(f"out_dict jet1_pt_jer1_up: {out_dict['jet1_pt_jer1_up'][:50].compute()}")
-        # logger.info(f"out_dict jet1_pt_jer1_down: {out_dict['jet1_pt_jer1_down'][:50].compute()}")
+        
         # test_dict = {
         #     "jet1_pt_nominal" : out_dict['jet1_pt_nominal'][:],
-        #     "jet1_pt_jer1_up" : out_dict['jet1_pt_jer1_up'][:],
-        #     "jet1_pt_jer1_down" : out_dict['jet1_pt_jer1_down'][:],
+        #     # "jet1_pt_jer1_up" : out_dict['jet1_pt_jer1_up'][:],
+        #     # "jet1_pt_jer1_down" : out_dict['jet1_pt_jer1_down'][:],
         #     "jet1_mass_nominal" : out_dict['jet1_mass_nominal'][:],
-        #     "jet1_mass_jer1_up" : out_dict['jet1_mass_jer1_up'][:],
-        #     "jet1_mass_jer1_down" : out_dict['jet1_mass_jer1_down'][:],
+        #     # "jet1_mass_jer1_up" : out_dict['jet1_mass_jer1_up'][:],
+        #     # "jet1_mass_jer1_down" : out_dict['jet1_mass_jer1_down'][:],
         #     "jet2_pt_nominal" : out_dict['jet2_pt_nominal'][:],
-        #     "jet2_pt_jer1_up" : out_dict['jet2_pt_jer1_up'][:],
-        #     "jet2_pt_jer1_down" : out_dict['jet2_pt_jer1_down'][:],
+        #     # "jet2_pt_jer1_up" : out_dict['jet2_pt_jer1_up'][:],
+        #     # "jet2_pt_jer1_down" : out_dict['jet2_pt_jer1_down'][:],
         #     "jet2_mass_nominal" : out_dict['jet2_mass_nominal'][:],
-        #     "jet2_mass_jer1_up" : out_dict['jet2_mass_jer1_up'][:],
-        #     "jet2_mass_jer1_down" : out_dict['jet2_mass_jer1_down'][:],
+        #     # "jet2_mass_jer1_up" : out_dict['jet2_mass_jer1_up'][:],
+        #     # "jet2_mass_jer1_down" : out_dict['jet2_mass_jer1_down'][:],
         #     "jj_pt_nominal" : out_dict['jj_pt_nominal'][:],
-        #     "jj_pt_jer1_up" : out_dict['jj_pt_jer1_up'][:],
-        #     "jj_pt_jer1_down" : out_dict['jj_pt_jer1_down'][:],
+        #     # "jj_pt_jer1_up" : out_dict['jj_pt_jer1_up'][:],
+        #     # "jj_pt_jer1_down" : out_dict['jj_pt_jer1_down'][:],
         #     "jj_mass_nominal" : out_dict['jj_mass_nominal'][:],
-        #     "jj_mass_jer1_up" : out_dict['jj_mass_jer1_up'][:],
-        #     "jj_mass_jer1_down" : out_dict['jj_mass_jer1_down'][:],
-        #     f"mmj1_dEta_nominal" : out_dict["mmj1_dEta_nominal"], 
-        #     f"mmj1_dPhi_nominal" : out_dict["mmj1_dPhi_nominal"], 
-        #     f"mmj1_dR_nominal" : out_dict["mmj1_dR_nominal"], 
-        #     f"mmj2_dEta_nominal" : out_dict["mmj2_dEta_nominal"], 
-        #     f"mmj2_dPhi_nominal" : out_dict["mmj2_dPhi_nominal"], 
-        #     f"mmj2_dR_nominal" : out_dict["mmj2_dR_nominal"], 
+        #     # "jj_mass_jer1_up" : out_dict['jj_mass_jer1_up'][:],
+        #     # "jj_mass_jer1_down" : out_dict['jj_mass_jer1_down'][:],
+        #     # f"mmj1_dEta_nominal" : out_dict["mmj1_dEta_nominal"], 
+        #     # f"mmj1_dPhi_nominal" : out_dict["mmj1_dPhi_nominal"], 
+        #     # f"mmj1_dR_nominal" : out_dict["mmj1_dR_nominal"], 
+        #     # f"mmj2_dEta_nominal" : out_dict["mmj2_dEta_nominal"], 
+        #     # f"mmj2_dPhi_nominal" : out_dict["mmj2_dPhi_nominal"], 
+        #     # f"mmj2_dR_nominal" : out_dict["mmj2_dR_nominal"], 
         #     f"mmj_min_dEta_nominal" : out_dict["mmj_min_dEta_nominal"], 
         #     f"mmj_min_dPhi_nominal" : out_dict["mmj_min_dPhi_nominal"], 
-        #     f"mmjj_pt_nominal" : out_dict["mmjj_pt_nominal"], 
-        #     f"mmjj_eta_nominal" : out_dict["mmjj_eta_nominal"], 
-        #     f"mmjj_phi_nominal" : out_dict["mmjj_phi_nominal"], 
-        #     f"mmjj_mass_nominal" : out_dict["mmjj_mass_nominal"], 
-        #     f"mmj1_dEta_jer1_up" : out_dict["mmj1_dEta_jer1_up"], 
-        #     f"mmj1_dPhi_jer1_up" : out_dict["mmj1_dPhi_jer1_up"], 
-        #     f"mmj1_dR_jer1_up" : out_dict["mmj1_dR_jer1_up"], 
-        #     f"mmj2_dEta_jer1_up" : out_dict["mmj2_dEta_jer1_up"], 
-        #     f"mmj2_dPhi_jer1_up" : out_dict["mmj2_dPhi_jer1_up"], 
-        #     f"mmj2_dR_jer1_up" : out_dict["mmj2_dR_jer1_up"], 
-        #     f"mmj_min_dEta_jer1_up" : out_dict["mmj_min_dEta_jer1_up"], 
-        #     f"mmj_min_dPhi_jer1_up" : out_dict["mmj_min_dPhi_jer1_up"], 
-        #     f"mmjj_pt_jer1_up" : out_dict["mmjj_pt_jer1_up"], 
-        #     f"mmjj_eta_jer1_up" : out_dict["mmjj_eta_jer1_up"], 
-        #     f"mmjj_phi_jer1_up" : out_dict["mmjj_phi_jer1_up"], 
-        #     f"mmjj_mass_jer1_up" : out_dict["mmjj_mass_jer1_up"], 
-        #     f"mmj1_dEta_jer1_down" : out_dict["mmj1_dEta_jer1_down"], 
-        #     f"mmj1_dPhi_jer1_down" : out_dict["mmj1_dPhi_jer1_down"], 
-        #     f"mmj1_dR_jer1_down" : out_dict["mmj1_dR_jer1_down"], 
-        #     f"mmj2_dEta_jer1_down" : out_dict["mmj2_dEta_jer1_down"], 
-        #     f"mmj2_dPhi_jer1_down" : out_dict["mmj2_dPhi_jer1_down"], 
-        #     f"mmj2_dR_jer1_down" : out_dict["mmj2_dR_jer1_down"], 
-        #     f"mmj_min_dEta_jer1_down" : out_dict["mmj_min_dEta_jer1_down"], 
-        #     f"mmj_min_dPhi_jer1_down" : out_dict["mmj_min_dPhi_jer1_down"], 
-        #     f"mmjj_pt_jer1_down" : out_dict["mmjj_pt_jer1_down"], 
-        #     f"mmjj_eta_jer1_down" : out_dict["mmjj_eta_jer1_down"], 
-        #     f"mmjj_phi_jer1_down" : out_dict["mmjj_phi_jer1_down"], 
-        #     f"mmjj_mass_jer1_down" : out_dict["mmjj_mass_jer1_down"], 
-        #     # "jet1_x_nominal" : out_dict['jet1_x_nominal'][:],
-        #     # "jet1_x_jer1_up" : out_dict['jet1_x_jer1_up'][:],
-        #     # "jet1_x_jer1_down" : out_dict['jet1_x_jer1_down'][:],
-        #     # "jet2_x_nominal" : out_dict['jet2_x_nominal'][:],
-        #     # "jet2_x_jer1_up" : out_dict['jet2_x_jer1_up'][:],
-        #     # "jet2_x_jer1_down" : out_dict['jet2_x_jer1_down'][:],
-        #     # "jet2_y_nominal" : out_dict['jet2_y_nominal'][:],
-        #     # "jet2_y_jer1_up" : out_dict['jet2_y_jer1_up'][:],
-        #     # "jet2_y_jer1_down" : out_dict['jet2_y_jer1_down'][:],
-        #     # "jet2_z_nominal" : out_dict['jet2_z_nominal'][:],
-        #     # "jet2_z_jer1_up" : out_dict['jet2_z_jer1_up'][:],
-        #     # "jet2_z_jer1_down" : out_dict['jet2_z_jer1_down'][:],
+        #     # f"mmjj_pt_nominal" : out_dict["mmjj_pt_nominal"], 
+        #     # f"mmjj_eta_nominal" : out_dict["mmjj_eta_nominal"], 
+        #     # f"mmjj_phi_nominal" : out_dict["mmjj_phi_nominal"], 
+        #     # f"mmjj_mass_nominal" : out_dict["mmjj_mass_nominal"], 
+        #     # f"mmj1_dEta_jer1_up" : out_dict["mmj1_dEta_jer1_up"], 
+        #     # f"mmj1_dPhi_jer1_up" : out_dict["mmj1_dPhi_jer1_up"], 
+        #     # f"mmj1_dR_jer1_up" : out_dict["mmj1_dR_jer1_up"], 
+        #     # f"mmj2_dEta_jer1_up" : out_dict["mmj2_dEta_jer1_up"], 
+        #     # f"mmj2_dPhi_jer1_up" : out_dict["mmj2_dPhi_jer1_up"], 
+        #     # f"mmj2_dR_jer1_up" : out_dict["mmj2_dR_jer1_up"], 
+        #     # f"mmj_min_dEta_jer1_up" : out_dict["mmj_min_dEta_jer1_up"], 
+        #     # f"mmj_min_dPhi_jer1_up" : out_dict["mmj_min_dPhi_jer1_up"], 
+        #     # f"mmjj_pt_jer1_up" : out_dict["mmjj_pt_jer1_up"], 
+        #     # f"mmjj_eta_jer1_up" : out_dict["mmjj_eta_jer1_up"], 
+        #     # f"mmjj_phi_jer1_up" : out_dict["mmjj_phi_jer1_up"], 
+        #     # f"mmjj_mass_jer1_up" : out_dict["mmjj_mass_jer1_up"], 
+        #     # f"mmj1_dEta_jer1_down" : out_dict["mmj1_dEta_jer1_down"], 
+        #     # f"mmj1_dPhi_jer1_down" : out_dict["mmj1_dPhi_jer1_down"], 
+        #     # f"mmj1_dR_jer1_down" : out_dict["mmj1_dR_jer1_down"], 
+        #     # f"mmj2_dEta_jer1_down" : out_dict["mmj2_dEta_jer1_down"], 
+        #     # f"mmj2_dPhi_jer1_down" : out_dict["mmj2_dPhi_jer1_down"], 
+        #     # f"mmj2_dR_jer1_down" : out_dict["mmj2_dR_jer1_down"], 
+        #     # f"mmj_min_dEta_jer1_down" : out_dict["mmj_min_dEta_jer1_down"], 
+        #     # f"mmj_min_dPhi_jer1_down" : out_dict["mmj_min_dPhi_jer1_down"], 
+        #     # f"mmjj_pt_jer1_down" : out_dict["mmjj_pt_jer1_down"], 
+        #     # f"mmjj_eta_jer1_down" : out_dict["mmjj_eta_jer1_down"], 
+        #     # f"mmjj_phi_jer1_down" : out_dict["mmjj_phi_jer1_down"], 
+        #     # f"mmjj_mass_jer1_down" : out_dict["mmjj_mass_jer1_down"], 
+        #     # # "jet1_x_nominal" : out_dict['jet1_x_nominal'][:],
+        #     # # "jet1_x_jer1_up" : out_dict['jet1_x_jer1_up'][:],
+        #     # # "jet1_x_jer1_down" : out_dict['jet1_x_jer1_down'][:],
+        #     # # "jet2_x_nominal" : out_dict['jet2_x_nominal'][:],
+        #     # # "jet2_x_jer1_up" : out_dict['jet2_x_jer1_up'][:],
+        #     # # "jet2_x_jer1_down" : out_dict['jet2_x_jer1_down'][:],
+        #     # # "jet2_y_nominal" : out_dict['jet2_y_nominal'][:],
+        #     # # "jet2_y_jer1_up" : out_dict['jet2_y_jer1_up'][:],
+        #     # # "jet2_y_jer1_down" : out_dict['jet2_y_jer1_down'][:],
+        #     # # "jet2_z_nominal" : out_dict['jet2_z_nominal'][:],
+        #     # # "jet2_z_jer1_up" : out_dict['jet2_z_jer1_up'][:],
+        #     # # "jet2_z_jer1_down" : out_dict['jet2_z_jer1_down'][:],
             
         # }
-        # # test_dict = [
-        # #             out_dict['jet1_pt_nominal'][:50],
-        # #             out_dict['jet1_pt_jer1_up'][:50],
-        # #             out_dict['jet1_pt_jer1_down'][:50],
-        # #             out_dict['jet2_pt_nominal'][:50],
-        # #             out_dict['jet2_pt_jer1_up'][:50],
-        # #             out_dict['jet2_pt_jer1_down'][:50],
-        # #             out_dict['jj_pt_nominal'][:50],
-        # #             out_dict['jj_pt_jer1_up'][:50],
-        # #             out_dict['jj_pt_jer1_down'][:50],
-        # #             out_dict['jj_mass_nominal'][:50],
-        # #             out_dict['jj_mass_jer1_up'][:50],
-        # #             out_dict['jj_mass_jer1_down'][:50],
-        # # ]
+        # # print(f"out_dict.keys(): {out_dict.keys()}")
+        # jec_uncs = self.config["jec_parameters"]["jec_unc_to_consider"]
+        # jec_uncs = ["Absolute"]#FIXME
+        
+        # for unc in jec_uncs:
+        #     for shift in ["up", "down"]:
+        #         variation = f"{unc}_{shift}"
+        #         unc_dict = {
+        #             f"jet1_pt_{variation}" : out_dict[f'jet1_pt_{variation}'][:],
+        #             f"jet1_mass_{variation}" : out_dict[f'jet1_mass_{variation}'][:],
+        #             f"jet2_pt_{variation}" : out_dict[f'jet2_pt_{variation}'][:],
+        #             f"jet2_mass_{variation}" : out_dict[f'jet2_mass_{variation}'][:],
+        #             f"jj_pt_{variation}" : out_dict[f'jj_pt_{variation}'][:],
+        #             f"jj_mass_{variation}" : out_dict[f'jj_mass_{variation}'][:],
+        #             f"mmj_min_dEta_{variation}" : out_dict[f"mmj_min_dEta_{variation}"], 
+        #             f"mmj_min_dPhi_{variation}" : out_dict[f"mmj_min_dPhi_{variation}"], 
+                    
+        #         }
+        #         test_dict.update(unc_dict)
         # test_dict = dask.compute(test_dict)[0]
-        # # logger.info(test_dict)
+        # logger.info(test_dict)
         # for key, element in test_dict.items():
         #     # print(element)
         #     element = ak.to_numpy(element[:50])
@@ -1644,14 +1653,6 @@ class EventProcessor(processor.ProcessorABC):
             # else:
                 # zpt_weight_mine_nbins100 = getZptWgts_3region(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
             
-            # logger.info("======================= old zpt weights are commented out =======================")
-            # if year == "2016postVFP" or year=="2018": #FIXME: This is temporary, we need to sync the zpt strategy and update it.
-            #     zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-            # else:
-            #     zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-            # logger.info(f"zpt_weight_mine_nbins100: {type(zpt_weight_mine_nbins100)}")
-            # logger.info(f"zpt_weight_mine_nbins100: {(zpt_weight_mine_nbins100)}")
-
             # logger.info("========================= new zpt weights start =========================")
             # sf_dict = load_sf_dict("/depot/cms/users/shar1172/copperheadV2_CheckSetup/data/zpt_rewgt/fitting_mu1mu2pt/sf_data_flat.json")
             # logger.info(f"sf_dict: {sf_dict}")
@@ -1952,6 +1953,7 @@ class EventProcessor(processor.ProcessorABC):
                 "btagDeepB",
             ]
             jets =  get_jet_variation(jets, variation, fields2add)
+            
         # if "jer" in variation: # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution#JER_Scaling_factors_and_Uncertai
         #     logger.info("doing JER unc!")
         #     jer_mask_dict ={
@@ -2232,7 +2234,7 @@ class EventProcessor(processor.ProcessorABC):
             }
             sj_dict.update(sj_out)
 
-        logger.info(f"sj_dict.keys(): {sj_dict.keys()}")
+        logger.debug(f"sj_dict.keys(): {sj_dict.keys()}")
         jet_loop_out_dict.update(sj_dict)
 
 

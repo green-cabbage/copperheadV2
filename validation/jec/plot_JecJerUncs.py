@@ -7,6 +7,7 @@ import numpy as np
 import json
 from collections import OrderedDict
 from modules.utils import filterRegion, applyRegionCatCuts
+from src.lib.get_parameters import getParametersForYr
 from distributed import Client
 import time    
 import tqdm
@@ -108,7 +109,7 @@ def compute_variations(events, hist_empty, sample, categories, regions, variable
     return hist_dictByCat
 
 
-def plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate):
+def plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate, save_path="plots"):
     for category in categories:
         plot_settings = getPlotSettings(category)
         for region_name in regions:
@@ -131,7 +132,7 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
                     variations = ["nominal"] + [f"{variation_base}_up", f"{variation_base}_down"]
                     # variations = ["nominal"]
                     print(f"variations: {variations}")
-                    print(f"{var} {category} {region_name} computed_hist: {computed_hist}")
+                    # print(f"{var} {category} {region_name} computed_hist: {computed_hist}")
                     
                     for variation in variations:
                         to_project_setting_val = {
@@ -161,7 +162,7 @@ def plot_variations(computed_hist_dict, sample, categories, regions, variables, 
                     plt.grid(True, linestyle='--', alpha=0.6)
                     
                     # Save to PDF
-                    plt.savefig(f'plots/{plot_var}_Reg{region_name}Cat{category}Var{variation_base}.pdf')
+                    plt.savefig(f'{save_path}/{plot_var}_Reg{region_name}Cat{category}Var{variation_base}.pdf')
                     plt.clf()
     
 if __name__ == "__main__":
@@ -260,17 +261,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/*/"
     year = args.year
-    if year == "all":
-        year_param = "*"
-    elif year == "2016":
-        year_param = "2016*"
-    else:
-        year_param = year
     load_path = args.load_path
     # events = dak.from_parquet(f"{load_path}/*data.parquet")
     # print(events.fields)
     print(f"load_path : {load_path}")
 
+    config = getParametersForYr("../../configs/parameters/" , year)
     lumi_dict = {
         "2018" : 59.83,
         "2017" : 41.48,
@@ -312,7 +308,10 @@ if __name__ == "__main__":
     # variables = ["jet1_pt", "jet2_pt"]
     n_jer_vars = 6
     # n_jer_vars = 1 #FIXME
-    variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)] # we need to keep this separate
+    # variations2validate = [f"jer{i}" for i in range(1, n_jer_vars+1)] # we need to keep this separate
+    # variations2validate = ["Absolute"] # FIXME
+    variations2validate = config["jec_parameters"]["jec_unc_to_consider"]
+    print(f"variations2validate: {variations2validate}")
     # add up and down
     variations_with_shifts = [f"{variation}_up" for variation in variations2validate] + [f"{variation}_down" for variation in variations2validate] # TODO: extract the variations from config (use the same method from run_stage1.py)
     # print(f"variations2validate: {variations2validate}")
@@ -344,6 +343,8 @@ if __name__ == "__main__":
     
     
     for sample in samples:
+        save_path = f"plots/{year}/{sample}"
+        os.makedirs(save_path, exist_ok=True)
         full_load_path = load_path+f"/{sample}*/*/*.parquet" 
         print(f"full_load_path: {full_load_path}")
         filelist = glob.glob(full_load_path)
@@ -353,9 +354,10 @@ if __name__ == "__main__":
         # -----------------------------------------------
         
         events = dak.from_parquet(filelist)
-
+        print(f"events.fields : {events.fields}")
+        # raise ValueError
         computed_hist_dict = compute_variations(events, sample_hist_empty, sample, categories, regions, variables, variations_with_shifts)
-        plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate)
+        plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate, save_path=save_path)
         # print(f"computed_hists: {computed_hists}")
         # print(f"events.fields: {events.fields}")
 
