@@ -16,8 +16,18 @@ import copy
 import pandas as pd
 from modules.utils import getGOF_KS
 
+# coreFunction_dict = {
+#         "BWZRedux" : [],
+#         # "BwzGamma" : [],
+#         # "BWZxBern" : [],
+#         "sumExp" : [],
+#         # "PowerLaw" : [],
+#         "FEWZxBern" : [],
+#         # "LandauxBern" : [],
+#     }
 
-    
+
+
 def create_core_pdf(pdf_type, subcat_index, x, init_vals):
     """
     Create a RooAbsPdf of a given type with per-subcategory RooRealVars,
@@ -53,7 +63,33 @@ def create_core_pdf(pdf_type, subcat_index, x, init_vals):
                            init_vals["f_coeff"], 0.0, 1.0)
         pdf = rt.RooSumTwoExpPdf(prefix, prefix, x, a1, a2, f)
         return pdf, [a1, a2, f]
-
+        
+    elif pdf_type == "PowerLaw":
+        a1 = rt.RooRealVar(f"{prefix}_PowerLaw_a1_coeff", f"{prefix}_PowerLaw_a1_coeff", 
+                           init_vals["PowerLaw_a1_coeff"], -2.0, 1.0)
+        a2 = rt.RooRealVar(f"{prefix}_PowerLaw_a2_coeff", f"{prefix}_PowerLaw_a2_coeff", 
+                           init_vals["PowerLaw_a2_coeff"], -2.0, 1.0)
+        f  = rt.RooRealVar(f"{prefix}_PowerLaw_f_coeff", f"{prefix}_PowerLaw_f_coeff", 
+                           init_vals["PowerLaw_f_coeff"], 0.0, 1.0)
+        pdf = rt.RooSumTwoPowerLawPdf(prefix, prefix, x, a1, a2, f)
+        return pdf, [a1, a2, f]
+        
+    elif pdf_type == "FEWZxBern":
+        pdf, param_l = getFEWZxBern(x, init_vals, fewz_workspace_path="modules/ucsd_workspace/")
+        return pdf, param_l
+        
+    elif pdf_type == "LandauxBern":
+        pdf, param_l = getLandxBern(x, init_vals)
+        return pdf, param_l
+        
+    elif pdf_type == "BWZxBern":
+        pdf, param_l = getBWZxBern(x, init_vals)
+        return pdf, param_l
+        
+    elif pdf_type == "BwzGamma":
+        pdf, param_l = getBWZ_gamma(x, init_vals)
+        return pdf, param_l
+        
     else:
         raise ValueError(f"Unsupported PDF type: {pdf_type}")
 
@@ -175,15 +211,14 @@ if __name__ == "__main__":
 
 
     nSubCats = 5
-    nSubCats = 1 # FIXME
     coreFunction_dict = {
         "BWZRedux" : [],
-        # "BwzGamma" : [],
-        # "BWZxBern" : [],
+        "BwzGamma" : [],
+        "BWZxBern" : [],
         "sumExp" : [],
-        # "PowerLaw" : [],
-        # "FEWZxBern" : [],
-        # "LandauxBern" : [],
+        "PowerLaw" : [],
+        "FEWZxBern" : [],
+        "LandauxBern" : [],
     }
     
     # subCat 0
@@ -208,12 +243,38 @@ if __name__ == "__main__":
         "b_coeff": -1.3658e-04,
         "c_coeff": 2.0602e+00,
     }
-    
     sumexp_init_vals = {
         "a1_coeff": -1.4756e-01,
         "a2_coeff": -3.4552e-02,
         "f_coeff": 2.4864e-01,
     }
+    powerlaw_init_vals = {
+        "PowerLaw_a1_coeff": 0.00001,
+        "PowerLaw_a2_coeff": 0.1,
+        "PowerLaw_f_coeff": 0.9,
+    }
+
+    fewzxbern_init_vals = {
+        "fewz_bernstein_a1": 1.5,
+        "fewz_bernstein_a2": 0.75,
+        "fewz_bernstein_a3": 0.75,
+    }
+    landauxbern_init_vals = {
+        "landau_a_coeff": 0.258087,
+        "landau_bernstein_a1": 1.5,
+        "landau_bernstein_a2": 0.75,
+    }
+    bwzxbern_init_vals = {
+        "BWZxBern_a_coeff": -0.02,
+        "bwz_bernstein_a0": 0.3,
+        "bwz_bernstein_a1": 0.3,
+    }
+    bwzgamma_init_vals = {
+        "bwzgamma_BWZ_a_coeff": -0.02,
+        "bwzgamma_Gamma_a_coeff": -0.00005,
+        "bwzgamma_frac": 0.5,
+    }
+    
     
     all_params = []
     
@@ -228,7 +289,37 @@ if __name__ == "__main__":
         coreFunction_dict["sumExp"].append(pdf_sumexp)
         all_params.extend(params_sumexp)
 
+        # PowerLaw
+        pdf, params = create_core_pdf("PowerLaw", ix, mass, powerlaw_init_vals)
+        coreFunction_dict["PowerLaw"].append(pdf)
+        all_params.extend(params)
+
+        # FEWZxBern
+        pdf, params = create_core_pdf("FEWZxBern", ix, mass, fewzxbern_init_vals)
+        coreFunction_dict["FEWZxBern"].append(pdf)
+        all_params.extend(params)
+
+        # LandauxBern
+        pdf, params = create_core_pdf("LandauxBern", ix, mass, landauxbern_init_vals)
+        coreFunction_dict["LandauxBern"].append(pdf)
+        all_params.extend(params)
+
+        # BWZxBern
+        pdf, params = create_core_pdf("BWZxBern", ix, mass, bwzxbern_init_vals)
+        coreFunction_dict["BWZxBern"].append(pdf)
+        all_params.extend(params)
         
+        # BwzGamma
+        pdf, params = create_core_pdf("BwzGamma", ix, mass, bwzgamma_init_vals)
+        coreFunction_dict["BwzGamma"].append(pdf)
+        all_params.extend(params)
+
+        
+
+
+    print(f"all_params b4 fitting: {[param.Print() for param in all_params]}")
+    # print(f"coreFunction_dict: {coreFunction_dict}")
+    # raise ValueError
     # ---------------------------------------------------------------
     # Extract Data over all sub cats
     # ---------------------------------------------------------------
@@ -285,17 +376,28 @@ if __name__ == "__main__":
     #----------------------------------------------------------------------------
     # Do fit to the core function
     # ---------------------------------------------------------------------------
-
+    data_histSubCat_l = [
+        roo_histData_subCat0,
+        roo_histData_subCat1,
+        roo_histData_subCat2,
+        roo_histData_subCat3,
+        roo_histData_subCat4,
+    ]
 
     # fit FEWZxBern separately
-    for core_func_name, core_func_l in coreFunction_dict.items():
-        print(f"core_func_name: {core_func_name}")
-        
-        core_func = core_func_l[0]
-        _ = core_func.fitTo(roo_histData_subCat0, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-        fitResult = core_func.fitTo(roo_histData_subCat0, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-        fitResult.Print()
+    for ix in range(nSubCats):
+        for core_func_name, core_func_l in coreFunction_dict.items():
+            print(f"core_func_name: {core_func_name}")
+            print(f"core_func_l: {core_func_l}")
+            core_func = core_func_l[ix]
+            data_histSubCat = data_histSubCat_l[ix]
+            _ = core_func.fitTo(data_histSubCat, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+            fitResult = core_func.fitTo(data_histSubCat, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+            fitResult.Print()
 
+    print(f"all_params after fitting: {[param.Print() for param in all_params]}")
+    print(f"coreFunction_dict: {coreFunction_dict}")
+    
     print("Success!")
     
     raise ValueError
