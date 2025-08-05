@@ -16,17 +16,6 @@ import copy
 import pandas as pd
 from modules.utils import getGOF_KS
 
-# coreFunction_dict = {
-#         "BWZRedux" : [],
-#         # "BwzGamma" : [],
-#         # "BWZxBern" : [],
-#         "sumExp" : [],
-#         # "PowerLaw" : [],
-#         "FEWZxBern" : [],
-#         # "LandauxBern" : [],
-#     }
-
-
 
 def create_core_pdf(pdf_type, subcat_index, x, init_vals):
     """
@@ -93,6 +82,26 @@ def create_core_pdf(pdf_type, subcat_index, x, init_vals):
     else:
         raise ValueError(f"Unsupported PDF type: {pdf_type}")
 
+
+def getEnvelope(coreFunction_dict, cat_ix : int, func_order : list):
+    # intialize RooCategory for each subCat with a same name so that combine changes index over all cats
+    cat_index = rt.RooCategory(f"pdf_index_ggh","Index of Pdf which is active") # if I have one rooCategory over all categories, then I get "ERROR:InputArguments -- RooAbsCategory::defineState(pdf_index_ggh): index X (0-4) already assigned"
+    
+    pdf_list = []
+    for func_name in func_order:
+        pdf = coreFunction_dict[func_name][cat_ix]
+        pdf_list.append(pdf)
+
+    print([pdf.Print() for pdf in pdf_list])
+    pdf_list = rt.RooArgList(*pdf_list)
+
+    env_pdf = rt.RooMultiPdf(f"EnvPdf_cat{cat_ix}", f"EnvPdf_cat{cat_ix}", cat_index, pdf_list)
+    penalty = 0.5
+    env_pdf.setCorrectionFactor(penalty) 
+    # [pdf.Print() for pdf in pdf_list]
+    print(f"cat{cat_ix} cat_index: {cat_index}")
+    
+    return env_pdf, [pdf_list, cat_index]
 
 
 if __name__ == "__main__":
@@ -211,6 +220,7 @@ if __name__ == "__main__":
 
 
     nSubCats = 5
+    # nSubCats = 1 #FIXME
     coreFunction_dict = {
         "BWZRedux" : [],
         "BwzGamma" : [],
@@ -398,15 +408,14 @@ if __name__ == "__main__":
     print(f"all_params after fitting: {[param.Print() for param in all_params]}")
     print(f"coreFunction_dict: {coreFunction_dict}")
     
-    print("Success!")
+    # print("Success!")
+    # raise ValueError
     
-    raise ValueError
     # ---------------------------------------------------
-    # Make CORE-PDF
+    # Group the functions into one Envelope
     # ---------------------------------------------------
 
-    # subCat 0 
-    cat_subCat0 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
+
     
     # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
     # // 0 == BWZRedux
@@ -419,31 +428,27 @@ if __name__ == "__main__":
     
     # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
     # I suppose BWZredux is there bc it's the one function with overall least bias (which is why BWZredux is used if CORE-PDF is not used)
-    pdf_list_subCat0 = rt.RooArgList(
-        model_subCat0_sumExp,
-        model_subCat0_BWZRedux,
-        model_subCat0_FEWZxBern,
-    )
-    corePdf_subCat0 = rt.RooMultiPdf("CorePdf_subCat0","CorePdf_subCat0",cat_subCat0,pdf_list_subCat0)
-    # penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
-    penalty = 0.5
-    corePdf_subCat0.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat0.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
-    print(f"roo_datasetData_subCat0 sumentries: {nevents}")
-    bkg_subCat0_norm = rt.RooRealVar(corePdf_subCat0.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
-    
-    # add yield
-    new_row = {
-        "year": [args.year],
-        "category": ["cat0"],
-        "dataset": ["data"], 
-        "yield": [nevents]
-    }
-    new_row = pd.DataFrame(new_row)
-    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
-    
+    func_order = ['BWZRedux', 'BwzGamma', 'BWZxBern', 'sumExp', 'PowerLaw', 'FEWZxBern', 'LandauxBern']
+    env_pdfs = []
+    norm_l = []
+    # cat_index = rt.RooCategory(f"pdf_index_ggh_cat{cat_ix}","Index of Pdf which is active");
+    for cat_ix in range(nSubCats):
+        env_pdf, params = getEnvelope(coreFunction_dict, cat_ix, func_order)
+        env_pdfs.append(env_pdf)
+        all_params.extend(params)
+
+        nevents = data_histSubCat_l[cat_ix].sumEntries()
+        env_norm = rt.RooRealVar(env_pdf.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
+        norm_l.append(env_norm)
+        
+
+    print(f"env_pdfs: {env_pdfs}")
+
+    print("Success!")
+    raise ValueError
 
 
+    #--------------------------------------------------------------
     # subCat 1 
     cat_subCat1 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
     
