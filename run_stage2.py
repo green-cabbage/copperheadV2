@@ -9,7 +9,7 @@ from typing import Tuple, List, Dict
 # import ROOT as rt
 import glob, os
 
-from src.lib.MVA_functions import prepare_features, evaluate_bdt, evaluate_dnn
+from src.lib.MVA_functions import prepare_features, evaluate_bdt, evaluate_dnn, apply_variation
 import argparse
 import time
 import sys, inspect
@@ -120,7 +120,7 @@ def getDeltaPhi(phi1,phi2):
     dphi = abs(np.mod(phi1 - phi2 + np.pi, 2 * np.pi) - np.pi)
     return dphi
         
-def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Record:
+def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fields=[], jec_unc_fields=[]) -> ak.Record:
     """
     Takes the given stage1 output, runs MVA, and returns a new 
     ak.Record with MVA score + relevant info from stage1 output
@@ -150,7 +150,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
     # )
     # events["jj_dPhi"] = getDeltaPhi(events.jet1_phi, events.jet2_phi)
     
-
+    extra_variations = wgt_unc_fields + jec_unc_fields
 
     # merged 2016preVFP and 2016postVFP for BDT training
     if "2016" in year:
@@ -173,13 +173,19 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
     # ----------------------------------
     # do preprocessing
     # ----------------------------------
-   
+       
     # load fields to load
-    fields2load = ["nBtagLoose", "nBtagMedium", "dimuon_mass", "wgt_nominal", "mmj2_dEta", "mmj2_dPhi", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal"]
-    fields2load = prepare_features(events, fields2load) # add variation to the name
-    fields2load = list(set(fields2load + training_features)) # remove redundant fields
+    fields2load = ["nBtagLoose_nominal", "nBtagMedium_nominal", "dimuon_mass", "wgt_nominal", "mmj2_dEta_nominal", "mmj2_dPhi_nominal", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal"]
+    for variation in jec_unc_fields: # add jec unc variations
+        fields2load4variation = apply_variation(fields2load, variation)
+        training_feature4variation = apply_variation(training_features, variation)
+        fields2load = fields2load + fields2load4variation + training_feature4variation
+    # fields2load = prepare_features(events, fields2load) # add variation to the name
+    fields2load = list(set(fields2load + training_features + wgt_unc_fields)) # remove redundant fields
 
     print(f"fields2load: {fields2load}")
+    # print(f"training_features: {training_features}")
+    # raise ValueError
 
     # load data to memory using compute()
     # original start -------------------------------
@@ -229,8 +235,13 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
         "year" : year_param,
     }
     print(f"parameters models path: {parameters['models_path']}")
-    processed_events = evaluate_bdt(events, "nominal", model_name, training_features, parameters) 
-
+    variatons2loop = ["nominal"] + jec_unc_fields
+    print(f"variatons2loop: {variatons2loop}")
+    
+    for variation in variatons2loop:
+        # processed_events = evaluate_bdt(events, "nominal", model_name, training_features, parameters) 
+        events = evaluate_bdt(events, variation, model_name, training_features, parameters) 
+    processed_events = events
     # load BDT score edges for subcategory divison
     BDTedges_load_path = "./configs/MVA/ggH/BDT_edges.yaml"
     edges = OmegaConf.load(BDTedges_load_path)
@@ -239,28 +250,46 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str) -> ak.Recor
     # edges = 1-edges
     print(f"subCat BDT edges: {edges}")
 
-    BDT_score = processed_events["BDT_score"]
-    subCat_idx = np.digitize(BDT_score, edges) -1 # digitize starts at one, not zero
-    processed_events["subCategory_idx"] = subCat_idx
+    for variation in variatons2loop:
+        if variation == "nominal":
+            score_name = "BDT_score"
+            subCat_name = "subCategory_idx"
+        else:
+            score_name = f"BDT_score_{variation}"
+            subCat_name = f"subCategory_idx_{variation}"
+        BDT_score = processed_events[score_name]
+        subCat_idx = np.digitize(BDT_score, edges) -1 # digitize starts at one, not zero
+        processed_events[subCat_name] = subCat_idx
 
     
     # filter in only the variables you need to do stage3
     fields2save = [
         "dimuon_mass",
-        "BDT_score", # eval fold
+        # "BDT_score", # eval fold
         # "BDT_score_val", # val fold
         # "BDT_score_train", # train fold
-        "subCategory_idx", # eval fold
+        # "subCategory_idx", # eval fold
         # "subCategory_idx_val", # val fold
         "wgt_nominal",
         # "h_peak",
         # "h_sidebands",
         "event", # This is not strictly necessary
     ]
-    
+    for field in processed_events.fields: # add all fields mentioning bdt score
+        if "BDT_score" in field:
+            fields2save.append(field)
+        elif "subCategory_idx" in field:
+            fields2save.append(field)
+         
+    fields2save = fields2save + wgt_unc_fields
     processed_events = ak.zip({
         field : processed_events[field] for field in fields2save
     })
+
+    if year=="2018": #FIXME , temp hard code to add dummy prefiring wgts
+        wgt_nominal = processed_events["wgt_nominal"]
+        processed_events["wgt_l1prefiring_up"] = ak.ones_like(wgt_nominal)*wgt_nominal # make copy of wgt nominal just ones_like doesn't work
+        processed_events["wgt_l1prefiring_down"] = ak.ones_like(wgt_nominal)*wgt_nominal # make copy of wgt nominal just ones_like doesn't work
     return processed_events
 
 # def process4vbfCategory(events: ak.Record, variation="nominal") -> ak.Record:
@@ -432,7 +461,17 @@ def getOtherSamples(load_path):
         print(f"{mc_name} glob_out: {len(glob_out)}")
         glob_l += glob_out
     return glob_l
-    
+
+def applyUpDown(variation_base_l: list):
+    """
+    helper function that adds _up and _down to the variations
+    """
+    variation_up_l = [f"{variation}_up" for variation in variation_base_l]
+    variation_down_l = [f"{variation}_down" for variation in variation_base_l]
+    combined_variation_l = variation_up_l + variation_down_l
+    # print(f"combined_variation_l: {combined_variation_l}")
+    return combined_variation_l
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -516,19 +555,21 @@ if __name__ == "__main__":
     category = args.category.lower()
 
     print(f"args.samples: {args.samples}")
+    is_signal_MC = False
     for sample in args.samples:
         if sample.lower() == "data":
             full_load_path = load_path+f"/data_*/*/*.parquet" # original
             # altering to match copperheadV1's stasge1 output to work with copperheadV2
-            # full_load_path = load_path+f"/data_*/*.parquet"
-            # full_load_path = load_path+f"/data_B/*.parquet"
             full_load_path = glob.glob(full_load_path)
         elif sample.lower() == "ggh":
             full_load_path = load_path+f"/ggh_powhegPS/*/*.parquet"
+            is_signal_MC = True
         elif sample.lower() == "ggh_amcps":
             full_load_path = load_path+f"/ggh_amcPS/*/*.parquet"
+            is_signal_MC = True
         elif sample.lower() == "vbf":
             full_load_path = load_path+f"/vbf_powheg_dipole/*/*.parquet"
+            is_signal_MC = True
         elif sample.lower() == "dy":
             # full_load_path = load_path+f"/dy_M-100To200/*/*.parquet"
             full_load_path = load_path+f"/dy_*/*/*.parquet"
@@ -561,10 +602,29 @@ if __name__ == "__main__":
         events = dak.from_parquet(full_load_path)
         target_chunksize = 150_000
         events = events.repartition(rows_per_partition=target_chunksize)
+
+        wgt_unc_fields = []
+        for field in events.fields:
+            if (("wgt" in field) and not ("separate" in field)) and not ("nominal" in field):
+                wgt_unc_fields.append(field)
+
+        
+        jec_unc_fields  = ["Absolute", "FlavorQCD"]
+        jec_unc_fields = applyUpDown(jec_unc_fields)
+        # jec_unc_fields = []
+        
+        # extra_fields = wgt_unc_fields + jec_unc_fields
+        print(f"wgt_unc_fields: {wgt_unc_fields}")
+        print(f"jec_unc_fields: {jec_unc_fields}")
+        # print(f"wgt_unc_fields: {len(wgt_unc_fields)}")
+        # raise ValueError
         
         print("done loading events!")
         if category == "ggh":
-            processed_events = process4gghCategory(events, args.year, args.model_name)      
+            if is_signal_MC: # add extra fields for uncertainties in datacard
+                processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, jec_unc_fields=jec_unc_fields)
+            else:
+                processed_events = process4gghCategory(events, args.year, args.model_name)
         elif category == "vbf":
             processed_events = process4vbfCategory(events) 
         else: 
