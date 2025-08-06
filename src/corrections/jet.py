@@ -546,15 +546,15 @@ def do_jec_scale(jets, config, is_mc, dataset, uncs=["nominal"]):
             # up
             # jet_pt_jec = (1+new_jec_scale)*jets.pt_jec
             # jet_mass_jec = (1+new_jec_scale)*jets.mass_jec
-            jet_pt_jec = (1+new_jec_scale) # apply these corrections after JER
-            jet_mass_jec = (1+new_jec_scale) # apply these corrections after JER
+            jet_pt_jec = (1+new_jec_scale) # apply these corrections fully after JER
+            jet_mass_jec = (1+new_jec_scale) # apply these corrections fully after JER
             jets[f"pt_{unc}_up"] = jet_pt_jec
             jets[f"mass_{unc}_up"] = jet_mass_jec
             # down
             # jet_pt_jec = (1-new_jec_scale)*jets.pt_jec
             # jet_mass_jec = (1-new_jec_scale)*jets.mass_jec
-            jet_pt_jec = (1-new_jec_scale) # apply these corrections after JER
-            jet_mass_jec = (1-new_jec_scale) # apply these corrections after JER
+            jet_pt_jec = (1-new_jec_scale) # apply these corrections fully after JER
+            jet_mass_jec = (1-new_jec_scale) # apply these corrections fully after JER
             jets[f"pt_{unc}_down"] = jet_pt_jec
             jets[f"mass_{unc}_down"] = jet_mass_jec
     return jets

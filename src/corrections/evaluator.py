@@ -1547,6 +1547,35 @@ def btag_weights_json(processor, systs, jets, weights, bjet_sel_mask, btag_file)
 #
 # -----------------------------------------------------------
 
+
+def eval_jetpuid_sf(year, jets, jet_puid_wp, config):
+    """
+    Evaluates the jet PUID scale factors for a given year and set of jets.
+    """
+    fname = config["jmar_sf_file"]
+    # print(f"fname: {fname}")
+    puid_evaluator = correctionlib.CorrectionSet.from_file(fname)
+    wp_converter = {
+        "loose" : "L",
+        "medium" : "M",
+        "tight" : "T",
+    }
+    wp = wp_converter[jet_puid_wp]
+    map_name = "PUJetID_eff"
+    sf = puid_evaluator[map_name]
+
+    input_dict = {
+        "eta" : jets.eta,
+        "pt" : jets.pt,
+        "systematic" : "nom",
+        "workingpoint": wp
+    }
+    inputs = get_corr_inputs(input_dict, sf)
+    sf_val = sf.evaluate(*inputs)
+    sf_val = ak.prod(sf_val, axis=1)
+    sf_val = ak.fill_none(sf_val, value=1) # unncessary, but just in case
+    return sf_val
+
 def get_jetpuid_weights(year, jets, config):
     """
     Source: https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/jmarExample.py?ref_type=heads#L47-52
@@ -1590,7 +1619,26 @@ def get_jetpuid_weights(year, jets, config):
     sf_val = ak.fill_none(sf_val, value=1) # unncessary, but just in case
     return sf_val
 
+# eta dependent jet puid weights
+def get_jetpuid_weights_eta_dependent(year, jets, config):
+    jets = jets[jets.pt < 50]  # no need to re-weight jets with pt>= 50
 
+    # gen-matched jets
+    pT_gen_jets = ak.fill_none(jets.matched_gen.pt, value = -1.0) # if no match, fill with -1.0. Source https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/jercExample.py?ref_type=heads#L45
+    jets = jets[pT_gen_jets > 0]  # remove jets with no gen-matched
+
+    # split the jets based on eta ranges: |eta| <= 2.5 and |eta| > 2.5
+    jets_eta_low = jets[abs(jets.eta) <= 2.5]
+    jets_eta_high = jets[abs(jets.eta) > 2.5]
+
+    # get the jet PUID weights for each eta range
+    puid_weights_low = eval_jetpuid_sf(year, jets_eta_low, "loose", config)
+    puid_weights_high = eval_jetpuid_sf(year, jets_eta_high, "tight", config)
+
+    # print(f"puid_weights_low: {puid_weights_low[:10].compute()}")
+    # print(f"puid_weights_high: {puid_weights_high[:10].compute()}")
+
+    return puid_weights_low * puid_weights_high
 
 def get_jetpuid_weights_old(evaluator, year, jets, pt_name, jet_puid_opt, jet_puid):
     if year == "2016preVFP":

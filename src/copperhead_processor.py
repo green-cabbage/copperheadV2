@@ -11,7 +11,7 @@ from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
 from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, get_jet_variation, applyUpDown, applyJetUncertaintyKinematics
 # from src.corrections.weight import Weights
-from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old
+from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old, get_jetpuid_weights_eta_dependent
 import json
 from coffea.lumi_tools import LumiMask
 import pandas as pd # just for debugging
@@ -581,6 +581,7 @@ class EventProcessor(processor.ProcessorABC):
         year = self.config["year"]
         # ReInitialize PackedSelection, otherwise processor would merge selection from previous run
         self.selection = PackedSelection()
+        do_jec_unc = False #True 
         """
         TODO: Once you're done with testing and validation, do LHE cut after HLT and trigger match event filtering to save computation
         """
@@ -1182,8 +1183,10 @@ class EventProcessor(processor.ProcessorABC):
             
             # -------------------------------------
             print("doing JEC + SMEARing!")
-            variation_l = ["nominal"] + self.config["jec_parameters"]["jec_unc_to_consider"]
-            # variation_l = ["nominal", "Absolute"] # FIXME
+            if do_jec_unc:
+                variation_l = ["nominal"] + self.config["jec_parameters"]["jec_unc_to_consider"]
+            else:
+                variation_l = ["nominal"]
             jets = do_jec_scale(jets, self.config, is_mc, dataset, uncs=variation_l)
             # jets = do_jec_scale(jets, self.config, is_mc, dataset)
             # print(f"jets test: {jets.pt_Absolute_up.compute()}")
@@ -1284,7 +1287,6 @@ class EventProcessor(processor.ProcessorABC):
         # Calculate other event weights
         # ------------------------------------------------------------#
         jec_pars = self.config["jec_parameters"]
-        do_jec_unc = True
         if do_jec_unc:
             pt_variations = (
                 ["nominal"]
@@ -1515,19 +1517,19 @@ class EventProcessor(processor.ProcessorABC):
         #     "jet1_pt_nominal" : out_dict['jet1_pt_nominal'][:],
         #     # "jet1_pt_jer1_up" : out_dict['jet1_pt_jer1_up'][:],
         #     # "jet1_pt_jer1_down" : out_dict['jet1_pt_jer1_down'][:],
-        #     "jet1_mass_nominal" : out_dict['jet1_mass_nominal'][:],
+        #     # "jet1_mass_nominal" : out_dict['jet1_mass_nominal'][:],
         #     # "jet1_mass_jer1_up" : out_dict['jet1_mass_jer1_up'][:],
         #     # "jet1_mass_jer1_down" : out_dict['jet1_mass_jer1_down'][:],
-        #     "jet2_pt_nominal" : out_dict['jet2_pt_nominal'][:],
+        #     # "jet2_pt_nominal" : out_dict['jet2_pt_nominal'][:],
         #     # "jet2_pt_jer1_up" : out_dict['jet2_pt_jer1_up'][:],
         #     # "jet2_pt_jer1_down" : out_dict['jet2_pt_jer1_down'][:],
-        #     "jet2_mass_nominal" : out_dict['jet2_mass_nominal'][:],
+        #     # "jet2_mass_nominal" : out_dict['jet2_mass_nominal'][:],
         #     # "jet2_mass_jer1_up" : out_dict['jet2_mass_jer1_up'][:],
         #     # "jet2_mass_jer1_down" : out_dict['jet2_mass_jer1_down'][:],
-        #     "jj_pt_nominal" : out_dict['jj_pt_nominal'][:],
+        #     # "jj_pt_nominal" : out_dict['jj_pt_nominal'][:],
         #     # "jj_pt_jer1_up" : out_dict['jj_pt_jer1_up'][:],
         #     # "jj_pt_jer1_down" : out_dict['jj_pt_jer1_down'][:],
-        #     "jj_mass_nominal" : out_dict['jj_mass_nominal'][:],
+        #     # "jj_mass_nominal" : out_dict['jj_mass_nominal'][:],
         #     # "jj_mass_jer1_up" : out_dict['jj_mass_jer1_up'][:],
         #     # "jj_mass_jer1_down" : out_dict['jj_mass_jer1_down'][:],
         #     # f"mmj1_dEta_nominal" : out_dict["mmj1_dEta_nominal"], 
@@ -1536,8 +1538,8 @@ class EventProcessor(processor.ProcessorABC):
         #     # f"mmj2_dEta_nominal" : out_dict["mmj2_dEta_nominal"], 
         #     # f"mmj2_dPhi_nominal" : out_dict["mmj2_dPhi_nominal"], 
         #     # f"mmj2_dR_nominal" : out_dict["mmj2_dR_nominal"], 
-        #     f"mmj_min_dEta_nominal" : out_dict["mmj_min_dEta_nominal"], 
-        #     f"mmj_min_dPhi_nominal" : out_dict["mmj_min_dPhi_nominal"], 
+        #     # f"mmj_min_dEta_nominal" : out_dict["mmj_min_dEta_nominal"], 
+        #     # f"mmj_min_dPhi_nominal" : out_dict["mmj_min_dPhi_nominal"], 
         #     # f"mmjj_pt_nominal" : out_dict["mmjj_pt_nominal"], 
         #     # f"mmjj_eta_nominal" : out_dict["mmjj_eta_nominal"], 
         #     # f"mmjj_phi_nominal" : out_dict["mmjj_phi_nominal"], 
@@ -1582,20 +1584,21 @@ class EventProcessor(processor.ProcessorABC):
         # }
         # # print(f"out_dict.keys(): {out_dict.keys()}")
         # jec_uncs = self.config["jec_parameters"]["jec_unc_to_consider"]
-        # jec_uncs = ["Absolute"]#FIXME
+        # # jec_uncs = ["Absolute", "jer5","jer6"]#FIXME
+        # jec_uncs = ["jer5","jer6"]#FIXME
         
         # for unc in jec_uncs:
         #     for shift in ["up", "down"]:
         #         variation = f"{unc}_{shift}"
         #         unc_dict = {
         #             f"jet1_pt_{variation}" : out_dict[f'jet1_pt_{variation}'][:],
-        #             f"jet1_mass_{variation}" : out_dict[f'jet1_mass_{variation}'][:],
-        #             f"jet2_pt_{variation}" : out_dict[f'jet2_pt_{variation}'][:],
-        #             f"jet2_mass_{variation}" : out_dict[f'jet2_mass_{variation}'][:],
-        #             f"jj_pt_{variation}" : out_dict[f'jj_pt_{variation}'][:],
-        #             f"jj_mass_{variation}" : out_dict[f'jj_mass_{variation}'][:],
-        #             f"mmj_min_dEta_{variation}" : out_dict[f"mmj_min_dEta_{variation}"], 
-        #             f"mmj_min_dPhi_{variation}" : out_dict[f"mmj_min_dPhi_{variation}"], 
+        #             # f"jet1_mass_{variation}" : out_dict[f'jet1_mass_{variation}'][:],
+        #             # f"jet2_pt_{variation}" : out_dict[f'jet2_pt_{variation}'][:],
+        #             # f"jet2_mass_{variation}" : out_dict[f'jet2_mass_{variation}'][:],
+        #             # f"jj_pt_{variation}" : out_dict[f'jj_pt_{variation}'][:],
+        #             # f"jj_mass_{variation}" : out_dict[f'jj_mass_{variation}'][:],
+        #             # f"mmj_min_dEta_{variation}" : out_dict[f"mmj_min_dEta_{variation}"], 
+        #             # f"mmj_min_dPhi_{variation}" : out_dict[f"mmj_min_dPhi_{variation}"], 
                     
         #         }
         #         test_dict.update(unc_dict)
@@ -1603,7 +1606,7 @@ class EventProcessor(processor.ProcessorABC):
         # logger.info(test_dict)
         # for key, element in test_dict.items():
         #     # print(element)
-        #     element = ak.to_numpy(element[:50])
+        #     element = ak.to_numpy(element[:])
         #     print(f"{key}: {element}")
         
         # raise ValueError
@@ -2010,18 +2013,6 @@ class EventProcessor(processor.ProcessorABC):
         is_2017 = "2017" in year
         if NanoAODv == 9  or NanoAODv == 12:
             pass_jet_puid = jet_puid(jets, self.config)
-            # Jet PUID scale factors, which also takes pt < 50 into account within the function
-            if is_mc:
-                if is_2017:
-                    logger.info("doing jet puid weights!")
-                    jet_puid_opt = self.config["jet_puid"]
-                    pt_name = "pt"
-                    puId = jets.puId
-                    jetpuid_weight = get_jetpuid_weights_old(
-                        self.evaluator, year, jets, pt_name,
-                        jet_puid_opt, pass_jet_puid
-                    )
-                    # we add the jetpuid_weight later in the code
         else: # NanoAODv12 doesn't have Jet_PuID yet
             pass_jet_puid = ak.ones_like(pass_jet_id, dtype="bool")
         # ------------------------------------------------------------#
@@ -2055,10 +2046,8 @@ class EventProcessor(processor.ProcessorABC):
         jets = ak.to_packed(jets)
 
         # apply jetpuid if not have done already
-        if not is_2017 and is_mc:
-            jetpuid_weight = get_jetpuid_weights(year, jets, self.config)
-
         if is_mc and (variation=="nominal"):
+            jetpuid_weight = get_jetpuid_weights_eta_dependent(year, jets, self.config) # FIXME
             # now we add jetpuid_wgt
             weights.add("jetpuid_wgt",
                     weight=jetpuid_weight,
