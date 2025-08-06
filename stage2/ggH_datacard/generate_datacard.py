@@ -63,6 +63,7 @@ def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubca
             events = ak.from_parquet(year_load_path)
             print(f"events.fields: {events.fields}")
             row_data = {}
+            # row_data["year"] =  year
             for jec_unc_name in jec_unc_fields:
                 subCat_field = f"subCategory_idx_{jec_unc_name}"
                 subcat_filter = events[subCat_field] == subCat_ix
@@ -72,10 +73,24 @@ def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubca
                 row_data[jec_unc_name] = wgt_yield
                 
                 # print(f"{jec_unc_name} subcat {subCat_ix} yield: {wgt_yield}")
-        df.loc[f"subCat{subCat_ix}"] = row_data
+            df.loc[f"subCat{subCat_ix}_{year}"] = row_data
     print(df)
     raise ValueError
     return df
+
+def getProcessedEvents(events, fields2load, jec_unc_fields):
+    bdt_fields = [
+        "BDT_score",
+        "subCategory_idx",
+    ]
+    bdt_fields_variation = [] 
+    for jec_unc_field in jec_unc_fields:
+        bdt_fields_variation = bdt_fields_variation + [f"{bdt_field}_{jec_unc_field}" for bdt_field in bdt_fields]
+    wgt_fields = [field for field in events.fields if "wgt" in field]
+    fields_total = fields2load + bdt_fields + bdt_fields_variation + wgt_fields
+    print(fields_total)
+    processed_events = ak.zip({field: events[field] for field in fields_total}).compute()
+    return processed_events
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -136,8 +151,14 @@ if __name__ == "__main__":
             load_path = f"{args.load_path}/{year}/{fname}"
         print(f"load_path: {load_path}")
         # processed_events = ak.from_parquet(load_path)
-        processed_events = dak.from_parquet(load_path)
-        processed_events = processed_events.compute()
+        events = dak.from_parquet(load_path)
+        # print(f"events.fields: {events.fields}")
+        fields2load  = [
+            "dimuon_mass",
+        ]
+        jec_unc_fields = ["Absolute", "FlavorQCD"]
+        jec_unc_fields = applyUpDown(jec_unc_fields)
+        processed_events = getProcessedEvents(events, fields2load, jec_unc_fields)
         print(f"processed_events.wgt_nominal: {processed_events.wgt_nominal}")
         print(f"processed_events.wgt_l1prefiring_up: {processed_events.wgt_l1prefiring_up}")
         
@@ -147,10 +168,8 @@ if __name__ == "__main__":
         events = processed_events
         fields2process = [field for field in events.fields if "wgt" in field]
 
-        jec_unc_fields = ["Absolute", "FlavorQCD"]
-        jec_unc_fields = applyUpDown(jec_unc_fields)
-        # fields2process = fields2process + jec_unc_fields
-        fields2process = fields2process #+ jec_unc_fields
+        fields2process = fields2process + jec_unc_fields
+        # fields2process = fields2process 
         print(fields2process)
         # raise ValueError
         print(events.fields)
@@ -166,14 +185,19 @@ if __name__ == "__main__":
         # Create the empty DataFrame
         df = pd.DataFrame(index=row_labels, columns=fields2process)
         df = fillWgtVarations(df, events, nSubcats)
-        # df = fillJecJerVarations(df, events, nSubcats, jec_unc_fields)
+        df = fillJecJerVarations(df, events, nSubcats, jec_unc_fields)
         df.to_csv(f"{base_path}/{sample}_abs_yield.csv")
         df_rel = getRelativeYield2Nominal(df)
         df_rel.to_csv(f"{base_path}/{sample}_relative2nominal.csv")
 
         # fill in jec/jer samples
         years = ["2018", "2017"]
-        df = pd.DataFrame(index=row_labels, columns=(jec_unc_fields+["year"]))
+        row_labels = []
+        for year in years:
+            row_labels = row_labels + [f"subCat{i}_{year}" for i in range(nSubcats)]
+            
+        # df = pd.DataFrame(index=row_labels, columns=(jec_unc_fields+["year"))
+        df = pd.DataFrame(index=row_labels, columns=(jec_unc_fields))
         fname = f"processed_events_sigMC_{sample}.parquet"
         load_path = f"{args.load_path}/year_value/{fname}"
         print(f"load_path: {load_path}")
