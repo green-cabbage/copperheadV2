@@ -15,9 +15,9 @@ import os
 import copy
 import pandas as pd
 # from modules.utils import getGOF_KS
+from src.corrections.jet import applyUpDown
 
-
-def fillWgtVarations(df, events, nSubcats):
+def fillWgtVarations(df :  pd.DataFrame, events, nSubcats : int):
     wgt_fields = [col for col in df.columns if "wgt" in col]
     for cubCat_ix in range(nSubcats):
         subcat_filter = events.subCategory_idx == cubCat_ix
@@ -34,6 +34,21 @@ def getRelativeYield2Nominal(df):
     df_rel = df.div(df["wgt_nominal"], axis=0)
     return df_rel
 
+
+def fillJecJerVarations(df :  pd.DataFrame, events, nSubcats : int, jec_unc_fields):
+    wgt_name = "wgt_nominal"
+    for jec_unc_name in jec_unc_fields:
+        col_data = []
+        for cubCat_ix in range(nSubcats):
+            subCat_field = f"subCategory_idx_{jec_unc_name}"
+            subcat_filter = events[subCat_field] == cubCat_ix
+            wgt_values = events[wgt_name]
+            wgt_values = wgt_values[subcat_filter]
+            wgt_yield = ak.sum(wgt_values)
+            col_data.append(wgt_yield)
+            print(f"{jec_unc_name} subcat {cubCat_ix} yield: {wgt_yield}")
+        df[jec_unc_name] = col_data
+    return df
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -97,7 +112,11 @@ if __name__ == "__main__":
     
         events = processed_events
         fields2process = [field for field in events.fields if "wgt" in field]
-        # print(fields2process)
+
+        jec_unc_fields = ["Absolute", "FlavorQCD"]
+        jec_unc_fields = applyUpDown(jec_unc_fields)
+        fields2process = fields2process + jec_unc_fields
+        print(fields2process)
         print(events.fields)
         # make plot directory
         base_path = f"./datacards/{args.year}/{args.label}"
@@ -111,6 +130,7 @@ if __name__ == "__main__":
         # Create the empty DataFrame
         df = pd.DataFrame(index=row_labels, columns=fields2process)
         df = fillWgtVarations(df, events, nSubcats)
+        df = fillJecJerVarations(df, events, nSubcats, jec_unc_fields)
         print(df)
         df.to_csv(f"{base_path}/{sample}_abs_yield.csv")
         df_rel = getRelativeYield2Nominal(df)
