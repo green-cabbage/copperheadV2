@@ -31,7 +31,6 @@ def fillWgtVarations(df : pd.DataFrame, events, nSubcats : int):
     return df
 
 
-
 def getRelativeYield2Nominal(df):
     df_rel = df.div(df["wgt_nominal"], axis=0)
     return df_rel
@@ -55,7 +54,7 @@ def fillJecJerVarations(df : pd.DataFrame, events, nSubcats : int, jec_unc_field
 
 def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubcats : int, jec_unc_fields : list):
     wgt_name = "wgt_nominal"
-    
+    jec_unc_fields = jec_unc_fields + ["nominal"] # add nominal
     for subCat_ix in range(nSubcats):
         for year in years:
             year_load_path = load_path.replace("year_value", year)
@@ -65,7 +64,12 @@ def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubca
             row_data = {}
             # row_data["year"] =  year
             for jec_unc_name in jec_unc_fields:
-                subCat_field = f"subCategory_idx_{jec_unc_name}"
+                if jec_unc_name == "nominal":
+                    subCat_field = f"subCategory_idx"
+                else:
+                    subCat_field = f"subCategory_idx_{jec_unc_name}"
+                if not subCat_field in events.fields: 
+                    continue # ie. Absolute_2017 in events from 2018 stage2
                 subcat_filter = events[subCat_field] == subCat_ix
                 wgt_values = events[wgt_name]
                 wgt_values = wgt_values[subcat_filter]
@@ -74,9 +78,41 @@ def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubca
                 
                 # print(f"{jec_unc_name} subcat {subCat_ix} yield: {wgt_yield}")
             df.loc[f"subCat{subCat_ix}_{year}"] = row_data
-    print(df)
-    raise ValueError
     return df
+
+def combine_dfByYear(df_byYear, jec_unc_fields : list, years : list, nSubCats : int):
+    # jec_unc_fields = df_byYear.columns
+    print(f"combineDfByYear jec_unc_fields: {jec_unc_fields}")
+
+    # define out df
+    row_labels = [f"subCat{i}" for i in range(nSubcats)]
+    out_df = pd.DataFrame(index=row_labels, columns=jec_unc_fields)
+    print(f"combineDfByYear out_df b4: {out_df}")
+    
+    
+    for subCat_ix in range(nSubcats):
+        row_data = {
+            jec_unc_field : 0 for jec_unc_field in jec_unc_fields
+        }
+        print(row_data)
+        for year in years:
+            row_idx = f"subCat{subCat_ix}_{year}"
+            for jec_unc_field in jec_unc_fields:
+                value = df_byYear.loc[row_idx, jec_unc_field]
+                print(f"combineDfByYear {row_idx} {jec_unc_field} value: {value}")
+                
+                if pd.isna(value):
+                    value = df_byYear.loc[row_idx, "nominal"]
+                    row_data[jec_unc_field] += value
+                else:
+                    row_data[jec_unc_field] += value
+        # print(f"subCat{subCat_ix} row_data: {row_data}")
+        combined_row_idx = f"subCat{subCat_ix}"
+        out_df.loc[combined_row_idx] = row_data
+    print(f"combineDfByYear out_df after: {out_df}")
+
+    return out_df
+    
 
 def getProcessedEvents(events, fields2load, jec_unc_fields):
     bdt_fields = [
@@ -197,12 +233,17 @@ if __name__ == "__main__":
             row_labels = row_labels + [f"subCat{i}_{year}" for i in range(nSubcats)]
             
         # df = pd.DataFrame(index=row_labels, columns=(jec_unc_fields+["year"))
-        df = pd.DataFrame(index=row_labels, columns=(jec_unc_fields))
+        jec_unc_fields = ["Absolute", "FlavorQCD", "Absolute_2018", "Absolute_2017"]
+        jec_unc_fields = applyUpDown(jec_unc_fields)
+        df_byYear = pd.DataFrame(index=row_labels, columns=(jec_unc_fields + ["nominal"]))
         fname = f"processed_events_sigMC_{sample}.parquet"
         load_path = f"{args.load_path}/year_value/{fname}"
         print(f"load_path: {load_path}")
-        df = fillJecJerVarationsByYear(df, load_path, years, nSubcats, jec_unc_fields)
-        
-        print(df)
-        
+        df_byYear = fillJecJerVarationsByYear(df_byYear, load_path, years, nSubcats, jec_unc_fields)
+        print(f"df_byYear: {df_byYear}")
+        df_combined = combine_dfByYear(df_byYear, jec_unc_fields, years, nSubcats)
+        df_combined.to_csv(f"{base_path}/{sample}_jecUnc_absYield.csv")
 
+        df_combined_rel = df_combined.div(df["wgt_nominal"], axis=0)
+        df_combined_rel.to_csv(f"{base_path}/{sample}_jecUnc_relYield.csv")
+        
