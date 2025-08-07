@@ -10,6 +10,7 @@ from typing import Tuple, List, Dict
 import glob, os
 
 from src.lib.MVA_functions import prepare_features, evaluate_bdt, evaluate_dnn, apply_variation
+from src.corrections.jet import getJecJerUncertainties
 import argparse
 import time
 import sys, inspect
@@ -472,6 +473,30 @@ def applyUpDown(variation_base_l: list):
     # print(f"combined_variation_l: {combined_variation_l}")
     return combined_variation_l
 
+
+def mergeAkZips(ak_zips : list):
+    """
+    helper function that merges fields of zips from 
+    ak_zips list.
+    we assume that the shapes are identical for each zip
+    and that there's no overlaping fields between any two zips
+    """
+    merged = ak_zips[0]
+    for ix in range(1, len(ak_zips)):
+        zip2 = ak_zips[ix]
+        for key in zip2.fields:
+            if key not in merged.fields:
+                merged = ak.with_field(merged, zip2[key], key)
+    return merged
+
+def split_maxlen(lst, max_len):
+    """
+    helper function
+    Split a list into chunks of at most `max_len` length.
+    """
+    return [lst[i:i + max_len] for i in range(0, len(lst), max_len)]
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -533,7 +558,22 @@ if __name__ == "__main__":
     help="fraction value used in stage1. By default we assume it to be 1.0",
     )
     start_time = time.time()
-    client =  Client(n_workers=40,  threads_per_worker=1, processes=True, memory_limit='10 GiB') 
+    client =  Client(n_workers=40,  threads_per_worker=1, processes=True, memory_limit='30 GiB') 
+
+
+    # from dask_gateway import Gateway
+    # gateway = Gateway(
+    #     "http://dask-gateway-k8s.geddes.rcac.purdue.edu/",
+    #     proxy_address="traefik-dask-gateway-k8s.cms.geddes.rcac.purdue.edu:8786",
+    # )
+    # cluster_info = gateway.list_clusters()[0]# get the first cluster by default. There only should be one anyways
+    # client = gateway.connect(cluster_info.name).get_client()
+    # print(f"client: {client}")
+    # print("Gateway Client created")
+
+
+
+    
     args = parser.parse_args()
     # check for valid arguments
     if args.load_path == None:
@@ -609,20 +649,60 @@ if __name__ == "__main__":
                 wgt_unc_fields.append(field)
 
         
-        jec_unc_fields  = ["Absolute", "FlavorQCD"]
+        # jec_unc_fields  = ["Absolute", "FlavorQCD"]
+        # jec_unc_fields  = ["Absolute", "FlavorQCD", "Absolute_2018"]
+        # jec_unc_fields  = ["Absolute", "FlavorQCD", "Absolute_2017"]
+        jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"
+        jec_unc_fields = getJecJerUncertainties(jec_yml_path, year=args.year)
         jec_unc_fields = applyUpDown(jec_unc_fields)
-        # jec_unc_fields = []
+        # jec_unc_fields = [
+        #     "Absolute",
+        #     "BBEC1",
+        #     "EC2",
+        #     "HF",
+        #     "RelativeBal",
+        #     "FlavorQCD",
+        #     "jer1",
+        #     "jer2",
+        #     "jer3",
+        #     "jer4",
+        #     "jer5",
+        #     "jer6"
+        # ]
+        # jec_unc_fields = applyUpDown(jec_unc_fields)
+        
         
         # extra_fields = wgt_unc_fields + jec_unc_fields
         print(f"wgt_unc_fields: {wgt_unc_fields}")
         print(f"jec_unc_fields: {jec_unc_fields}")
         # print(f"wgt_unc_fields: {len(wgt_unc_fields)}")
-        # raise ValueError
         
         print("done loading events!")
         if category == "ggh":
             if is_signal_MC: # add extra fields for uncertainties in datacard
-                processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, jec_unc_fields=jec_unc_fields)
+                # processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, jec_unc_fields=jec_unc_fields)
+                processed_events_l = []
+                # test on only wgts first
+                processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields)
+                processed_events_l.append(processed_events)
+
+                smaller_jec_unc_field_l = split_maxlen(jec_unc_fields, 4)
+                for small_jec_unc_fields in smaller_jec_unc_field_l:
+                    print(f"small_jec_unc_fields: {small_jec_unc_fields}")
+                    
+                    processed_events = process4gghCategory(events, args.year, args.model_name, jec_unc_fields=small_jec_unc_fields)
+                    processed_events_l.append(processed_events)
+                    
+                
+                # mid = len(jec_unc_fields) // 2
+                # list1 = jec_unc_fields[:mid]
+                # list2 = jec_unc_fields[mid:]
+                # processed_events = process4gghCategory(events, args.year, args.model_name, jec_unc_fields=list1)
+                # processed_events_l.append(processed_events)
+                # processed_events = process4gghCategory(events, args.year, args.model_name, jec_unc_fields=list2)
+                # processed_events_l.append(processed_events)
+                processed_events = mergeAkZips(processed_events_l)
+                del processed_events_l
             else:
                 processed_events = process4gghCategory(events, args.year, args.model_name)
         elif category == "vbf":

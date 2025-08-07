@@ -11,6 +11,7 @@ import logging
 from modules.utils import logger
 import coffea.nanoevents.methods.candidate as candidate
 import random
+from omegaconf import OmegaConf
 
 # def jec_names_and_sources_yaml(jec_pars, year):
 #     localdir = os.path.dirname(os.path.abspath("__file__"))
@@ -466,6 +467,37 @@ def applyUpDown(variation_base_l: list):
     combined_variation_l = variation_up_l + variation_down_l
     # print(f"combined_variation_l: {combined_variation_l}")
     return combined_variation_l
+
+
+def extract_values(cfg):
+    """
+    Recursively extract all values from an OmegaConf object into a flat list.
+    """
+    values = []
+    for v in cfg.values():
+        if isinstance(v, dict) or isinstance(v, OmegaConf):
+            values.extend(extract_values(v))
+        else:
+            values.extend(v)
+
+    values = list(set(values)) # make a list of unique vals
+    return values
+    
+def getJecJerUncertainties(yaml_filename, year=None):
+    """
+    helper function to load the jec uncertainties
+    """
+    # Load YAML file
+    # cfg = OmegaConf.load("/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml")
+    cfg = OmegaConf.load(yaml_filename)
+    cfg = cfg["jec_parameters"]["jec_unc_to_consider"]
+    # Get list of all values
+    if year is None: # extract all years
+        jec_uncs = extract_values(cfg)
+    else:
+        jec_uncs = cfg[year]
+    jer_uncs = [f"jer{i}" for i in range(1,7)]
+    return jec_uncs + jer_uncs
 
 def get_baseVariations(variation_shifts : list):
     """
