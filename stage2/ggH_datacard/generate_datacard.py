@@ -17,53 +17,20 @@ import pandas as pd
 # from modules.utils import getGOF_KS
 from src.corrections.jet import applyUpDown, getJecJerUncertainties
 
-
-
-# def extract_values(cfg):
-#     """
-#     Recursively extract all values from an OmegaConf object into a flat list.
-#     """
-#     values = []
-#     for v in cfg.values():
-#         if isinstance(v, dict) or isinstance(v, OmegaConf):
-#             values.extend(extract_values(v))
-#         else:
-#             # values.append(v)
-#             values.extend(v)
-
-#     values = list(set(values)) # make a list of unique vals
-#     return values
-
-# def getJecJerUncertainties(yaml_filename, year=None):
-#     # Load YAML file
-#     # cfg = OmegaConf.load("/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml")
-#     cfg = OmegaConf.load(yaml_filename)
-#     cfg = cfg["jec_parameters"]["jec_unc_to_consider"]
-#     # Get list of all values
-#     if year is None: # extract all years
-#         jec_uncs = extract_values(cfg)
-#     else:
-#         jec_uncs = cfg[year]
-#     jer_uncs = [f"jer{i}" for i in range(1,7)]
-#     return jec_uncs + jer_uncs
-
-def fillWgtVarations(df : pd.DataFrame, events, nSubcats : int):
-    print(f"fillWgtVarations b4: \n {df}")
+def fillWgtVarations(df : pd.DataFrame, events, nSubCats : int):
+    # print(f"fillWgtVarations b4: \n {df}")
     wgt_fields = [col for col in df.columns if "wgt" in col]
-    for subCat_ix in range(nSubcats):
+    for subCat_ix in range(nSubCats):
         subcat_filter = events.subCategory_idx == subCat_ix
         row_data = {}
         for wgt_name in wgt_fields:
             wgt_values = events[wgt_name]
             wgt_values = wgt_values[subcat_filter]
             wgt_yield = ak.sum(wgt_values)
-            # #debugging
-            # if wgt_name == "nominal":
-            #     print(f"{wgt_name} subCat{subCat_ix} wgt_yield: {wgt_yield}")
             
             row_data[wgt_name] = wgt_yield
         df.loc[f"subCat{subCat_ix}"] = row_data
-    print(f"fillWgtVarations after: \n {df}")
+    # print(f"fillWgtVarations after: \n {df}")
     # raise ValueError
     
     return df
@@ -74,11 +41,11 @@ def getRelativeYield2Nominal(df):
     return df_rel
 
 
-# def fillJecJerVarations(df : pd.DataFrame, events, nSubcats : int, jec_unc_fields : list):
+# def fillJecJerVarations(df : pd.DataFrame, events, nSubCats : int, jec_unc_fields : list):
 #     wgt_name = "wgt_nominal"
 #     for jec_unc_name in jec_unc_fields:
 #         col_data = []
-#         for subCat_ix in range(nSubcats):
+#         for subCat_ix in range(nSubCats):
 #             subCat_field = f"subCategory_idx_{jec_unc_name}"
 #             subcat_filter = events[subCat_field] == subCat_ix
 #             wgt_values = events[wgt_name]
@@ -90,10 +57,10 @@ def getRelativeYield2Nominal(df):
 #     return df
 
 
-def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubcats : int, jec_unc_fields : list):
+def fillJecJerVarationsByYear(df : pd.DataFrame, load_path, years : list, nSubCats : int, jec_unc_fields : list):
     wgt_name = "wgt_nominal"
     jec_unc_fields = jec_unc_fields + ["nominal"] # add nominal
-    for subCat_ix in range(nSubcats):
+    for subCat_ix in range(nSubCats):
         for year in years:
             year_load_path = load_path.replace("year_value", year)
             # print(f"year_load_path: {year_load_path}")
@@ -123,12 +90,12 @@ def combine_dfByYear(df_JecByYear, jec_unc_fields : list, years : list, nSubCats
     # print(f"combineDfByYear jec_unc_fields: {jec_unc_fields}")
 
     # define out df
-    row_labels = [f"subCat{i}" for i in range(nSubcats)]
+    row_labels = [f"subCat{i}" for i in range(nSubCats)]
     out_df = pd.DataFrame(index=row_labels, columns=jec_unc_fields)
     # print(f"combineDfByYear out_df b4: {out_df}")
     
     
-    for subCat_ix in range(nSubcats):
+    for subCat_ix in range(nSubCats):
         row_data = {
             jec_unc_field : 0 for jec_unc_field in jec_unc_fields
         }
@@ -171,21 +138,77 @@ def flipDfAddSample(df, sample : str):
     """
     flips the rows and columns of the given df and adds sample string value to each column
     """
+    # print(f"pre flip: {df}")
     df_flipped = df.T  # Transpose (flip rows and columns)
     df_flipped.columns = df_flipped.columns.astype(str) + f"_{sample}"
+    # print(df_flipped)
     return df_flipped
     
 def getDataCardLikeDf(samples, base_path):
     # collect dfs
-    df_dict = {}
+    # df_dict = {}
+    df_dict_l = []
     for sample in samples:
-        df_path = f""
-        df = pd.read_csv(df_path)
+        df_path = f"{base_path}/{sample}_total_relYield.csv"
+        df = pd.read_csv(df_path, index_col=0)
         df = flipDfAddSample(df, sample)
-        df_dict[sample] = df
-    
-    # initialize
+        df_dict_l.append(df)
 
+    # assuming that the row indices are identical, we stitch the dfs
+    df_stitched = pd.concat(df_dict_l, axis=1)
+    return df_stitched
+
+
+def factor_pair(df, nuis, proc):
+    """
+    Return 'up/down' factors for nuisance `nuis` and process `proc` (ggh or vbf),
+    or '-' if missing/invalid.
+    """
+    try:
+        up = float(df.loc[f"{nuis}_up", proc])
+        dn = float(df.loc[f"{nuis}_down", proc])
+        if up > 0 and dn > 0:
+            return f"{up:.6g}/{dn:.6g}"
+    except Exception:
+        pass
+    return "-"
+
+
+
+def extract_nuisances(df):
+    """
+    Take the DataFrame row index, strip '_up' and '_down' suffixes,
+    and return a sorted list of unique nuisance names.
+    """
+    nuis = {str(idx).strip().removesuffix("_up").removesuffix("_down")
+            for idx in df.index}
+    nuis = sorted(nuis)
+    nuis.remove("wgt_nominal")
+    return nuis
+
+def buildDataCard(df, samples, subCat_ix):
+    nuisances = extract_nuisances(df)
+    lines = []
+    # print(nuisances)
+    lines.append(f"""
+bin                cat{subCat_ix}_ggh     cat{subCat_ix}_ggh     cat{subCat_ix}_ggh               
+process            ggH_hmm      qqH_hmm      bkg  
+process            -2           -1           1
+rate               1            1            1
+------------
+""")
+    
+    for u in nuisances:
+        # for sample i
+        ggh_val = factor_pair(df, u, f"subCat{subCat_ix}_ggh")
+        vbf_val = factor_pair(df, u, f"subCat{subCat_ix}_vbf")
+        lines.append(f"{u}   lnN   {ggh_val}   {vbf_val}   -")
+
+    datacard_str = "\n".join(lines)
+    print(datacard_str)
+    # raise ValueError
+    return datacard_str
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -227,7 +250,7 @@ if __name__ == "__main__":
         raise ValueError
 
     category = args.category.lower()
-    nSubcats = 5
+    nSubCats = 5
     samples = [
         "ggh",
         "vbf"
@@ -240,7 +263,8 @@ if __name__ == "__main__":
     plot_save_path = base_path
     if not os.path.exists(plot_save_path):
         os.makedirs(plot_save_path)
-    
+
+    # make pd df ------------------------------------------------------------------
     for sample in samples:
         year = args.year
         fname = f"processed_events_sigMC_{sample}.parquet"
@@ -283,12 +307,12 @@ if __name__ == "__main__":
         # --------------------------------------------------------------
 
         # Define your row labels
-        row_labels = [f"subCat{i}" for i in range(nSubcats)]
+        row_labels = [f"subCat{i}" for i in range(nSubCats)]
         
         # Create the empty DataFrame
         df_wgts = pd.DataFrame(index=row_labels, columns=wgt_fields)
-        df_wgts = fillWgtVarations(df_wgts, events, nSubcats)
-        # df_wgts = fillJecJerVarations(df_wgts, events, nSubcats, jec_unc_fields) # we don't use this function any more
+        df_wgts = fillWgtVarations(df_wgts, events, nSubCats)
+        # df_wgts = fillJecJerVarations(df_wgts, events, nSubCats, jec_unc_fields) # we don't use this function any more
         df_wgts.to_csv(f"{base_path}/{sample}_abs_yield.csv")
         df_wgts_rel = getRelativeYield2Nominal(df_wgts)
         df_wgts_rel.to_csv(f"{base_path}/{sample}_relative2nominal.csv")
@@ -303,7 +327,7 @@ if __name__ == "__main__":
         # years = ["2017"] 
         row_labels = []
         for year in years:
-            row_labels = row_labels + [f"subCat{i}_{year}" for i in range(nSubcats)]
+            row_labels = row_labels + [f"subCat{i}_{year}" for i in range(nSubCats)]
             
         # df = pd.DataFrame(index=row_labels, columns=(jec_unc_fields+["year"))
         # jec_unc_fields = ["Absolute", "FlavorQCD", "Absolute_2018", "Absolute_2017"]
@@ -316,9 +340,9 @@ if __name__ == "__main__":
         fname = f"processed_events_sigMC_{sample}.parquet"
         load_path = f"{args.load_path}/year_value/{fname}"
         print(f"load_path: {load_path}")
-        df_JecByYear = fillJecJerVarationsByYear(df_JecByYear, load_path, years, nSubcats, jec_unc_fields)
+        df_JecByYear = fillJecJerVarationsByYear(df_JecByYear, load_path, years, nSubCats, jec_unc_fields)
         print(f"df_JecByYear: {df_JecByYear}")
-        df_JecCombined = combine_dfByYear(df_JecByYear, jec_unc_fields, years, nSubcats)
+        df_JecCombined = combine_dfByYear(df_JecByYear, jec_unc_fields, years, nSubCats)
         df_JecCombined.to_csv(f"{base_path}/{sample}_jecUnc_absYield.csv")
 
         df_JecCombined_rel = df_JecCombined.div(df_wgts["wgt_nominal"], axis=0)
@@ -329,11 +353,47 @@ if __name__ == "__main__":
 
         df_total.to_csv(f"{base_path}/{sample}_total_relYield.csv")
 
-    # # --------------------------------------------------------------
-    # # convert df to something more datacard-like
-    # # --------------------------------------------------------------
-    # df_datacardLike = getDataCardLikeDf(samples, base_path)
-    # df_datacardLike.to_csv(f"{base_path}/datacardLikeDf.csv")
+    # make pd df ------------------------------------------------------------------
+    
+    # --------------------------------------------------------------
+    # convert df to something more datacard-like
+    # --------------------------------------------------------------
+    df_datacardLike = getDataCardLikeDf(samples, base_path)
+    df_datacardLike.to_csv(f"{base_path}/datacardLikeDf.csv")
         
+    datacard_start = """
+imax *                                                                                                                        
+jmax *                                                                                                                        
+kmax *                                                                                                                        
+------------                                                                                                                  
+shapes ggH_hmm     catCAT_INDEX_ggh           my_workspace/workspace_sig_catCAT_INDEX_ggh.root     w:ggH_catCAT_INDEX_ggh_pdf 
+shapes bkg         catCAT_INDEX_ggh           my_workspace/workspace_bkg_catCAT_INDEX_ggh.root     w:bkg_catCAT_INDEX_ggh_pdf            
+shapes data_obs    catCAT_INDEX_ggh           my_workspace/workspace_bkg_catCAT_INDEX_ggh.root     w:data_catCAT_INDEX_ggh
 
+------------                                                                                                                  
+bin                catCAT_INDEX_ggh      
+observation        -1                                                                                                         
+------------     
+
+"""
+
+    datacard_end = """
+------------
+CMS_hmm_peak_catCAT_INDEX_ggh   param  0  0.001
+CMS_hmm_sigma_catCAT_INDEX_ggh  param  0  0.1
+------------
+pdf_index_ggh discrete
+"""
+    # nSubCats = 1
+    for subCat_ix in range(nSubCats):
+        datacard_subCat_str = datacard_start.replace("CAT_INDEX", str(subCat_ix))
+        datacard_subCat_str += buildDataCard(df_datacardLike, samples, subCat_ix)
+        datacard_subCat_str += datacard_end.replace("CAT_INDEX", str(subCat_ix))
         
+        # Write it to a file
+        datacard_fname = f"{base_path}/datacard_cat{subCat_ix}_ggh.txt"
+        with open(datacard_fname, "w") as f:
+            f.write(datacard_subCat_str)
+
+    print("Success!")
+
