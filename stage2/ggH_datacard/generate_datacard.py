@@ -167,8 +167,11 @@ def factor_pair(df, nuis, proc):
     try:
         up = float(df.loc[f"{nuis}_up", proc])
         dn = float(df.loc[f"{nuis}_down", proc])
-        if up > 0 and dn > 0:
-            return f"{up:.6g}/{dn:.6g}"
+        # if up > 0 and dn > 0:
+        if round(up, 3) == round(dn, 3):
+            return f"{up:.4g}"
+        else:
+            return f"{up:.4g}/{dn:.4g}"
     except Exception:
         pass
     return "-"
@@ -196,7 +199,17 @@ process            ggH_hmm      qqH_hmm      bkg
 process            -2           -1           1
 rate               1            1            1
 ------------
-""")
+BR_mm            lnN       1.012        1.012        - 
+------------
+QCDscale_ggH     lnN     0.933/1.046  -            -          
+QCDscale_qqH     lnN     -            0.997/1.004  -          
+pdf_Higgs_gg     lnN     1.032        -            -          
+pdf_Higgs_qq     lnN     -            1.021        -      
+------------
+lumi_13TeV_2016  lnN       1.012        1.012        -
+lumi_13TeV_2017  lnN       1.023        1.023        -
+lumi_13TeV_2018  lnN       1.025        1.025        -
+""")# QCD and pdf Source table 2.1 from AN-19-124. Lumi source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/LumiRecommendationsRun2
     
     for u in nuisances:
         # for sample i
@@ -367,6 +380,7 @@ jmax *
 kmax *                                                                                                                        
 ------------                                                                                                                  
 shapes ggH_hmm     catCAT_INDEX_ggh           my_workspace/workspace_sig_catCAT_INDEX_ggh.root     w:ggH_catCAT_INDEX_ggh_pdf 
+shapes qqH_hmm     catCAT_INDEX_ggh           my_workspace/workspace_sig_catCAT_INDEX_ggh.root     w:qqH_catCAT_INDEX_ggh_pdf            
 shapes bkg         catCAT_INDEX_ggh           my_workspace/workspace_bkg_catCAT_INDEX_ggh.root     w:bkg_catCAT_INDEX_ggh_pdf            
 shapes data_obs    catCAT_INDEX_ggh           my_workspace/workspace_bkg_catCAT_INDEX_ggh.root     w:data_catCAT_INDEX_ggh
 
@@ -383,7 +397,7 @@ CMS_hmm_peak_catCAT_INDEX_ggh   param  0  0.001
 CMS_hmm_sigma_catCAT_INDEX_ggh  param  0  0.1
 ------------
 pdf_index_ggh discrete
-"""
+""" # Source: CMS_hmm_peak_catCAT_INDEX_ggh and CMS_hmm_sigma_catCAT_INDEX_ggh are the shape uncertainties from line 1385 of AN-19-124 
     # nSubCats = 1
     for subCat_ix in range(nSubCats):
         datacard_subCat_str = datacard_start.replace("CAT_INDEX", str(subCat_ix))
@@ -392,6 +406,11 @@ pdf_index_ggh discrete
         
         # Write it to a file
         datacard_fname = f"{base_path}/datacard_cat{subCat_ix}_ggh.txt"
+        with open(datacard_fname, "w") as f:
+            f.write(datacard_subCat_str)
+        # Write it to a file
+        datacard_fname = f"{base_path}/datacard_cat{subCat_ix}_ggh_test.txt"
+        datacard_subCat_str = datacard_subCat_str.replace("pdf_index_ggh discrete", "")
         with open(datacard_fname, "w") as f:
             f.write(datacard_subCat_str)
 
