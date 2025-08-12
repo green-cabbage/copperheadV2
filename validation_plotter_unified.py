@@ -5,7 +5,7 @@ import json
 import argparse
 import os
 from src.lib.histogram.ROOT_utils import setTDRStyle, CMS_lumi, reweightROOTH_data, reweightROOTH_mc #reweightROOTH
-from src.lib.histogram.plotting import plotDataMC_compare
+from src.lib.histogram.plotting import plotDataMC_compare, fillHist
 from distributed import Client
 import time    
 import tqdm
@@ -16,7 +16,7 @@ import copy
 import hist.dask as hda
 from hist import Hist
 import dask
-from modules.utils import ensure_compacted
+from modules.utils import ensure_compacted, applyRegionCatCuts
 
 def get_scalar_ptCentrality(events):
     pt_centrality_scalar = events.dimuon_pt - abs(events.jet1_pt_nominal + events.jet2_pt_nominal)/2
@@ -75,19 +75,19 @@ def find_group_name(process_name, group_dict):
     return "other"
 
 
-def fillHist(sample_hist, to_fill_setting, values, weights):
-    values_filter = values!=-999.0
-    values = values[values_filter]
-    weights = weights[values_filter]
-    to_fill_setting[var] = values
-    to_fill_value = to_fill_setting.copy()
-    to_fill_value["val_sumw2"] = "value"
-    sample_hist.fill(**to_fill_value, weight=weights)
+# def fillHist(sample_hist, to_fill_setting, values, weights):
+#     values_filter = values!=-999.0
+#     values = values[values_filter]
+#     weights = weights[values_filter]
+#     to_fill_setting[var] = values
+#     to_fill_value = to_fill_setting.copy()
+#     to_fill_value["val_sumw2"] = "value"
+#     sample_hist.fill(**to_fill_value, weight=weights)
     
-    to_fill_sumw2 = to_fill_setting.copy()
-    to_fill_sumw2["val_sumw2"] = "sumw2"
-    sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
-    return sample_hist
+#     to_fill_sumw2 = to_fill_setting.copy()
+#     to_fill_sumw2["val_sumw2"] = "sumw2"
+#     sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
+#     return sample_hist
                     
 
 def getPlotVar(var: str):
@@ -101,78 +101,81 @@ def getPlotVar(var: str):
     return plot_var
 
 
-def applyRegionCatCuts(events, category: str, region_name: str, njets: str, process: str, do_vbf_filter_study: bool):
-    # do mass region cut
-    mass = events.dimuon_mass
-    z_peak = ((mass > 70) & (mass < 110))
-    h_sidebands =  ((mass > 110) & (mass < 115.03)) | ((mass > 135.03) & (mass < 150))
-    h_peak = ((mass > 115.03) & (mass < 135.03))
-    if region_name == "signal":
-        region = h_sidebands | h_peak
-    elif region_name == "h-peak":
-        region = h_peak 
-    elif region_name == "h-sidebands":
-        region = h_sidebands 
-    elif region_name == "z-peak":
-        region = z_peak 
-    else: 
-        print("ERROR: acceptable region!")
-        raise ValueError
+# def applyRegionCatCuts(events, category: str, region_name: str, njets: str, process: str, do_vbf_filter_study: bool):
+#     # do mass region cut
+#     mass = events.dimuon_mass
+#     z_peak = ((mass > 70) & (mass < 110))
+#     h_sidebands =  ((mass > 110) & (mass < 115)) | ((mass > 135) & (mass < 150))
+#     h_peak = ((mass > 115) & (mass < 135))
+#     if region_name == "signal":
+#         region = h_sidebands | h_peak
+#     elif region_name == "h-peak":
+#         region = h_peak 
+#     elif region_name == "h-sidebands":
+#         region = h_sidebands 
+#     elif region_name == "z-peak":
+#         region = z_peak 
+#     else: 
+#         print("ERROR: acceptable region!")
+#         raise ValueError
     
-    # do category cut
-    if category == "nocat": 
-        # print("nocat mode!")
-        prod_cat_cut =  ak.ones_like(region, dtype="bool")
-    else: # VBF or ggH
-        btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
-        btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
-        btag_cut = btagLoose_filter | btagMedium_filter
-        # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
-        vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
-        vbf_cut = ak.fill_none(vbf_cut, value=False)
-        if category == "vbf":
-            # print("vbf mode!")
-            prod_cat_cut =  vbf_cut
-            prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-        elif category == "ggh":
-            # print("ggH mode!")
-            prod_cat_cut =  ~vbf_cut 
-            prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-        else:
-            print("Error: invalid category option!")
-            raise ValueError
+#     # do category cut
+#     if category == "nocat": 
+#         # print("nocat mode!")
+#         prod_cat_cut =  ak.ones_like(region, dtype="bool")
+#         # prod_cat_cut = ak.fill_none(events.jj_mass_nominal > 400, value=False)
+#         # prod_cat_cut = prod_cat_cut & ak.fill_none(events.jet1_pt_nominal > 35, value=False)
+        
+#     else: # VBF or ggH
+#         btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
+#         btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
+#         btag_cut = btagLoose_filter | btagMedium_filter
+#         # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
+#         vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
+#         vbf_cut = ak.fill_none(vbf_cut, value=False)
+#         if category == "vbf":
+#             # print("vbf mode!")
+#             prod_cat_cut =  vbf_cut
+#             prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+#         elif category == "ggh":
+#             # print("ggH mode!")
+#             prod_cat_cut =  ~vbf_cut 
+#             prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
+#         else:
+#             print("Error: invalid category option!")
+#             raise ValueError
 
-    if do_vbf_filter_study:
-        if "dy_" in process:
-            is_vbf_filter = ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc")
-            if is_vbf_filter:
-                print(f"applying VBF filter cut on: {process}")
+#     if do_vbf_filter_study:
+#         if "dy_" in process:
+#             is_vbf_filter = ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc")
+#             if is_vbf_filter:
+#                 # print(f"applying VBF filter cut on: {process}")
                 
-                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
-                prod_cat_cut =  (prod_cat_cut  
-                            & vbf_filter
-                )
-            else:
-                print(f"cutting off inclusive dy: {process}")
-                vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
-                prod_cat_cut =  (
-                    prod_cat_cut  
-                    & ~vbf_filter 
-                )
-        else:
-            print(f"no extra processing for {process}")
-            pass
+#                 vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
+#                 prod_cat_cut =  (prod_cat_cut  
+#                             & vbf_filter
+#                 )
+#             else:
+#                 # print(f"cutting off inclusive dy: {process}")
+#                 vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
+#                 prod_cat_cut =  (
+#                     prod_cat_cut  
+#                     & ~vbf_filter 
+#                 )
+#         else:
+#             # print(f"no extra processing for {process}")
+#             pass
     
-    category_selection = (
-        prod_cat_cut & 
-        region 
-    )
+#     category_selection = (
+#         prod_cat_cut & 
+#         region 
+#     )
     
-    # filter events fro selected category
+#     # filter events fro selected category
     
-    # print(f"len(events) {process} b4 selection: {len(events)}")
-    events = events[category_selection]
-    return events
+#     # print(f"len(events) {process} b4 selection: {len(events)}")
+#     events = events[category_selection]
+#     return events
 
 
 def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty, var, plot_settings, category, args):
@@ -228,7 +231,8 @@ def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty
             
             # events = applyRegionCatCuts(events, args.category, region_name)
             njets = "inclusive"
-            events = dak.map_partitions(applyRegionCatCuts,events, category, region_name, njets, process, args.do_vbf_filter_study)
+            # events = dak.map_partitions(applyRegionCatCuts,events, category, region_name, njets, process, args.do_vbf_filter_study)
+            events = dak.map_partitions(applyRegionCatCuts,events, category, region_name, process, "nominal", args.do_vbf_filter_study)
             # applyRegionCatCuts(events, category: str, region_name: str, njets: str, process: str, do_vbf_filter_study: bool
             # print(f"len(events) {process} after selection: {len(events)}")
             
@@ -281,7 +285,7 @@ def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty
             "variation" : "nominal",
             "sample_group": group_name,
             }
-            sample_hist = fillHist(sample_hist, to_fill_setting, values, weights)
+            sample_hist = fillHist(sample_hist, to_fill_setting, var, values, weights)
             
         sample_hist_l.append(sample_hist)
     # print(f"sample_hist_l: {sample_hist_l}")
@@ -289,7 +293,7 @@ def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty
     return sample_hist_dictByVar2compute
 
 
-def plotComputedHistograms(sample_hist_dictByVarComputed, var, plot_settings, full_save_path, sample_groups, region_name, category, do_logscale=True):
+def plotComputedHistograms(sample_hist_dictByVarComputed, var, plot_settings, full_save_path, sample_groups, region_name, category, do_logscale=True, binning=None):
     data_dict = {}
     bkg_MC_dict = {}
     sig_MC_dict = {}
@@ -297,9 +301,6 @@ def plotComputedHistograms(sample_hist_dictByVarComputed, var, plot_settings, fu
     if plot_var not in plot_settings.keys():
         print(f"variable {var} not configured in plot settings!")
         return
-    # for process in available_processes: 
-    # print(f"sample_hist_dictByVarComputed: {sample_hist_dictByVarComputed.keys()}")
-    
     for group_name in sample_groups: 
         sample_hist_l = sample_hist_dictByVarComputed[var]
         sample_hist = sum(sample_hist_l)
@@ -356,7 +357,8 @@ def plotComputedHistograms(sample_hist_dictByVarComputed, var, plot_settings, fu
     # raise ValueError
 
     plot_var = getPlotVar(var)
-    binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    if binning is None:
+        binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
       
     plotDataMC_compare(
         binning, 
@@ -576,8 +578,10 @@ if __name__ == "__main__":
                 # available_processes.append("dyTo2L_M-50_incl")
                 # available_processes.append("dy_m105_160_vbf_amc")
                 available_processes.append("dy_M-100To200_MiNNLO")
-                # available_processes.append("dy_M-50_MiNNLO")
+                available_processes.append("dy_M-50_MiNNLO")
                 # available_processes.append("dy_M-100To200_aMCatNLO")
+                # available_processes.append("dy_M-50_aMCatNLO")
+                # available_processes.append("dy_VBF_filter_NewZWgt")
             
             elif bkg_sample.upper() == "TT": # enforce upper case to prevent confusion
                 available_processes.append("ttjets_dl")
@@ -720,6 +724,7 @@ if __name__ == "__main__":
         full_compact_path = full_compact_path.replace("/f1_0", "") # remove fraction when doing full compatct path
         try:
             events = dak.from_parquet(f"{full_load_path}/*/*.parquet")
+            # events = dak.from_parquet(f"{full_compact_path}/*.parquet")
             # # target_chunksize = 150_000
             # # target_chunksize = 500_000
             # target_chunksize = 250_000
@@ -728,8 +733,7 @@ if __name__ == "__main__":
             # events = events.repartition(rows_per_partition=target_chunksize)
 
             # check if compacted version of the input parquet files exist, if not, make compacted version
-            ensure_compacted(events, full_compact_path)
-            # raise ValueError
+            ensure_compacted(events, full_compact_path, exception_samples=["vbf_powheg_dipole", "ggh_amcPS", "ggh_powhegPS"])
             # reread the parquet from the compact
             events = dak.from_parquet(f"{full_compact_path}/*.parquet") # all parquet files should be saved  ../0/ directory
             
@@ -738,8 +742,6 @@ if __name__ == "__main__":
             print(f"loading samples failed with Error: {e}")
             continue
         # print(f"events.fields: {events.fields}")
-        # raise ValueError
-        
         # ------------------------------------------------------
         # select only needed variables to load to save run time
         # ------------------------------------------------------
@@ -798,6 +800,7 @@ if __name__ == "__main__":
         loaded_events[process] = events
     print("finished loading parquet files!")
 
+    # raise ValueError
     import mplhep as hep
     import matplotlib.pyplot as plt
     import matplotlib
