@@ -443,259 +443,11 @@ if __name__ == "__main__":
         
 
     print(f"env_pdfs: {env_pdfs}")
+    print(f"env_pdfs: {len(env_pdfs)}")
 
     print("Success!")
-    raise ValueError
-
-
-    #--------------------------------------------------------------
-    # subCat 1 
-    cat_subCat1 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
-    
-    # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
-    # // 0 == BWZ_Redux
-    # // 1 == sumExp
-    # // 2 == PowerSum
-    
-    # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
-    # I suppose BWZredux is there bc it's the one function with overall least bias (which is why BWZredux is used if CORE-PDF is not used)
-    pdf_list_subCat1 = rt.RooArgList(
-        model_subCat1_sumExp,
-        model_subCat1_BWZRedux,
-        model_subCat1_FEWZxBern,
-    )
-    corePdf_subCat1 = rt.RooMultiPdf("CorePdf_subCat1","CorePdf_subCat1",cat_subCat1,pdf_list_subCat1)
-    penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
-    corePdf_subCat1.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat1.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
-    print(f"roo_datasetData_subCat1 sumentries: {nevents}")
-    bkg_subCat1_norm = rt.RooRealVar(corePdf_subCat1.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
-    
-    # add yield
-    new_row = {
-        "year": [args.year],
-        "category": ["cat1"],
-        "dataset": ["data"], 
-        "yield": [nevents]
-    }
-    new_row = pd.DataFrame(new_row)
-    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
-    
-    
-    # subCat 2 
-    cat_subCat2 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
-    
-    # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
-    # // 0 == BWZ_Redux
-    # // 1 == sumExp
-    # // 2 == PowerSum
-    
-    # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
-    # I suppose BWZredux is there bc it's the one function with overall least bias (which is why BWZredux is used if CORE-PDF is not used)
-    pdf_list_subCat2 = rt.RooArgList(
-        model_subCat2_sumExp,
-        model_subCat2_BWZRedux,
-        model_subCat2_FEWZxBern,
-    )
-    corePdf_subCat2 = rt.RooMultiPdf("CorePdf_subCat2","CorePdf_subCat2",cat_subCat2,pdf_list_subCat2)
-    penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
-    corePdf_subCat2.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat2.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
-    print(f"roo_datasetData_subCat2 sumentries: {nevents}")
-    bkg_subCat2_norm = rt.RooRealVar(corePdf_subCat2.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
-    # add yield
-    new_row = {
-        "year": [args.year],
-        "category": ["cat2"],
-        "dataset": ["data"], 
-        "yield": [nevents]
-    }
-    new_row = pd.DataFrame(new_row)
-    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
-    
-        
-    # subCat 3 
-    cat_subCat3 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
-    
-    # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
-    # // 0 == BWZ_Redux
-    # // 1 == sumExp
-    # // 2 == PowerSum
-    
-    # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
-    # I suppose BWZredux is there bc it's the one function with overall least bias (which is why BWZredux is used if CORE-PDF is not used)
-    pdf_list_subCat3 = rt.RooArgList(
-        model_subCat3_sumExp,
-        model_subCat3_BWZRedux,
-        model_subCat3_FEWZxBern,
-    )
-    corePdf_subCat3 = rt.RooMultiPdf("CorePdf_subCat3","CorePdf_subCat3",cat_subCat3,pdf_list_subCat3)
-    penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
-    corePdf_subCat3.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat3.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
-    print(f"roo_datasetData_subCat3 sumentries: {nevents}")
-    bkg_subCat3_norm = rt.RooRealVar(corePdf_subCat3.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
-    # add yield
-    new_row = {
-        "year": [args.year],
-        "category": ["cat3"],
-        "dataset": ["data"], 
-        "yield": [nevents]
-    }
-    new_row = pd.DataFrame(new_row)
-    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
-    
-
-    # subCat 4
-    cat_subCat4 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
-    
-    # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
-    # // 0 == sumExp
-    # // 1 == BWZ_Redux
-    # // 2 == FEWZxBern
-    
-    # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
-    # I suppose BWZredux is there bc it's the one function with overall least bias (which is why BWZredux is used if CORE-PDF is not used)
-    pdf_list_subCat4 = rt.RooArgList(
-        model_subCat4_sumExp,
-        model_subCat4_BWZRedux,
-        model_subCat4_FEWZxBern,
-    )
-    corePdf_subCat4 = rt.RooMultiPdf("CorePdf_subCat4","CorePdf_subCat4",cat_subCat4,pdf_list_subCat4)
-    penalty = 0 # as told in https://cms-talk.web.cern.ch/t/combine-fitting-not-working-with-roomultipdf-leading-to-bad-signal-significance/44238/
-    corePdf_subCat4.setCorrectionFactor(penalty) 
-    nevents = roo_datasetData_subCat4.sumEntries() # these are data, so all weights are one, thus no need to sum over the weights, though ofc you can just do that too
-    print(f"roo_datasetData_subCat4 sumentries: {nevents}")
-    bkg_subCat4_norm = rt.RooRealVar(corePdf_subCat4.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
-    # add yield
-    new_row = {
-        "year": [args.year],
-        "category": ["cat4"],
-        "dataset": ["data"], 
-        "yield": [nevents]
-    }
-    new_row = pd.DataFrame(new_row)
-    yield_df = pd.concat([yield_df, new_row], ignore_index=True)
-    
-    print(f"yield_df after Data: \n {yield_df}")
-
-
-    # #----------------------------------------------------------------------------
-    # # Get GoF of CORE-PDF
-    # # ---------------------------------------------------------------------------
-
-    # KS_df = pd.DataFrame()
-    corePDF_subCats = [
-        corePdf_subCat0,
-        corePdf_subCat1,
-        corePdf_subCat2,
-        corePdf_subCat3,
-        corePdf_subCat4,
-    ]
-    hist_datas = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-    multi_pdf_cats = [
-        cat_subCat0,
-        cat_subCat1,
-        cat_subCat2,
-        cat_subCat3,
-        cat_subCat4,
-    ]
-    pdf_cat_name_dict = {
-        0: "sumExp",
-        1: "BWZRedux",
-        2: "FEWZxBern",
-    }
-    gof_save_path = f"{plot_save_path}/gof"
-    os.makedirs(gof_save_path, exist_ok=True)
-    gof_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass"])
-    for i in range(len(corePDF_subCats)):
-        hist_data = hist_datas[i]
-        corePDF_subCat = corePDF_subCats[i]
-        multi_pdf_cat = multi_pdf_cats[i]
-        for cat_ix in range(len(pdf_cat_name_dict.keys())):
-            multi_pdf_cat.setIndex(cat_ix)
-            print(f"multi_pdf_cat.getIndex(): {multi_pdf_cat.getIndex()}")
-            core_func_name = pdf_cat_name_dict[cat_ix]
-            gof_test_name = f"ggh_cat{i}_{core_func_name}"
-            KS_dict = getGOF_KS(mass, hist_data, corePDF_subCat, gof_test_name, gof_save_path)
-            for region, ks_stat_dict in KS_dict.items():
-                nevents = ks_stat_dict["nevents"]
-                ks_stat = ks_stat_dict["ks_statistic"]
-                # alpha = 0.05
-                # pass_threshold = 1.358 / (nevents**(0.5))
-                alpha = 0.1
-                pass_threshold = 1.22385 / (nevents**(0.5))
-                
-                gof_df.loc[len(gof_df)] = {
-                    "pdf category": gof_test_name,
-                    "region": region,
-                    "KS statistic": ks_stat,
-                    "nevents": nevents,
-                    "alpha": alpha,
-                    "pass threshold": pass_threshold,
-                    "test pass": ks_stat<pass_threshold,
-                }
-    gof_df.to_csv(f"{gof_save_path}/KS_stats.csv")
-
-        
-    raise ValueError
-
-    # #----------------------------------------------------------------------------
-    # # Now do multi-Pdf 
-    # # ---------------------------------------------------------------------------
-     
-    # # Define category to distinguish physics and control samples events
-    # sample = rt.RooCategory("sample", "sample")
-    # sample.defineType("subCat0_BWZRedux")
-    # sample.defineType("subCat1_BWZRedux")
-    # sample.defineType("subCat2_BWZRedux")
-    # sample.defineType("subCat3_BWZRedux")
-    # sample.defineType("subCat4_BWZRedux")
-
-     
-    # # Construct combined dataset in (x,sample)
-    # combData = rt.RooDataSet(
-    #     "combData",
-    #     "combined data",
-    #     {mass},
-    #     Index=sample,
-    #     Import={
-    #         "subCat0_BWZRedux": data_subCat0_BWZRedux, 
-    #         "subCat1_BWZRedux": data_subCat1_BWZRedux,
-    #         "subCat2_BWZRedux": data_subCat2_BWZRedux,
-    #         "subCat3_BWZRedux": data_subCat3_BWZRedux,
-    #         "subCat4_BWZRedux": data_subCat4_BWZRedux,
-    #     },
-    # )
-    # # ---------------------------------------------------
-    # # Construct a simultaneous pdf in (x, sample)
-    # # -----------------------------------------------------------------------------------
-     
-    # simPdf = rt.RooSimultaneous(
-    #                             "simPdf", 
-    #                             "simultaneous pdf", 
-    #                             {
-    #                                 "subCat0_BWZRedux": corePdf_subCat0, 
-    #                                 "subCat1_BWZRedux": corePdf_subCat1,
-    #                                 "subCat2_BWZRedux": corePdf_subCat2,
-    #                                 "subCat3_BWZRedux": corePdf_subCat3,
-    #                                 "subCat4_BWZRedux": corePdf_subCat4,
-    #                             }, 
-    #                             sample,
-    # )
-    # # ---------------------------------------------------
-    # # Perform a simultaneous fit
-    # # ---------------------------------------------------
-    # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    # fitResult.Print()
     # raise ValueError
-    
+
 
     # ---------------------------------------------------
     # Obtain signal MC events
@@ -1197,7 +949,8 @@ if __name__ == "__main__":
         load_path = f"{args.load_path}/2016*/processed_events_sigMC_vbf.parquet"
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_vbf.parquet" # Fig 6.15 was only with qqH process, though with all 2016, 2017 and 2018
-    
+
+    print(load_path)
     processed_eventsSignalMC_vbf = ak.from_parquet(load_path)
     print(f"qqH yield: {np.sum(processed_eventsSignalMC_vbf.wgt_nominal)}")
     print("signal events loaded")
@@ -1506,8 +1259,6 @@ if __name__ == "__main__":
     # ---------------------------------------------------
 
     # subCat 0
-    # _ = signal_subCat0_vbf.fitTo(data_subCat0_vbf_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat0_vbf.fitTo(data_subCat0_vbf_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat0_vbf.fitTo(data_subCat0_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat0_vbf.fitTo(data_subCat0_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1527,8 +1278,6 @@ if __name__ == "__main__":
 
 
     # subCat 1
-    # _ = signal_subCat1_vbf.fitTo(data_subCat1_vbf_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat1_vbf.fitTo(data_subCat1_vbf_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat1_vbf.fitTo(data_subCat1_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat1_vbf.fitTo(data_subCat1_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1544,8 +1293,6 @@ if __name__ == "__main__":
 
 
     # subCat 2
-    # _ = signal_subCat2_vbf.fitTo(data_subCat2_vbf_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat2_vbf.fitTo(data_subCat2_vbf_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat2_vbf.fitTo(data_subCat2_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat2_vbf.fitTo(data_subCat2_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1561,8 +1308,6 @@ if __name__ == "__main__":
 
     
     # subCat 3
-    # _ = signal_subCat3_vbf.fitTo(data_subCat3_vbf_signal,  EvalBackend=device, Save=True, )
-    # fit_result = signal_subCat3_vbf.fitTo(data_subCat3_vbf_signal,  EvalBackend=device, Save=True, )
     _ = signal_subCat3_vbf.fitTo(data_subCat3_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     fit_result = signal_subCat3_vbf.fitTo(data_subCat3_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
@@ -1574,11 +1319,7 @@ if __name__ == "__main__":
     n1_subCat3_vbf.setConstant(True)
     alpha2_subCat3_vbf.setConstant(True)
     n2_subCat3_vbf.setConstant(True)
-    # sigma_subCat3_vbf.setConstant(False)
-    # alpha1_subCat3_vbf.setConstant(False)
-    # n1_subCat3_vbf.setConstant(False)
-    # alpha2_subCat3_vbf.setConstant(False)
-    # n2_subCat3_vbf.setConstant(False)
+
 
 
     # subCat 4
@@ -1599,241 +1340,228 @@ if __name__ == "__main__":
 
     
         
-    # -------------------------------------------------------------------------
-    # Save yield_df
-    # -------------------------------------------------------------------------
-    summed_values = yield_df.groupby("dataset", as_index=False)["yield"].sum()
-    summed_values["year"] = args.year
-    summed_values["category"] = "combined"
-    yield_df = pd.concat([yield_df, summed_values], ignore_index=True)
-    # print(f"yield_df after all: \n {yield_df}")
-    yield_df = yield_df.sort_values(by=["dataset", "category"], ascending=[False, True])
-    yield_df.to_csv(f"{base_path}/yield_df.csv")
-
-
-
-    # -------------------------------------------------------------------------
-    # Plotting
-    # -------------------------------------------------------------------------
+    # # -------------------------------------------------------------------------
+    # # Plotting
+    # # -------------------------------------------------------------------------
     
-    # -------------------------------------------------------------------------
-    # do signal ggH plotting with fit and data
-    # -------------------------------------------------------------------------
+    # # -------------------------------------------------------------------------
+    # # do signal ggH plotting with fit and data
+    # # -------------------------------------------------------------------------
     
-    # subCat 0
-    print(f"data_subCat0_signal.sumEntries(): {data_subCat0_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat0_signal.GetName()
-    data_subCat0_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat0.GetName()
-    signal_subCat0.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 0
+    # print(f"data_subCat0_signal.sumEntries(): {data_subCat0_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat0_signal.GetName()
+    # data_subCat0_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat0.GetName()
+    # signal_subCat0.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
         
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat0.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat0.pdf")
 
-    # subCat 1
-    print(f"data_subCat1_signal.sumEntries(): {data_subCat1_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat1_signal.GetName()
-    data_subCat1_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat1.GetName()
-    signal_subCat1.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 1
+    # print(f"data_subCat1_signal.sumEntries(): {data_subCat1_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat1_signal.GetName()
+    # data_subCat1_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat1.GetName()
+    # signal_subCat1.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat1.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat1.pdf")
 
-    # subCat 2
-    print(f"data_subCat2_signal.sumEntries(): {data_subCat2_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat2_signal.GetName()
-    data_subCat2_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat2.GetName()
-    signal_subCat2.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 2
+    # print(f"data_subCat2_signal.sumEntries(): {data_subCat2_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat2_signal.GetName()
+    # data_subCat2_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat2.GetName()
+    # signal_subCat2.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat2.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat2.pdf")
 
-    # subCat 3
-    print(f"data_subCat3_signal.sumEntries(): {data_subCat3_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat3_signal.GetName()
-    data_subCat3_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat3.GetName()
-    signal_subCat3.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 3
+    # print(f"data_subCat3_signal.sumEntries(): {data_subCat3_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat3_signal.GetName()
+    # data_subCat3_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat3.GetName()
+    # signal_subCat3.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat3.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat3.pdf")
 
-    # subCat 4
-    print(f"data_subCat4_signal.sumEntries(): {data_subCat4_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat4_signal.GetName()
-    data_subCat4_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat4.GetName()
-    signal_subCat4.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 4
+    # print(f"data_subCat4_signal.sumEntries(): {data_subCat4_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat4_signal.GetName()
+    # data_subCat4_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat4.GetName()
+    # signal_subCat4.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4.pdf")
 
-    # -------------------------------------------------------------------------
-    # do signal VBF plotting with fit and data
-    # -------------------------------------------------------------------------
+    # # -------------------------------------------------------------------------
+    # # do signal VBF plotting with fit and data
+    # # -------------------------------------------------------------------------
     
-    # subCat 0
-    print(f"data_subCat0_vbf_signal.sumEntries(): {data_subCat0_vbf_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat0_vbf_signal.GetName()
-    data_subCat0_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat0_vbf.GetName()
-    signal_subCat0_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 0
+    # print(f"data_subCat0_vbf_signal.sumEntries(): {data_subCat0_vbf_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat0_vbf_signal.GetName()
+    # data_subCat0_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat0_vbf.GetName()
+    # signal_subCat0_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat0_vbf.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat0_vbf.pdf")
 
-    # subCat 1
-    print(f"data_subCat1_vbf_signal.sumEntries(): {data_subCat1_vbf_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat1_vbf_signal.GetName()
-    data_subCat1_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat1_vbf.GetName()
-    signal_subCat1_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 1
+    # print(f"data_subCat1_vbf_signal.sumEntries(): {data_subCat1_vbf_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat1_vbf_signal.GetName()
+    # data_subCat1_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat1_vbf.GetName()
+    # signal_subCat1_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat1_vbf.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat1_vbf.pdf")
 
-    # subCat 2
-    print(f"data_subCat2_vbf_signal.sumEntries(): {data_subCat2_vbf_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat2_vbf_signal.GetName()
-    data_subCat2_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat2_vbf.GetName()
-    signal_subCat2_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 2
+    # print(f"data_subCat2_vbf_signal.sumEntries(): {data_subCat2_vbf_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat2_vbf_signal.GetName()
+    # data_subCat2_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat2_vbf.GetName()
+    # signal_subCat2_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat2_vbf.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat2_vbf.pdf")
 
-    # subCat 3
-    print(f"data_subCat3_vbf_signal.sumEntries(): {data_subCat3_vbf_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat3_vbf_signal.GetName()
-    data_subCat3_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat3_vbf.GetName()
-    signal_subCat3_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 3
+    # print(f"data_subCat3_vbf_signal.sumEntries(): {data_subCat3_vbf_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat3_vbf_signal.GetName()
+    # data_subCat3_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat3_vbf.GetName()
+    # signal_subCat3_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat3_vbf.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat3_vbf.pdf")
 
-    # subCat 4
-    print(f"data_subCat4_vbf_signal.sumEntries(): {data_subCat4_vbf_signal.sumEntries()}")
-    name = "Canvas"
-    canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
-    canvas.cd()
-    frame = mass.frame()
-    legend = rt.TLegend(0.65,0.55,0.9,0.7)
-    name = data_subCat4_vbf_signal.GetName()
-    data_subCat4_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat4_vbf.GetName()
-    signal_subCat4_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
-    legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+    # # subCat 4
+    # print(f"data_subCat4_vbf_signal.sumEntries(): {data_subCat4_vbf_signal.sumEntries()}")
+    # name = "Canvas"
+    # canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
+    # canvas.cd()
+    # frame = mass.frame()
+    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    # name = data_subCat4_vbf_signal.GetName()
+    # data_subCat4_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
+    # name = signal_subCat4_vbf.GetName()
+    # signal_subCat4_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
+    # legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
-    frame.Draw()
-    legend.Draw()
+    # frame.Draw()
+    # legend.Draw()
     
-    canvas.Update()
-    canvas.Draw()
-    canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4_vbf.pdf")
+    # canvas.Update()
+    # canvas.Draw()
+    # canvas.SaveAs(f"{plot_save_path}/stage3_plot_{category}_subCat4_vbf.pdf")
 
     # ---------------------------------------------------
     # Save to Signal, Background and Data to Workspace
@@ -1860,25 +1588,33 @@ if __name__ == "__main__":
     CMS_hmm_sigma_cat4_ggh.setConstant(False)
     CMS_hmm_peak_cat4_ggh.setConstant(False)
 
-    # ----------------------------------------------------------------
-    # # freeze back the core function before saving to workspace
-    # # BWZ redux
-    # a_coeff.setConstant(True)
-    # b_coeff.setConstant(True)
-    # c_coeff.setConstant(True)
+
+
+
+    # conver nameing schemes
+    corePdf_subCat0 = env_pdfs[0]
+    corePdf_subCat1 = env_pdfs[1]
+    corePdf_subCat2 = env_pdfs[2]
+    corePdf_subCat3 = env_pdfs[3]
+    corePdf_subCat4 = env_pdfs[4]
+
+
+    nevents = roo_datasetData_subCat0.sumEntries()
+    bkg_subCat0_norm = rt.RooRealVar(corePdf_subCat0.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
     
-    # # sumExp
-    # a1_coeff.setConstant(True)
-    # a2_coeff.setConstant(True)
-    # f_coeff.setConstant(True)
-
-    # # FEWZxBern
-    # c1.setConstant(True)
-    # c2.setConstant(True)
-    # c3.setConstant(True)
-    # c4.setConstant(True)
-    # ----------------------------------------------------------------
-
+    nevents = roo_datasetData_subCat1.sumEntries()
+    bkg_subCat1_norm = rt.RooRealVar(corePdf_subCat1.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
+    
+    nevents = roo_datasetData_subCat2.sumEntries()
+    bkg_subCat2_norm = rt.RooRealVar(corePdf_subCat2.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
+    
+    nevents = roo_datasetData_subCat3.sumEntries()
+    bkg_subCat3_norm = rt.RooRealVar(corePdf_subCat3.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
+    
+    nevents = roo_datasetData_subCat4.sumEntries()
+    bkg_subCat4_norm = rt.RooRealVar(corePdf_subCat4.GetName()+"_norm","Background normalization value",nevents,0,3*nevents) # free floating value
+    
+    
     # subCat 0 
     fout = rt.TFile(f"{workspace_path}/workspace_bkg_cat0_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -1891,7 +1627,7 @@ if __name__ == "__main__":
     roo_histData_subCat0_norm = rt.RooRealVar(roo_histData_subCat0.GetName()+"_norm","Background normalization value",nevents,0,3*nevents)
     wout.Import(roo_histData_subCat0_norm);
     wout.Import(roo_histData_subCat0);
-    wout.Import(cat_subCat0);
+    # wout.Import(cat_subCat0);
     wout.Import(bkg_subCat0_norm);
     wout.Import(corePdf_subCat0);
     # wout.Print();
@@ -1930,7 +1666,7 @@ if __name__ == "__main__":
     roo_histData_subCat1_norm = rt.RooRealVar(roo_histData_subCat1.GetName()+"_norm","Background normalization value",nevents,0,3*nevents)
     wout.Import(roo_histData_subCat1_norm);
     wout.Import(roo_histData_subCat1);
-    wout.Import(cat_subCat1);
+    # wout.Import(cat_subCat1);
     wout.Import(bkg_subCat1_norm);
     wout.Import(corePdf_subCat1);
     # wout.Print();
@@ -1967,7 +1703,7 @@ if __name__ == "__main__":
     roo_histData_subCat2_norm = rt.RooRealVar(roo_histData_subCat2.GetName()+"_norm","Background normalization value",nevents,0,3*nevents)
     wout.Import(roo_histData_subCat2_norm);
     wout.Import(roo_histData_subCat2);
-    wout.Import(cat_subCat2);
+    # wout.Import(cat_subCat2);
     wout.Import(bkg_subCat2_norm);
     wout.Import(corePdf_subCat2);
     # wout.Print();
@@ -2005,7 +1741,7 @@ if __name__ == "__main__":
     roo_histData_subCat3_norm = rt.RooRealVar(roo_histData_subCat3.GetName()+"_norm","Background normalization value",nevents,0,3*nevents)
     wout.Import(roo_histData_subCat3_norm);
     wout.Import(roo_histData_subCat3);
-    wout.Import(cat_subCat3);
+    # wout.Import(cat_subCat3);
     wout.Import(bkg_subCat3_norm);
     wout.Import(corePdf_subCat3);
     # wout.Print();
@@ -2042,7 +1778,7 @@ if __name__ == "__main__":
     roo_histData_subCat4_norm = rt.RooRealVar(roo_histData_subCat4.GetName()+"_norm","Background normalization value",nevents,0,3*nevents)
     wout.Import(roo_histData_subCat4_norm);
     wout.Import(roo_histData_subCat4);
-    wout.Import(cat_subCat4);
+    # wout.Import(cat_subCat4);
     wout.Import(bkg_subCat4_norm);
     wout.Import(corePdf_subCat4);
     # wout.Print();
@@ -2066,405 +1802,5 @@ if __name__ == "__main__":
     wout.Import(roo_histData_subCat4_vbf_signal);
     # wout.Print();
     wout.Write();
-
-    
-    # ---------------------------------------------------
-    # Group plotting start here
-    # ---------------------------------------------------
-
-    # ---------------------------------------------------
-    # Plot 6.23 blinded
-    # ---------------------------------------------------
-    save_fname = f"{plot_save_path}/fig6_23"
-    subCat_dataHists = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-    SMF_func_l = [
-        subCat0_SMF,
-        subCat1_SMF,
-        subCat2_SMF,
-        subCat3_SMF,
-        subCat4_SMF,
-    ]
-    y_range_l = [
-        (7e-3, 13e-3),
-        (7e-3, 13e-3),
-        (7e-3, 14e-3),
-        (5.6e-3, 18.5e-3),
-        (5.6e-3, 18.5e-3),
-    ]
-    plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
-
-    # ---------------------------------------------------
-    # plot Fig 6.26 blinded
-    # ---------------------------------------------------
-    # define the sim pdfs
-    bkg_pdf_dict = {
-        "subCat0_BWZRedux": model_subCat0_BWZRedux, 
-        "subCat1_BWZRedux": model_subCat1_BWZRedux,
-        "subCat2_BWZRedux": model_subCat2_BWZRedux,
-        "subCat3_BWZRedux": model_subCat3_BWZRedux,
-        "subCat4_BWZRedux": model_subCat4_BWZRedux,
-        "subCat0_sumExp": model_subCat0_sumExp, 
-        "subCat1_sumExp": model_subCat1_sumExp,
-        "subCat2_sumExp": model_subCat2_sumExp,
-        "subCat3_sumExp": model_subCat3_sumExp,
-        "subCat4_sumExp": model_subCat4_sumExp,
-        "subCat0_FEWZxBern": model_subCat0_FEWZxBern, 
-        "subCat1_FEWZxBern": model_subCat1_FEWZxBern,
-        "subCat2_FEWZxBern": model_subCat2_FEWZxBern,
-        "subCat3_FEWZxBern": model_subCat3_FEWZxBern,
-        "subCat4_FEWZxBern": model_subCat4_FEWZxBern,
-    }
-    sig_pdf_dict = {
-        "signal_subCat0" : signal_subCat0,
-        "signal_subCat1" : signal_subCat1,
-        "signal_subCat2" : signal_subCat2,
-        "signal_subCat3" : signal_subCat3,
-        "signal_subCat4" : signal_subCat4,
-    }
-    sim_sigBkg_pdf, parameters_sigBkg = getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict)
-    # ------------------------
-    sim_sigBkg_pdf = {
-        "subCat0_BWZRedux": sim_sigBkg_pdf["subCat0_BWZRedux"], 
-        "subCat1_BWZRedux": sim_sigBkg_pdf["subCat1_BWZRedux"],
-        "subCat2_BWZRedux": sim_sigBkg_pdf["subCat2_BWZRedux"],
-        "subCat3_BWZRedux": sim_sigBkg_pdf["subCat3_BWZRedux"],
-        "subCat4_BWZRedux": sim_sigBkg_pdf["subCat4_BWZRedux"],
-        # ----------------------------
-        "subCat0_sumExp": sim_sigBkg_pdf["subCat0_sumExp"], 
-        "subCat1_sumExp": sim_sigBkg_pdf["subCat1_sumExp"],
-        "subCat2_sumExp": sim_sigBkg_pdf["subCat2_sumExp"],
-        "subCat3_sumExp": sim_sigBkg_pdf["subCat3_sumExp"],
-        "subCat4_sumExp": sim_sigBkg_pdf["subCat4_sumExp"],
-        #----------------------------
-        "subCat0_FEWZxBern": sim_sigBkg_pdf["subCat0_FEWZxBern"], 
-        "subCat1_FEWZxBern": sim_sigBkg_pdf["subCat1_FEWZxBern"],
-        "subCat2_FEWZxBern": sim_sigBkg_pdf["subCat2_FEWZxBern"],
-        "subCat3_FEWZxBern": sim_sigBkg_pdf["subCat3_FEWZxBern"],
-        "subCat4_FEWZxBern": sim_sigBkg_pdf["subCat4_FEWZxBern"],
-        
-    }
-    # -----------------------------------------------------
-    
-    # save_fname = f"{plot_save_path}/fig6_26"
-    subCat_dataHists = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-
-    core_funcs = {
-        "BWZRedux" : "BWZRedux",
-        "sumExp" : "SumExp",
-        "FEWZxBern" : "FEWZxBern",
-    }
-    for core_func, coreFuncName in core_funcs.items():
-        save_fname = f"{plot_save_path}/fig6_26_{coreFuncName}"
-        
-        multi_pdf_l = [
-            sim_sigBkg_pdf[f"subCat0_{core_func}"],
-            sim_sigBkg_pdf[f"subCat1_{core_func}"],
-            sim_sigBkg_pdf[f"subCat2_{core_func}"],
-            sim_sigBkg_pdf[f"subCat3_{core_func}"],
-            sim_sigBkg_pdf[f"subCat4_{core_func}"],
-        ]
-        plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName=coreFuncName, unblind=False)
-        
-
-    # ---------------------------------------------------
-    # Unblinded fitting
-    # ---------------------------------------------------
-
-    # perform fit over full 110, 150
-    # CAUTION: make the parameters in the workspace is saved and closed
-
-    # freeze back the core function s
-    # # BWZ redux
-    # a_coeff.setConstant(True)
-    # b_coeff.setConstant(True)
-    # c_coeff.setConstant(True)
-    
-    # # sumExp
-    # a1_coeff.setConstant(True)
-    # a2_coeff.setConstant(True)
-    # f_coeff.setConstant(True)
-
-    # # FEWZxBern
-    # c1.setConstant(True)
-    # c2.setConstant(True)
-    # c3.setConstant(True)
-    # c4.setConstant(True)
-
-
-    # # SMF coeffs
-    # a0_subCat0.setConstant(True)
-    # a1_subCat0.setConstant(True)
-    # a3_subCat0.setConstant(True)
-
-    # a0_subCat1.setConstant(True)
-    # a1_subCat1.setConstant(True)
-    # a0_subCat2.setConstant(True)
-    # a1_subCat2.setConstant(True)
-    # a0_subCat3.setConstant(True)
-    # a1_subCat3.setConstant(True)
-    # a0_subCat4.setConstant(True)
-    # a1_subCat4.setConstant(True)
-
-    # MH_subCat0.setConstant(False)
-    MH_subCat0.setConstant(True) # all other MH subcat refers to MH_subCat0
-    # MH_subCat0.Print("v")
-    # print(f"MH_subCat0: {MH_subCat0.getVal()}")
-    # raise ValueError
-  
-    CMS_hmm_sigma_cat0_ggh.setConstant(True)
-    CMS_hmm_peak_cat0_ggh.setConstant(True)
-    
-    CMS_hmm_sigma_cat1_ggh.setConstant(True)
-    CMS_hmm_peak_cat1_ggh.setConstant(True)
-    
-    CMS_hmm_sigma_cat2_ggh.setConstant(True)
-    CMS_hmm_peak_cat2_ggh.setConstant(True)
-    
-    CMS_hmm_sigma_cat3_ggh.setConstant(True)
-    CMS_hmm_peak_cat3_ggh.setConstant(True)
-    
-    CMS_hmm_sigma_cat4_ggh.setConstant(True)
-    CMS_hmm_peak_cat4_ggh.setConstant(True)
-    
-    # ------------------------
-    simPdf = rt.RooSimultaneous(
-                                "simPdf", 
-                                "simultaneous pdf", 
-                                sim_sigBkg_pdf,
-                                sample,
-    )
-    fitResult = simPdf.fitTo(combData, EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    # fitResult.Print()
-    # raise ValueError
-    # ---------------------------------------------------
-    # Plot 6.23 unblinded
-    # ---------------------------------------------------
-    save_fname = f"{plot_save_path}/fig6_23_unblinded"
-    subCat_dataHists = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-    SMF_func_l = [
-        subCat0_SMF,
-        subCat1_SMF,
-        subCat2_SMF,
-        subCat3_SMF,
-        subCat4_SMF,
-    ]
-    y_range_l = [
-        (7e-3, 13e-3),
-        (7e-3, 13e-3),
-        (7e-3, 14e-3),
-        (5.6e-3, 18.5e-3),
-        (5.6e-3, 18.5e-3),
-    ]
-    # plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
-    
-
-    # ---------------------------------------------------
-    # plot Fig 6.26
-    # ---------------------------------------------------
-    
-    save_fname = f"{plot_save_path}/fig6_26"
-    subCat_dataHists = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-    # multi_pdf_l = [
-    #     corePdf_subCat0,
-    #     corePdf_subCat1,
-    #     corePdf_subCat2,
-    #     corePdf_subCat3,
-    #     corePdf_subCat4,
-    # ]
-    # multi_pdf_l = [
-    #     model_subCat0_BWZRedux,
-    #     model_subCat1_BWZRedux,
-    #     model_subCat2_BWZRedux,
-    #     model_subCat3_BWZRedux,
-    #     model_subCat4_BWZRedux,
-    # ]
-    # multi_pdf_l = [
-    #     sim_sigBkg_pdf["subCat0_BWZRedux"],
-    #     sim_sigBkg_pdf["subCat1_BWZRedux"],
-    #     sim_sigBkg_pdf["subCat2_BWZRedux"],
-    #     sim_sigBkg_pdf["subCat3_BWZRedux"],
-    #     sim_sigBkg_pdf["subCat4_BWZRedux"],
-    # ]
-    # plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName="BWZRedux")
-    # multi_pdf_l = [
-    #     sim_sigBkg_pdf["subCat0_sumExp"],
-    #     sim_sigBkg_pdf["subCat1_sumExp"],
-    #     sim_sigBkg_pdf["subCat2_sumExp"],
-    #     sim_sigBkg_pdf["subCat3_sumExp"],
-    #     sim_sigBkg_pdf["subCat4_sumExp"],
-    # ]
-    # plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName="SumExp")
-    multi_pdf_l = [
-        sim_sigBkg_pdf["subCat0_FEWZxBern"],
-        sim_sigBkg_pdf["subCat1_FEWZxBern"],
-        sim_sigBkg_pdf["subCat2_FEWZxBern"],
-        sim_sigBkg_pdf["subCat3_FEWZxBern"],
-        sim_sigBkg_pdf["subCat4_FEWZxBern"],
-    ]
-    plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName="FEWZxBern", unblind=True)
-    
-    # print(f"data_subCat0_signal sumentries: {data_subCat0_signal.sumEntries()}")
-    # print(f"data_subCat1_signal sumentries: {data_subCat1_signal.sumEntries()}")
-    # print(f"data_subCat2_signal sumentries: {data_subCat2_signal.sumEntries()}")
-    # print(f"data_subCat3_signal sumentries: {data_subCat3_signal.sumEntries()}")
-    # print(f"data_subCat4_signal sumentries: {data_subCat4_signal.sumEntries()}")
-    # # raise ValueError
-
-    # -------------------------------------------------------------------------
-    # do signal plotting for all sub-Cats in one plot
-    # -------------------------------------------------------------------------
-    sig_dict_by_sample = {
-        "ggh_signal" : [
-            signal_subCat0, 
-            signal_subCat1,
-            signal_subCat2,
-            signal_subCat3,
-            signal_subCat4,
-        ],
-    }
-    sigHist_list = [ # for signal function normalization
-        roo_histData_subCat0_signal,
-        roo_histData_subCat1_signal,
-        roo_histData_subCat2_signal,
-        roo_histData_subCat3_signal,
-        roo_histData_subCat4_signal
-    ]
-    plotSigBySample(mass, sig_dict_by_sample, sigHist_list, plot_save_path)
-
-    sig_dict_by_sample = {
-        "vbf_signal" : [
-            signal_subCat0_vbf, 
-            signal_subCat1_vbf,
-            signal_subCat2_vbf,
-            signal_subCat3_vbf,
-            signal_subCat4_vbf,
-        ]
-    }
-    sigHist_list = [ # for signal function normalization
-        roo_histData_subCat0_vbf_signal,
-        roo_histData_subCat1_vbf_signal,
-        roo_histData_subCat2_vbf_signal,
-        roo_histData_subCat3_vbf_signal,
-        roo_histData_subCat4_vbf_signal
-    ]
-    plotSigBySample(mass, sig_dict_by_sample, sigHist_list, plot_save_path)
-        
-
-    # -------------------------------------------------------------------------
-    # do Bkg plotting loop divided into core-function
-    # -------------------------------------------------------------------------
-    
-    model_dict_by_coreFunction = {
-        "BWZRedux" : [
-            model_subCat0_BWZRedux, 
-            model_subCat1_BWZRedux,
-            model_subCat2_BWZRedux,
-            model_subCat3_BWZRedux,
-            model_subCat4_BWZRedux,
-        ],
-        "sumExp" : [
-            model_subCat0_sumExp, 
-            model_subCat1_sumExp,
-            model_subCat2_sumExp,
-            model_subCat3_sumExp,
-            model_subCat4_sumExp,
-        ],
-        "FEWZxBern" : [
-            model_subCat0_FEWZxBern, 
-            model_subCat1_FEWZxBern,
-            model_subCat2_FEWZxBern,
-            model_subCat3_FEWZxBern,
-            model_subCat4_FEWZxBern,
-        ],
-        # "FEWZxBern" : [
-        #     coreFEWZxBern_SubCat0, 
-        #     coreFEWZxBern_SubCat1,
-        #     coreFEWZxBern_SubCat2,
-        #     coreFEWZxBern_SubCat3,
-        #     coreFEWZxBern_SubCat4,
-        # ],
-        "SMF" : [
-            subCat0_SMF, 
-            subCat1_SMF,
-            subCat2_SMF,
-            subCat3_SMF,
-            subCat4_SMF,
-        ],
-    }
-    rooHist_list = [ # for normalization histogram reference
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4
-    ]
-    plotBkgByCoreFunc(mass, model_dict_by_coreFunction, rooHist_list, plot_save_path)
-    
-
-    # -------------------------------------------------------------------------
-    # do Bkg plotting loop divided into Sub Categories
-    # -------------------------------------------------------------------------
-
-    model_dict_by_subCat = {
-        0 : [
-            model_subCat0_BWZRedux, 
-            model_subCat0_sumExp,
-            model_subCat0_FEWZxBern,
-        ],
-        1 : [
-            model_subCat1_BWZRedux, 
-            model_subCat1_sumExp,
-            model_subCat1_FEWZxBern,
-        ],
-        2 : [
-            model_subCat2_BWZRedux, 
-            model_subCat2_sumExp,
-            model_subCat2_FEWZxBern,
-        ],
-        3 : [
-            model_subCat3_BWZRedux, 
-            model_subCat3_sumExp,
-            model_subCat3_FEWZxBern,
-        ],
-        4 : [
-            model_subCat4_BWZRedux, 
-            model_subCat4_sumExp,
-            model_subCat4_FEWZxBern,
-        ],
-    }
-    data_dict_by_subCat = {
-        0 : roo_histData_subCat0,
-        1 : roo_histData_subCat1,
-        2 : roo_histData_subCat2,
-        3 : roo_histData_subCat3,
-        4 : roo_histData_subCat4,
-    }
-    plotBkgBySubCat(mass, model_dict_by_subCat, data_dict_by_subCat, plot_save_path)
-
-    
 
 
