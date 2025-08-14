@@ -58,6 +58,102 @@ def MakeFEWZxBernDof3(
    
     return (final_model, out_dict)
 
+
+def MakeFEWZxBernDof3_BernFast(
+        name_final:str, 
+        title:str, 
+        mass: rt.RooRealVar, 
+        # c1: rt.RooRealVar, c2: rt.RooRealVar, c3: rt.RooRealVar
+        BernCoeff_list,
+    ) ->Tuple[rt.RooProdPdf, Dict]:
+    """
+    params:
+    mass = rt.RooRealVar that we will fitTo
+    dof = degrees of freedom given to this model. Since the spline
+    has no dof, all the dof is inserted to the Bernstein
+    """
+    # collect all variables that we don't want destroyed by Python once function ends
+    out_dict = {}
+
+    # make BernStein of order == dof
+    # n_coeffs = 3
+    # BernCoeff_list = [c1, c2, c3]
+    # n_coeffs = 1
+    # BernCoeff_list = [c1,]
+    name = f"BernsteinFast"
+    n_coeffs = len(BernCoeff_list)
+    bern_model = rt.RooBernsteinFast(n_coeffs)(name, name, mass, BernCoeff_list)
+    # bern_model = rt.RooBernstein(name, name, mass, BernCoeff_list)
+    out_dict[name] = bern_model # add model to make python remember
+
+
+    
+    # make the spline portion
+
+    # this ROOT files has branches full_36fb, full_xsec, full_shape -> all three has the same shape (same hist once normalized)
+    FEWZ_file = rt.TFile("./data/NNLO_Bourilkov_2017.root", "READ")
+    FEWZ_histo = FEWZ_file.Get("full_36fb")
+    # FEWZ_histo = FEWZ_file.Get("full_shape") # 50 bins in total
+
+    # rebin_factor = 5#5 
+    rebin_factor = 2#5 
+    FEWZ_histo = FEWZ_histo.Rebin(rebin_factor, "hist_rebinned")
+    # FEWZ_data = rt.RooDataHist("fewzdata","fewzdata",mass,FEWZ_histo) # this is RoofitHist data
+    
+    
+    # x_arr, y_arr = getFEWZ_vals(FEWZ_histo)
+    
+
+    # # Roospline start ---------------------------------    
+    # x_arr_vec = rt.vector("double")(x_arr)
+    # y_arr_vec = rt.vector("double")(y_arr)
+    # name = "fewz_roospline_func"
+    # roo_spline_func = rt.RooSpline(name, name, mass, x_arr_vec, y_arr_vec, order=3)
+    # out_dict[name] = roo_spline_func
+    # # Roospline end ------------------------------------
+
+
+    
+    roo_spline_func = getFEWZ_roospline(mass, "ucsd_workspace/")# extract from ucsd 's fews root file
+    
+    out_dict[roo_spline_func.GetName()] = roo_spline_func
+    
+    # Roospline1D start ---------------------------------    
+    # x0 = (ctypes.c_double * len(x_arr))(*x_arr)
+    # y0 = (ctypes.c_double * len(y_arr))(*y_arr)
+    # n = len(x0)
+    # name = "fewz_roospline_func"
+    # roo_spline_func = rt.RooSpline1D(name, name, mass, n,x0, y0)
+    # out_dict[name] = roo_spline_func
+    # Roospline1D end ------------------------------------
+
+    
+
+    # turn roo_spline_func into pdf
+    # RooProdPDF seems to automatically normalize the pdfs on https://root.cern.ch/doc/master/classRooProdPdf.html,
+    # so no need to "normalize" rooSpline into a PDF. Also, I tried both full_36fb and full_shape bracnhes of 
+    # FEWZ histograms (they have same shape, but different values), and I saw no difference in fit function plot,
+    # loosely suggesting automatic normalization
+    # roo_spline_pdf = roo_spline_func
+    
+    
+    name = "fewz_1j_spl_pdf"
+    roo_spline_pdf = rt.RooWrapperPdf(name, name, roo_spline_func)
+    out_dict[name] = roo_spline_pdf # add model to make python remember  
+
+    # RooWrapperPdf doesn't seem to work well with FitTo. Just freezes for a long time
+    # name = "fewz_roospline_pdf"
+    # roo_spline_pdf = rt.RooGenericPdf(name, "@0", rt.RooArgList(roo_spline_func))      
+    # out_dict[name] = roo_spline_pdf # add model to make python remember  
+
+    final_model = rt.RooProdPdf(name_final, name_final, [bern_model, roo_spline_pdf]) 
+    # final_model = rt.RooGenericPdf(name_final, "@0*@1", rt.RooArgList(roo_spline_pdf, bern_model))  
+    # final_model = bern_model
+    # final_model = roo_spline_pdf
+   
+    return (final_model, out_dict)
+
+
 def getShapeModifierHist(x, allCat_hist, subCat_hist, normalize=False, nbins=100):
     x_name = x.GetName()
     nbins_old = x.getBins()
@@ -251,8 +347,15 @@ def getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict, nSubCats=5):
     parameters = []
     sim_sigBkg_pdf = {}
     for ix in range(nSubCats):
-        name = f"frac_subCat{ix}"
-        frac = rt.RooRealVar(name,name,0.01, 0.0, 1.0) 
+        name = f"frac_subCat{ix}_BWZRedux"
+        frac_BWZRedux = rt.RooRealVar(name,name,0.01, 0.0, 1.0) 
+        name = f"frac_subCat{ix}_SumExp"
+        frac_SumExp = rt.RooRealVar(name,name,0.01, 0.0, 1.0) 
+        name = f"frac_subCat{ix}_FEWZxBern"
+        frac_FEWZxBern = rt.RooRealVar(name,name,0.01, 0.0, 1.0) 
+
+        frac_SumExp = frac_BWZRedux
+        frac_FEWZxBern = frac_BWZRedux
 
         bwz_redux = bkg_pdf_dict[f"subCat{ix}_BWZRedux"]
         sum_exp = bkg_pdf_dict[f"subCat{ix}_sumExp"]
@@ -260,13 +363,18 @@ def getSigBkgPdf(bkg_pdf_dict, sig_pdf_dict, nSubCats=5):
         signal_ggh = sig_pdf_dict[f"signal_subCat{ix}"]
         
         name = f"sigBkg_subCat{ix}_BWZRedux"
-        sigBkg_BWZRedux = rt.RooAddPdf(name, name, [signal_ggh, bwz_redux], [frac])
+        sigBkg_BWZRedux = rt.RooAddPdf(name, name, [signal_ggh, bwz_redux], [frac_BWZRedux])
         name = f"sigBkg_subCat{ix}_sumExp"
-        sigBkg_sumExp = rt.RooAddPdf(name, name, [signal_ggh, sum_exp], [frac])
+        sigBkg_sumExp = rt.RooAddPdf(name, name, [signal_ggh, sum_exp], [frac_SumExp])
         name = f"sigBkg_subCat{ix}_FEWZxBern"
-        sigBkg_FEWZxBern = rt.RooAddPdf(name, name, [signal_ggh, fewzXbern], [frac])
+        sigBkg_FEWZxBern = rt.RooAddPdf(name, name, [signal_ggh, fewzXbern], [frac_FEWZxBern])
         
-        parameters.append(frac)
+        # parameters.append(frac)
+        parameters = parameters + [
+            frac_BWZRedux,
+            frac_SumExp,
+            frac_FEWZxBern
+        ]
         
         sim_sigBkg_pdf[f"subCat{ix}_BWZRedux"] = sigBkg_BWZRedux
         sim_sigBkg_pdf[f"subCat{ix}_sumExp"] = sigBkg_sumExp
@@ -418,8 +526,24 @@ def getResidHistBand(x, pdf, fitResult, dataHist, n_sigma=1, color=rt.kGreen):
     # raise ValueError
     return h_band
 
+# def turnRooHist2RooDataHist(roo_hist, x):
+#     # extract the TH1
+#     th1 = roo_hist.GetHistogram()     # a TH1*
+#     print(f"th1.Integral(): {th1.Integral()}")
+#     # now build a RooDataHist out of it
+#     x_name = x.GetName()
+#     roo_dataHist = rt.RooDataHist(
+#         x_name,                # name
+#         x_name, 
+#         rt.RooArgList(x),       # list of observables (must match the axis of th1)
+#         th1                  # the TH1 to import
+#     )
+#     return roo_dataHist
 
-def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nbins=50):
+
+def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nbins=50, coreFuncName="", unblind=False):
+    # target_nbins = 100
+    target_nbins = 80 # NOTE: the plots are sensitve to rebins
     x_name = x.GetName()
     sig_yield_multiply_l = [
         50,
@@ -428,7 +552,13 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
         30,
         20
     ]
-    
+    if unblind:
+        fit_range = "full"
+        plot_range = "full"
+    else:
+        fit_range = "loSB,hiSB"
+        plot_range = "full"
+        
     for ix in range(len(subCat_dataHists)):
     # for ix in range(1):
         canvas = rt.TCanvas("canvas","canvas",800, 800) # giving a specific name for each canvas prevents segfault
@@ -458,54 +588,93 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
         multi_pdf = multi_pdf_l[ix]
         
         subCat_dataHist.plotOn(frame, Invisible=True)
-        bkg_pdf_name = f"model_SubCat{ix}_SMFxBWZRedux"
-        multi_pdf.plotOn(frame, Components=bkg_pdf_name, Invisible=True) 
+        # bkg_pdf_name = f"model_SubCat{ix}_SMFxBWZRedux"
+        bkg_pdf_name = f"model_SubCat{ix}_SMFx{coreFuncName}"
+        
+        # multi_pdf.plotOn(frame, Components=bkg_pdf_name, Invisible=True) 
+        # hresid_bkg_only = frame.residHist() # obtain residual for later
+
+        # multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange), Components=bkg_pdf_name) 
+        # legend.AddEntry(frame.getObject(int(frame.numItems())-1),"+/ 2\sigma", "F")
+        
+        # multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen), Components=bkg_pdf_name) 
+        # legend.AddEntry(frame.getObject(int(frame.numItems())-1),"+/ 1\sigma", "F")
+        
+        # multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2, Components=bkg_pdf_name, LineStyle=rt.kDashed)
+        # legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Fitted background", "L")
+        # multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2)
+        
+        
+        multi_pdf.plotOn(frame, rt.RooFit.NormRange(fit_range), rt.RooFit.Range(plot_range), Components=bkg_pdf_name, Invisible=True) 
         hresid_bkg_only = frame.residHist() # obtain residual for later
 
-        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange), Components=bkg_pdf_name) 
+        multi_pdf.plotOn(frame, rt.RooFit.NormRange(fit_range), rt.RooFit.Range(plot_range), VisualizeError=(fitResult, 2), FillColor=(ROOT.kOrange), Components=bkg_pdf_name) 
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),"+/ 2\sigma", "F")
         
-        multi_pdf.plotOn(frame, VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen), Components=bkg_pdf_name) 
+        multi_pdf.plotOn(frame, rt.RooFit.NormRange(fit_range), rt.RooFit.Range(plot_range), VisualizeError=(fitResult, 1), FillColor=(ROOT.kGreen), Components=bkg_pdf_name) 
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),"+/ 1\sigma", "F")
         
-        multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2, Components=bkg_pdf_name, LineStyle=rt.kDashed)
+        multi_pdf.plotOn(frame, rt.RooFit.NormRange(fit_range), rt.RooFit.Range(plot_range), LineColor=rt.kRed, LineWidth=2, Components=bkg_pdf_name, LineStyle=rt.kDashed)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Fitted background", "L")
         
+
+
+        # sig_frac = get_fracFromAddPdf(add_pdf, f"frac_subCat{ix}")
+        # sig_frac.Print("v")
+        # original_frac_val = sig_frac.getVal()
+        # multipy_val = sig_yield_multiply_l[ix]
+        # sig_frac.setVal(original_frac_val*multipy_val)
+        # multi_pdf.plotOn(frame, LineColor=rt.kBlue, LineWidth=2, Components=f"ggH_cat{ix}_ggh_pdf")
+
         
-        
-        multi_pdf.plotOn(frame, LineColor=rt.kRed, LineWidth=2)
-        legend.AddEntry(frame.getObject(int(frame.numItems())-1),"S+B fit", "L")
-        subCat_dataHist.plotOn(frame)
+        if unblind:
+            multi_pdf.plotOn(frame, rt.RooFit.NormRange(fit_range), rt.RooFit.Range(plot_range), LineColor=rt.kRed, LineWidth=2)
+            legend.AddEntry(frame.getObject(int(frame.numItems())-1),"S+B fit", "L")
+            
+            add_pdf = multi_pdf
+            sig_frac = get_fracFromAddPdf(add_pdf, f"frac_subCat{ix}_BWZRedux")
+            # sig_frac = get_fracFromAddPdf(add_pdf, f"frac_subCat{ix}_{coreFuncName}")
+            # sig_frac.Print("v")
+            original_frac_val = sig_frac.getVal()
+            multipy_val = sig_yield_multiply_l[ix]
+            sig_frac.setVal(original_frac_val*multipy_val)
+            multi_pdf.plotOn(frame, LineColor=rt.kBlue, LineWidth=2, Components=f"ggH_cat{ix}_ggh_pdf")
+            legend.AddEntry(frame.getObject(int(frame.numItems())-1),f"Post-fit signal x {multipy_val}, m_H = 125 GeV", "L")
+
+        subCat_dataHist.plotOn(frame, rt.RooFit.CutRange(fit_range))
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "PE")
         
-        
-        add_pdf = multi_pdf
-        sig_frac = get_fracFromAddPdf(add_pdf, f"frac_subCat{ix}")
-        sig_frac.Print("v")
-        original_frac_val = sig_frac.getVal()
-        multipy_val = sig_yield_multiply_l[ix]
-        sig_frac.setVal(original_frac_val*multipy_val)
-        multi_pdf.plotOn(frame, LineColor=rt.kBlue, LineWidth=2, Components=f"ggH_cat{ix}_ggh_pdf")
-        legend.AddEntry(frame.getObject(int(frame.numItems())-1),f"Post-fit signal x {multipy_val}, m_H = 125 GeV", "L")
-
         frame.Draw()
         legend.Draw()
 
         
-        print(f"original_frac_val: {original_frac_val}")
-        print(f"subCat {ix} dataHist sumentries: {subCat_dataHist.sumEntries()}")
-        print(f"subCat {ix} signal yield: {subCat_dataHist.sumEntries()*original_frac_val}")
+        # print(f"subCat {ix} {coreFuncName} dataHist sumentries: {subCat_dataHist.sumEntries()}")
+        # print(f"subCat {ix} {coreFuncName} signal yield: {subCat_dataHist.sumEntries()*original_frac_val}")
         # done with pad1
         
         # Bottom pad start
         pad2.cd()
+
+        
+        # get dummy frame and get blinded residual
+        dummy_frame = x.frame()
+        subCat_dataHist.plotOn(dummy_frame, Invisible=True)
+        multi_pdf.plotOn(dummy_frame, rt.RooFit.NormRange(fit_range), rt.RooFit.Range(fit_range), Components=bkg_pdf_name) 
+        # multi_pdf.plotOn(dummy_frame, Components=bkg_pdf_name) 
+        subCat_dataHist.plotOn(dummy_frame, rt.RooFit.CutRange(fit_range))
+        
+        cut_hresid_bkg_only = dummy_frame.residHist()
+        
+
+
+        # get residual plot frame
         frame_resid = x.frame()
         frame_resid.addPlotable(hresid_bkg_only, "P", invisible=True)
         frame_resid.Draw() # draw invisible residual to set y range in pad2
         
-
         # set fraction back to normal
-        sig_frac.setVal(original_frac_val)
+        if unblind:
+            sig_frac.setVal(original_frac_val)
 
         bkg_pdf = get_pdf_by_name(multi_pdf, bkg_pdf_name)
         # print(f"bkg_pdf.GetName(): {bkg_pdf.GetName()}")
@@ -521,8 +690,8 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
 
         sig_pdf_name = f"ggH_cat{ix}_ggh_pdf"
         sigBkg_resid_pdf = get_pdf_by_name(multi_pdf, sig_pdf_name)
-        
-        sigBkg_resid_pdf.plotOn(frame_resid, LineColor=rt.kRed, LineStyle=rt.kSolid, LineWidth=2)
+        if unblind:
+            sigBkg_resid_pdf.plotOn(frame_resid, LineColor=rt.kRed, LineStyle=rt.kSolid, LineWidth=2)
 
         # Get the Erro bands
         # h_band_sig2 = getResidHistBand(x, bkg_pdf, fitResult, subCat_dataHist, n_sigma=2, color=rt.kOrange)
@@ -531,7 +700,9 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
         h_band_sig1 = getResidHistBand(x, multi_pdf, fitResult, subCat_dataHist, n_sigma=1, color=rt.kGreen)
         
         # plot the residual data points again, but visible this time
-        frame_resid.addPlotable(hresid_bkg_only, "P")
+        # frame_resid.addPlotable(hresid_bkg_only, "P", )
+        frame_resid.addPlotable(cut_hresid_bkg_only, "P", )
+        
         
         # draw 
         h_band_sig2.Draw("E2 SAME")
@@ -539,13 +710,147 @@ def plot_6_26(x, subCat_dataHists, multi_pdf_l, fitResult, save_fname, target_nb
         frame_resid.Draw("SAME")
         # frame_resid.Draw()
         
-        # continue
-        
         # done with pad2
         
         canvas.Update()
         canvas.Draw()
-        canvas.SaveAs(f"{save_fname}_subCat{ix}.pdf")
+        if unblind:
+            canvas.SaveAs(f"{save_fname}_{coreFuncName}_subCat{ix}_unblinded.pdf")
+        else:
+            canvas.SaveAs(f"{save_fname}_{coreFuncName}_subCat{ix}_blinded.pdf")
+            
     
     fitResult.Print()
-    # raise ValueError
+
+
+
+# -----------------------------------------------------
+# bias test
+# -----------------------------------------------------
+
+def getBWZ_gamma(x, init_param_dict):
+    name = f"bwzgamma_BWZ_a_coeff"
+    a_coeff_bwz = rt.RooRealVar(name,name, init_param_dict[name],-0.5,0.5)
+    # a_coeff_bwz = rt.RooRealVar(name,name, init_param_dict[name],-0.05,0.05)
+    name = "BWZ"
+    BWZ = rt.RooModZPdf(name, name, x, a_coeff_bwz) 
+
+    name = f"bwzgamma_Gamma_a_coeff"
+    # a_coeff_gamma = rt.RooRealVar(name,name, init_param_dict[name],-0.05,0.05)
+    a_coeff_gamma = rt.RooRealVar(name,name, init_param_dict[name],-0.5,0.5)
+    gamma = rt.RooGenericPdf("Gamma", "exp(@1*@0)/pow(@0,2)", rt.RooArgList(x, a_coeff_gamma))
+
+    name = f"bwzgamma_frac"
+    frac = rt.RooRealVar(name,name, init_param_dict[name], 0.0, 1.0) 
+    name = "BWZGamma"
+    coreBWZGamma = rt.RooAddPdf(name, name, [BWZ, gamma], [frac])
+    coreBWZGamma.fixCoefNormalization(rt.RooArgSet(x)) # I get this . Use RooAddPdf::fixCoefNormalization(nset) to provide a normalization set for defining uniquely RooAddPdf coefficients! error other wise
+    param_l = [
+        # a_coeff_bwz,
+        BWZ,
+        # a_coeff_gamma,
+        gamma,
+        # frac,
+        {
+            "2freeze": [a_coeff_bwz, a_coeff_gamma, frac]
+        }
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreBWZGamma, param_l
+
+
+def getBWZxBern(x, init_param_dict):
+    name = f"BWZxBern_a_coeff"
+    a_coeff_bwz = rt.RooRealVar(name,name, init_param_dict[name], -1, 1)
+
+    # we use RooModZPdf, so all bernstein coeffs are freely floating
+    name = f"bwz_bernstein_a0" 
+    a0_bern = rt.RooRealVar(name,name, init_param_dict[name], -1, 1)
+    name = f"bwz_bernstein_a1"
+    a1_bern = rt.RooRealVar(name,name, init_param_dict[name], -1, 1) # starting value = 1/n_coeffs
+    
+
+    name = "BWZxBernstein"
+    coreBWZxBern = rt.RooModZPdf(name, name, x, a_coeff_bwz, rt.RooArgList(a0_bern,a1_bern)) 
+
+    param_l = [
+        # a_coeff_bwz,
+        # a0_bern,
+        # a1_bern,
+        {
+            "2freeze": [a_coeff_bwz, a0_bern, a1_bern]
+        }
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreBWZxBern, param_l
+
+
+def getLandxBern(x, init_param_dict):
+    name = f"landau_m_Z"
+    m_Z = rt.RooRealVar(name,name, 91.2)
+    name = f"landau_a_coeff"
+    a_coeff = rt.RooRealVar(name, name, init_param_dict[name],0.0, 5)
+    name = "Landau"
+    Landau = rt.RooLandau(name, name, x, m_Z, a_coeff) 
+
+    name = f"landau_bernstein_a0"
+    a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
+    name = f"landau_bernstein_a1"
+    a1_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.5, 3) # starting value = 1/n_coeffs
+    name = f"landau_bernstein_a2"
+    a2_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.5, 3) # starting value = 1/n_coeffs
+    
+    # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
+    # name = "LandauxBernstein"
+    name = "bernstein_landau"
+    bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
+
+    name = "LandauxBernstein"
+    # coreLandxBern = rt.RooProdPdf(name, name, [Landau, bern_pol])
+    coreLandxBern = rt.RooProdPdf(name, name, [bern_pol, Landau])
+
+    param_l = [
+        m_Z,
+        # a_coeff,
+        Landau,
+        a0_bern,
+        # a1_bern,
+        # a2_bern,
+        bern_pol,
+        {
+            "2freeze": [a_coeff, a1_bern, a2_bern]
+        }
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreLandxBern, param_l
+
+
+def getFEWZxBern(x, init_param_dict, fewz_workspace_path="modules/ucsd_workspace/"):
+    roo_spline_func = getFEWZ_roospline(x, fewz_workspace_path)
+
+    name = "fewz_1j_spl_pdf"
+    roo_spline_pdf = rt.RooWrapperPdf(name, name, roo_spline_func)
+
+    name = f"fewz_bernstein_a0"
+    a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
+    name = f"fewz_bernstein_a1"
+    a1_bern = rt.RooRealVar(name,name, init_param_dict[name], 0, 5) 
+    name = f"fewz_bernstein_a2"
+    a2_bern = rt.RooRealVar(name,name, init_param_dict[name], 0.0, 10) 
+    name = f"fewz_bernstein_a3"
+    a3_bern = rt.RooRealVar(name,name, init_param_dict[name], 0.0, 10) 
+    
+    name = "bernstein_FEWZxBern"
+    bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern, a3_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
+
+    
+    name = "FEWZxBernstein"
+    coreFEWZxBern = rt.RooProdPdf(name, name, [roo_spline_pdf, bern_pol])
+
+    param_l = [
+        roo_spline_func,
+        roo_spline_pdf,
+        a0_bern,
+        a1_bern,
+        a2_bern,
+        a3_bern,
+        bern_pol,
+    ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
+    return coreFEWZxBern, param_l

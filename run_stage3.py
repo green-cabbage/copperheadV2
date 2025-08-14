@@ -11,6 +11,7 @@ import ROOT as rt
 import ROOT
 # from src.lib.fit_functions import MakeFEWZxBernDof3
 from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23, plot_6_26, getSigBkgPdf
+from modules.fit_functions import getBWZ_gamma, getBWZxBern, getLandxBern, getFEWZxBern
 import argparse
 import os
 import copy
@@ -339,12 +340,12 @@ if __name__ == "__main__":
     
 
     # # trying bigger range do that I don't get warning message from combine like: [WARNING] Found parameter BWZ_Redux_a_coeff at boundary (within ~1sigma)
-    name = f"BWZ_Redux_a_coeff"
-    a_coeff = rt.RooRealVar(name,name, 5.1288e-02,-0.5,0.5)
-    name = f"BWZ_Redux_b_coeff"
-    b_coeff = rt.RooRealVar(name,name, -1.3658e-04,-0.02,0.02)
-    name = f"BWZ_Redux_c_coeff"
-    c_coeff = rt.RooRealVar(name,name, 2.0602e+00,-10.0,10.0)
+    # name = f"BWZ_Redux_a_coeff"
+    # a_coeff = rt.RooRealVar(name,name, 5.1288e-02,-0.5,0.5)
+    # name = f"BWZ_Redux_b_coeff"
+    # b_coeff = rt.RooRealVar(name,name, -1.3658e-04,-0.02,0.02)
+    # name = f"BWZ_Redux_c_coeff"
+    # c_coeff = rt.RooRealVar(name,name, 2.0602e+00,-10.0,10.0)
     # name = f"BWZ_Redux_a_coeff"
     # a_coeff = rt.RooRealVar(name,name, -0.02,-0.5,0.5)
     # name = f"BWZ_Redux_b_coeff"
@@ -364,6 +365,16 @@ if __name__ == "__main__":
     # a_coeff.setConstant(True)
     # b_coeff.setConstant(True)
     # c_coeff.setConstant(True)
+
+
+
+    name = f"BWZ_Redux_a_coeff"
+    a_coeff = rt.RooRealVar(name,name, 3.9611e-02,-0.02,0.02) # this converges to -1.2561e-03
+    name = f"BWZ_Redux_b_coeff"
+    b_coeff = rt.RooRealVar(name,name, -9.9358e-05,-0.02,0.02) # this converges to  2.1729e-05,
+    name = f"BWZ_Redux_c_coeff"
+    c_coeff = rt.RooRealVar(name,name, 1.9978e+00,1,2.5) # this converges to 1.7082e+00
+
 
     # subCat 0
     name = "subCat0_BWZ_Redux"
@@ -611,13 +622,85 @@ if __name__ == "__main__":
     # f_coeff.setConstant(True)
 
     # sumexp subcat
-    a0_subCat0_sumExp = rt.RooRealVar("a0_subCat0_sumExp", "a0_subCat0_sumExp", -0.1, -1, 1)
-    a1_subCat0_sumExp = rt.RooRealVar("a1_subCat0_sumExp", "a1_subCat0_sumExp", 0.5, -0.5, 0.5)
-    a3_subCat0_sumExp = rt.RooRealVar("a3_subCat0_sumExp", "a3_subCat0_sumExp", 0.5, -0.5, 0.5)
+    # a0_subCat0_sumExp = rt.RooRealVar("a0_subCat0_sumExp", "a0_subCat0_sumExp", -0.1, -1, 1)
+    # a1_subCat0_sumExp = rt.RooRealVar("a1_subCat0_sumExp", "a1_subCat0_sumExp", 0.5, -0.5, 0.5)
+    # a3_subCat0_sumExp = rt.RooRealVar("a3_subCat0_sumExp", "a3_subCat0_sumExp", 0.5, -0.5, 0.5)
     
     name = "subCat0_sumExp"
-    coreSumExp_SubCat0 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
-     
+    # coreSumExp_SubCat0 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
+    # all_params = [{"2freeze":[]}]
+    
+
+    # # -------------------------------------------------------
+    # # FIXME: replace sumexp with BWZxBern
+    # # -------------------------------------------------------
+    # bwzxbern_init_vals = {
+    #     "BWZxBern_a_coeff": -0.02,
+    #     "bwz_bernstein_a0": 0.3,
+    #     "bwz_bernstein_a1": 0.3,
+    # }
+    # all_params = []
+    # coreSumExp_SubCat0, params = getBWZxBern(mass, bwzxbern_init_vals) 
+    # all_params.extend(params)
+
+
+    # # -------------------------------------------------------
+    # # FIXME: replace sumexp with Powerlaw
+    # # -------------------------------------------------------
+    # powerlaw_init_vals = {
+    #     "PowerLaw_a1_coeff": 0.00001,
+    #     "PowerLaw_a2_coeff": 0.1,
+    #     "PowerLaw_f_coeff": 0.9,
+    # }
+    # init_vals = powerlaw_init_vals
+    # prefix="corefuncPowerLaw"
+    # powerlaw_a1 = rt.RooRealVar(f"{prefix}_PowerLaw_a1_coeff", f"{prefix}_PowerLaw_a1_coeff", 
+    #                        init_vals["PowerLaw_a1_coeff"], -2.0, 1.0)
+    # powerlaw_a2 = rt.RooRealVar(f"{prefix}_PowerLaw_a2_coeff", f"{prefix}_PowerLaw_a2_coeff", 
+    #                    init_vals["PowerLaw_a2_coeff"], -2.0, 1.0)
+    # powerlaw_f  = rt.RooRealVar(f"{prefix}_PowerLaw_f_coeff", f"{prefix}_PowerLaw_f_coeff", 
+    #                    init_vals["PowerLaw_f_coeff"], 0.0, 1.0)
+    # coreSumExp_SubCat0 = rt.RooSumTwoPowerLawPdf(prefix, prefix, mass, powerlaw_a1, powerlaw_a2, powerlaw_f)
+    # all_params = [{"2freeze":[powerlaw_a1,
+    # powerlaw_a2,
+    # powerlaw_f,]}]
+
+
+    # # # -------------------------------------------------------
+    # # FIXME: replace sumexp with landauBern
+    # # -------------------------------------------------------
+    # landauxbern_init_vals = {
+    #     # "landau_a_coeff": 0.258087,
+    #     "landau_a_coeff": 0.01,
+    #     "landau_bernstein_a1": 1.5,
+    #     "landau_bernstein_a2": 0.75,
+    # }
+    # all_params = []
+    # coreSumExp_SubCat0, params = getLandxBern(mass, landauxbern_init_vals) 
+    # all_params.extend(params)
+    # print(f"all_params: {all_params}")
+
+    # -------------------------------------------------------
+    # FIXME: replace sumexp with bwzGamma
+    # -------------------------------------------------------
+    bwzgamma_init_vals = {
+        "bwzgamma_BWZ_a_coeff": -0.01,
+        "bwzgamma_Gamma_a_coeff": -0.005,
+        "bwzgamma_frac": 0.5,
+    }
+    # bwzgamma_init_vals = {
+    #     "bwzgamma_BWZ_a_coeff": -0.01,
+    #     "bwzgamma_Gamma_a_coeff": 2,
+    #     "bwzgamma_frac": 0.1,
+    # }
+    all_params = []
+    coreSumExp_SubCat0, params = getBWZ_gamma(mass, bwzgamma_init_vals) 
+    all_params.extend(params)
+    print(f"all_params: {all_params}")
+
+
+    
+    # ---------------------------------------------------------------------------
     name = "subCat0_SMF_sumExp"
     subCat0_SumExp_SMF = rt.RooChebychev(name, name, mass, [a0_subCat0, a1_subCat0, a3_subCat0]) # original
     # subCat0_SumExp_SMF = rt.RooChebychev(name, name, mass, [a0_subCat0_sumExp, a1_subCat0_sumExp, a3_subCat0_sumExp]) 
@@ -978,30 +1061,35 @@ if __name__ == "__main__":
 
     # fit core functions separately
     # BWZ redux
+    fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    fitResult.Print()
+    
     _ = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
-    fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
+    # fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
-    fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
+    # raise ValueError
+    
     # sum exp
     _ = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
-    fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
-    fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
+    # fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
     
     # fit FEWZxBern separately
     _ = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
-    fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
-    fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
+    # fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
+    # fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
 
     #----------------------------------------------------------------------------
     # freeze core pdf params b4 SMF fitting
@@ -1020,6 +1108,14 @@ if __name__ == "__main__":
     c2.setConstant(True)
     c3.setConstant(True)
     c4.setConstant(True)
+
+    # additional value
+    for var in all_params[-1]["2freeze"]:
+        # var.Print("v")
+        var.setConstant(True)
+        # print("-------------------------------------")
+        # var.Print("v")
+        # raise ValueError
     #----------------------------------------------------------------------------
 
     
@@ -1110,29 +1206,29 @@ if __name__ == "__main__":
 
     fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
-    # ---------------------------------------------------
-    # unfreeze the core function params b4 fitting again
-    # BWZ redux
-    a_coeff.setConstant(False)
-    b_coeff.setConstant(False)
-    c_coeff.setConstant(False)
+    # # ---------------------------------------------------
+    # # unfreeze the core function params b4 fitting again
+    # # BWZ redux
+    # a_coeff.setConstant(False)
+    # b_coeff.setConstant(False)
+    # c_coeff.setConstant(False)
     
-    # sumExp
-    a1_coeff.setConstant(False)
-    a2_coeff.setConstant(False)
-    f_coeff.setConstant(False)
+    # # sumExp
+    # a1_coeff.setConstant(False)
+    # a2_coeff.setConstant(False)
+    # f_coeff.setConstant(False)
 
-    # FEWZxBern
-    c1.setConstant(True) # first parameter always stay constant
-    c2.setConstant(False)
-    c3.setConstant(False)
-    c4.setConstant(False)
-    # ---------------------------------------------------
-    rt.Math.MinimizerOptions.SetDefaultTolerance(0.02)
-    fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True, Offset=True, Strategy=0)
-    # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=1 ,Save=True, Offset=True)
+    # # FEWZxBern
+    # c1.setConstant(True) # first parameter always stay constant
+    # c2.setConstant(False)
+    # c3.setConstant(False)
+    # c4.setConstant(False)
+    # # ---------------------------------------------------
+    # rt.Math.MinimizerOptions.SetDefaultTolerance(0.02)
+    # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True, Offset=True, Strategy=0)
+    # # fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=1 ,Save=True, Offset=True)
     
-    fitResult.Print()
+    # fitResult.Print()
 
     
     # raise ValueError
@@ -1224,6 +1320,11 @@ if __name__ == "__main__":
     c3.setConstant(False)
     c4.setConstant(False)
 
+    # additional value
+    for var in all_params[-1]["2freeze"]:
+        var.setConstant(False)
+    
+    
     end = time.time()
     print(f"runtime: {end-start} seconds")
 
@@ -1465,7 +1566,7 @@ if __name__ == "__main__":
     gof_df.to_csv(f"{gof_save_path}/KS_stats.csv")
 
         
-    raise ValueError
+    # raise ValueError
 
     # #----------------------------------------------------------------------------
     # # Now do multi-Pdf 
@@ -2999,102 +3100,103 @@ if __name__ == "__main__":
         plot_6_26(mass, subCat_dataHists, multi_pdf_l, fitResult, save_fname, coreFuncName=coreFuncName, unblind=False)
         
 
+
     # ---------------------------------------------------
     # Unblinded fitting
     # ---------------------------------------------------
 
-    # perform fit over full 110, 150
-    # CAUTION: make the parameters in the workspace is saved and closed
+    # # perform fit over full 110, 150
+    # # CAUTION: make the parameters in the workspace is saved and closed
 
-    # freeze back the core function s
-    # # BWZ redux
-    # a_coeff.setConstant(True)
-    # b_coeff.setConstant(True)
-    # c_coeff.setConstant(True)
+    # # freeze back the core function s
+    # # # BWZ redux
+    # # a_coeff.setConstant(True)
+    # # b_coeff.setConstant(True)
+    # # c_coeff.setConstant(True)
     
-    # # sumExp
-    # a1_coeff.setConstant(True)
-    # a2_coeff.setConstant(True)
-    # f_coeff.setConstant(True)
+    # # # sumExp
+    # # a1_coeff.setConstant(True)
+    # # a2_coeff.setConstant(True)
+    # # f_coeff.setConstant(True)
 
-    # # FEWZxBern
-    # c1.setConstant(True)
-    # c2.setConstant(True)
-    # c3.setConstant(True)
-    # c4.setConstant(True)
+    # # # FEWZxBern
+    # # c1.setConstant(True)
+    # # c2.setConstant(True)
+    # # c3.setConstant(True)
+    # # c4.setConstant(True)
 
 
-    # # SMF coeffs
-    # a0_subCat0.setConstant(True)
-    # a1_subCat0.setConstant(True)
-    # a3_subCat0.setConstant(True)
+    # # # SMF coeffs
+    # # a0_subCat0.setConstant(True)
+    # # a1_subCat0.setConstant(True)
+    # # a3_subCat0.setConstant(True)
 
-    # a0_subCat1.setConstant(True)
-    # a1_subCat1.setConstant(True)
-    # a0_subCat2.setConstant(True)
-    # a1_subCat2.setConstant(True)
-    # a0_subCat3.setConstant(True)
-    # a1_subCat3.setConstant(True)
-    # a0_subCat4.setConstant(True)
-    # a1_subCat4.setConstant(True)
+    # # a0_subCat1.setConstant(True)
+    # # a1_subCat1.setConstant(True)
+    # # a0_subCat2.setConstant(True)
+    # # a1_subCat2.setConstant(True)
+    # # a0_subCat3.setConstant(True)
+    # # a1_subCat3.setConstant(True)
+    # # a0_subCat4.setConstant(True)
+    # # a1_subCat4.setConstant(True)
 
-    # MH_subCat0.setConstant(False)
-    MH_subCat0.setConstant(True) # all other MH subcat refers to MH_subCat0
-    # MH_subCat0.Print("v")
-    # print(f"MH_subCat0: {MH_subCat0.getVal()}")
-    # raise ValueError
+    # # MH_subCat0.setConstant(False)
+    # MH_subCat0.setConstant(True) # all other MH subcat refers to MH_subCat0
+    # # MH_subCat0.Print("v")
+    # # print(f"MH_subCat0: {MH_subCat0.getVal()}")
+    # # raise ValueError
   
-    CMS_hmm_sigma_cat0_ggh.setConstant(True)
-    CMS_hmm_peak_cat0_ggh.setConstant(True)
+    # CMS_hmm_sigma_cat0_ggh.setConstant(True)
+    # CMS_hmm_peak_cat0_ggh.setConstant(True)
     
-    CMS_hmm_sigma_cat1_ggh.setConstant(True)
-    CMS_hmm_peak_cat1_ggh.setConstant(True)
+    # CMS_hmm_sigma_cat1_ggh.setConstant(True)
+    # CMS_hmm_peak_cat1_ggh.setConstant(True)
     
-    CMS_hmm_sigma_cat2_ggh.setConstant(True)
-    CMS_hmm_peak_cat2_ggh.setConstant(True)
+    # CMS_hmm_sigma_cat2_ggh.setConstant(True)
+    # CMS_hmm_peak_cat2_ggh.setConstant(True)
     
-    CMS_hmm_sigma_cat3_ggh.setConstant(True)
-    CMS_hmm_peak_cat3_ggh.setConstant(True)
+    # CMS_hmm_sigma_cat3_ggh.setConstant(True)
+    # CMS_hmm_peak_cat3_ggh.setConstant(True)
     
-    CMS_hmm_sigma_cat4_ggh.setConstant(True)
-    CMS_hmm_peak_cat4_ggh.setConstant(True)
+    # CMS_hmm_sigma_cat4_ggh.setConstant(True)
+    # CMS_hmm_peak_cat4_ggh.setConstant(True)
     
-    # ------------------------
-    simPdf = rt.RooSimultaneous(
-                                "simPdf", 
-                                "simultaneous pdf", 
-                                sim_sigBkg_pdf,
-                                sample,
-    )
-    fitResult = simPdf.fitTo(combData, EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    # fitResult.Print()
-    # raise ValueError
-    # ---------------------------------------------------
-    # Plot 6.23 unblinded
-    # ---------------------------------------------------
-    save_fname = f"{plot_save_path}/fig6_23_unblinded"
-    subCat_dataHists = [
-        roo_histData_subCat0,
-        roo_histData_subCat1,
-        roo_histData_subCat2,
-        roo_histData_subCat3,
-        roo_histData_subCat4,
-    ]
-    SMF_func_l = [
-        subCat0_SMF,
-        subCat1_SMF,
-        subCat2_SMF,
-        subCat3_SMF,
-        subCat4_SMF,
-    ]
-    y_range_l = [
-        (7e-3, 13e-3),
-        (7e-3, 13e-3),
-        (7e-3, 14e-3),
-        (5.6e-3, 18.5e-3),
-        (5.6e-3, 18.5e-3),
-    ]
-    # plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
+    # # ------------------------
+    # simPdf = rt.RooSimultaneous(
+    #                             "simPdf", 
+    #                             "simultaneous pdf", 
+    #                             sim_sigBkg_pdf,
+    #                             sample,
+    # )
+    # fitResult = simPdf.fitTo(combData, EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # # fitResult.Print()
+    # # raise ValueError
+    # # ---------------------------------------------------
+    # # Plot 6.23 unblinded
+    # # ---------------------------------------------------
+    # save_fname = f"{plot_save_path}/fig6_23_unblinded"
+    # subCat_dataHists = [
+    #     roo_histData_subCat0,
+    #     roo_histData_subCat1,
+    #     roo_histData_subCat2,
+    #     roo_histData_subCat3,
+    #     roo_histData_subCat4,
+    # ]
+    # SMF_func_l = [
+    #     subCat0_SMF,
+    #     subCat1_SMF,
+    #     subCat2_SMF,
+    #     subCat3_SMF,
+    #     subCat4_SMF,
+    # ]
+    # y_range_l = [
+    #     (7e-3, 13e-3),
+    #     (7e-3, 13e-3),
+    #     (7e-3, 14e-3),
+    #     (5.6e-3, 18.5e-3),
+    #     (5.6e-3, 18.5e-3),
+    # ]
+    # # plot_6_23(mass, roo_histData_allCat, subCat_dataHists, SMF_func_l, fitResult, save_fname, y_range_l=y_range_l)
     
 
     # ---------------------------------------------------
