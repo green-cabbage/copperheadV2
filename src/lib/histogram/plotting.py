@@ -216,14 +216,16 @@ def plotDataMC_compare(
             sig_density = sig_arr / np.sum(sig_arr * widths)
             # separation power
             d_val = 0.5 * np.sum(np.abs(sig_density - bkg_density) * widths)
-        # place text in upper-right, offset per sample
-        for idx, sig_name in enumerate(sig_MC_dict.keys()):
-            y_pos = 0.95 - idx * 0.05
+            y_pos = 0.95 - idx * 0.07
             ax_main.text(
                 0.95, y_pos,
                 f"{sig_name}: d = {d_val:.2f}",
-                ha="right", va="top", transform=ax_main.transAxes
+                ha="right", va="top", 
+                transform=ax_main.transAxes
             )
+            # Dummy entry for extra text
+            # dummy, = plt.plot([], [], ' ', label=f"{sig_name}: d = {d_val:.2f}")
+        
 
     # -----------------------------------------
     # Legend, title, etc +  save figure
