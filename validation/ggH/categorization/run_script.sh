@@ -79,59 +79,13 @@ region="signal"
 # python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
 # python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
 # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
-python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
+# python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
 # # -----------------------------------------------------
-# year="2016postVFP"
+# plot 6.7 
+python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
-# region="z-peak"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# region="signal"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# region="h-sidebands"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# # plot Fig 6.13 from AN-19-124
-# region="signal"
-# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
-
-# # -----------------------------------------------------
-# year="2016preVFP"
-
-# region="z-peak"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# region="signal"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# region="h-sidebands"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# # plot Fig 6.13 from AN-19-124
-# region="signal"
-# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
-
-
-# # -----------------------------------------------------
-# year="2016"
-
-# region="z-peak"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# region="signal"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# region="h-sidebands"
-# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# # plot Fig 6.13 from AN-19-124
-# region="signal"
-# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 
 
 # # -----------------------------------------------------
