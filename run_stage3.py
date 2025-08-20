@@ -375,6 +375,13 @@ if __name__ == "__main__":
     name = f"BWZ_Redux_c_coeff"
     c_coeff = rt.RooRealVar(name,name, 1.9978e+00,1,2.5) # this converges to 1.7082e+00
 
+    # name = f"BWZ_Redux_a_coeff"
+    # a_coeff = rt.RooRealVar(name,name, -1.2561e-03,-0.02,0.02) # this converges to -1.2561e-03
+    # name = f"BWZ_Redux_b_coeff"
+    # b_coeff = rt.RooRealVar(name,name, 2.1729e-05,-0.02,0.02) # this converges to  2.1729e-05,
+    # name = f"BWZ_Redux_c_coeff"
+    # c_coeff = rt.RooRealVar(name,name, 1.7082e+00,1,2.5) # this converges to 1.7082e+00
+
 
     # subCat 0
     name = "subCat0_BWZ_Redux"
@@ -627,8 +634,8 @@ if __name__ == "__main__":
     # a3_subCat0_sumExp = rt.RooRealVar("a3_subCat0_sumExp", "a3_subCat0_sumExp", 0.5, -0.5, 0.5)
     
     name = "subCat0_sumExp"
-    # coreSumExp_SubCat0 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
-    # all_params = [{"2freeze":[]}]
+    coreSumExp_SubCat0 = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
+    all_params = [{"2freeze":[]}]
     
 
     # # -------------------------------------------------------
@@ -680,23 +687,23 @@ if __name__ == "__main__":
     # all_params.extend(params)
     # print(f"all_params: {all_params}")
 
-    # -------------------------------------------------------
-    # FIXME: replace sumexp with bwzGamma
-    # -------------------------------------------------------
-    bwzgamma_init_vals = {
-        "bwzgamma_BWZ_a_coeff": -0.01,
-        "bwzgamma_Gamma_a_coeff": -0.005,
-        "bwzgamma_frac": 0.5,
-    }
+    # # -------------------------------------------------------
+    # # FIXME: replace sumexp with bwzGamma
+    # # -------------------------------------------------------
     # bwzgamma_init_vals = {
     #     "bwzgamma_BWZ_a_coeff": -0.01,
-    #     "bwzgamma_Gamma_a_coeff": 2,
-    #     "bwzgamma_frac": 0.1,
+    #     "bwzgamma_Gamma_a_coeff": -0.005,
+    #     "bwzgamma_frac": 0.5,
     # }
-    all_params = []
-    coreSumExp_SubCat0, params = getBWZ_gamma(mass, bwzgamma_init_vals) 
-    all_params.extend(params)
-    print(f"all_params: {all_params}")
+    # # bwzgamma_init_vals = {
+    # #     "bwzgamma_BWZ_a_coeff": -0.01,
+    # #     "bwzgamma_Gamma_a_coeff": 2,
+    # #     "bwzgamma_frac": 0.1,
+    # # }
+    # all_params = []
+    # coreSumExp_SubCat0, params = getBWZ_gamma(mass, bwzgamma_init_vals) 
+    # all_params.extend(params)
+    # print(f"all_params: {all_params}")
 
 
     
@@ -1092,30 +1099,30 @@ if __name__ == "__main__":
     # fitResult.Print()
 
     #----------------------------------------------------------------------------
-    # freeze core pdf params b4 SMF fitting
-    # BWZ redux
-    a_coeff.setConstant(True)
-    b_coeff.setConstant(True)
-    c_coeff.setConstant(True)
+    # # freeze core pdf params b4 SMF fitting
+    # # BWZ redux
+    # a_coeff.setConstant(True)
+    # b_coeff.setConstant(True)
+    # c_coeff.setConstant(True)
     
-    # sumExp
-    a1_coeff.setConstant(True)
-    a2_coeff.setConstant(True)
-    f_coeff.setConstant(True)
+    # # sumExp
+    # a1_coeff.setConstant(True)
+    # a2_coeff.setConstant(True)
+    # f_coeff.setConstant(True)
 
-    # FEWZxBern
-    c1.setConstant(True)
-    c2.setConstant(True)
-    c3.setConstant(True)
-    c4.setConstant(True)
+    # # FEWZxBern
+    # c1.setConstant(True)
+    # c2.setConstant(True)
+    # c3.setConstant(True)
+    # c4.setConstant(True)
 
-    # additional value
-    for var in all_params[-1]["2freeze"]:
-        # var.Print("v")
-        var.setConstant(True)
-        # print("-------------------------------------")
-        # var.Print("v")
-        # raise ValueError
+    # # additional value
+    # for var in all_params[-1]["2freeze"]:
+    #     # var.Print("v")
+    #     var.setConstant(True)
+    #     # print("-------------------------------------")
+    #     # var.Print("v")
+    #     # raise ValueError
     #----------------------------------------------------------------------------
 
     
