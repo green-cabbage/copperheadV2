@@ -1099,30 +1099,30 @@ if __name__ == "__main__":
     # fitResult.Print()
 
     #----------------------------------------------------------------------------
-    # # freeze core pdf params b4 SMF fitting
-    # # BWZ redux
-    # a_coeff.setConstant(True)
-    # b_coeff.setConstant(True)
-    # c_coeff.setConstant(True)
+    # freeze core pdf params b4 SMF fitting
+    # BWZ redux
+    a_coeff.setConstant(True)
+    b_coeff.setConstant(True)
+    c_coeff.setConstant(True)
     
-    # # sumExp
-    # a1_coeff.setConstant(True)
-    # a2_coeff.setConstant(True)
-    # f_coeff.setConstant(True)
+    # sumExp
+    a1_coeff.setConstant(True)
+    a2_coeff.setConstant(True)
+    f_coeff.setConstant(True)
 
-    # # FEWZxBern
-    # c1.setConstant(True)
-    # c2.setConstant(True)
-    # c3.setConstant(True)
-    # c4.setConstant(True)
+    # FEWZxBern
+    c1.setConstant(True)
+    c2.setConstant(True)
+    c3.setConstant(True)
+    c4.setConstant(True)
 
-    # # additional value
-    # for var in all_params[-1]["2freeze"]:
-    #     # var.Print("v")
-    #     var.setConstant(True)
-    #     # print("-------------------------------------")
-    #     # var.Print("v")
-    #     # raise ValueError
+    # additional value
+    for var in all_params[-1]["2freeze"]:
+        # var.Print("v")
+        var.setConstant(True)
+        # print("-------------------------------------")
+        # var.Print("v")
+        # raise ValueError
     #----------------------------------------------------------------------------
 
     
