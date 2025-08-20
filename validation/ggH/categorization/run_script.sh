@@ -85,11 +85,11 @@ region="signal"
 # # -----------------------------------------------------
 # plot 6.7 
 model_name="V2_fullRun_Jun21_2025_1n2Revised"
-category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields" # stage2 ouput name
+category="${model_name}_ggh" # stage2 ouput name
 year="all"
 label="fullRun_Jun23_2025_1n2Revised"
 region="signal"
-
+# depot/cms/users/yun79/hmm/copperheadV1clean/fullRun_Jun23_2025_1n2Revised/V2_fullRun_Jun21_2025_1n2Revised_ggh/stage2_outputForFig6_7/2018/processed_events_sigMC_ggh.parquet
 python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
 

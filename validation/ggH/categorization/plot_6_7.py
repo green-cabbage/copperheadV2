@@ -25,7 +25,17 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")
 sys.path.insert(0, parent_dir)
 # Now you can import your module
 
-def plot_6_7(df, binning, var, xlabel):
+def getPlotVar(var: str):
+    """
+    Helper function that removes the variations in variable name if they exist
+    """
+    if "_nominal" in var:
+        plot_var = var.replace("_nominal", "")
+    else:
+        plot_var = var
+    return plot_var
+    
+def plot_6_7(df, binning, var, xlabel, save_dir):
     
     # --- binning ---
     bdt_edges = np.array([-1.00, -0.28, -0.10, 0.08, 0.23, 0.32, 0.43, 0.51, 1.00])
@@ -57,14 +67,16 @@ def plot_6_7(df, binning, var, xlabel):
     plt.ylabel("A.U.")
     plt.title("")
     # plt.title("Normalized dimuon mass by BDT slice")
-    plt.legend(fontsize=9, loc="best", ncol=2)
+    plt.legend(fontsize=12, loc="best", ncol=1)
     # plt.legend(ncol=2)
     # plt.tight_layout()
     # plt.show()
     CenterOfMass = 13
-    status = "Simulation"
-    hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
-    plt.savefig("test.png")
+    # status = "Simulation"
+    # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+    hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
+    fig_name = f"{save_dir}/{plot_var}.pdf"
+    plt.savefig(fig_name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -128,7 +140,8 @@ if __name__ == "__main__":
         year_param = "2016*"
     else:
         year_param = year
-    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year_param}/"
+    # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year_param}/"
+    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_outputForFig6_7/{year_param}/"
     # events = dak.from_parquet(f"{load_path}/*data.parquet")
     # print(events.fields)
     bdt_edges = [0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 1.0]
@@ -164,24 +177,57 @@ if __name__ == "__main__":
     full_load_path = load_path+f"processed_events_sigMC*.parquet" 
     df = dd.read_parquet(full_load_path).compute()
     # change BDT score range from [0,1] to [-1,1]
+    # print(df)
+    print(df.columns)
     df["BDT_score"] = (df["BDT_score"] *2 ) -1
-    print(df)
+    print(df.columns)
+    print(df.isna().any().any()) 
+    print(df.isna().sum().sum())
     # raise ValueError
 
 
-    plot_setting_fname = "../../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
+    # plot_setting_fname = "../../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
+    plot_setting_fname = "../../../src/lib/histogram/plot_settings_gghCat_BDT_input.json"
     # plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
     with open(plot_setting_fname, "r") as file:
         plot_settings = json.load(file)
-    # plot_var = "BDT_score"
-    plot_var = "dimuon_mass"
-    if plot_var == "dimuon_mass":
-        binning = np.linspace(115, 135, 50)
-    else:
-        binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-    xlabel =  plot_settings[plot_var].get("xlabel")
-    save_fname = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_7"
 
-    plot_6_7(df, binning, plot_var, xlabel)
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_7"
+    os.makedirs(save_dir, exist_ok=True)
+    
+    bdt_inputs = [
+        'dimuon_cos_theta_cs', 
+        'dimuon_phi_cs', 
+        'dimuon_rapidity', 
+        'dimuon_pt', 
+        'jet1_eta_nominal', 
+        'jet2_eta_nominal', 
+        'jet1_pt_nominal', 
+        'jet2_pt_nominal', 
+        'jj_dEta_nominal', 
+        'jj_dPhi_nominal', 
+        'jj_mass_nominal', 
+        # 'mmj1_dEta', 
+        # 'mmj1_dPhi',  
+        'mmj_min_dEta_nominal', 
+        'mmj_min_dPhi_nominal', 
+        'mu1_eta', 
+        'mu1_pt_over_mass', 
+        'mu2_eta', 
+        'mu2_pt_over_mass', 
+        'zeppenfeld_nominal',
+        'njets_nominal'
+    ]
+    
+    for var in bdt_inputs:
+        # plot_var = "BDT_score"
+        # plot_var = "dimuon_mass"
+        plot_var = getPlotVar(var)
+        if plot_var == "dimuon_mass":
+            binning = np.linspace(115, 135, 50)
+        else:
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        xlabel =  plot_settings[plot_var].get("xlabel")
+        plot_6_7(df, binning, var, xlabel, save_dir)
 
     
