@@ -84,6 +84,12 @@ region="signal"
 
 # # -----------------------------------------------------
 # plot 6.7 
+model_name="V2_fullRun_Jun21_2025_1n2Revised"
+category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields" # stage2 ouput name
+year="all"
+label="fullRun_Jun23_2025_1n2Revised"
+region="signal"
+
 python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
 
