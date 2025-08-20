@@ -6,7 +6,7 @@ import os
 import numpy as np
 import json
 from collections import OrderedDict
-
+from modules.utils import filterRegion
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -15,19 +15,19 @@ sys.path.insert(0, parent_dir)
 # Now you can import your module
 from src.lib.histogram.plotting import plotDataMC_compare_eager
 
-def filterRegion(events, region="h-peak"):
-    dimuon_mass = events.dimuon_mass
-    if region =="h-peak":
-        region = (dimuon_mass > 115) & (dimuon_mass < 135)
-    elif region =="h-sidebands":
-        region = ((dimuon_mass > 110) & (dimuon_mass < 115)) | ((dimuon_mass > 135) & (dimuon_mass < 150))
-    elif region =="signal":
-        region = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
-    elif region =="z-peak":
-        region = (dimuon_mass >= 70) & (dimuon_mass <= 110.0)
+# def filterRegion(events, region="h-peak"):
+#     dimuon_mass = events.dimuon_mass
+#     if region =="h-peak":
+#         region = (dimuon_mass > 115) & (dimuon_mass < 135)
+#     elif region =="h-sidebands":
+#         region = ((dimuon_mass > 110) & (dimuon_mass < 115)) | ((dimuon_mass > 135) & (dimuon_mass < 150))
+#     elif region =="signal":
+#         region = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
+#     elif region =="z-peak":
+#         region = (dimuon_mass >= 70) & (dimuon_mass <= 110.0)
 
-    events = events[region]
-    return events
+#     events = events[region]
+#     return events
 
 def tranformBDT_score(computed_zip):
     """

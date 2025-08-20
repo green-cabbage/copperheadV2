@@ -50,6 +50,9 @@ def createUnitHistogram_roofit(x):
     return th1_rooHist
 
 def getColor(name):
+    """
+    helper function to get root colors
+    """
     # color_list = [
     #     rt.kGreen,
     #     rt.kBlue,
@@ -98,56 +101,6 @@ def getBWZ_gamma(x):
         frac,
     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
     return coreBWZGamma, param_l
-
-# def getBWZxBern(x):
-#     name = f"BWZ_a_coeff"
-#     # a_coeff_bwz = rt.RooRealVar(name,name, -0.02,-0.5,0.5)
-#     # a_coeff_bwz = rt.RooRealVar(name,name, -0.02,-0.03,-0.01)
-#     # name = "BWZ"
-#     # BWZ = rt.RooModZPdf(name, name, x, a_coeff_bwz) 
-
-#     # name = f"bernstein_a0"
-#     # # a0_bern = rt.RooRealVar(name,name, 1.157, 0, 2)
-#     # # a0_bern = rt.RooRealVar(name,name, 0.3, 0, 2)
-#     # a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
-#     # name = f"bernstein_a1"
-#     # # a1_bern = rt.RooRealVar(name,name, 1.6, 0, 2)
-#     # a1_bern = rt.RooRealVar(name,name, 1.5, 1, 2) # starting value = 1/n_coeffs
-#     # name = f"bernstein_a2"
-#     # a2_bern = rt.RooRealVar(name,name, 3.5, 3, 4) # starting value = 1/n_coeffs
-    
-#     # # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
-#     # bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
-
-#     a_coeff_bwz = rt.RooRealVar(name,name, 8.6877e-03,-0.03,1)
-#     name = "BWZ"
-#     BWZ = rt.RooModZPdf(name, name, x, a_coeff_bwz) 
-
-#     name = f"bernstein_a0"
-#     # a0_bern = rt.RooRealVar(name,name, 1.157, 0, 2)
-#     # a0_bern = rt.RooRealVar(name,name, 0.3, 0, 2)
-#     a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
-#     name = f"bernstein_a1"
-#     # a1_bern = rt.RooRealVar(name,name, 1.6, 0, 2)
-#     a1_bern = rt.RooRealVar(name,name, 1, -10, 10) # starting value = 1/n_coeffs
-#     name = f"bernstein_a2"
-#     a2_bern = rt.RooRealVar(name,name, 1, -10, 10) # starting value = 1/n_coeffs
-    
-#     # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
-#     bern_pol = rt.RooBernstein(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) # extra parameter is needed https://root-forum.cern.ch/t/roobernstein-correction/41800
-
-#     name = "BWZxBernstein"
-#     coreBWZxBern = rt.RooProdPdf(name, name, [BWZ, bern_pol])
-
-#     param_l = [
-#         a_coeff_bwz,
-#         BWZ,
-#         a0_bern,
-#         a1_bern,
-#         a2_bern,
-#         bern_pol,
-#     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
-#     return coreBWZxBern, param_l
 
 
 def getBWZxBern(x):
@@ -212,23 +165,6 @@ def getLandxBern(x):
     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
     return coreLandxBern, param_l
 
-# def getFEWZ_roospline(x, root_path):
-#     """
-#     Extract RooSpline1D instance that we assume has been saved in ucsd_workspace/fewz.root
-#     with the name "fewz_1j_spl_order1_cat_ggh" (which we will keep)
-#     replace the variable that the RooSpline1D was constructed with, with our own variable "x"
-#     so fitTo could work with the rest of the roofit pdfs
-#     """
-#     # ucsd_spline = rt.TFile("modules/ucsd_workspace/fewz.root")["fewz_1j_spl_order1_cat_ggh"]
-#     ucsd_spline = rt.TFile(f"{root_path}/fewz.root")["fewz_1j_spl_order1_cat_ggh"]
-#     ucsd_var = ucsd_spline.getVariables()[0]
-#     # replace the variable with our variable
-#     customizer = rt.RooCustomizer(ucsd_spline, "")
-#     customizer.replaceArg(ucsd_var, x)
-#     roo_spline_func = customizer.build()
-#     name = "fewz_1j_spl_order1_cat_ggh"
-#     roo_spline_func.SetName(name)
-#     return roo_spline_func
 
 def getFEWZxBern(x):
     roo_spline_func = getFEWZ_roospline(x, "modules/ucsd_workspace/")
@@ -263,7 +199,7 @@ def getFEWZxBern(x):
     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
     return coreFEWZxBern, param_l
 
-def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
+def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
     device = "cpu"
     # nSubCats=1 # FIXME
     for target_subCat in range(nSubCats):
@@ -273,7 +209,20 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         # nbins = 800
         nbins = 100
         mass.setBins(nbins)
+        mass.setRange("hiSB", 135, 150 )
+        mass.setRange("loSB", 110, 115 )
+        mass.setRange("h_peak", 115, 135 )
+        mass.setRange("full", 110, 150 )
+        if apply_blind:
+            fit_range = "hiSB,loSB" 
+        else:
+            fit_range = "full" 
         subCat_mass_arr  = ak.to_numpy(dataDict_target["dimuon_mass"]) # convert to numpy for rt.RooDataSet
+        if apply_blind:
+            dimuon_mass = subCat_mass_arr
+            h_peak = (dimuon_mass > 115) & (dimuon_mass < 135)
+            blind_filter = ~h_peak
+            subCat_mass_arr = subCat_mass_arr[blind_filter]
         roo_datasetData = rt.RooDataSet.from_numpy({mass_name: subCat_mass_arr}, [mass])
         roo_histData = rt.RooDataHist("rooHist_BWZRedux","rooHist_BWZRedux", rt.RooArgSet(mass), roo_datasetData)
         
@@ -286,8 +235,8 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         c_coeff = rt.RooRealVar(name,name, 0.5,-10.0,10.0)
         name = "BWZRedux" # source: https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit/blob/5ae49dd944479b79af5692ff47fd7f1d9de16e91/interface/HMuMuRooPdfs.h#L11
         coreBWZRedux = rt.RooModZPdf(name, name, mass, a_coeff, b_coeff, c_coeff) 
-        _ = coreBWZRedux.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreBWZRedux.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        _ = coreBWZRedux.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreBWZRedux.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
         # print(f"fitResult: {fitResult}")
 
         # fit Sum exp
@@ -300,8 +249,8 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
     
         name = "S-Exponential"
         coreSumExp = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
-        _ = coreSumExp.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreSumExp.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        _ = coreSumExp.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreSumExp.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
 
         # fit Sum Power law
         name = f"RooSumTwoPowerLawPdf_a1_coeff"
@@ -313,35 +262,35 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
     
         name = "S-Power-Law"
         coreSumPow = rt.RooSumTwoPowerLawPdf(name, name, mass, a1_coeff_pow, a2_coeff_pow, f_coeff_pow) 
-        _ = coreSumPow.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreSumPow.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        _ = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
 
         # fit BWZ Gamma
         coreBWZGamma, param_l_bwz_gamma = getBWZ_gamma(mass)
-        _ = coreBWZGamma.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreBWZGamma.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        _ = coreBWZGamma.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreBWZGamma.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
         print(f"coreBWZGamma : \n")
         fitResult.Print()
         # raise ValueError
 
         # fit BWZ Gamma
         coreBWZxBern, param_l_bwz_bern = getBWZxBern(mass)
-        _ = coreBWZxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreBWZxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True,)
+        _ = coreBWZxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreBWZxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
         # print(f"coreBWZxBern : \n")
         # fitResult.Print()
 
         # fit FEWZxBern
         coreFEWZxBern, param_l_fewz_bern = getFEWZxBern(mass)
-        _ = coreFEWZxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreFEWZxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True)
+        _ = coreFEWZxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreFEWZxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True)
         print(f"coreFEWZxBern : \n")
         fitResult.Print()
         
         # fit LandxBern
         coreLandxBern, param_l_land_bern = getLandxBern(mass)
-        _ = coreLandxBern.fitTo(roo_histData, EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-        fitResult = coreLandxBern.fitTo(roo_histData, EvalBackend=device, PrintLevel=0 ,Save=True)
+        _ = coreLandxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        fitResult = coreLandxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True)
         # print(f"coreLandxBern : \n")
         # fitResult.Print()
 
@@ -496,8 +445,11 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5):
         
         canvas.Update()
         canvas.Draw()
-        canvas.SaveAs(f"{save_fname}_subCat{target_subCat}.pdf")
-
+        if apply_blind:
+            canvas.SaveAs(f"{save_fname}_subCat{target_subCat}_blinded.pdf")
+        else:
+            canvas.SaveAs(f"{save_fname}_subCat{target_subCat}_unblinded.pdf")
+            
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -551,6 +503,13 @@ if __name__ == "__main__":
     action="store",
     help="region value to plot, available regions are: h_peak, h_sidebands, z_peak and signal (h_peak OR h_sidebands)",
     )
+    parser.add_argument(
+    "--unblind",
+    dest="unblind",
+    default=False,
+    action=argparse.BooleanOptionalAction,
+    help="If true, unblind data",
+    )
     nSubCats = 5
     
     args = parser.parse_args()
@@ -601,15 +560,17 @@ if __name__ == "__main__":
         plot_settings = json.load(file)
     plot_var = "BDT_score"
     binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-    # save_fname = "plots/Fig6_19"
-    save_fname = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_19"
+    # save_fname = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_19"
+    save_fname = f"{args.save_path}/{args.label}_x_{args.category}/{args.year}_{args.region}/Fig6_19"
+    
     # status = "Private"
     status = "Simulation"
+    apply_blind= not args.unblind
     dataDict_by_subCat = getDimuMassBySubCat(sample_dict, sample="data", nSubCats=nSubCats)
     # print(f"sample_dict: {sample_dict}")
     print(f"dataDict_by_subCat: {dataDict_by_subCat}")
     
-    plot_6_19(dataDict_by_subCat, save_fname)
+    plot_6_19(dataDict_by_subCat, save_fname, apply_blind = apply_blind)
     
 
     
