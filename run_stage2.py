@@ -181,7 +181,6 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         fields2load4variation = apply_variation(fields2load, variation)
         training_feature4variation = apply_variation(training_features, variation)
         fields2load = fields2load + fields2load4variation + training_feature4variation
-    # fields2load = prepare_features(events, fields2load) # add variation to the name
     fields2load = list(set(fields2load + training_features + wgt_unc_fields)) # remove redundant fields
 
     print(f"fields2load: {fields2load}")
@@ -209,13 +208,16 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # print(f"events num: {ak.num(events, axis=0)}")
     # raise ValueError
 
-    # make sure to replace nans with zeros,  unless it's delta phis, in which case it's -1, as specified in line 1117 of the AN
-    for field in events.fields:
-        if "dPhi" in field:
-            none_val = -1.0
-        else:
-            none_val = 0.0
-        events[field] = ak.fill_none(events[field], value=none_val)
+    # FIXME temprarily disable this for fig 6.7 plot ------------------
+    # # make sure to replace nans with zeros,  unless it's delta phis, in which case it's -1, as specified in line 1117 of the AN
+    # for field in events.fields:
+    #     if "dPhi" in field:
+    #         none_val = -1.0
+    #     else:
+    #         none_val = 0.0
+    #     events[field] = ak.fill_none(events[field], value=none_val)
+    # FIXME temprarily disable this for fig 6.7 plot ------------------
+    
     print(f"process4gghCategory year: {year}")
     # if year == "2016_RERECO": # I didn't train a separate BDT for rereco eras
     #     year_param = "2016preVFP"
@@ -266,7 +268,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # filter in only the variables you need to do stage3
     fields2save = [
         "dimuon_mass",
-        # "BDT_score", # eval fold
+        "BDT_score", # eval fold
         # "BDT_score_val", # val fold
         # "BDT_score_train", # train fold
         # "subCategory_idx", # eval fold
@@ -276,11 +278,40 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         # "h_sidebands",
         "event", # This is not strictly necessary
     ]
-    for field in processed_events.fields: # add all fields mentioning bdt score
-        if "BDT_score" in field:
-            fields2save.append(field)
-        elif "subCategory_idx" in field:
-            fields2save.append(field)
+
+    # add bdt inputs for fig 6.7 ----------------------
+    # fig 6.7 only requires signal samples
+    bdt_inputs = [
+        'dimuon_cos_theta_cs', 
+        'dimuon_phi_cs', 
+        'dimuon_rapidity', 
+        'dimuon_pt', 
+        'jet1_eta_nominal', 
+        'jet2_eta_nominal', 
+        'jet1_pt_nominal', 
+        'jet2_pt_nominal', 
+        'jj_dEta_nominal', 
+        'jj_dPhi_nominal', 
+        'jj_mass_nominal', 
+        # 'mmj1_dEta', 
+        # 'mmj1_dPhi',  
+        'mmj_min_dEta_nominal', 
+        'mmj_min_dPhi_nominal', 
+        'mu1_eta', 
+        'mu1_pt_over_mass', 
+        'mu2_eta', 
+        'mu2_pt_over_mass', 
+        'zeppenfeld_nominal',
+        'njets_nominal'
+    ]
+    fields2save += bdt_inputs
+    # add bdt inputs for fig 6.7 ----------------------
+    
+    # for field in processed_events.fields: # add all fields mentioning bdt score
+    #     if "BDT_score" in field:
+    #         fields2save.append(field)
+    #     elif "subCategory_idx" in field:
+    #         fields2save.append(field)
          
     fields2save = fields2save + wgt_unc_fields
     processed_events = ak.zip({
@@ -671,6 +702,7 @@ if __name__ == "__main__":
         # ]
         # jec_unc_fields = applyUpDown(jec_unc_fields)
         
+        jec_unc_fields =[] #FIXME
         
         # extra_fields = wgt_unc_fields + jec_unc_fields
         print(f"wgt_unc_fields: {wgt_unc_fields}")
