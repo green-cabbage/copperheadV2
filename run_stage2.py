@@ -121,7 +121,7 @@ def getDeltaPhi(phi1,phi2):
     dphi = abs(np.mod(phi1 - phi2 + np.pi, 2 * np.pi) - np.pi)
     return dphi
         
-def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fields=[], jec_unc_fields=[]) -> ak.Record:
+def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fields=[], jec_unc_fields=[], do_6p7=False) -> ak.Record:
     """
     Takes the given stage1 output, runs MVA, and returns a new 
     ak.Record with MVA score + relevant info from stage1 output
@@ -208,15 +208,14 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # print(f"events num: {ak.num(events, axis=0)}")
     # raise ValueError
 
-    # FIXME temprarily disable this for fig 6.7 plot ------------------
-    # # make sure to replace nans with zeros,  unless it's delta phis, in which case it's -1, as specified in line 1117 of the AN
-    # for field in events.fields:
-    #     if "dPhi" in field:
-    #         none_val = -1.0
-    #     else:
-    #         none_val = 0.0
-    #     events[field] = ak.fill_none(events[field], value=none_val)
-    # FIXME temprarily disable this for fig 6.7 plot ------------------
+    if not do_6p7:
+        # make sure to replace nans with zeros,  unless it's delta phis, in which case it's -1, as specified in line 1117 of the AN
+        for field in events.fields:
+            if "dPhi" in field:
+                none_val = -1.0
+            else:
+                none_val = 0.0
+            events[field] = ak.fill_none(events[field], value=none_val)
     
     print(f"process4gghCategory year: {year}")
     # if year == "2016_RERECO": # I didn't train a separate BDT for rereco eras
@@ -268,52 +267,52 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # filter in only the variables you need to do stage3
     fields2save = [
         "dimuon_mass",
-        "BDT_score", # eval fold
+        # "BDT_score", # eval fold
+        # "subCategory_idx", # eval fold
+        "wgt_nominal",
+        "event", 
+        # misc fields below ------------------
         # "BDT_score_val", # val fold
         # "BDT_score_train", # train fold
-        # "subCategory_idx", # eval fold
         # "subCategory_idx_val", # val fold
-        "wgt_nominal",
-        # "h_peak",
-        # "h_sidebands",
-        "event", # This is not strictly necessary
     ]
 
     # add bdt inputs for fig 6.7 ----------------------
-    # fig 6.7 only requires signal samples
-    bdt_inputs = [
-        'dimuon_cos_theta_cs', 
-        'dimuon_phi_cs', 
-        'dimuon_rapidity', 
-        'dimuon_pt', 
-        'jet1_eta_nominal', 
-        'jet2_eta_nominal', 
-        'jet1_pt_nominal', 
-        'jet2_pt_nominal', 
-        'jj_dEta_nominal', 
-        'jj_dPhi_nominal', 
-        'jj_mass_nominal', 
-        # 'mmj1_dEta', 
-        # 'mmj1_dPhi',  
-        'mmj_min_dEta_nominal', 
-        'mmj_min_dPhi_nominal', 
-        'mu1_eta', 
-        'mu1_pt_over_mass', 
-        'mu2_eta', 
-        'mu2_pt_over_mass', 
-        'zeppenfeld_nominal',
-        'njets_nominal'
-    ]
-    fields2save += bdt_inputs
+    if do_6p7:
+        bdt_inputs = [
+            'dimuon_cos_theta_cs', 
+            'dimuon_phi_cs', 
+            'dimuon_rapidity', 
+            'dimuon_pt', 
+            'jet1_eta_nominal', 
+            'jet2_eta_nominal', 
+            'jet1_pt_nominal', 
+            'jet2_pt_nominal', 
+            'jj_dEta_nominal', 
+            'jj_dPhi_nominal', 
+            'jj_mass_nominal', 
+            # 'mmj1_dEta', 
+            # 'mmj1_dPhi',  
+            'mmj_min_dEta_nominal', 
+            'mmj_min_dPhi_nominal', 
+            'mu1_eta', 
+            'mu1_pt_over_mass', 
+            'mu2_eta', 
+            'mu2_pt_over_mass', 
+            'zeppenfeld_nominal',
+            'njets_nominal'
+        ]
+        fields2save += bdt_inputs
     # add bdt inputs for fig 6.7 ----------------------
-    
-    # for field in processed_events.fields: # add all fields mentioning bdt score
-    #     if "BDT_score" in field:
-    #         fields2save.append(field)
-    #     elif "subCategory_idx" in field:
-    #         fields2save.append(field)
+
+    for field in processed_events.fields: # add all fields mentioning bdt score
+        if "BDT_score" in field:
+            fields2save.append(field)
+        elif "subCategory_idx" in field:
+            fields2save.append(field)
          
     fields2save = fields2save + wgt_unc_fields
+    fields2save = list(set(fields2save)) # remove redundant mentions of fields
     processed_events = ak.zip({
         field : processed_events[field] for field in fields2save
     })
@@ -588,6 +587,20 @@ if __name__ == "__main__":
     action="store",
     help="fraction value used in stage1. By default we assume it to be 1.0",
     )
+    parser.add_argument(
+    "--do_6p7",
+    dest="do_6p7",
+    default=False,
+    action=argparse.BooleanOptionalAction,
+    help="If true, remove fill none operation and others for producing 6.7",
+    )
+    parser.add_argument(
+    "--do_jecUnc",
+    dest="do_jecUnc",
+    default=False,
+    action=argparse.BooleanOptionalAction,
+    help="If true, add all the fields that JEC variations is applied on",
+    )
     start_time = time.time()
     client =  Client(n_workers=40,  threads_per_worker=1, processes=True, memory_limit='30 GiB') 
 
@@ -680,29 +693,12 @@ if __name__ == "__main__":
                 wgt_unc_fields.append(field)
 
         
-        # jec_unc_fields  = ["Absolute", "FlavorQCD"]
-        # jec_unc_fields  = ["Absolute", "FlavorQCD", "Absolute_2018"]
-        # jec_unc_fields  = ["Absolute", "FlavorQCD", "Absolute_2017"]
-        jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"
-        jec_unc_fields = getJecJerUncertainties(jec_yml_path, year=args.year)
-        jec_unc_fields = applyUpDown(jec_unc_fields)
-        # jec_unc_fields = [
-        #     "Absolute",
-        #     "BBEC1",
-        #     "EC2",
-        #     "HF",
-        #     "RelativeBal",
-        #     "FlavorQCD",
-        #     "jer1",
-        #     "jer2",
-        #     "jer3",
-        #     "jer4",
-        #     "jer5",
-        #     "jer6"
-        # ]
-        # jec_unc_fields = applyUpDown(jec_unc_fields)
-        
-        jec_unc_fields =[] #FIXME
+        if args.do_jecUnc:
+            jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"
+            jec_unc_fields = getJecJerUncertainties(jec_yml_path, year=args.year) # jec_unc_fields = ["Absolute", etc]
+            jec_unc_fields = applyUpDown(jec_unc_fields) # jec_unc_fields = ["Absolute_up", "Absolute_down", etc]
+        else:
+            jec_unc_fields =[] 
         
         # extra_fields = wgt_unc_fields + jec_unc_fields
         print(f"wgt_unc_fields: {wgt_unc_fields}")
@@ -715,7 +711,7 @@ if __name__ == "__main__":
                 # processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, jec_unc_fields=jec_unc_fields)
                 processed_events_l = []
                 # test on only wgts first
-                processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields)
+                processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, do_6p7=args.do_6p7)
                 processed_events_l.append(processed_events)
 
                 smaller_jec_unc_field_l = split_maxlen(jec_unc_fields, 4)
@@ -724,15 +720,7 @@ if __name__ == "__main__":
                     
                     processed_events = process4gghCategory(events, args.year, args.model_name, jec_unc_fields=small_jec_unc_fields)
                     processed_events_l.append(processed_events)
-                    
-                
-                # mid = len(jec_unc_fields) // 2
-                # list1 = jec_unc_fields[:mid]
-                # list2 = jec_unc_fields[mid:]
-                # processed_events = process4gghCategory(events, args.year, args.model_name, jec_unc_fields=list1)
-                # processed_events_l.append(processed_events)
-                # processed_events = process4gghCategory(events, args.year, args.model_name, jec_unc_fields=list2)
-                # processed_events_l.append(processed_events)
+
                 processed_events = mergeAkZips(processed_events_l)
                 del processed_events_l
             else:
@@ -743,13 +731,14 @@ if __name__ == "__main__":
             print ("unsupported category given!")
             raise ValueError
         # define save path and save
-        # save_path = "/work/users/yun79/stage2_output/ggH/test"
-        # save_path = f"{args.save_path}/{category}/{args.year}"
-        save_path = f"{args.save_path}/{args.year}"
+        if args.do_6p7:
+            save_path = f"{args.save_path}ForFig6_7/{args.year}"
+        else:
+            save_path = f"{args.save_path}/{args.year}"
         print(f"save_path: {save_path}")
-        # make save path if it doesn't exist
         if not os.path.exists(save_path):
             os.makedirs(save_path)
+            
         if sample.lower() == "data":
             save_filename = f"{save_path}/processed_events_data.parquet"  
         elif sample.lower() == "ggh": # signal
