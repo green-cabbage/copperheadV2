@@ -18,6 +18,8 @@ import copy
 from array import array
 ROOT.gStyle.SetOptStat(0) # remove stats box
 import dask.dataframe as dd
+import matplotlib.cm as cm
+
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -34,7 +36,147 @@ def getPlotVar(var: str):
     else:
         plot_var = var
     return plot_var
+
+def get_unique_colors(n, cmap_name="tab10"):
+
+    """
+    Return a list of n unique colors (as RGBA tuples) compatible with pyplot.
     
+    Parameters
+    ----------
+    n : int
+        Number of colors to generate.
+    cmap_name : str, optional
+        Name of a matplotlib colormap (default "tab10").
+    
+    Returns
+    -------
+    list of RGBA tuples
+    """
+    cmap = cm.get_cmap(cmap_name, n)  # sample 'n' distinct colors
+    return [cmap(i) for i in range(n)]
+    
+def weighted_quantile(values, quantile, sample_weight=None):
+    """
+    Compute weighted quantile of given data.
+    
+    values : np.ndarray
+        Data (e.g. BDT scores).
+    quantile : float
+        Quantile in [0, 1] (e.g. 0.3 for 30%).
+    sample_weight : np.ndarray or None
+        Weights (same length as values).
+    """
+    values = np.array(values)
+    if sample_weight is None:
+        sample_weight = np.ones(len(values))
+    else:
+        sample_weight = np.array(sample_weight)
+    
+    # sort by values
+    sorter = np.argsort(values)
+    values = values[sorter]
+    weights = sample_weight[sorter]
+
+    # compute cumulative normalized weights
+    cumsum = np.cumsum(weights)
+    cutoff = quantile * np.sum(weights)
+
+    return values[np.searchsorted(cumsum, cutoff)]
+
+# def plot_6_7BySubCat(df, binning, var, xlabel, save_dir):
+    
+#     # --- binning ---
+#     bdt_edges = np.array([-1.00, -0.28, -0.10, 0.08, 0.23, 0.32, 0.43, 0.51, 1.00])
+    
+#     # --- plotting ---
+#     # plt.figure(figsize=(7,5))
+#     fig, ax_main = plt.subplots()
+    
+#     colors = ["black","red","blue","orange","green","cyan","magenta","gray"]
+#     score_name =  "BDT_score"
+#     for (lo, hi), color in zip(zip(bdt_edges[:-1], bdt_edges[1:]), colors):
+#         mask = (df[score_name] > lo) & (df[score_name] <= hi)
+#         if not mask.any():
+#             continue
+#         wgt_var= "wgt_nominal"
+#         hist, bins = np.histogram(df.loc[mask, var], bins=binning, weights=df.loc[mask, wgt_var])
+#         # hist, bins = np.histogram(df.loc[mask, var], bins=binning, density=True)
+#         hist = hist / np.sum(hist)
+#         hep.histplot(
+#             hist,
+#             bins,
+#             label=f"{lo:.2f} < BDT < {hi:.2f}",
+#             histtype="step",
+#             color=color,
+#             ax=ax_main,
+#         )
+
+#     plt.xlabel(xlabel)
+#     plt.ylabel("A.U.")
+#     plt.title("")
+#     # plt.title("Normalized dimuon mass by BDT slice")
+#     plt.legend(fontsize=12, loc="best", ncol=1)
+#     # plt.legend(ncol=2)
+#     # plt.tight_layout()
+#     # plt.show()
+#     CenterOfMass = 13
+#     # status = "Simulation"
+#     # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+#     hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
+#     fig_name = f"{save_dir}/{plot_var}BySubCat.pdf"
+#     # fig_name = f"{plot_var}.pdf"
+#     plt.savefig(fig_name)
+
+
+def plot_6_7FineGrain(df, binning, var, xlabel, save_dir):
+    
+    # --- binning ---
+    # bdt_edges = np.array([-1.00, -0.28, -0.10, 0.08, 0.23, 0.32, 0.43, 0.51, 1.00])
+    # n_cats = 20
+    # n_cats = 12
+    # bdt_edges = np.linspace(-1,1,n_cats+1)
+    bdt_edges = np.array([-1.   , -0.625, -0.5  , -0.375, -0.25 , -0.125,        0.   ,  0.125,  0.25 ,  0.375,  0.5  ,  0.625,  0.75 ,  0.875,        1.   ])
+    n_cats = len(bdt_edges)-1
+    
+    # --- plotting ---
+    # plt.figure(figsize=(7,5))
+    fig, ax_main = plt.subplots()
+    
+    colors = get_unique_colors(n_cats, cmap_name="tab20")
+    score_name =  "BDT_score"
+    for (lo, hi), color in zip(zip(bdt_edges[:-1], bdt_edges[1:]), colors):
+        mask = (df[score_name] > lo) & (df[score_name] <= hi)
+        if not mask.any():
+            continue
+        wgt_var= "wgt_nominal"
+        hist, bins = np.histogram(df.loc[mask, var], bins=binning, weights=df.loc[mask, wgt_var])
+        # hist, bins = np.histogram(df.loc[mask, var], bins=binning, density=True)
+        hist = hist / np.sum(hist)
+        hep.histplot(
+            hist,
+            bins,
+            label=f"{lo:.2f} < BDT < {hi:.2f}",
+            histtype="step",
+            color=color,
+            ax=ax_main,
+        )
+
+    plt.xlabel(xlabel)
+    plt.ylabel("A.U.")
+    plt.title("")
+    # plt.title("Normalized dimuon mass by BDT slice")
+    plt.legend(fontsize=12, loc="best", ncol=1)
+    # plt.legend(ncol=2)
+    # plt.tight_layout()
+    # plt.show()
+    CenterOfMass = 13
+    # status = "Simulation"
+    # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+    hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
+    fig_name = f"{save_dir}/{plot_var}FineGrain.pdf"
+    # fig_name = f"{plot_var}.pdf"
+    plt.savefig(fig_name)
 def plot_6_7(df, binning, var, xlabel, save_dir):
     
     # --- binning ---
@@ -76,6 +218,7 @@ def plot_6_7(df, binning, var, xlabel, save_dir):
     # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
     hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
     fig_name = f"{save_dir}/{plot_var}.pdf"
+    # fig_name = f"{plot_var}.pdf"
     plt.savefig(fig_name)
 
 if __name__ == "__main__":
@@ -174,7 +317,8 @@ if __name__ == "__main__":
     #     events = filterRegion(events, region=args.region)
     #     sample_dict = fillSampleValues(events, sample_dict, group)
 
-    full_load_path = load_path+f"processed_events_sigMC*.parquet" 
+    # full_load_path = load_path+f"processed_events_sigMC*.parquet" 
+    full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
     df = dd.read_parquet(full_load_path).compute()
     # change BDT score range from [0,1] to [-1,1]
     # print(df)
@@ -201,7 +345,7 @@ if __name__ == "__main__":
         'dimuon_rapidity', 
         'dimuon_pt', 
         'jet1_eta_nominal', 
-        'jet2_eta_nominal', 
+        # 'jet2_eta_nominal', 
         'jet1_pt_nominal', 
         'jet2_pt_nominal', 
         'jj_dEta_nominal', 
@@ -218,8 +362,10 @@ if __name__ == "__main__":
         'zeppenfeld_nominal',
         'njets_nominal'
     ]
-    
-    for var in bdt_inputs:
+    variables = bdt_inputs + ["dimuon_mass", "dimuon_ebe_mass_res"]
+    # variables =  ["dimuon_mass", "dimuon_ebe_mass_res"
+    threshold_targets = [0.3, .65, .8, .95]
+    for var in variables:
         # plot_var = "BDT_score"
         # plot_var = "dimuon_mass"
         plot_var = getPlotVar(var)
@@ -228,6 +374,23 @@ if __name__ == "__main__":
         else:
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
         xlabel =  plot_settings[plot_var].get("xlabel")
+        # thresholds = []
+        # for threshold_target in threshold_targets:
+        #     threshold = weighted_quantile(df["BDT_score"], threshold_target, sample_weight=df["wgt_nominal"])
+        #     thresholds.append(threshold)
+        # thresholds = np.array(thresholds)
+        # print("BDT score threshold (30% cumulative weight):", thresholds)
+        # raise ValueError
         plot_6_7(df, binning, var, xlabel, save_dir)
+        # plot_6_7FineGrain(df, binning, var, xlabel, save_dir)
 
+
+    # # ----------------------------------------------------
+    # #  Add
+    # # ----------------------------------------------------
+    
+    # full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
+    # df = dd.read_parquet(full_load_path).compute()
+    
+    # for var in ["dimuon_pt"]:
     

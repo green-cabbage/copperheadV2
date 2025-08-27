@@ -12,7 +12,8 @@ sample_l="data ggh vbf dy ewk tt st ww wz zz other"
 # label="DYMiNNLO_30Mar2025"
 # label="fullRun_May30_2025"
 # label="fullRun_Jun21_2025"
-label="fullRun_Jun23_2025_1n2Revised"
+# label="fullRun_Jun23_2025_1n2Revised"
+label="BSC_off_Aug26_2025"
 
 stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_output"
 
@@ -30,18 +31,9 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_UL_Apr09_2025_DyMinnloTtStVvEwkGghVbf_hyperParamOnScaleWgt0_75"
 # model_name="V2_UL_Jun09_2025"
 # model_name="V2_fullRun_Jun21_2025_allYear"
-model_name="V2_fullRun_Jun21_2025_1n2Revised"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoJ1Eta_MinMmjdEta"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_DimuVarsOnly"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoSingleJet_Mu2_MinMmjdEta"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoSingleJet_MinMmjVars"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_NoJet_Mu2_MinMmjVars"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_MinMmjdEta_Vars"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_Vars"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_jet1Pt_Vars"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised"
+model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off"
+
 
 # category="${model_name}_ggh"
 # category="${model_name}_ggh_w_allYearBDT"
@@ -85,11 +77,21 @@ region="signal"
 # # -----------------------------------------------------
 # plot 6.7 
 model_name="V2_fullRun_Jun21_2025_1n2Revised"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_orig"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_wgt_1e6"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_noSigWgt"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT_amcDY"
+# model_name="V2_UL_Jan18_2025"
 category="${model_name}_ggh" # stage2 ouput name
 year="all"
+# year="2018"
 label="fullRun_Jun23_2025_1n2Revised"
+# label="BSC_off_Aug26_2025"
 region="signal"
-# depot/cms/users/yun79/hmm/copperheadV1clean/fullRun_Jun23_2025_1n2Revised/V2_fullRun_Jun21_2025_1n2Revised_ggh/stage2_outputForFig6_7/2018/processed_events_sigMC_ggh.parquet
 python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
 
