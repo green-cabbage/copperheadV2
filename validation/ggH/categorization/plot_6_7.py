@@ -222,34 +222,45 @@ def plot_6_7(df, binning, var, xlabel, save_dir):
     # fig_name = f"{plot_var}.pdf"
     plt.savefig(fig_name)
 
-def compareMC(ggh_df, vbf_df, binning, var, xlabel, save_dir):
+def compareMC(df_dict, binning, var, xlabel, save_dir):
     
     # --- plotting ---
     # plt.figure(figsize=(7,5))
     fig, ax_main = plt.subplots()
     
     wgt_var= "wgt_nominal"
-    df = ggh_df
-    hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
-    hist = hist / np.sum(hist)
-    hep.histplot(
-        hist,
-        bins,
-        label=f"ggH",
-        histtype="step",
-        ax=ax_main,
-    )
-    # ---------------------------------------------
-    df = vbf_df
-    hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
-    hist = hist / np.sum(hist)
-    hep.histplot(
-        hist,
-        bins,
-        label=f"VBF",
-        histtype="step",
-        ax=ax_main,
-    )
+
+    for label, df in df_dict.items():
+        hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
+        hist = hist / np.sum(hist)
+        hep.histplot(
+            hist,
+            bins,
+            label=label,
+            histtype="step",
+            ax=ax_main,
+        )
+    # df = ggh_df
+    # hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
+    # hist = hist / np.sum(hist)
+    # hep.histplot(
+    #     hist,
+    #     bins,
+    #     label=f"ggH",
+    #     histtype="step",
+    #     ax=ax_main,
+    # )
+    # # ---------------------------------------------
+    # df = vbf_df
+    # hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
+    # hist = hist / np.sum(hist)
+    # hep.histplot(
+    #     hist,
+    #     bins,
+    #     label=f"VBF",
+    #     histtype="step",
+    #     ax=ax_main,
+    # )
 
     plt.xlabel(xlabel)
     plt.ylabel("A.U.")
@@ -447,8 +458,35 @@ if __name__ == "__main__":
         else:
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
         xlabel =  plot_settings[plot_var].get("xlabel")
-        # df_dict = {
-        #     "ggH" : ggh_df,
-        #     "VBF" : vbf_df
-        # }
-        compareMC(ggh_df, vbf_df, binning, var, xlabel, save_dir)
+        df_dict = {
+            "ggH" : ggh_df,
+            "VBF" : vbf_df
+        }
+        compareMC(df_dict, binning, var, xlabel, save_dir)
+
+
+    # ----------------------------------------------------
+    #  Add sigMC vs bkg comparison
+    # ----------------------------------------------------
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/sigBkgMC_comp"
+    os.makedirs(save_dir, exist_ok=True)
+    
+    full_load_path = load_path+f"processed_events_sigMC*.parquet" 
+    sig_df = dd.read_parquet(full_load_path).compute()
+    full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
+    dy_df = dd.read_parquet(full_load_path).compute()
+    print(dy_df.columns)
+    # raise ValueError
+    # for var in ["dimuon_pt", "dimuon_mass"]:
+    for var in variables:
+        plot_var = getPlotVar(var)
+        if plot_var == "dimuon_mass":
+            binning = np.linspace(115, 135, 50)
+        else:
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        xlabel =  plot_settings[plot_var].get("xlabel")
+        df_dict = {
+            "ggH+VBF" : sig_df,
+            "DY" : dy_df
+        }
+        compareMC(df_dict, binning, var, xlabel, save_dir)
