@@ -177,6 +177,7 @@ def plot_6_7FineGrain(df, binning, var, xlabel, save_dir):
     fig_name = f"{save_dir}/{plot_var}FineGrain.pdf"
     # fig_name = f"{plot_var}.pdf"
     plt.savefig(fig_name)
+    
 def plot_6_7(df, binning, var, xlabel, save_dir):
     
     # --- binning ---
@@ -219,6 +220,49 @@ def plot_6_7(df, binning, var, xlabel, save_dir):
     hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
     fig_name = f"{save_dir}/{plot_var}.pdf"
     # fig_name = f"{plot_var}.pdf"
+    plt.savefig(fig_name)
+
+def compareMC(ggh_df, vbf_df, binning, var, xlabel, save_dir):
+    
+    # --- plotting ---
+    # plt.figure(figsize=(7,5))
+    fig, ax_main = plt.subplots()
+    
+    wgt_var= "wgt_nominal"
+    df = ggh_df
+    hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
+    hist = hist / np.sum(hist)
+    hep.histplot(
+        hist,
+        bins,
+        label=f"ggH",
+        histtype="step",
+        ax=ax_main,
+    )
+    # ---------------------------------------------
+    df = vbf_df
+    hist, bins = np.histogram(df[var], bins=binning, weights=df[wgt_var])
+    hist = hist / np.sum(hist)
+    hep.histplot(
+        hist,
+        bins,
+        label=f"VBF",
+        histtype="step",
+        ax=ax_main,
+    )
+
+    plt.xlabel(xlabel)
+    plt.ylabel("A.U.")
+    plt.title("")
+    plt.legend(fontsize=12, loc="best", ncol=1)
+    # plt.legend(ncol=2)
+    # plt.tight_layout()
+    # plt.show()
+    CenterOfMass = 13
+    # status = "Simulation"
+    # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+    hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
+    fig_name = f"{save_dir}/{plot_var}_sigMC_comp.pdf"
     plt.savefig(fig_name)
 
 if __name__ == "__main__":
@@ -380,17 +424,31 @@ if __name__ == "__main__":
         #     thresholds.append(threshold)
         # thresholds = np.array(thresholds)
         # print("BDT score threshold (30% cumulative weight):", thresholds)
-        # raise ValueError
-        plot_6_7(df, binning, var, xlabel, save_dir)
+        # plot_6_7(df, binning, var, xlabel, save_dir)
         # plot_6_7FineGrain(df, binning, var, xlabel, save_dir)
 
 
-    # # ----------------------------------------------------
-    # #  Add
-    # # ----------------------------------------------------
+    # ----------------------------------------------------
+    #  Add sigMC comparison
+    # ----------------------------------------------------
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/sigMC_comp"
+    os.makedirs(save_dir, exist_ok=True)
     
-    # full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
-    # df = dd.read_parquet(full_load_path).compute()
+    full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
+    ggh_df = dd.read_parquet(full_load_path).compute()
+    full_load_path = load_path+f"processed_events_sigMC_vbf.parquet" 
+    vbf_df = dd.read_parquet(full_load_path).compute()
     
-    # for var in ["dimuon_pt"]:
-    
+    # for var in ["dimuon_pt", "dimuon_mass"]:
+    for var in variables:
+        plot_var = getPlotVar(var)
+        if plot_var == "dimuon_mass":
+            binning = np.linspace(115, 135, 50)
+        else:
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        xlabel =  plot_settings[plot_var].get("xlabel")
+        # df_dict = {
+        #     "ggH" : ggh_df,
+        #     "VBF" : vbf_df
+        # }
+        compareMC(ggh_df, vbf_df, binning, var, xlabel, save_dir)
