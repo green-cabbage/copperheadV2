@@ -76,7 +76,7 @@ region="signal"
 
 # # -----------------------------------------------------
 # plot 6.7 
-model_name="V2_fullRun_Jun21_2025_1n2Revised"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_orig"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_wgt_1e6"
@@ -86,11 +86,17 @@ model_name="V2_fullRun_Jun21_2025_1n2Revised"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT_amcDY"
 # model_name="V2_UL_Jan18_2025"
+# model_name="V2_UL_Jan19_2025_addTTST_Aug26"
+# model_name="V2_UL_Jan19_2025_addTTST_Aug28_MiNNLO"
+# model_name="V2_UL_Mar24_2025_Aug28_MiNNLO_scalePosWgtOff"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff"
+model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr"
+
 category="${model_name}_ggh" # stage2 ouput name
-year="all"
-# year="2018"
-label="fullRun_Jun23_2025_1n2Revised"
-# label="BSC_off_Aug26_2025"
+# year="all"
+year="2018"
+# label="fullRun_Jun23_2025_1n2Revised"
+label="BSC_off_Aug26_2025"
 region="signal"
 python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 

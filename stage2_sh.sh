@@ -38,7 +38,7 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
 # model="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
 # model="V2_fullRun_Jun21_2025_1n2Revised_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_jjdPhi_Vars"
-model="V2_fullRun_Jun21_2025_1n2Revised"
+# model="V2_fullRun_Jun21_2025_1n2Revised"
 # model="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025"
 # model="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_orig"
 # model="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_wgt_1e6"
@@ -48,6 +48,12 @@ model="V2_fullRun_Jun21_2025_1n2Revised"
 # model="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT"
 # model="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT_amcDY"
 # model="V2_UL_Jan18_2025"
+# model="V2_UL_Jan19_2025_addTTST_Aug26"
+# model="V2_UL_Jan19_2025_addTTST_Aug28_MiNNLO"
+# model="V2_UL_Mar24_2025_Aug28_MiNNLO_scalePosWgtOff"
+# model="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff"
+model="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr"
+
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT/stage2_output" 
@@ -68,7 +74,6 @@ model="V2_fullRun_Jun21_2025_1n2Revised"
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_jjdPhi_Vars/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields/stage2_output" 
 stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
-# stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_outputForFig6_7" 
 
 
 
@@ -111,7 +116,8 @@ bdt_edge_config_path="/work/users/yun79/Run3/copperheadV2/configs/MVA/ggH/BDT_ed
 # stage2 specifically for fig 6.7
 # ------------------
 year="2018"
-sample_l="dy" # fig 6.7 only requires signal samples
+sample_l="ggh vbf"  # fig 6.7 only requires signal samples
+# sample_l="dy" # for comparison with dy
 python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model --do_6p7 # --do_jecUnc
 # year="2017"
 # python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model --do_6p7 # --do_jecUnc

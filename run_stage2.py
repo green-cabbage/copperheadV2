@@ -160,6 +160,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         year_param = year
 
     year_param="all" #FIXME    
+    # year_param="2018" #FIXME    
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
     print(f"trainig_feat_path: {training_feat_path}")
@@ -176,7 +177,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # ----------------------------------
        
     # load fields to load
-    fields2load = ["nBtagLoose_nominal", "nBtagMedium_nominal", "dimuon_mass", "wgt_nominal", "mmj2_dEta_nominal", "mmj2_dPhi_nominal", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal"]
+    fields2load = ["nBtagLoose_nominal", "nBtagMedium_nominal", "dimuon_mass", "wgt_nominal", "mmj2_dEta_nominal", "mmj2_dPhi_nominal", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal", "dimuon_ebe_mass_res"]
     for variation in jec_unc_fields: # add jec unc variations
         fields2load4variation = apply_variation(fields2load, variation)
         training_feature4variation = apply_variation(training_features, variation)
@@ -271,6 +272,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         # "subCategory_idx", # eval fold
         "wgt_nominal",
         "event", 
+        "dimuon_ebe_mass_res",
         # misc fields below ------------------
         # "BDT_score_val", # val fold
         # "BDT_score_train", # train fold
@@ -285,7 +287,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
             'dimuon_rapidity', 
             'dimuon_pt', 
             'jet1_eta_nominal', 
-            'jet2_eta_nominal', 
+            # 'jet2_eta_nominal', 
             'jet1_pt_nominal', 
             'jet2_pt_nominal', 
             'jj_dEta_nominal', 
@@ -703,12 +705,17 @@ if __name__ == "__main__":
         # extra_fields = wgt_unc_fields + jec_unc_fields
         print(f"wgt_unc_fields: {wgt_unc_fields}")
         print(f"jec_unc_fields: {jec_unc_fields}")
+        print(f"args.do_6p7: {args.do_6p7}")
+        print(f"category: {category}")
+        print(f"is_signal_MC: {is_signal_MC}")
+        # raise ValueError
         # print(f"wgt_unc_fields: {len(wgt_unc_fields)}")
         
         print("done loading events!")
         if category == "ggh":
             if is_signal_MC: # add extra fields for uncertainties in datacard
                 # processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, jec_unc_fields=jec_unc_fields)
+                
                 processed_events_l = []
                 # test on only wgts first
                 processed_events = process4gghCategory(events, args.year, args.model_name, wgt_unc_fields=wgt_unc_fields, do_6p7=args.do_6p7)
@@ -724,7 +731,7 @@ if __name__ == "__main__":
                 processed_events = mergeAkZips(processed_events_l)
                 del processed_events_l
             else:
-                processed_events = process4gghCategory(events, args.year, args.model_name)
+                processed_events = process4gghCategory(events, args.year, args.model_name, do_6p7=args.do_6p7)
         elif category == "vbf":
             processed_events = process4vbfCategory(events) 
         else: 
