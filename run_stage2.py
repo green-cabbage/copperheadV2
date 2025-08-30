@@ -159,8 +159,9 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     else:
         year_param = year
 
-    year_param="all" #FIXME    
-    # year_param="2018" #FIXME    
+    # year_param="all" #FIXME    
+    year_param="2018" #FIXME    
+    # year_param="2017" #FIXME    
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
     print(f"trainig_feat_path: {training_feat_path}")
@@ -177,7 +178,39 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # ----------------------------------
        
     # load fields to load
-    fields2load = ["nBtagLoose_nominal", "nBtagMedium_nominal", "dimuon_mass", "wgt_nominal", "mmj2_dEta_nominal", "mmj2_dPhi_nominal", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal", "dimuon_ebe_mass_res"]
+    fields2load = ["nBtagLoose_nominal", "nBtagMedium_nominal", "dimuon_mass", "wgt_nominal", "mmj2_dEta_nominal", "mmj2_dPhi_nominal", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal", "dimuon_ebe_mass_res",
+            'jet2_eta_nominal', # this technically is not in BDT, but add just in case 
+            'rpt_nominal', # this technically is not in BDT, but add just in case 
+                   
+      ]
+
+    bdt_inputs = [ # FIXME. overwrite for testing
+            'dimuon_cos_theta_cs', 
+            'dimuon_phi_cs', 
+            'dimuon_rapidity', 
+            'dimuon_pt', 
+            'jet1_eta_nominal', 
+            'jet2_eta_nominal', # this technically is not in BDT, but add just in case 
+            'jet1_pt_nominal', 
+            'jet2_pt_nominal', 
+            'jj_dEta_nominal', 
+            'jj_dPhi_nominal', 
+            'jj_mass_nominal', 
+            # 'mmj1_dEta', 
+            # 'mmj1_dPhi',  
+            'mmj_min_dEta_nominal', 
+            'mmj_min_dPhi_nominal', 
+            'mu1_eta', 
+            'mu1_pt_over_mass', 
+            'mu2_eta', 
+            'mu2_pt_over_mass', 
+            'zeppenfeld_nominal',
+            'njets_nominal',
+            'rpt_nominal', # this technically is not in BDT, but add just in case 
+        ]
+    fields2load += bdt_inputs
+
+    
     for variation in jec_unc_fields: # add jec unc variations
         fields2load4variation = apply_variation(fields2load, variation)
         training_feature4variation = apply_variation(training_features, variation)
@@ -287,7 +320,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
             'dimuon_rapidity', 
             'dimuon_pt', 
             'jet1_eta_nominal', 
-            # 'jet2_eta_nominal', 
+            'jet2_eta_nominal', # this technically is not in BDT, but add just in case 
             'jet1_pt_nominal', 
             'jet2_pt_nominal', 
             'jj_dEta_nominal', 
@@ -302,7 +335,8 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
             'mu2_eta', 
             'mu2_pt_over_mass', 
             'zeppenfeld_nominal',
-            'njets_nominal'
+            'njets_nominal',
+            'rpt_nominal', # this technically is not in BDT, but add just in case 
         ]
         fields2save += bdt_inputs
     # add bdt inputs for fig 6.7 ----------------------
@@ -657,8 +691,8 @@ if __name__ == "__main__":
             full_load_path = load_path+f"/vbf_powheg_dipole/*/*.parquet"
             is_signal_MC = True
         elif sample.lower() == "dy":
-            # full_load_path = load_path+f"/dy_M-100To200/*/*.parquet"
-            full_load_path = load_path+f"/dy_*/*/*.parquet"
+            # full_load_path = load_path+f"/dy_*/*/*.parquet"
+            full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" #FIXME
         elif sample.lower() == "ewk":
             full_load_path = load_path+f"/ewk_lljj_mll50_mjj120/*/*.parquet"
         elif sample.lower() == "tt":
@@ -687,13 +721,13 @@ if __name__ == "__main__":
         
         events = dak.from_parquet(full_load_path)
         target_chunksize = 150_000
-        events = events.repartition(rows_per_partition=target_chunksize)
+        # events = events.repartition(rows_per_partition=target_chunksize) # FIXME
 
         wgt_unc_fields = []
         for field in events.fields:
             if (("wgt" in field) and not ("separate" in field)) and not ("nominal" in field):
                 wgt_unc_fields.append(field)
-
+        wgt_unc_fields = [] # FIXME
         
         if args.do_jecUnc:
             jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"
