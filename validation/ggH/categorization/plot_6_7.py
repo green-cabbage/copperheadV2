@@ -590,17 +590,28 @@ if __name__ == "__main__":
 
 
     # ----------------------------------------------------
-    #  check DY in z peak region
+    #  check DY in z peak region with no ggH cat cuts
     # ----------------------------------------------------
-    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMCZpeak_comp"
+    # extract directly from stage1
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMC_comp"
     os.makedirs(save_dir, exist_ok=True)
 
-    full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
-    dy_df = dd.read_parquet(full_load_path).compute()
-    dy_df = filterRegion(dy_df, region="z-peak")
+    if year == "all":
+        year_param = "*"
+    else:
+        year_param = year
+    stage1_load_path=f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/{year_param}/f1_0/"
+    # stage1_load_path=f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/2018/f1_0/"
+
+    full_load_path = stage1_load_path+f"dy*/*/*.parquet" 
+    print(full_load_path)
+    fields2load = variables + ["wgt_nominal"]
+    dy_df = dd.read_parquet(full_load_path)[fields2load].compute()
+    dy_df_zpeak = filterRegion(dy_df, region="z-only")
+    dy_df_hpeak = filterRegion(dy_df, region="h-peak")
+    
+    
     print(dy_df.columns)
-    # raise ValueError
-    # for var in ["dimuon_pt", "dimuon_mass"]:
     for var in variables:
         plot_var = getPlotVar(var)
         if plot_var == "dimuon_mass":
@@ -609,8 +620,36 @@ if __name__ == "__main__":
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
         xlabel =  plot_settings[plot_var].get("xlabel")
         df_dict = {
-            "DY" : dy_df
+            "DY ($85 < m_{\mu\mu} < 95$)" : dy_df_zpeak,
+            "DY H peak" : dy_df_hpeak,
         }
         compareMC(df_dict, binning, var, xlabel, save_dir)
 
+    # ----------------------------------------------------
+    #  add DY with ggH channel cut
+    # ----------------------------------------------------
+    
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMCggHCut_comp"
+    os.makedirs(save_dir, exist_ok=True)
+    full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
+    dy_df_gghCut = dd.read_parquet(full_load_path).compute()
+    dy_df_gghCut = filterRegion(dy_df_gghCut, region="h-peak")
+    
+    for var in variables:
+        plot_var = getPlotVar(var)
+        if plot_var == "dimuon_mass":
+            binning = np.linspace(70, 110, 50)
+        elif plot_var == "jj_mass":
+            binning = np.linspace(0, 2500, 100)
+        else:
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        xlabel =  plot_settings[plot_var].get("xlabel")
+        df_dict = {
+            "DY ($85 < m_{\mu\mu} < 95$)" : dy_df_zpeak,
+            "DY H peak" : dy_df_hpeak,
+            "DY H peak + ggH channel cut" : dy_df_gghCut,
+        }
+        compareMC(df_dict, binning, var, xlabel, save_dir)
+        compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
+        
         
