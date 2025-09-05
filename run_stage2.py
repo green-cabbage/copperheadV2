@@ -111,7 +111,7 @@ def getCategoryCutNames(category:str) -> List[str]:
     category_config = OmegaConf.load("configs/categories/categories.yml")
     out_list = category_config["baseline"]
     out_list += category_config[category]
-    # print(f"getCategoryCutNames out_list: {out_list}")
+    print(f"getCategoryCutNames out_list: {out_list}")
     return out_list
 
 def getDeltaPhi(phi1,phi2):
@@ -159,9 +159,8 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     else:
         year_param = year
 
-    # year_param="all" #FIXME    
-    year_param="2018" #FIXME    
-    # year_param="2017" #FIXME    
+    year_param="all"    
+    # year_param=year #FIXME    
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
     print(f"trainig_feat_path: {training_feat_path}")
@@ -237,18 +236,23 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         categoryWrapperLoop(cut_names, events)
         # & region
     )
-    
+    print(f"gghCat_selection: {gghCat_selection}")
+    print(f"gghCat_selection sum: {ak.sum(gghCat_selection)}")
+    print(f"gghCat_selection anti sum: {ak.sum(~gghCat_selection)}")
+    print(f"gghCat_selection sum: {ak.sum(events['wgt_nominal'][gghCat_selection])}")
+    # raise ValueError
+    print(f"events num b4: {ak.num(events, axis=0)}")
     events = events[gghCat_selection]
-    # print(f"events num: {ak.num(events, axis=0)}")
+    print(f"events num after: {ak.num(events, axis=0)}")
     # raise ValueError
 
     if not do_6p7:
         # make sure to replace nans with zeros,  unless it's delta phis, in which case it's -1, as specified in line 1117 of the AN
         for field in events.fields:
             if "dPhi" in field:
-                none_val = -1.0
+                none_val = -999.0
             else:
-                none_val = 0.0
+                none_val = -999.0
             events[field] = ak.fill_none(events[field], value=none_val)
     
     print(f"process4gghCategory year: {year}")
@@ -720,6 +724,7 @@ if __name__ == "__main__":
         #     bkg_MC_filelist.append(full_load_path)
         
         events = dak.from_parquet(full_load_path)
+        # print(f"events.fields: {events.fields}")
         target_chunksize = 150_000
         # events = events.repartition(rows_per_partition=target_chunksize) # FIXME
 
