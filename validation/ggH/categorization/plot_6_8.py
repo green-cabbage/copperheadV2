@@ -17,6 +17,7 @@ import ROOT as rt
 import copy
 from array import array
 ROOT.gStyle.SetOptStat(0) # remove stats box
+from distributed import Client
 
 
 # Get the parent directory
@@ -174,6 +175,7 @@ if __name__ == "__main__":
     action="store",
     help="region value to plot, available regions are: h_peak, h_sidebands, z_peak and signal (h_peak OR h_sidebands)",
     )
+    client =  Client(n_workers=63,  threads_per_worker=1, processes=True, memory_limit='10 GiB') 
     
     args = parser.parse_args()
     # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/*/"
@@ -184,7 +186,9 @@ if __name__ == "__main__":
         year_param = "2016*"
     else:
         year_param = year
-    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year_param}/"
+    # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/{year_param}/"
+    load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_outputForFig6_7/{year_param}/"
+    
     # events = dak.from_parquet(f"{load_path}/*data.parquet")
     # print(events.fields)
     bdt_edges = [0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 1.0]

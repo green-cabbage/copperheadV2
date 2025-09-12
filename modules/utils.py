@@ -9,6 +9,8 @@ import ROOT as rt
 import ROOT
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import linear_sum_assignment
+import pandas as pd
 
 LOGGER_NAME = "CopperHead"
 NO_GIT_INFO_AVAILABLE = "No git info available"
@@ -190,7 +192,8 @@ def filterRegion(events, region="h-peak"):
         region = (dimuon_mass >= 110) & (dimuon_mass <= 150.0)
     elif region =="z-peak":
         region = (dimuon_mass >= 70) & (dimuon_mass <= 110.0)
-
+    elif region =="z-only":
+        region = (dimuon_mass >= 85) & (dimuon_mass <= 95)
     events = events[region]
     return events
 
@@ -439,3 +442,139 @@ def applyRegionCatCuts(events, category: str, region_name: str, process: str, va
     # print(f"len(events) {process} b4 selection: {len(events)}")
     events = events[category_selection]
     return events
+
+
+def pair_and_remove(df, cols=("mu1_eta","mu2_eta"), wgt_col="wgt_nominal"):
+    """
+    Pair each negative-weight row with at most one positive-weight row
+    using Hungarian algorithm (minimizing L1 distance).
+    Remove the paired rows from the original df.
+
+    Returns:
+        matches_df: DataFrame with match info (neg_idx, pos_idx, dist, ...)
+        remaining_df: df with matched rows removed
+    """    
+    # Split
+    neg = df[df[wgt_col] < 0].copy()
+    pos = df[df[wgt_col] > 0].copy()
+
+    if len(neg) == 0 or len(pos) == 0:
+        return pd.DataFrame(), df.copy()
+
+    # Arrays
+    X = neg.loc[:, cols].to_numpy(dtype=float)
+    Y = pos.loc[:, cols].to_numpy(dtype=float)
+    print(f"X: {X}")
+    print(f"y: {Y}")
+    # Cost matrix (L1 distance)
+    cost = np.abs(X[:, None, :] - Y[None, :, :]).sum(axis=2)
+    print(f"cost: {cost}")
+    
+    # Hungarian assignment
+    row_ind, col_ind = linear_sum_assignment(cost)
+    print(f"row_ind: {row_ind}")
+    print(f"col_ind: {col_ind}")
+    
+    # Map back to indices
+    neg_idx = neg.index.to_numpy()[row_ind]
+    pos_idx = pos.index.to_numpy()[col_ind]
+    dists   = cost[row_ind, col_ind]
+
+    # Matches dataframe
+    data = {
+        "neg_idx": neg_idx,
+        "pos_idx": pos_idx,
+        "dist": dists,
+        "neg_wgt": df.loc[neg_idx, wgt_col].to_numpy(),
+        "pos_wgt": df.loc[pos_idx, wgt_col].to_numpy(),
+    }
+    for c in cols:
+        data[f"neg_{c}"] = df.loc[neg_idx, c].to_numpy()
+        data[f"pos_{c}"] = df.loc[pos_idx, c].to_numpy()
+
+    matches_df = pd.DataFrame(data).sort_values("dist").reset_index(drop=True)
+
+    # Drop matched rows from original df
+    matched_indices = np.concatenate([neg_idx, pos_idx])
+    remaining_df = df.drop(index=matched_indices).reset_index(drop=True)
+
+    return matches_df, remaining_df
+
+
+def plotScatter(df, variables, x_var, save_path):
+    # Scatter plot
+    bdt_edges = np.array([ # 2018 UL subcat edges
+        0.8443986773490906,
+        1.1
+    ])
+    bdt_edges = bdt_edges*2 -1
+    score_name =  "BDT_score"
+    
+    # plt.ylim(0, 10)
+    for y_var in variables:
+        if y_var == x_var:
+            continue
+        for (lo, hi) in zip(bdt_edges[:-1], bdt_edges[1:]):
+            mask = (df[score_name] > lo) & (df[score_name] <= hi)
+            plt.scatter(df.loc[mask, x_var], df.loc[mask, y_var], alpha=0.002, label=f"{lo:.2f} < BDT < {hi:.2f}",)
+        plt.legend()
+        plt.xlabel(x_var)
+        plt.xlim(0,200)
+        plt.ylabel(y_var)
+        plt.title(f"Scatter plot: {x_var} vs {y_var}")
+        plt.grid(True)
+        plt.savefig(f"{save_path}/{x_var}_{y_var}.png")
+        plt.clf()
+
+def getPlotVar(var: str):
+    """
+    Helper function that removes the variations in variable name if they exist
+    """
+    if "_nominal" in var:
+        plot_var = var.replace("_nominal", "")
+    else:
+        plot_var = var
+    return plot_var
+
+
+def plot2D(df, variables, x_var, plot_settings, save_path):
+    # get binning
+    x_bins = np.linspace(*plot_settings[getPlotVar(x_var)]["binning_linspace"])
+    
+    # Scatter plot
+    bdt_edges = np.array([ # 2018 UL subcat edges
+        0.8443986773490906,
+        1.1
+    ])
+    bdt_edges = bdt_edges*2 -1
+    score_name =  "BDT_score"
+    for y_var in variables:
+        if y_var == x_var:
+            continue
+        y_bins = np.linspace(*plot_settings[getPlotVar(y_var)]["binning_linspace"])
+        
+        for (lo, hi) in zip(bdt_edges[:-1], bdt_edges[1:]):
+            mask = (df[score_name] > lo) & (df[score_name] <= hi)
+            plt.hist2d(
+                df.loc[mask, x_var], 
+                df.loc[mask, y_var],
+                bins=[x_bins, y_bins],   # pass lists/arrays of edges
+                cmap="viridis",       # colormap
+                label=f"{lo:.2f} < BDT < {hi:.2f}"
+            )
+        # Add color scale (mapping counts → colors)
+        cbar = plt.colorbar()
+        cbar.set_label("Counts")   # Label for the colorbar
+
+        plt.legend()
+        plt.xlabel(x_var)
+        plt.xlim(0,200)
+        plt.ylabel(y_var)
+        plt.title(f"{x_var} vs {y_var}, {lo:.2f} < BDT < {hi:.2f}")
+        plt.grid(True)
+        plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}.png")
+        plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}.pdf")
+        plt.clf()
+
+
+    

@@ -19,13 +19,50 @@ from array import array
 ROOT.gStyle.SetOptStat(0) # remove stats box
 import dask.dataframe as dd
 import matplotlib.cm as cm
-from modules.utils import filterRegion
+from modules.utils import filterRegion, pair_and_remove, plotScatter, plot2D
+import pandas as pd
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 # Add it to sys.path
 sys.path.insert(0, parent_dir)
 # Now you can import your module
+
+def plotWgtAnnhilation(parq_path, save_dir):
+    """
+    wrapper function
+    """
+    df = dd.read_parquet(parq_path).compute()
+    df = filterRegion(df, region="h-peak")
+
+    # print(f"{parq_path} \n df: {df}")
+    # print(f"{parq_path} \n df: {len(df)}")
+    colsOfInterest = ["mu1_eta", "mu2_eta","dimuon_pt"]
+    matches, remaining = pair_and_remove(df, cols=colsOfInterest)
+    # print(f"matches: {matches}")
+    # print(f"remaining: {remaining}")
+    print(f"df: {len(df)}")
+    print(f"matches: {len(matches)}")
+    print(f"remaining: {len(remaining)}")
+    # print(f"remaining all positive: {np.all(remaining['wgt_nominal'] >= 0)}")
+
+    for var in variables:
+        plot_var = getPlotVar(var)
+        if plot_var == "dimuon_mass":
+            binning = np.linspace(70, 110, 50)
+        elif plot_var == "jj_mass":
+            binning = np.linspace(0, 2500, 100)
+        else:
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        xlabel =  plot_settings[plot_var].get("xlabel")
+        df_dict = {
+            "DY" : df,
+            "DY pair match removed" : remaining,
+        }
+        compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True, do_logscale=False)
+
+
+
 
 def getPlotVar(var: str):
     """
@@ -177,7 +214,56 @@ def plot_6_7FineGrain(df, binning, var, xlabel, save_dir):
     fig_name = f"{save_dir}/{plot_var}FineGrain.pdf"
     # fig_name = f"{plot_var}.pdf"
     plt.savefig(fig_name)
+
+def plot_6_7BDTCatMerged(df, binning, var, xlabel, save_dir):
     
+    # --- binning ---
+    bdt_edges = np.array([-1.00, -0.28, -0.10, 0.08, 0.23, 0.32, 0.43, 0.51, 1.00])
+    
+    # --- plotting ---
+    # plt.figure(figsize=(7,5))
+    fig, ax_main = plt.subplots()
+    
+    colors = ["black","red","blue","orange","green","cyan","magenta","gray"]
+    score_name =  "BDT_score"
+    hist_l = []
+    for (lo, hi), color in zip(zip(bdt_edges[:-1], bdt_edges[1:]), colors):
+        mask = (df[score_name] > lo) & (df[score_name] <= hi)
+        if not mask.any():
+            continue
+        wgt_var= "wgt_nominal"
+        hist, bins = np.histogram(df.loc[mask, var], bins=binning, weights=df.loc[mask, wgt_var])
+        hist_l.append(hist)
+    # print(f"hist_l: {hist_l}")
+    hist = sum(hist_l)
+    # print(f"hist: {hist}")
+    hist = hist/np.sum(hist)
+    hep.histplot(
+        hist,
+        bins,
+        label=f"combined BDT category",
+        histtype="step",
+        color=color,
+        ax=ax_main,
+    )
+
+    plt.xlabel(xlabel)
+    plt.ylabel("A.U.")
+    plt.title("")
+    # plt.title("Normalized dimuon mass by BDT slice")
+    plt.legend(fontsize=12, loc="best", ncol=1)
+    # plt.legend(ncol=2)
+    # plt.tight_layout()
+    # plt.show()
+    CenterOfMass = 13
+    # status = "Simulation"
+    # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+    hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
+    fig_name = f"{save_dir}/{plot_var}_BDTCatMerged.pdf"
+    # fig_name = f"{plot_var}.pdf"
+    plt.savefig(fig_name)
+
+
 def plot_6_7(df, binning, var, xlabel, save_dir):
     
     # --- binning ---
@@ -275,7 +361,7 @@ def plot_6_7BySubCat(df, binning, var, xlabel, save_dir):
     # fig_name = f"{plot_var}.pdf"
     plt.savefig(fig_name)
 
-def compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=False, abs_wgt=False, removeNegWgt=False, applyWgt=False):
+def compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=False, abs_wgt=False, removeNegWgt=False, applyWgt=False, do_logscale=True):
     
     # --- plotting ---
     # plt.figure(figsize=(7,5))
@@ -308,7 +394,8 @@ def compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=False, abs_wgt
     plt.xlabel(xlabel)
     if applyWgt:
         plt.ylabel("yield")
-        plt.yscale("log")
+        if do_logscale:
+            plt.yscale("log")
     else:
         plt.ylabel("A.U.")
     plt.title("")
@@ -320,6 +407,7 @@ def compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=False, abs_wgt
     # status = "Simulation"
     # hep.cms.label(data=False, loc=0, label=status, com=CenterOfMass, ax=ax_main)
     hep.cms.label(data=False, loc=0, com=CenterOfMass, ax=ax_main)
+    plot_var = getPlotVar(var)
     if unweighted:
         fig_name = f"{save_dir}/{plot_var}_sigMC_compUnWgted.pdf"
     elif abs_wgt:
@@ -449,6 +537,7 @@ if __name__ == "__main__":
         plot_settings = json.load(file)
 
     save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_7"
+    # save_dir = f"plots/{args.category}/{args.year}signal/Fig6_7"
     os.makedirs(save_dir, exist_ok=True)
     
     bdt_inputs = [
@@ -478,178 +567,242 @@ if __name__ == "__main__":
     # variables =  ["dimuon_mass", "dimuon_ebe_mass_res"
     threshold_targets = [0.3, .65, .8, .95]
     for var in variables:
-        # plot_var = "BDT_score"
-        # plot_var = "dimuon_mass"
         plot_var = getPlotVar(var)
         if plot_var == "dimuon_mass":
             binning = np.linspace(115, 135, 50)
         else:
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
         xlabel =  plot_settings[plot_var].get("xlabel")
-        # thresholds = []
-        # for threshold_target in threshold_targets:
-        #     threshold = weighted_quantile(df["BDT_score"], threshold_target, sample_weight=df["wgt_nominal"])
-        #     thresholds.append(threshold)
-        # thresholds = np.array(thresholds)
-        # print("BDT score threshold (30% cumulative weight):", thresholds)
+        thresholds = []
+        for threshold_target in threshold_targets:
+            threshold = weighted_quantile(df["BDT_score"], threshold_target, sample_weight=df["wgt_nominal"])
+            thresholds.append(threshold)
+        thresholds = np.array(thresholds)
+        print("BDT score threshold (30% cumulative weight):", thresholds)
         plot_6_7(df, binning, var, xlabel, save_dir)
         plot_6_7BySubCat(df, binning, var, xlabel, save_dir)
         plot_6_7FineGrain(df, binning, var, xlabel, save_dir)
+        plot_6_7BDTCatMerged(df, binning, var, xlabel, save_dir)
 
-
-    # ----------------------------------------------------
-    #  Add sigMC comparison
-    # ----------------------------------------------------
-    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/sigMC_comp"
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Scatter"
     os.makedirs(save_dir, exist_ok=True)
-    
-    full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
-    ggh_df = dd.read_parquet(full_load_path).compute()
-    full_load_path = load_path+f"processed_events_sigMC_vbf.parquet" 
-    vbf_df = dd.read_parquet(full_load_path).compute()
-    
-    # for var in ["dimuon_pt", "dimuon_mass"]:
-    for var in variables:
-        plot_var = getPlotVar(var)
-        if plot_var == "dimuon_mass":
-            binning = np.linspace(115, 135, 50)
-        else:
-            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-        xlabel =  plot_settings[plot_var].get("xlabel")
-        df_dict = {
-            "ggH" : ggh_df,
-            "VBF" : vbf_df
-        }
-        compareMC(df_dict, binning, var, xlabel, save_dir)
 
-
-    # ----------------------------------------------------
-    #  Add sigMC vs bkg comparison
-    # ----------------------------------------------------
-    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/sigBkgMC_comp"
+    x_var = "dimuon_pt"
+    plotScatter(df, variables, x_var, save_dir)
+    # ----------------
+    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Hist2D"
     os.makedirs(save_dir, exist_ok=True)
+    x_var = "dimuon_pt"
+    plot2D(df, variables, x_var, plot_settings, save_dir)
     
-    full_load_path = load_path+f"processed_events_sigMC*.parquet" 
-    sig_df = dd.read_parquet(full_load_path).compute()
-    sig_df = filterRegion(sig_df, region="h-peak")
-    full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
-    dy_df = dd.read_parquet(full_load_path).compute()
-    dy_df = filterRegion(dy_df, region="h-peak")
-    print(dy_df.columns)
+    
     # raise ValueError
-    # for var in ["dimuon_pt", "dimuon_mass"]:
-    for var in variables:
-        plot_var = getPlotVar(var)
-        if plot_var == "dimuon_mass":
-            binning = np.linspace(115, 135, 50)
-        else:
-            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-        xlabel =  plot_settings[plot_var].get("xlabel")
-        df_dict = {
-            "ggH+VBF" : sig_df,
-            "DY" : dy_df
-        }
-        compareMC(df_dict, binning, var, xlabel, save_dir)
 
 
-    # ----------------------------------------------------
-    #  Add ggH vs VBF vs bkg comparison
-    # ----------------------------------------------------
-    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/ggHVBF_DYMC_comp"
-    os.makedirs(save_dir, exist_ok=True)
+    # # # ----------------------------------------------------
+    # # #  Add sigMC comparison
+    # # # ----------------------------------------------------
+    # # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/sigMC_comp"
+    # # os.makedirs(save_dir, exist_ok=True)
     
-    full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
-    ggh_df = dd.read_parquet(full_load_path).compute()
-    ggh_df = filterRegion(ggh_df, region="h-peak")
-    full_load_path = load_path+f"processed_events_sigMC_vbf.parquet" 
-    vbf_df = dd.read_parquet(full_load_path).compute()
-    vbf_df = filterRegion(vbf_df, region="h-peak")
-    full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
-    dy_df = dd.read_parquet(full_load_path).compute()
-    dy_df = filterRegion(dy_df, region="h-peak")
-    print(dy_df.columns)
-    # raise ValueError
-    # for var in ["dimuon_pt", "dimuon_mass"]:
-    for var in variables:
-        plot_var = getPlotVar(var)
-        if plot_var == "dimuon_mass":
-            binning = np.linspace(115, 135, 50)
-        else:
-            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-        xlabel =  plot_settings[plot_var].get("xlabel")
-        df_dict = {
-            "ggH" : ggh_df,
-            "VBF" : vbf_df,
-            "DY" : dy_df
-        }
-        compareMC(df_dict, binning, var, xlabel, save_dir)
-        compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=True)
-        compareMC(df_dict, binning, var, xlabel, save_dir, abs_wgt=True)
-        compareMC(df_dict, binning, var, xlabel, save_dir, removeNegWgt=True)
-        compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
+    # # full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
+    # # ggh_df = dd.read_parquet(full_load_path).compute()
+    # # full_load_path = load_path+f"processed_events_sigMC_vbf.parquet" 
+    # # vbf_df = dd.read_parquet(full_load_path).compute()
+    
+    # # # for var in ["dimuon_pt", "dimuon_mass"]:
+    # # for var in variables:
+    # #     plot_var = getPlotVar(var)
+    # #     if plot_var == "dimuon_mass":
+    # #         binning = np.linspace(115, 135, 50)
+    # #     else:
+    # #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    # #     xlabel =  plot_settings[plot_var].get("xlabel")
+    # #     df_dict = {
+    # #         "ggH" : ggh_df,
+    # #         "VBF" : vbf_df
+    # #     }
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir)
 
 
-    # ----------------------------------------------------
-    #  check DY in z peak region with no ggH cat cuts
-    # ----------------------------------------------------
-    # extract directly from stage1
-    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMC_comp"
-    os.makedirs(save_dir, exist_ok=True)
+    # # # ----------------------------------------------------
+    # # #  Add sigMC vs bkg comparison
+    # # # ----------------------------------------------------
+    # # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/sigBkgMC_comp"
+    # # os.makedirs(save_dir, exist_ok=True)
+    
+    # # full_load_path = load_path+f"processed_events_sigMC*.parquet" 
+    # # sig_df = dd.read_parquet(full_load_path).compute()
+    # # sig_df = filterRegion(sig_df, region="h-peak")
+    # # full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
+    # # dy_df = dd.read_parquet(full_load_path).compute()
+    # # dy_df = filterRegion(dy_df, region="h-peak")
+    # # print(dy_df.columns)
+    # # # raise ValueError
+    # # # for var in ["dimuon_pt", "dimuon_mass"]:
+    # # for var in variables:
+    # #     plot_var = getPlotVar(var)
+    # #     if plot_var == "dimuon_mass":
+    # #         binning = np.linspace(115, 135, 50)
+    # #     else:
+    # #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    # #     xlabel =  plot_settings[plot_var].get("xlabel")
+    # #     df_dict = {
+    # #         "ggH+VBF" : sig_df,
+    # #         "DY" : dy_df
+    # #     }
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir)
 
-    if year == "all":
-        year_param = "*"
-    else:
-        year_param = year
-    stage1_load_path=f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/{year_param}/f1_0/"
-    # stage1_load_path=f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/2018/f1_0/"
 
-    full_load_path = stage1_load_path+f"dy*/*/*.parquet" 
-    print(full_load_path)
-    fields2load = variables + ["wgt_nominal"]
-    dy_df = dd.read_parquet(full_load_path)[fields2load].compute()
-    dy_df_zpeak = filterRegion(dy_df, region="z-only")
-    dy_df_hpeak = filterRegion(dy_df, region="h-peak")
+    # # # ----------------------------------------------------
+    # # #  Add ggH vs VBF vs bkg comparison
+    # # # ----------------------------------------------------
+    # # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/ggHVBF_DYMC_comp"
+    # # os.makedirs(save_dir, exist_ok=True)
+    
+    # # full_load_path = load_path+f"processed_events_sigMC_ggh.parquet" 
+    # # ggh_df = dd.read_parquet(full_load_path).compute()
+    # # ggh_df = filterRegion(ggh_df, region="h-peak")
+    # # full_load_path = load_path+f"processed_events_sigMC_vbf.parquet" 
+    # # vbf_df = dd.read_parquet(full_load_path).compute()
+    # # vbf_df = filterRegion(vbf_df, region="h-peak")
+    # # full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
+    # # dy_df = dd.read_parquet(full_load_path).compute()
+    # # dy_df = filterRegion(dy_df, region="h-peak")
+    # # print(dy_df.columns)
+    # # # raise ValueError
+    # # # for var in ["dimuon_pt", "dimuon_mass"]:
+    # # for var in variables:
+    # #     plot_var = getPlotVar(var)
+    # #     if plot_var == "dimuon_mass":
+    # #         binning = np.linspace(115, 135, 50)
+    # #     else:
+    # #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    # #     xlabel =  plot_settings[plot_var].get("xlabel")
+    # #     df_dict = {
+    # #         "ggH" : ggh_df,
+    # #         "VBF" : vbf_df,
+    # #         "DY" : dy_df
+    # #     }
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=True)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, abs_wgt=True)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, removeNegWgt=True)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
+
+
+    # # # ----------------------------------------------------
+    # # #  check DY in z peak region with no ggH cat cuts
+    # # # ----------------------------------------------------
+    # # # extract directly from stage1
+    # # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMC_comp"
+    # # os.makedirs(save_dir, exist_ok=True)
+
+    # # if year == "all":
+    # #     year_param = "*"
+    # # else:
+    # #     year_param = year
+    # # stage1_load_path=f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/{year_param}/f1_0/"
+    # # # stage1_load_path=f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/2018/f1_0/"
+
+    # # full_load_path = stage1_load_path+f"dy*/*/*.parquet" 
+    # # print(full_load_path)
+    # # fields2load = variables + ["wgt_nominal"]
+    # # dy_df = dd.read_parquet(full_load_path)[fields2load].compute()
+    # # dy_df_zpeak = filterRegion(dy_df, region="z-only")
+    # # dy_df_hpeak = filterRegion(dy_df, region="h-peak")
     
     
-    print(dy_df.columns)
-    for var in variables:
-        plot_var = getPlotVar(var)
-        if plot_var == "dimuon_mass":
-            binning = np.linspace(70, 110, 50)
-        else:
-            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-        xlabel =  plot_settings[plot_var].get("xlabel")
-        df_dict = {
-            "DY ($85 < m_{\mu\mu} < 95$)" : dy_df_zpeak,
-            "DY H peak" : dy_df_hpeak,
-        }
-        compareMC(df_dict, binning, var, xlabel, save_dir)
+    # # print(dy_df.columns)
+    # # for var in variables:
+    # #     plot_var = getPlotVar(var)
+    # #     if plot_var == "dimuon_mass":
+    # #         binning = np.linspace(70, 110, 50)
+    # #     else:
+    # #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    # #     xlabel =  plot_settings[plot_var].get("xlabel")
+    # #     df_dict = {
+    # #         "DY ($85 < m_{\mu\mu} < 95$)" : dy_df_zpeak,
+    # #         "DY H peak" : dy_df_hpeak,
+    # #     }
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir)
 
-    # ----------------------------------------------------
-    #  add DY with ggH channel cut
-    # ----------------------------------------------------
+    # # # ----------------------------------------------------
+    # # #  add DY with ggH channel cut
+    # # # ----------------------------------------------------
     
-    save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMCggHCut_comp"
-    os.makedirs(save_dir, exist_ok=True)
-    full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
-    dy_df_gghCut = dd.read_parquet(full_load_path).compute()
-    dy_df_gghCut = filterRegion(dy_df_gghCut, region="h-peak")
+    # # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMCggHCut_comp"
+    # # os.makedirs(save_dir, exist_ok=True)
+    # # full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
+    # # dy_df_gghCut = dd.read_parquet(full_load_path).compute()
+    # # dy_df_gghCut = filterRegion(dy_df_gghCut, region="h-peak")
     
-    for var in variables:
-        plot_var = getPlotVar(var)
-        if plot_var == "dimuon_mass":
-            binning = np.linspace(70, 110, 50)
-        elif plot_var == "jj_mass":
-            binning = np.linspace(0, 2500, 100)
-        else:
-            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-        xlabel =  plot_settings[plot_var].get("xlabel")
-        df_dict = {
-            "DY ($85 < m_{\mu\mu} < 95$)" : dy_df_zpeak,
-            "DY H peak" : dy_df_hpeak,
-            "DY H peak + ggH channel cut" : dy_df_gghCut,
-        }
-        compareMC(df_dict, binning, var, xlabel, save_dir)
-        compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
-        
-        
+    # # for var in variables:
+    # #     plot_var = getPlotVar(var)
+    # #     if plot_var == "dimuon_mass":
+    # #         binning = np.linspace(70, 110, 50)
+    # #     elif plot_var == "jj_mass":
+    # #         binning = np.linspace(0, 2500, 100)
+    # #     else:
+    # #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    # #     xlabel =  plot_settings[plot_var].get("xlabel")
+    # #     df_dict = {
+    # #         "DY ($85 < m_{\mu\mu} < 95$)" : dy_df_zpeak,
+    # #         "DY H peak" : dy_df_hpeak,
+    # #         "DY H peak + ggH channel cut" : dy_df_gghCut,
+    # #     }
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
+
+    # # ----------------------------------------------------
+    # #  compare DY sample with sample wgt annhilation
+    # # ----------------------------------------------------
+    
+    # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/DYMCNegWgtPair_comp"
+    # os.makedirs(save_dir, exist_ok=True)
+    # full_load_path = load_path+f"processed_events_bkgMC_dy.parquet" 
+    # plotWgtAnnhilation(full_load_path, save_dir)
+    
+    # # dy_df = dd.read_parquet(full_load_path).compute()
+    # # dy_df = filterRegion(dy_df, region="h-peak")
+
+    # # print(f"dy_df: {dy_df}")
+    # # print(f"dy_df: {len(dy_df)}")
+    # # colsOfInterest = ["mu1_eta", "mu2_eta","dimuon_pt"]
+    # # matches, remaining = pair_and_remove(dy_df, cols=colsOfInterest)
+    # # print(f"matches: {matches}")
+    # # print(f"remaining: {remaining}")
+    # # print(f"matches: {len(matches)}")
+    # # print(f"remaining: {len(remaining)}")
+
+    # # for var in variables:
+    # #     plot_var = getPlotVar(var)
+    # #     if plot_var == "dimuon_mass":
+    # #         binning = np.linspace(70, 110, 50)
+    # #     elif plot_var == "jj_mass":
+    # #         binning = np.linspace(0, 2500, 100)
+    # #     else:
+    # #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+    # #     xlabel =  plot_settings[plot_var].get("xlabel")
+    # #     df_dict = {
+    # #         "DY" : dy_df,
+    # #         "DY pair match removed" : remaining,
+    # #     }
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True, do_logscale=False)
+
+
+    # # ----------------------------------------------------
+    # #  compare top sample with sample wgt annhilation
+    # # ----------------------------------------------------
+    
+    # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/TTMCNegWgtPair_comp"
+    # os.makedirs(save_dir, exist_ok=True)
+    # full_load_path = load_path+f"processed_events_bkgMC_tt.parquet" 
+    # plotWgtAnnhilation(full_load_path, save_dir)
+    # save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/STMCNegWgtPair_comp"
+    # os.makedirs(save_dir, exist_ok=True)
+    # full_load_path = load_path+f"processed_events_bkgMC_st.parquet" 
+    # plotWgtAnnhilation(full_load_path, save_dir)
+    
+    
+    
