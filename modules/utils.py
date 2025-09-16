@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 import pandas as pd
+import copy
+import ROOT as rt
 
 LOGGER_NAME = "CopperHead"
 NO_GIT_INFO_AVAILABLE = "No git info available"
@@ -537,15 +539,21 @@ def getPlotVar(var: str):
     return plot_var
 
 
-def plot2D(df, variables, x_var, plot_settings, save_path):
+def plot2D(df, variables, x_var, plot_settings, save_path, inclusive=False):
     # get binning
     x_bins = np.linspace(*plot_settings[getPlotVar(x_var)]["binning_linspace"])
     
     # Scatter plot
-    bdt_edges = np.array([ # 2018 UL subcat edges
-        0.8443986773490906,
-        1.1
-    ])
+    if inclusive:
+        bdt_edges = np.array([ # 2018 UL subcat edges
+            0.0,
+            1.1
+        ])
+    else:
+        bdt_edges = np.array([ # 2018 UL subcat edges
+            0.8443986773490906,
+            1.1
+        ])
     bdt_edges = bdt_edges*2 -1
     score_name =  "BDT_score"
     for y_var in variables:
@@ -568,13 +576,151 @@ def plot2D(df, variables, x_var, plot_settings, save_path):
 
         plt.legend()
         plt.xlabel(x_var)
-        plt.xlim(0,200)
+        if x_var == "dimuon_pt":
+            plt.xlim(0,200)
         plt.ylabel(y_var)
         plt.title(f"{x_var} vs {y_var}, {lo:.2f} < BDT < {hi:.2f}")
         plt.grid(True)
-        plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}.png")
-        plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}.pdf")
+        if inclusive:
+            plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}Incl.png")
+            plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}Incl.pdf")
+        else:
+            plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}.png")
+            plt.savefig(f"{save_path}/hist2D{x_var}_{y_var}.pdf")
         plt.clf()
 
 
+def fillNanJetvariables(df, forward_filter, jet_variables):
+    dijet_variables = [ 
+        # 'jet1_eta', 
+        # 'jet2_eta', 
+        # 'jet1_pt', 
+        # 'jet2_pt', 
+        'jj_dEta', 
+        'jj_dPhi', 
+        'jj_mass', 
+        'mmj_min_dEta', 
+        'mmj_min_dPhi', 
+    ]
+    jet_variables = list(set(jet_variables + dijet_variables))
+    jet_variables  = [var+"_nominal" for var in jet_variables] 
+    # print(f"df.loc[forward_filter, jet_variables] b4: {df.loc[forward_filter, jet_variables]}")
+    # df.loc[forward_filter, jet_variables].to_csv("dfb4.csv")
+    # print(f"forward_filter: {forward_filter}")
+    # print(f"jet_variables: {jet_variables}")
     
+    for jet_var in jet_variables:
+        if jet_var in df.columns:
+            if "dPhi" in jet_var:
+                df.loc[forward_filter, jet_var] = -999.0
+            else:
+                df.loc[forward_filter, jet_var] = -999.0
+
+    # print(f"df.loc[forward_filter, jet_variables] after: {df.loc[forward_filter, jet_variables]}")
+    # df.loc[forward_filter, jet_variables].to_csv("dfafter.csv")
+
+    # remove njets
+    df.loc[forward_filter, "njets_nominal"] = df.loc[forward_filter, "njets_nominal"] - 1
+    # print(f'np.all(df["njets_nominal"]): {np.all(df["njets_nominal"])}')
+    assert(np.all(df["njets_nominal"]>=0))
+    return df
+    
+def removeForwardJets(df):
+    """
+    remove jet variables that are in the forward region abs(jet eta)> 2.5 with with fill nan
+    values consistent with the rest of the framework for ggH BDT.
+    """
+    df_new = copy.deepcopy(df)
+    
+    # leading jet  --------------------------
+    forward_filter = (abs(df["jet1_eta_nominal"]) > 2.5) & (abs(df["jet1_eta_nominal"]) < 5.0)
+    jet_variables = [
+        "jet1_eta",
+        "jet1_pt",
+        # "jet1_phi",
+        # "jet1_mass",
+        "mmj1_dEta",
+        # "mmj1_dPhi",
+    ]
+    df_new = fillNanJetvariables(df_new, forward_filter, jet_variables)
+    # raise ValueError
+    
+    # sub-leading jet  --------------------------
+    forward_filter = (abs(df["jet2_eta_nominal"]) > 2.5) & (abs(df["jet2_eta_nominal"]) < 5.0)
+    jet_variables = [
+        "jet2_eta",
+        "jet2_pt",
+        # "jet2_phi",
+        # "jet2_mass",
+    ]
+    df_new = fillNanJetvariables(df_new, forward_filter, jet_variables)
+    return df_new
+
+def fromPdDftoAkZip(df):
+    """
+    helper function
+    """
+    arr_back_zip = ak.zip(
+        {col: ak.Array(df[col].to_numpy()) for col in df.columns}
+    )
+    return arr_back_zip
+
+
+
+def hist_stddev_with_unc(counts: np.ndarray, edges: np.ndarray):
+    """
+    Compute std deviation and its uncertainty using ROOT's TH1D.
+
+    Parameters
+    ----------
+    counts : np.ndarray
+        Histogram bin contents (like from np.histogram).
+    edges : np.ndarray
+        Histogram bin edges (len = len(counts)+1).
+
+    Returns
+    -------
+    std : float
+        Standard deviation of the histogram (RMS).
+    std_err : float
+        Uncertainty on the standard deviation.
+    """
+    # Ensure histograms store sum of squares of weights for error calculation
+    rt.TH1.SetDefaultSumw2(True)
+    nbins = len(counts)
+    h = rt.TH1D("h_tmp", "temporary hist", nbins, edges)
+
+    for i, c in enumerate(counts, start=1):  # ROOT bins start at 1
+        h.SetBinContent(i, float(c))
+
+    std     = h.GetStdDev()
+    std_err = h.GetStdDevError()
+    return std, std_err
+
+
+def getSqrtSOverB(bin_edges, sig_counts, bkg_counts, save_path, fname):
+    # Example: signal and background histograms
+    # bin_edges = np.array([0, 1, 2, 3, 4, 5])
+    # sig_counts = np.array([5, 10, 20, 15, 5])
+    # bkg_counts = np.array([50, 40, 30, 20, 10])
+    
+    # Cumulative yields above each bin edge
+    S_cum = np.cumsum(sig_counts[::-1])[::-1]
+    B_cum = np.cumsum(bkg_counts[::-1])[::-1]
+    
+    # Avoid division by zero
+    with np.errstate(divide='ignore', invalid='ignore'):
+        significance = np.sqrt(S_cum) / B_cum
+        significance[B_cum <= 0] = np.nan  # mask bins with no background
+    
+    # Compute bin centers
+    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    
+    # Plot vs bin centers
+    plt.plot(bin_centers, significance, marker='o', label=r'$\sqrt{S}/B$')
+    plt.xlabel("Variable (bin center)")
+    plt.ylabel(r"$\sqrt{S}/B$")
+    plt.legend()
+    plt.grid(True)
+    # plt.show()
+    plt.savefig(f"{save_path}/{fname}.pdf")
