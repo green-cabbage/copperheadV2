@@ -281,11 +281,11 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     print(f"variatons2loop: {variatons2loop}")
 
     # -----------------------------------------------
-    df = ak.to_dataframe(events).reset_index(drop=True)
-    # print(df["jet1_eta_nominal"][:30])
-    df = removeForwardJets(df)
-    # print(df["jet1_eta_nominal"][:30])
-    events = fromPdDftoAkZip(df)
+    # df = ak.to_dataframe(events).reset_index(drop=True)
+    # # print(df["jet1_eta_nominal"][:30])
+    # df = removeForwardJets(df)
+    # # print(df["jet1_eta_nominal"][:30])
+    # events = fromPdDftoAkZip(df)
     # -----------------------------------------------
     
     for variation in variatons2loop:
