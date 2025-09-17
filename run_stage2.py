@@ -16,7 +16,7 @@ import time
 import sys, inspect
 import configs.categories.category_cuts as category_cuts
 import json
-
+from modules.utils import removeForwardJets, fromPdDftoAkZip
 
 def prepare_features(events, features, variation="nominal"):
     features_var = []
@@ -180,6 +180,8 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     fields2load = ["nBtagLoose_nominal", "nBtagMedium_nominal", "dimuon_mass", "wgt_nominal", "mmj2_dEta_nominal", "mmj2_dPhi_nominal", "event", "jj_mass_nominal", "jj_dEta_nominal", "jet1_pt_nominal", "njets_nominal", "dimuon_ebe_mass_res",
             'jet2_eta_nominal', # this technically is not in BDT, but add just in case 
             'rpt_nominal', # this technically is not in BDT, but add just in case 
+        'mmj1_dEta_nominal', 
+        'mmj1_dPhi_nominal',  
                    
       ]
 
@@ -244,16 +246,16 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     print(f"events num b4: {ak.num(events, axis=0)}")
     events = events[gghCat_selection]
     print(f"events num after: {ak.num(events, axis=0)}")
-    # raise ValueError
+    # raise ValueErrremoveForwardJetsor
 
-    if not do_6p7:
+    # if not do_6p7:
         # make sure to replace nans with zeros,  unless it's delta phis, in which case it's -1, as specified in line 1117 of the AN
-        for field in events.fields:
-            if "dPhi" in field:
-                none_val = -999.0
-            else:
-                none_val = -999.0
-            events[field] = ak.fill_none(events[field], value=none_val)
+    for field in events.fields:
+        if "dPhi" in field:
+            none_val = -999.0
+        else:
+            none_val = -999.0
+        events[field] = ak.fill_none(events[field], value=none_val)
     
     print(f"process4gghCategory year: {year}")
     # if year == "2016_RERECO": # I didn't train a separate BDT for rereco eras
@@ -277,6 +279,14 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     print(f"parameters models path: {parameters['models_path']}")
     variatons2loop = ["nominal"] + jec_unc_fields
     print(f"variatons2loop: {variatons2loop}")
+
+    # -----------------------------------------------
+    df = ak.to_dataframe(events).reset_index(drop=True)
+    # print(df["jet1_eta_nominal"][:30])
+    df = removeForwardJets(df)
+    # print(df["jet1_eta_nominal"][:30])
+    events = fromPdDftoAkZip(df)
+    # -----------------------------------------------
     
     for variation in variatons2loop:
         # processed_events = evaluate_bdt(events, "nominal", model_name, training_features, parameters) 
@@ -341,6 +351,8 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
             'zeppenfeld_nominal',
             'njets_nominal',
             'rpt_nominal', # this technically is not in BDT, but add just in case 
+            'mmj1_dEta_nominal', 
+            'mmj1_dPhi_nominal',  
         ]
         fields2save += bdt_inputs
     # add bdt inputs for fig 6.7 ----------------------
@@ -819,6 +831,7 @@ if __name__ == "__main__":
             os.remove(save_filename)
         except:
             pass
+        
         ak.to_parquet(processed_events, save_filename)
 
         
