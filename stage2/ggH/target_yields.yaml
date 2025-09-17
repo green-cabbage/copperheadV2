@@ -1,4 +1,4 @@
-# target_yields: # UCSD target yields
+# target_yields: # UCSD AN-19-124 target yields
 # - 0.30457106
 # - 0.35325641
 # - 0.14842342
@@ -31,9 +31,27 @@
 # - 0.21
 # - 0.2
 # - 0.09
-target_yields:  # fullRun_May30_2025_X_V2_UL_Jun09_2025
-- 0.24
+# target_yields:  # fullRun_May30_2025_X_V2_UL_Jun09_2025
+# - 0.24
+# - 0.27
+# - 0.19
+# - 0.2
+# - 0.1
+# target_yields:  # fullRun_Jun21_2025_X_V2_fullRun_Jun21_2025_allYear
+# - 0.23
+# - 0.27
+# - 0.2
+# - 0.21
+# - 0.09
+# target_yields:  # fullRun_Jun23_2025_1n2Revised_X_V2_fullRun_Jun21_2025_1n2Revised (trained over all years)
+# - 0.27
+# - 0.3
+# - 0.35
+# - 0.06
+# - 0.02
+target_yields:  # fullRun_Jun23_2025_1n2Revised_x_V2_Aug28_PosWgtRun0p7_MassResRun1 (trained over all years)
 - 0.27
+- 0.37
 - 0.19
-- 0.2
-- 0.1
+- 0.11
+- 0.06

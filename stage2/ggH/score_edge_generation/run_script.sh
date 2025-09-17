@@ -5,7 +5,9 @@ set -e
 # label="DYMiNNLO_30Mar2025"
 # label="DYamcNLO_11Apr2025"
 # label="DYMiNNLO_11Apr2025"
-label="fullRun_May30_2025"
+# label="fullRun_May30_2025"
+# label="fullRun_Jun21_2025"
+label="fullRun_Jun23_2025_1n2Revised/"
 
 sample_l="data ggh vbf" 
 
@@ -13,13 +15,20 @@ category="ggh"
 # model="V2_UL_Apr09_2025_DyMinnloTtStVvEwkGghVbf_hyperParamOnScaleWgt0_75"
 # model="V2_UL_Apr11_2025_DyTtStVvEwkGghVbf"
 # model="V2_UL_Apr11_2025_DyMinnloTtStVvEwkGghVbf"
-model="V2_UL_Jun09_2025"
+# model="V2_UL_Jun09_2025"
+# model="V2_fullRun_Jun21_2025_allYear"
+# model="V2_fullRun_Jun21_2025_1n2Revised"
+model="V2_Aug28_PosWgtRun0p7_MassResRun1"
 
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/$category/stage2_output" 
 stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output"  # I like to specify the category in the save path
 
 
-# years="2016preVFP 2016postVFP 2017 2018"
-years="2018"
+years="2016preVFP 2016postVFP 2017 2018"
+# years="2018"
+# years="2016preVFP 2016postVFP 2018"
 python determine_score_edge.py -load $stage2_save_path --years ${years}
+
+# despite its name, this plots the AMS values from saved .csv output to pngs
+python validation.py
