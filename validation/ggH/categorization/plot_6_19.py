@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 plt.style.use(hep.style.CMS)
 from omegaconf import OmegaConf
-from modules.utils import fillSampleValues, getDimuMassBySubCat
+from modules.utils import fillSampleValues, getDimuMassBySubCat, rebinRooDataHist
 from modules.basic_functions import filterRegion
 from modules.fit_functions import getFEWZ_roospline
 import ROOT
@@ -202,12 +202,14 @@ def getFEWZxBern(x):
 def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
     device = "cpu"
     # nSubCats=1 # FIXME
-    for target_subCat in range(nSubCats):
+    # for target_subCat in range(nSubCats):
+    for target_subCat in dataDict_by_subCat.keys():
         dataDict_target = dataDict_by_subCat[target_subCat]
         mass_name = "mh_ggh"
         mass = rt.RooRealVar(mass_name, mass_name, 120, 110, 150)
-        # nbins = 800
-        nbins = 100
+        nbins = 800
+        # nbins = 120
+        # nbins = 200
         mass.setBins(nbins)
         mass.setRange("hiSB", 135, 150 )
         mass.setRange("loSB", 110, 115 )
@@ -254,16 +256,19 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
 
         # fit Sum Power law
         name = f"RooSumTwoPowerLawPdf_a1_coeff"
-        a1_coeff_pow = rt.RooRealVar(name,name, 0.00001,-2.0,1)
+        a1_coeff_pow = rt.RooRealVar(name,name, -9,-20.0,20)
         name = f"RooSumTwoPowerLawPdf_a2_coeff"
-        a2_coeff_pow = rt.RooRealVar(name,name, 0.1,-2.0,1)
+        a2_coeff_pow = rt.RooRealVar(name,name, 15,-20.0,20)
         name = f"RooSumTwoPowerLawPdf_f_coeff"
-        f_coeff_pow = rt.RooRealVar(name,name, 0.9,0.0,1.0)
+        f_coeff_pow = rt.RooRealVar(name,name, 0.6,0.0,1.0)
     
         name = "S-Power-Law"
         coreSumPow = rt.RooSumTwoPowerLawPdf(name, name, mass, a1_coeff_pow, a2_coeff_pow, f_coeff_pow) 
         _ = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
+        print(f"coreSumPow : \n")
+        fitResult.Print()
+        # raise ValueError
 
         # fit BWZ Gamma
         coreBWZGamma, param_l_bwz_gamma = getBWZ_gamma(mass)
@@ -349,7 +354,8 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         # Sum Power
         color, style = getColor(coreSumPow.GetName())
         name = coreSumPow.GetName()
-        coreSumPow.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        # coreSumPow.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
+        # coreSumPow.plotOn(frame, Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
         # -----------------------------------------------------------
@@ -375,7 +381,11 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
 
         # -----------------------------------------------------------
         # Data
-        roo_histData.plotOn(frame)
+        # roo_histData.plotOn(frame)
+        target_nbins = 80
+        rebin_factor = nbins // target_nbins
+        roo_histData_rebinned = rebinRooDataHist(mass, roo_histData, rebin_factor)
+        roo_histData_rebinned.plotOn(frame)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
         
         
@@ -566,9 +576,15 @@ if __name__ == "__main__":
     # status = "Private"
     status = "Simulation"
     apply_blind= not args.unblind
-    dataDict_by_subCat = getDimuMassBySubCat(sample_dict, sample="data", nSubCats=nSubCats)
-    # print(f"sample_dict: {sample_dict}")
+    sample="data"
+    dataDict_by_subCat = getDimuMassBySubCat(sample_dict, sample=sample, nSubCats=nSubCats)
+    print(f"sample_dict: {sample_dict}")
     print(f"dataDict_by_subCat: {dataDict_by_subCat}")
+    # add "all" category
+    dataDict_by_subCat["all"] = {
+            "dimuon_mass" : sample_dict[sample]["dimuon_mass"],
+            "wgt_nominal" : sample_dict[sample]["wgt_nominal"],
+    }
     
     plot_6_19(dataDict_by_subCat, save_fname, apply_blind = apply_blind)
     

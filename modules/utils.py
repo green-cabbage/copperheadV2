@@ -724,3 +724,19 @@ def getSqrtSOverB(bin_edges, sig_counts, bkg_counts, save_path, fname):
     plt.grid(True)
     # plt.show()
     plt.savefig(f"{save_path}/{fname}.pdf")
+
+def rebinRooDataHist(x, rooDataHist, rebin_factor):
+    """
+    convert to TH1, rebin, then convert back to rooDataHist
+    """
+    # Step 3: Convert original RooDataHist into a TH1
+    h_original = rooDataHist.createHistogram("h_original", x)
+    
+    # Step 4: Rebin the TH1
+    new_name = f"{rooDataHist.GetName()}_rebinned"
+    h_rebinned = h_original.Rebin(rebin_factor, f"{rooDataHist.GetName()}_rebinned")
+    
+    # Step 5: Build a new RooDataHist from the rebinned TH1
+    rebinned_dh = rt.RooDataHist(new_name, new_name, rt.RooArgList(x), h_rebinned)
+    return rebinned_dh
+    
