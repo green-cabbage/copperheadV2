@@ -14,10 +14,11 @@ plt.style.use(hep.style.CMS)
 from omegaconf import OmegaConf
 from modules.utils import fillSampleValues, getDimuMassBySubCat, rebinRooDataHist
 from modules.basic_functions import filterRegion
-from modules.fit_functions import getFEWZ_roospline
+from modules.fit_functions import getFEWZ_roospline, getPowerLaw
 import ROOT
 import ROOT as rt
 import copy
+import pandas as pd
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -202,6 +203,26 @@ def getFEWZxBern(x):
 def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
     device = "cpu"
     # nSubCats=1 # FIXME
+    df_rows = []
+    fitResults={}
+    powerLawStarValDict = {
+        0: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -1.9743280291018659, 'RooSumTwoPowerLawPdf_a2_coeff': -5.070611059366495, 'RooSumTwoPowerLawPdf_f_coeff': 0.9169613224723027
+           }, 
+        1: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -2.6281519073027844, 'RooSumTwoPowerLawPdf_a2_coeff': -4.460879015664051, 'RooSumTwoPowerLawPdf_f_coeff': 0.44823019493423466
+           }, 
+        2: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -2.3033162245329164, 'RooSumTwoPowerLawPdf_a2_coeff': -4.183898141656655, 'RooSumTwoPowerLawPdf_f_coeff': 0.40115183986375974
+           }, 
+        3: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -2.4924512293219796, 'RooSumTwoPowerLawPdf_a2_coeff': -3.681762231096663, 'RooSumTwoPowerLawPdf_f_coeff': 0.2902132176929161
+           }, 
+        4: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -1.3892075987583783, 'RooSumTwoPowerLawPdf_a2_coeff': -84.29141727097351, 'RooSumTwoPowerLawPdf_f_coeff': 0.9948389705318498
+           }, 
+        'all': {'RooSumTwoPowerLawPdf_a1_coeff': -2.1969979862085047, 'RooSumTwoPowerLawPdf_a2_coeff': -4.18629756373829, 'RooSumTwoPowerLawPdf_f_coeff': 0.6569304312671497}
+    }
     # for target_subCat in range(nSubCats):
     for target_subCat in dataDict_by_subCat.keys():
         dataDict_target = dataDict_by_subCat[target_subCat]
@@ -240,6 +261,7 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         _ = coreBWZRedux.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreBWZRedux.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
         # print(f"fitResult: {fitResult}")
+        
 
         # fit Sum exp
         name = f"RooSumTwoExpPdf_a1_coeff"
@@ -256,26 +278,46 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
 
         # fit Sum Power law
         name = f"RooSumTwoPowerLawPdf_a1_coeff"
-        a1_coeff_pow = rt.RooRealVar(name,name, -9,-20.0,20)
+        # a1_coeff_pow = rt.RooRealVar(name,name, 0.0,-20.0,20)
+        # a1_coeff_pow = rt.RooRealVar(name,name, -2,-3.5,-1.0)
+        # print(powerLawStarValDict[target_subCat])
+        
+        a1_coeff_pow = rt.RooRealVar(name,name, powerLawStarValDict[target_subCat][name],-3.5,-1.0)
         name = f"RooSumTwoPowerLawPdf_a2_coeff"
-        a2_coeff_pow = rt.RooRealVar(name,name, 15,-20.0,20)
+        # a2_coeff_pow = rt.RooRealVar(name,name, 0.0001,-20.0,20)
+        if target_subCat == 4:
+            a2_coeff_pow = rt.RooRealVar(name,name, powerLawStarValDict[target_subCat][name],-150.0, -50)
+            # a2_coeff_pow = rt.RooRealVar(name,name, -84,-150.0, -50)
+        else:
+            a2_coeff_pow = rt.RooRealVar(name,name, powerLawStarValDict[target_subCat][name],-6.0, -3)
+            # a2_coeff_pow = rt.RooRealVar(name,name, -4,-6.0, -3)
         name = f"RooSumTwoPowerLawPdf_f_coeff"
-        f_coeff_pow = rt.RooRealVar(name,name, 0.6,0.0,1.0)
+        # f_coeff_pow = rt.RooRealVar(name,name, 0.1,0.0,1.0)
+        # f_coeff_pow = rt.RooRealVar(name,name, 0.9,0.0,1.0)
+        f_coeff_pow = rt.RooRealVar(name,name, powerLawStarValDict[target_subCat][name],0.0,1.0)
     
         name = "S-Power-Law"
-        coreSumPow = rt.RooSumTwoPowerLawPdf(name, name, mass, a1_coeff_pow, a2_coeff_pow, f_coeff_pow) 
-        _ = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        # coreSumPow = rt.RooSumTwoPowerLawPdf(name, name, mass, a1_coeff_pow, a2_coeff_pow, f_coeff_pow)
+        coreSumPow, param_l_powerLaw  = getPowerLaw(mass, powerLawStarValDict[target_subCat])
+        # _ = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        _ = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Minos=True)
         fitResult = coreSumPow.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
+        # _ = coreSumPow.fitTo(roo_histData, rt.RooFit.Range("full"), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
+        # fitResult = coreSumPow.fitTo(roo_histData, rt.RooFit.Range("full"), EvalBackend=device, PrintLevel=0 ,Save=True,)
         print(f"coreSumPow : \n")
         fitResult.Print()
-        # raise ValueError
+        # fitResults[target_subCat] = {
+        #     "RooSumTwoPowerLawPdf_a1_coeff" : a1_coeff_pow.getVal(),
+        #     "RooSumTwoPowerLawPdf_a2_coeff" : a2_coeff_pow.getVal(),
+        #     "RooSumTwoPowerLawPdf_f_coeff" : f_coeff_pow.getVal(),
+        # }
 
         # fit BWZ Gamma
         coreBWZGamma, param_l_bwz_gamma = getBWZ_gamma(mass)
         _ = coreBWZGamma.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreBWZGamma.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
         print(f"coreBWZGamma : \n")
-        fitResult.Print()
+        # fitResult.Print()
         # raise ValueError
 
         # fit BWZ Gamma
@@ -290,7 +332,7 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         _ = coreFEWZxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
         fitResult = coreFEWZxBern.fitTo(roo_histData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True)
         print(f"coreFEWZxBern : \n")
-        fitResult.Print()
+        # fitResult.Print()
         
         # fit LandxBern
         coreLandxBern, param_l_land_bern = getLandxBern(mass)
@@ -300,10 +342,11 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         # fitResult.Print()
 
         
+        nfree_params = fitResult.floatParsFinal().getSize() # ndf should be consistent over all possible bkg fit functions
+        print(f"nfree_params: {nfree_params}")
         
         
-        # raise ValueError
-
+        
         # --------------------------------------------------------------------
         # plot
         # --------------------------------------------------------------------
@@ -329,7 +372,8 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         frame = mass.frame()
 
         # plot invisible data points for pdfs could be normalized
-        roo_histData.plotOn(frame, Invisible=True)
+        hist_name = roo_histData.GetName()
+        roo_histData.plotOn(frame, Invisible=True, Name=hist_name,)
         # legend.AddEntry(frame.getObject(int(frame.numItems())-1),"Data", "P")
         
         # BWZRedux
@@ -337,12 +381,29 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         name = coreBWZRedux.GetName()
         coreBWZRedux.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
+        
         # -----------------------------------------------------------
         # BWZxBern
         color, style = getColor(coreBWZxBern.GetName())
         name = coreBWZxBern.GetName()
         coreBWZxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
+
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
         # -----------------------------------------------------------
         # Sum Exp
         color, style = getColor(coreSumExp.GetName())
@@ -350,14 +411,27 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         coreSumExp.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
         # -----------------------------------------------------------
         # Sum Power
         color, style = getColor(coreSumPow.GetName())
         name = coreSumPow.GetName()
-        # coreSumPow.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
-        # coreSumPow.plotOn(frame, Name=name, LineColor=color, LineStyle=style)
+        coreSumPow.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
         # -----------------------------------------------------------
         # BWZxGamma
         color, style = getColor(coreBWZGamma.GetName())
@@ -365,13 +439,27 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         coreBWZGamma.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
         # -----------------------------------------------------------
         # FEWZxBern
         color, style = getColor(coreFEWZxBern.GetName())
         name = coreFEWZxBern.GetName()
         coreFEWZxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
-        
+
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
         # -----------------------------------------------------------
         # LandxBern
         color, style = getColor(coreLandxBern.GetName())
@@ -379,6 +467,13 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         coreLandxBern.plotOn(frame, DataError="SumW2", Name=name, LineColor=color, LineStyle=style)
         legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
 
+        chi2ndf = frame.chiSquare(name, hist_name, nfree_params)
+        print(f"chi^2 {name} = ", chi2ndf)
+        df_rows.append({
+            "BDT cat": target_subCat,
+            "fit function": name,
+            "chi2ndf": chi2ndf
+        })
         # -----------------------------------------------------------
         # Data
         # roo_histData.plotOn(frame)
@@ -459,7 +554,18 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
             canvas.SaveAs(f"{save_fname}_subCat{target_subCat}_blinded.pdf")
         else:
             canvas.SaveAs(f"{save_fname}_subCat{target_subCat}_unblinded.pdf")
-            
+    df = pd.DataFrame(df_rows, columns=["BDT cat", "fit function", "chi2ndf"])
+    df_pivot = df.pivot(index="BDT cat", columns="fit function", values="chi2ndf")
+    print(df)
+    print(fitResults)
+    if apply_blind:
+        df.to_csv(f"{save_fname}_chi2ndf_blinded.csv")
+        df_pivot.to_csv(f"{save_fname}_chi2ndfByFitFunc_blinded.csv")
+    else:
+        df.to_csv(f"{save_fname}_chi2ndf_unblinded.csv")
+        df_pivot.to_csv(f"{save_fname}_chi2ndfByFitFunc_unblinded.csv")
+    # raise ValueError
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -587,6 +693,7 @@ if __name__ == "__main__":
     }
     
     plot_6_19(dataDict_by_subCat, save_fname, apply_blind = apply_blind)
+    # plot_6_19(dataDict_by_subCat, save_fname, apply_blind = False)
     
 
     
