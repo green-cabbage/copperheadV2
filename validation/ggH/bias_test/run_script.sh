@@ -9,16 +9,19 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 
 category="ggh"
 
-model="V2_fullRun_Jun21_2025_1n2Revised"
+# model="V2_fullRun_Jun21_2025_1n2Revised"
+model="V2_Aug28_PosWgtRun0p7_MassResRun1"
 
-stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields/stage2_output" 
+# stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields/stage2_output" 
+stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
 
 
 # # ------------------
 # # Begin stage3
 # # ------------------
 
-stage3_label="${label}_X_${model}_w_allYearBDT_w_newBDTTargetYields_V2Jun28"
+# stage3_label="${label}_X_${model}_w_allYearBDT_w_newBDTTargetYields_V2Jun28"
+stage3_label="${label}_X_${model}_all7FitFuncs"
 
 year="all"
 python run_bias_test.py -load $stage2_save_path -cat $category --year $year --label $stage3_label

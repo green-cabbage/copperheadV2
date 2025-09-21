@@ -757,17 +757,36 @@ def getBWZ_gamma(x, init_param_dict):
     ]# list of variables to return so that they don't get deleted in python functions. Otherwise the roofit pdfs don't work
     return coreBWZGamma, param_l
 
+def getPowerLaw(x, init_param_dict):
+    name = f"RooSumTwoPowerLawPdf_a1_coeff"
+    a1_coeff_pow = rt.RooRealVar(name,name, init_param_dict[name],-3.5,-1.0)
+    name = f"RooSumTwoPowerLawPdf_a2_coeff"
+    a2_coeff_pow = rt.RooRealVar(name,name, init_param_dict[name],-10.0, -3)
+    name = f"RooSumTwoPowerLawPdf_f_coeff"
+    f_coeff_pow = rt.RooRealVar(name,name, init_param_dict[name],0.0,1.0)
+    pow_pdf1 = rt.RooGenericPdf("pow_pdf1", "pow(@0, @1)", rt.RooArgList(x, a1_coeff_pow))
+    pow_pdf2 = rt.RooGenericPdf("pow_pdf2", "pow(@0, @1)", rt.RooArgList(x, a2_coeff_pow))
+    name = "S-Power-Law"
+    coreSumPow = rt.RooAddPdf(name, name, [pow_pdf1, pow_pdf2], [f_coeff_pow])
+    param_l = [
+        a1_coeff_pow,
+        a2_coeff_pow,
+        f_coeff_pow,
+        pow_pdf1,
+        pow_pdf2,
+    ]
+    return coreSumPow, param_l
+    
 
 def getBWZxBern(x, init_param_dict):
     name = f"BWZxBern_a_coeff"
-    a_coeff_bwz = rt.RooRealVar(name,name, init_param_dict[name], -1, 1)
+    a_coeff_bwz = rt.RooRealVar(name,name, init_param_dict[name], -0.03, -0.001)
 
     # we use RooModZPdf, so all bernstein coeffs are freely floating
     name = f"bwz_bernstein_a0" 
-    a0_bern = rt.RooRealVar(name,name, init_param_dict[name], -1, 1)
+    a0_bern = rt.RooRealVar(name,name, init_param_dict[name], 0.15, 0.5)
     name = f"bwz_bernstein_a1"
-    a1_bern = rt.RooRealVar(name,name, init_param_dict[name], -1, 1) # starting value = 1/n_coeffs
-    
+    a1_bern = rt.RooRealVar(name,name, init_param_dict[name], 0.015, 0.05) # starting value = 1/n_coeffs
 
     name = "BWZxBernstein"
     coreBWZxBern = rt.RooModZPdf(name, name, x, a_coeff_bwz, rt.RooArgList(a0_bern,a1_bern)) 
@@ -787,16 +806,21 @@ def getLandxBern(x, init_param_dict):
     name = f"landau_m_Z"
     m_Z = rt.RooRealVar(name,name, 91.2)
     name = f"landau_a_coeff"
-    a_coeff = rt.RooRealVar(name, name, init_param_dict[name],0.0, 5)
+    a_coeff = rt.RooRealVar(name, name, init_param_dict[name],0.0,3)
     name = "Landau"
     Landau = rt.RooLandau(name, name, x, m_Z, a_coeff) 
 
     name = f"landau_bernstein_a0"
     a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
     name = f"landau_bernstein_a1"
-    a1_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.5, 3) # starting value = 1/n_coeffs
+    a1_bern = rt.RooRealVar(name, name, init_param_dict[name], 0, 5) # starting value = 1/n_coeffs
     name = f"landau_bernstein_a2"
-    a2_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.5, 3) # starting value = 1/n_coeffs
+    a2_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.0, 10) # starting value = 1/n_coeffs
+
+   #    --------------------  ------------  --------------------------  --------
+   #      landau_a_coeff    3.2148e-06    3.6326e-06 +/-  2.14e-03  <none>
+   # landau_bernstein_a1    1.2154e+00    1.2154e+00 +/-  6.50e-02  <none>
+   # landau_bernstein_a2    1.2806e+00    1.2806e+00 +/-  7.49e-02  <none>
     
     # bern_pol = rt.RooBernsteinFast(3)(name, name, x, rt.RooArgList(a0_bern, a1_bern, a2_bern)) 
     # name = "LandauxBernstein"

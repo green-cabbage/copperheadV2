@@ -9,7 +9,7 @@ from typing import Tuple, List, Dict
 import ROOT as rt
 import ROOT
 from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23, plot_6_26, getSigBkgPdf
-from modules.fit_functions import getBWZ_gamma, getBWZxBern, getLandxBern, getFEWZxBern
+from modules.fit_functions import getBWZ_gamma, getBWZxBern, getLandxBern, getFEWZxBern, getPowerLaw
 import argparse
 import os
 import copy
@@ -35,33 +35,39 @@ def create_core_pdf(pdf_type, subcat_index, x, init_vals):
 
     if pdf_type == "BWZRedux":
         a = rt.RooRealVar(f"{prefix}_a_coeff", f"{prefix}_a_coeff", 
-                          init_vals["a_coeff"], -0.5, 0.5)
+                          init_vals["a_coeff"], -0.1,0.1)
         b = rt.RooRealVar(f"{prefix}_b_coeff", f"{prefix}_b_coeff", 
                           init_vals["b_coeff"], -0.02, 0.02)
         c = rt.RooRealVar(f"{prefix}_c_coeff", f"{prefix}_c_coeff", 
-                          init_vals["c_coeff"], -10.0, 10.0)
+                          init_vals["c_coeff"], 0,5) 
         pdf = rt.RooModZPdf(prefix, prefix, x, a, b, c)
         return pdf, [a, b, c]
-
     elif pdf_type == "sumExp":
+        # a1 = rt.RooRealVar(f"{prefix}_a1_coeff", f"{prefix}_a1_coeff", 
+        #                    init_vals["a1_coeff"], -1.0, 0)
+        # a2 = rt.RooRealVar(f"{prefix}_a2_coeff", f"{prefix}_a2_coeff", 
+        #                    init_vals["a2_coeff"], -1.0, 0.0)
         a1 = rt.RooRealVar(f"{prefix}_a1_coeff", f"{prefix}_a1_coeff", 
-                           init_vals["a1_coeff"], -2.0, 1.0)
+                           init_vals["a1_coeff"], -0.3, 0)
         a2 = rt.RooRealVar(f"{prefix}_a2_coeff", f"{prefix}_a2_coeff", 
-                           init_vals["a2_coeff"], -2.0, 1.0)
+                           init_vals["a2_coeff"], -0.3, 0.0)
         f  = rt.RooRealVar(f"{prefix}_f_coeff", f"{prefix}_f_coeff", 
                            init_vals["f_coeff"], 0.0, 1.0)
         pdf = rt.RooSumTwoExpPdf(prefix, prefix, x, a1, a2, f)
+
         return pdf, [a1, a2, f]
         
     elif pdf_type == "PowerLaw":
-        a1 = rt.RooRealVar(f"{prefix}_PowerLaw_a1_coeff", f"{prefix}_PowerLaw_a1_coeff", 
-                           init_vals["PowerLaw_a1_coeff"], -2.0, 1.0)
-        a2 = rt.RooRealVar(f"{prefix}_PowerLaw_a2_coeff", f"{prefix}_PowerLaw_a2_coeff", 
-                           init_vals["PowerLaw_a2_coeff"], -2.0, 1.0)
-        f  = rt.RooRealVar(f"{prefix}_PowerLaw_f_coeff", f"{prefix}_PowerLaw_f_coeff", 
-                           init_vals["PowerLaw_f_coeff"], 0.0, 1.0)
-        pdf = rt.RooSumTwoPowerLawPdf(prefix, prefix, x, a1, a2, f)
-        return pdf, [a1, a2, f]
+        # a1 = rt.RooRealVar(f"{prefix}_PowerLaw_a1_coeff", f"{prefix}_PowerLaw_a1_coeff", 
+        #                    init_vals["RooSumTwoPowerLawPdf_a1_coeff"], -4, -1.0)
+        # a2 = rt.RooRealVar(f"{prefix}_PowerLaw_a2_coeff", f"{prefix}_PowerLaw_a2_coeff", 
+        #                    init_vals["RooSumTwoPowerLawPdf_a2_coeff"], -2.0, -1.0)
+        # f  = rt.RooRealVar(f"{prefix}_PowerLaw_f_coeff", f"{prefix}_PowerLaw_f_coeff", 
+        #                    init_vals["RooSumTwoPowerLawPdf_f_coeff"], 0.0, 1.0)
+        # pdf = rt.RooSumTwoPowerLawPdf(prefix, prefix, x, a1, a2, f)
+        # return pdf, [a1, a2, f]
+        pdf, param_l = getPowerLaw(x, init_vals)
+        return pdf, param_l
         
     elif pdf_type == "FEWZxBern":
         pdf, param_l = getFEWZxBern(x, init_vals, fewz_workspace_path="modules/ucsd_workspace/")
@@ -162,7 +168,7 @@ if __name__ == "__main__":
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_data.parquet"
     print(f"load_path: {load_path}")
-    processed_eventsData = ak.from_parquet(load_path)
+    processed_eventsData = dak.from_parquet(load_path).compute()
     print(f"processed_eventsData length: {ak.num(processed_eventsData.dimuon_mass, axis=0)}")
     print("events loaded!")
 
@@ -201,22 +207,22 @@ if __name__ == "__main__":
     # --------------------------------------------------------------
 
 
-    # # trying bigger range do that I don't get warning message from combine like: [WARNING] Found parameter BWZ_Redux_a_coeff at boundary (within ~1sigma)
-    name = f"BWZ_Redux_a_coeff"
-    a_coeff = rt.RooRealVar(name,name, 5.1288e-02,-0.5,0.5)
-    name = f"BWZ_Redux_b_coeff"
-    b_coeff = rt.RooRealVar(name,name, -1.3658e-04,-0.02,0.02)
-    name = f"BWZ_Redux_c_coeff"
-    c_coeff = rt.RooRealVar(name,name, 2.0602e+00,-10.0,10.0)
-    # # old end --------------------------------------------------
+    # # # trying bigger range do that I don't get warning message from combine like: [WARNING] Found parameter BWZ_Redux_a_coeff at boundary (within ~1sigma)
+    # name = f"BWZ_Redux_a_coeff"
+    # a_coeff = rt.RooRealVar(name,name, 5.1288e-02,-0.5,0.5)
+    # name = f"BWZ_Redux_b_coeff"
+    # b_coeff = rt.RooRealVar(name,name, -1.3658e-04,-0.02,0.02)
+    # name = f"BWZ_Redux_c_coeff"
+    # c_coeff = rt.RooRealVar(name,name, 2.0602e+00,-10.0,10.0)
+    # # # old end --------------------------------------------------
 
-    # sumexp subcat
-    name = f"RooSumTwoExpPdf_a1_coeff"
-    a1_coeff = rt.RooRealVar(name,name, -1.4756e-01,-2.0,1)
-    name = f"RooSumTwoExpPdf_a2_coeff"
-    a2_coeff = rt.RooRealVar(name,name, -3.4552e-02,-2.0,1)
-    name = f"RooSumTwoExpPdf_f_coeff"
-    f_coeff = rt.RooRealVar(name,name,  2.4864e-01,0.0,1.0)
+    # # sumexp subcat
+    # name = f"RooSumTwoExpPdf_a1_coeff"
+    # a1_coeff = rt.RooRealVar(name,name, -1.4756e-01,-2.0,1)
+    # name = f"RooSumTwoExpPdf_a2_coeff"
+    # a2_coeff = rt.RooRealVar(name,name, -3.4552e-02,-2.0,1)
+    # name = f"RooSumTwoExpPdf_f_coeff"
+    # f_coeff = rt.RooRealVar(name,name,  2.4864e-01,0.0,1.0)
 
 
     nSubCats = 5
@@ -248,20 +254,44 @@ if __name__ == "__main__":
     #     core_func = rt.RooSumTwoExpPdf(name, name, mass, a1_coeff, a2_coeff, f_coeff) 
     #     coreFunction_dict[core_func_name].append(core_func)
 
-    bwz_init_vals = {
-        "a_coeff": 5.1288e-02,
-        "b_coeff": -1.3658e-04,
-        "c_coeff": 2.0602e+00,
+    # bwz_init_vals = {
+    #     "a_coeff": 5.1288e-02,
+    #     "b_coeff": -1.3658e-04,
+    #     "c_coeff": 2.0602e+00,
+    # }
+    bwz_init_vals = { # Aug17 2025
+        "a_coeff": 3.9611e-02,
+        "b_coeff": -9.9358e-05,
+        "c_coeff": 1.9978e+00,
     }
     sumexp_init_vals = {
         "a1_coeff": -1.4756e-01,
         "a2_coeff": -3.4552e-02,
         "f_coeff": 2.4864e-01,
     }
-    powerlaw_init_vals = {
-        "PowerLaw_a1_coeff": 0.00001,
-        "PowerLaw_a2_coeff": 0.1,
-        "PowerLaw_f_coeff": 0.9,
+    # powerlaw_init_vals = {
+    #     "RooSumTwoPowerLawPdf_a1_coeff": 0.00001,
+    #     "PowerLaw_a2_cRooSumTwoPowerLawPdf_a2_coeffoeff": 0.1,
+    #     "RooSumTwoPowerLawPdf_f_coeff": 0.9,
+    # }
+    # power law is very sensitive for each cat, so we need separate starting values
+    powerLawStarValDict = {
+        0: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -1.9743280291018659, 'RooSumTwoPowerLawPdf_a2_coeff': -5.070611059366495, 'RooSumTwoPowerLawPdf_f_coeff': 0.9169613224723027
+           }, 
+        1: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -2.6281519073027844, 'RooSumTwoPowerLawPdf_a2_coeff': -4.460879015664051, 'RooSumTwoPowerLawPdf_f_coeff': 0.44823019493423466
+           }, 
+        2: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -2.3033162245329164, 'RooSumTwoPowerLawPdf_a2_coeff': -4.183898141656655, 'RooSumTwoPowerLawPdf_f_coeff': 0.40115183986375974
+           }, 
+        3: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -2.4924512293219796, 'RooSumTwoPowerLawPdf_a2_coeff': -3.681762231096663, 'RooSumTwoPowerLawPdf_f_coeff': 0.2902132176929161
+           }, 
+        4: {
+            'RooSumTwoPowerLawPdf_a1_coeff': -1.3892075987583783, 'RooSumTwoPowerLawPdf_a2_coeff': -84.29141727097351, 'RooSumTwoPowerLawPdf_f_coeff': 0.9948389705318498
+           }, 
+        'all': {'RooSumTwoPowerLawPdf_a1_coeff': -2.1969979862085047, 'RooSumTwoPowerLawPdf_a2_coeff': -4.18629756373829, 'RooSumTwoPowerLawPdf_f_coeff': 0.6569304312671497}
     }
 
     fewzxbern_init_vals = {
@@ -300,6 +330,7 @@ if __name__ == "__main__":
         all_params.extend(params_sumexp)
 
         # PowerLaw
+        powerlaw_init_vals = powerLawStarValDict[ix]
         pdf, params = create_core_pdf("PowerLaw", ix, mass, powerlaw_init_vals)
         coreFunction_dict["PowerLaw"].append(pdf)
         all_params.extend(params)
@@ -327,7 +358,7 @@ if __name__ == "__main__":
         
 
 
-    print(f"all_params b4 fitting: {[param.Print() for param in all_params]}")
+    # print(f"all_params b4 fitting: {[param.Print() for param in all_params]}")
     # print(f"coreFunction_dict: {coreFunction_dict}")
     # raise ValueError
     # ---------------------------------------------------------------
@@ -394,18 +425,45 @@ if __name__ == "__main__":
         roo_histData_subCat4,
     ]
 
+    df_rows = []
+    nfree_params = 3
     # fit FEWZxBern separately
     for ix in range(nSubCats):
+        data_histSubCat = data_histSubCat_l[ix]
+        frame = mass.frame()
+        hist_name = data_histSubCat.GetName()
+        # ploton for chi2
+        data_histSubCat.plotOn(frame, Name=hist_name,)
+        
+
+        
         for core_func_name, core_func_l in coreFunction_dict.items():
             print(f"core_func_name: {core_func_name}")
             print(f"core_func_l: {core_func_l}")
+            
             core_func = core_func_l[ix]
-            data_histSubCat = data_histSubCat_l[ix]
             _ = core_func.fitTo(data_histSubCat, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
             fitResult = core_func.fitTo(data_histSubCat, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-            fitResult.Print()
 
-    print(f"all_params after fitting: {[param.Print() for param in all_params]}")
+
+            # ploton for chi2
+            core_func.plotOn(frame, DataError="SumW2", Name=core_func_name)
+            chi2ndf = frame.chiSquare(core_func_name, hist_name, nfree_params)
+            print(f"chi^2 {core_func_name} = ", chi2ndf)
+            df_rows.append({
+                "BDT cat": ix,
+                "fit function": core_func_name,
+                "chi2ndf": chi2ndf
+            })
+
+            
+            print(f"subCat index: {ix}")
+            fitResult.Print("v")
+
+    df = pd.DataFrame(df_rows, columns=["BDT cat", "fit function", "chi2ndf"])
+    df.to_csv(f"test_chi2ndf.csv")
+    raise ValueError
+    # print(f"all_params after fitting: {[param.Print() for param in all_params]}")
     print(f"coreFunction_dict: {coreFunction_dict}")
     
     # print("Success!")
@@ -469,7 +527,7 @@ if __name__ == "__main__":
         load_path = f"{args.load_path}/2016*/processed_events_sigMC_ggh.parquet"
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_ggh.parquet"
-    processed_eventsSignalMC = ak.from_parquet(load_path)
+    processed_eventsSignalMC = dak.from_parquet(load_path).compute()
     print(f"ggH yield: {np.sum(processed_eventsSignalMC.wgt_nominal)}")
     print("signal events loaded")
     
@@ -951,7 +1009,7 @@ if __name__ == "__main__":
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_vbf.parquet" # Fig 6.15 was only with qqH process, though with all 2016, 2017 and 2018
 
     print(load_path)
-    processed_eventsSignalMC_vbf = ak.from_parquet(load_path)
+    processed_eventsSignalMC_vbf = dak.from_parquet(load_path).compute()
     print(f"qqH yield: {np.sum(processed_eventsSignalMC_vbf.wgt_nominal)}")
     print("signal events loaded")
     
