@@ -17,6 +17,7 @@ import os
 import copy
 import pandas as pd
 from modules.utils import getGOF_KS
+import glob
 
 def normalizeFlatHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHist :
     """
@@ -299,7 +300,8 @@ if __name__ == "__main__":
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_data.parquet"
     print(f"load_path: {load_path}")
-    processed_eventsData = ak.from_parquet(load_path)
+    # filelist = glob.glob(load_path)
+    processed_eventsData = dak.from_parquet(load_path).compute()
     print(f"processed_eventsData length: {ak.num(processed_eventsData.dimuon_mass, axis=0)}")
     print("events loaded!")
 
@@ -883,11 +885,11 @@ if __name__ == "__main__":
     name = f"FEWZxBern_c1"
     c1 = rt.RooRealVar(name,name, 1.0) # extra frozen parameter is needed. Source: https://root-forum.cern.ch/t/roobernstein-correction/41800
     name = f"FEWZxBern_c2"
-    c2 = rt.RooRealVar(name,name, 9.6443e-01,0,10)
+    c2 = rt.RooRealVar(name,name, 9.6443e-01,0.1,2)
     name = f"FEWZxBern_c3"
-    c3 = rt.RooRealVar(name,name, 9.6222e-01,0,10)
+    c3 = rt.RooRealVar(name,name, 9.6222e-01,0.1,2)
     name = f"FEWZxBern_c4"
-    c4 = rt.RooRealVar(name,name, 9.2745e-01,0,10)
+    c4 = rt.RooRealVar(name,name, 9.2745e-01,0.1,2)
     # new end --------------------------------------------------
     BernCoeff_list = [c1, c2, c3, c4] # we use RooBernstein, which requires n+1 parameters https://root.cern.ch/doc/master/classRooBernstein.html
     # c1.setConstant(True)
@@ -1347,8 +1349,8 @@ if __name__ == "__main__":
     cat_subCat0 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
     
     # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
-    # // 0 == BWZ_Redux
-    # // 1 == sumExp
+    # // 0 == sumExp
+    # // 1 == BWZ_Redux
     # // 2 == FEWZxBern
     
     # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
@@ -1646,7 +1648,7 @@ if __name__ == "__main__":
         load_path = f"{args.load_path}/2016*/processed_events_sigMC_ggh.parquet"
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_ggh.parquet"
-    processed_eventsSignalMC = ak.from_parquet(load_path)
+    processed_eventsSignalMC = dak.from_parquet(load_path).compute()
     print(f"ggH yield: {np.sum(processed_eventsSignalMC.wgt_nominal)}")
     print("signal events loaded")
     
@@ -2127,7 +2129,7 @@ if __name__ == "__main__":
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_vbf.parquet" # Fig 6.15 was only with qqH process, though with all 2016, 2017 and 2018
     
-    processed_eventsSignalMC_vbf = ak.from_parquet(load_path)
+    processed_eventsSignalMC_vbf = dak.from_parquet(load_path).compute()
     print(f"qqH yield: {np.sum(processed_eventsSignalMC_vbf.wgt_nominal)}")
     print("signal events loaded")
     
@@ -2559,7 +2561,7 @@ if __name__ == "__main__":
     name = data_subCat0_signal.GetName()
     data_subCat0_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat0.GetName()
+    name = signal_subCat0.GetName() + f"\n sigma = {sigma_subCat0.getVal():.3f} +/- {sigma_subCat0.getError():.3f}"
     signal_subCat0.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2581,7 +2583,7 @@ if __name__ == "__main__":
     name = data_subCat1_signal.GetName()
     data_subCat1_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat1.GetName()
+    name = signal_subCat1.GetName() + f"\n sigma = {sigma_subCat1.getVal():.3f} +/- {sigma_subCat1.getError():.3f}"
     signal_subCat1.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2602,7 +2604,7 @@ if __name__ == "__main__":
     name = data_subCat2_signal.GetName()
     data_subCat2_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat2.GetName()
+    name = signal_subCat2.GetName() + f"\n sigma = {sigma_subCat2.getVal():.3f} +/- {sigma_subCat2.getError():.3f}"
     signal_subCat2.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2623,7 +2625,7 @@ if __name__ == "__main__":
     name = data_subCat3_signal.GetName()
     data_subCat3_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat3.GetName()
+    name = signal_subCat3.GetName() + f"\n sigma = {sigma_subCat3.getVal():.3f} +/- {sigma_subCat3.getError():.3f}"
     signal_subCat3.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2644,7 +2646,7 @@ if __name__ == "__main__":
     name = data_subCat4_signal.GetName()
     data_subCat4_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat4.GetName()
+    name = signal_subCat4.GetName() + f"\n sigma = {sigma_subCat4.getVal():.3f} +/- {sigma_subCat4.getError():.3f}"
     signal_subCat4.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2669,7 +2671,7 @@ if __name__ == "__main__":
     name = data_subCat0_vbf_signal.GetName()
     data_subCat0_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat0_vbf.GetName()
+    name = signal_subCat0_vbf.GetName() + f"\n sigma = {sigma_subCat0_vbf.getVal():.3f} +/- {sigma_subCat0_vbf.getError():.3f}"
     signal_subCat0_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2690,7 +2692,7 @@ if __name__ == "__main__":
     name = data_subCat1_vbf_signal.GetName()
     data_subCat1_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat1_vbf.GetName()
+    name = signal_subCat1_vbf.GetName() + f"\n sigma = {sigma_subCat1_vbf.getVal():.3f} +/- {sigma_subCat1_vbf.getError():.3f}"
     signal_subCat1_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2711,7 +2713,7 @@ if __name__ == "__main__":
     name = data_subCat2_vbf_signal.GetName()
     data_subCat2_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat2_vbf.GetName()
+    name = signal_subCat2_vbf.GetName() + f"\n sigma = {sigma_subCat2_vbf.getVal():.3f} +/- {sigma_subCat2_vbf.getError():.3f}"
     signal_subCat2_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2732,7 +2734,7 @@ if __name__ == "__main__":
     name = data_subCat3_vbf_signal.GetName()
     data_subCat3_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat3_vbf.GetName()
+    name = signal_subCat3_vbf.GetName() + f"\n sigma = {sigma_subCat3_vbf.getVal():.3f} +/- {sigma_subCat3_vbf.getError():.3f}"
     signal_subCat3_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2753,7 +2755,7 @@ if __name__ == "__main__":
     name = data_subCat4_vbf_signal.GetName()
     data_subCat4_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = signal_subCat4_vbf.GetName()
+    name = signal_subCat4_vbf.GetName() + f"\n sigma = {sigma_subCat4_vbf.getVal():.3f} +/- {sigma_subCat4_vbf.getError():.3f}"
     signal_subCat4_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
