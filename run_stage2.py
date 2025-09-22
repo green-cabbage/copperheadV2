@@ -222,6 +222,21 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     # print(f"training_features: {training_features}")
     # raise ValueError
 
+    # turns out this code was unneccsary but keeping just in case ----------------------------
+    # # FIXME: if there's any missing up and down variations, just plug it with the nominal value:
+    # for field in fields2load:
+    #     if field not in events.fields:
+    #         print(f"{field} not avialable in events.fields! Replacing with the nominal verion!")
+    #         field2copy = None
+    #         for bdt_input in bdt_inputs:
+    #             bdt_input_cut = bdt_input.replace("_nominal", "")
+    #             if bdt_input_cut in field:
+    #                 field2copy = bdt_input
+    #         print(f"field2copy: {field2copy}")
+    #         events[field] = events[field2copy]
+    # turns out this code was unneccsary but keeping just in case ----------------------------
+
+    # raise ValueError
     # load data to memory using compute()
     # original start -------------------------------
     events = ak.zip({
@@ -369,7 +384,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         field : processed_events[field] for field in fields2save
     })
 
-    if year=="2018": #FIXME , temp hard code to add dummy prefiring wgts
+    if (year=="2018") and (len(wgt_unc_fields) > 0): #FIXME , temp hard code to add dummy prefiring wgts for 2018 
         wgt_nominal = processed_events["wgt_nominal"]
         processed_events["wgt_l1prefiring_up"] = ak.ones_like(wgt_nominal)*wgt_nominal # make copy of wgt nominal just ones_like doesn't work
         processed_events["wgt_l1prefiring_down"] = ak.ones_like(wgt_nominal)*wgt_nominal # make copy of wgt nominal just ones_like doesn't work
@@ -649,7 +664,7 @@ if __name__ == "__main__":
     parser.add_argument(
     "--do_jecUnc",
     dest="do_jecUnc",
-    default=False,
+    default=True,
     action=argparse.BooleanOptionalAction,
     help="If true, add all the fields that JEC variations is applied on",
     )
@@ -708,7 +723,8 @@ if __name__ == "__main__":
             is_signal_MC = True
         elif sample.lower() == "dy":
             # full_load_path = load_path+f"/dy_*/*/*.parquet"
-            full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" #FIXME
+            full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
+            # full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" #FIXME
         elif sample.lower() == "ewk":
             full_load_path = load_path+f"/ewk_lljj_mll50_mjj120/*/*.parquet"
         elif sample.lower() == "tt":
@@ -744,7 +760,7 @@ if __name__ == "__main__":
         for field in events.fields:
             if (("wgt" in field) and not ("separate" in field)) and not ("nominal" in field):
                 wgt_unc_fields.append(field)
-        wgt_unc_fields = [] # FIXME
+        # wgt_unc_fields = [] # FIXME
         
         if args.do_jecUnc:
             jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"
