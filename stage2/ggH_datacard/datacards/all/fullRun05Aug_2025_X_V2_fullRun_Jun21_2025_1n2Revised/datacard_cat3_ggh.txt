@@ -1,0 +1,83 @@
+
+imax *                                                                                                                        
+jmax *                                                                                                                        
+kmax *                                                                                                                        
+------------                                                                                                                  
+shapes ggH_hmm     cat3_ggh           my_workspace/workspace_sig_cat3_ggh.root     w:ggH_cat3_ggh_pdf 
+shapes qqH_hmm     cat3_ggh           my_workspace/workspace_sig_cat3_ggh.root     w:qqH_cat3_ggh_pdf            
+shapes bkg         cat3_ggh           my_workspace/workspace_bkg_cat3_ggh.root     w:bkg_cat3_ggh_pdf            
+shapes data_obs    cat3_ggh           my_workspace/workspace_bkg_cat3_ggh.root     w:data_cat3_ggh
+
+------------                                                                                                                  
+bin                cat3_ggh      
+observation        -1                                                                                                         
+------------     
+
+
+bin                cat3_ggh     cat3_ggh     cat3_ggh               
+process            ggH_hmm      qqH_hmm      bkg  
+process            -2           -1           1
+rate               1            1            1
+------------
+BR_mm            lnN       1.012        1.012        - 
+------------
+QCDscale_ggH     lnN     0.933/1.046  -            -          
+QCDscale_qqH     lnN     -            0.997/1.004  -          
+pdf_Higgs_gg     lnN     1.032        -            -          
+pdf_Higgs_qq     lnN     -            1.021        -      
+------------
+lumi_13TeV_2016  lnN       1.012        1.012        -
+lumi_13TeV_2017  lnN       1.023        1.023        -
+lumi_13TeV_2018  lnN       1.025        1.025        -
+
+Absolute   lnN   1.018/0.9855   1.009/0.9933   -
+Absolute_2016   lnN   1.001/0.999   1   -
+Absolute_2017   lnN   1.003/0.9977   1.001/0.9993   -
+Absolute_2018   lnN   1.001/0.9993   1.001/0.9996   -
+BBEC1   lnN   1.001/0.9995   1   -
+BBEC1_2016   lnN   1   1   -
+BBEC1_2017   lnN   1   1   -
+BBEC1_2018   lnN   1   1   -
+EC2   lnN   1.004/0.9965   1.002/0.9986   -
+EC2_2016   lnN   1.001/0.9991   1   -
+EC2_2017   lnN   1.002/0.9979   1.001/0.9992   -
+EC2_2018   lnN   1.002/0.999   1.001/0.9996   -
+FlavorQCD   lnN   1.008/0.9937   1.004/0.9968   -
+HF   lnN   1.009/0.9925   1.004/0.9965   -
+HF_2016   lnN   1   1   -
+HF_2017   lnN   1.001/0.9993   1   -
+HF_2018   lnN   1.001/0.999   1.001/0.9995   -
+RelativeBal   lnN   0.9921/1.009   0.9966/1.005   -
+RelativeSample_2016   lnN   0.9988/1.001   0.9995/1.001   -
+RelativeSample_2017   lnN   0.9959/1.006   0.9981/1.003   -
+RelativeSample_2018   lnN   0.9934/1.008   0.9971/1.004   -
+jer1   lnN   0.9998/1.001   0.9998/1.001   -
+jer2   lnN   1/1.001   0.9997   -
+jer3   lnN   1.001/1   1   -
+jer4   lnN   0.9998   0.9997   -
+jer5   lnN   1.002/0.9995   1.001/1   -
+jer6   lnN   0.9999   0.9997   -
+wgt_LHEFac   lnN   1.007/0.9876   1.006/0.9991   -
+wgt_LHERen   lnN   0.8256/1.238   1.002/0.9971   -
+wgt_THU_VBF_JET01   lnN   1   0.9975/1.002   -
+wgt_THU_VBF_Mjj1000   lnN   1   1   -
+wgt_THU_VBF_Mjj120   lnN   1   0.9989/1.001   -
+wgt_THU_VBF_Mjj1500   lnN   1   1   -
+wgt_THU_VBF_Mjj350   lnN   1   0.9978/1.002   -
+wgt_THU_VBF_Mjj60   lnN   1   0.9974/1.003   -
+wgt_THU_VBF_Mjj700   lnN   1   0.9998   -
+wgt_THU_VBF_PTH200   lnN   1   1   -
+wgt_THU_VBF_PTH25   lnN   1   0.9944/1.006   -
+wgt_THU_VBF_Yield   lnN   1.004/0.9962   1.004/0.9962   -
+wgt_l1prefiring   lnN   0.9963/1.004   0.995/1.005   -
+wgt_muID   lnN   1.004/0.9961   1.004/0.9961   -
+wgt_muIso   lnN   1.008/0.9922   1.008/0.9922   -
+wgt_muTrig   lnN   1   1   -
+wgt_pdf_2rms   lnN   1.005/0.9952   1.014/0.9864   -
+wgt_pu_wgt   lnN   0.9956/1.004   0.9964/1.003   -
+wgt_qgl_wgt   lnN   1.037/1.007   1.011/1.001   -
+------------
+CMS_hmm_peak_cat3_ggh   param  0  0.001
+CMS_hmm_sigma_cat3_ggh  param  0  0.1
+------------
+pdf_index_ggh discrete
