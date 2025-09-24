@@ -1360,7 +1360,8 @@ class EventProcessor(processor.ProcessorABC):
                 and ("nominal" in pt_variations)
                 and ("stage1_1_fine_cat_pTjet30GeV" in events.HTXS.fields)
             )
-            do_thu = False
+            # do_thu = False
+            do_thu = True #FIXME
             if do_thu:
                 logger.info("doing THU!")
                 add_stxs_variations(
