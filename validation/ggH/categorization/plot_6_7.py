@@ -764,10 +764,10 @@ if __name__ == "__main__":
             thresholds.append(threshold)
         thresholds = np.array(thresholds)
         print("BDT score threshold (30% cumulative weight):", thresholds)
-        # plot_6_7(df, binning, var, xlabel, save_dir)
-        # plot_6_7BySubCat(df, binning, var, xlabel, save_dir)
-        # plot_6_7FineGrain(df, binning, var, xlabel, save_dir)
-        # plot_6_7BDTCatMerged(df, binning, var, xlabel, save_dir)
+        plot_6_7(df, binning, var, xlabel, save_dir)
+        plot_6_7BySubCat(df, binning, var, xlabel, save_dir)
+        plot_6_7FineGrain(df, binning, var, xlabel, save_dir)
+        plot_6_7BDTCatMerged(df, binning, var, xlabel, save_dir)
 
 
     # ----------------------------------------------------
@@ -952,28 +952,30 @@ if __name__ == "__main__":
     dy_ewk = dd.read_parquet(full_load_path).compute()
     dy_ewk = filterRegion(dy_ewk, region="h-peak")
     
-    # for var in variables:
-    #     plot_var = getPlotVar(var)
-    #     if plot_var == "dimuon_mass":
-    #         binning = np.linspace(115, 135, 50)
-    #     else:
-    #         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-    #     xlabel =  plot_settings[plot_var].get("xlabel")
-    #     df_dict = {
-    #         "ggH" : ggh_df,
-    #         "VBF" : vbf_df,
-    #         "DY" : dy_df,
-    #         "TT" : dy_tt,
-    #         # "ST" : dy_st,
-    #         # "EWK" : dy_ewk,
-    #     }
-    #     compareMC(df_dict, binning, var, xlabel, save_dir)
-    #     compareMCByNjet(df_dict, binning, var, xlabel, save_dir)
-    # # #     compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=True)
-    # # #     compareMC(df_dict, binning, var, xlabel, save_dir, abs_wgt=True)
-    # # #     compareMC(df_dict, binning, var, xlabel, save_dir, removeNegWgt=True)
-    # # #     compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
+    for var in variables:
+        plot_var = getPlotVar(var)
+        if plot_var == "dimuon_mass":
+            binning = np.linspace(115, 135, 50)
+        else:
+            binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        xlabel =  plot_settings[plot_var].get("xlabel")
+        df_dict = {
+            "ggH" : ggh_df,
+            "VBF" : vbf_df,
+            "DY" : dy_df,
+            "TT" : dy_tt,
+            # "ST" : dy_st,
+            # "EWK" : dy_ewk,
+        }
+        compareMC(df_dict, binning, var, xlabel, save_dir)
+        compareMCByNjet(df_dict, binning, var, xlabel, save_dir)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, unweighted=True)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, abs_wgt=True)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, removeNegWgt=True)
+    # #     compareMC(df_dict, binning, var, xlabel, save_dir, applyWgt=True)
 
+    raise ValueError
+    
 
     save_dir = f"plots/{args.label}_x_{args.category}/{args.year}_signal/ggHVBF_TTMC_comp"
     os.makedirs(save_dir, exist_ok=True)
@@ -1012,7 +1014,6 @@ if __name__ == "__main__":
         }
         compareMC(df_dict, binning, var, xlabel, save_dir)
         compareMCByNjet(df_dict, binning, var, xlabel, save_dir)
-    raise ValueError
     
 
     # # # ----------------------------------------------------

@@ -462,7 +462,7 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(df_rows, columns=["BDT cat", "fit function", "chi2ndf"])
     df.to_csv(f"test_chi2ndf.csv")
-    raise ValueError
+    # raise ValueError
     # print(f"all_params after fitting: {[param.Print() for param in all_params]}")
     print(f"coreFunction_dict: {coreFunction_dict}")
     
@@ -1862,3 +1862,4 @@ if __name__ == "__main__":
     wout.Write();
 
 
+    print(f"workspace_path: {workspace_path}")

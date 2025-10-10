@@ -806,16 +806,19 @@ def getLandxBern(x, init_param_dict):
     name = f"landau_m_Z"
     m_Z = rt.RooRealVar(name,name, 91.2)
     name = f"landau_a_coeff"
-    a_coeff = rt.RooRealVar(name, name, init_param_dict[name],0.0,3)
+    # a_coeff = rt.RooRealVar(name, name, init_param_dict[name],0.0,3)
+    a_coeff = rt.RooRealVar(name, name, init_param_dict[name],1.0,3)
     name = "Landau"
     Landau = rt.RooLandau(name, name, x, m_Z, a_coeff) 
 
     name = f"landau_bernstein_a0"
     a0_bern = rt.RooRealVar(name,name, 1.0) # first term being constant
     name = f"landau_bernstein_a1"
-    a1_bern = rt.RooRealVar(name, name, init_param_dict[name], 0, 5) # starting value = 1/n_coeffs
+    # a1_bern = rt.RooRealVar(name, name, init_param_dict[name], 0, 5) # starting value = 1/n_coeffs
+    a1_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.5, 5) # starting value = 1/n_coeffs
     name = f"landau_bernstein_a2"
-    a2_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.0, 10) # starting value = 1/n_coeffs
+    # a2_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.0, 10) # starting value = 1/n_coeffs
+    a2_bern = rt.RooRealVar(name, name, init_param_dict[name], 0.1, 5) # starting value = 1/n_coeffs
 
    #    --------------------  ------------  --------------------------  --------
    #      landau_a_coeff    3.2148e-06    3.6326e-06 +/-  2.14e-03  <none>

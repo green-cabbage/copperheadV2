@@ -4,7 +4,7 @@
 
 ## Obtaining new BDT Score edges for BDT cateogories
 
-Run stage2 with full sample list:
+Run stage2 with full sample list (but dy has to be the M100To200 samples only, otherwise memory overload):
 ```
 sh stage2_sh.sh
 ```

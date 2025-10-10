@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 plt.style.use(hep.style.CMS)
 from omegaconf import OmegaConf
-from modules.utils import fillSampleValues, getDimuMassBySubCat, rebinRooDataHist
+from modules.utils import fillSampleValues, getDimuMassBySubCat, rebinRooDataHist, getGOF_KS
 from modules.basic_functions import filterRegion
 from modules.fit_functions import getFEWZ_roospline, getPowerLaw
 import ROOT
@@ -223,6 +223,10 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
            }, 
         'all': {'RooSumTwoPowerLawPdf_a1_coeff': -2.1969979862085047, 'RooSumTwoPowerLawPdf_a2_coeff': -4.18629756373829, 'RooSumTwoPowerLawPdf_f_coeff': 0.6569304312671497}
     }
+
+    ks_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass"])
+    
+    
     # for target_subCat in range(nSubCats):
     for target_subCat in dataDict_by_subCat.keys():
         dataDict_target = dataDict_by_subCat[target_subCat]
@@ -344,8 +348,8 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         
         nfree_params = fitResult.floatParsFinal().getSize() # ndf should be consistent over all possible bkg fit functions
         print(f"nfree_params: {nfree_params}")
-        
-        
+
+    
         
         # --------------------------------------------------------------------
         # plot
@@ -554,6 +558,59 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
             canvas.SaveAs(f"{save_fname}_subCat{target_subCat}_blinded.pdf")
         else:
             canvas.SaveAs(f"{save_fname}_subCat{target_subCat}_unblinded.pdf")
+
+
+        # --------------------------------------------------------------------
+        # KS test
+        # --------------------------------------------------------------------
+        pdf_l = [
+            coreBWZRedux,
+            coreSumExp,
+            coreSumPow,
+            coreBWZGamma,
+            coreBWZxBern,
+            coreFEWZxBern,
+            coreLandxBern,
+        ]
+        # pdf_cat_name_dict = {
+        #     0: coreBWZRedux.GetName(),
+        #     1: coreSumExp.GetName(),
+        #     2: coreSumPow.GetName(),
+        #     3: coreBWZGamma.GetName(),
+        #     4: coreBWZxBern.GetName(),
+        #     5: coreFEWZxBern.GetName(),
+        #     6: coreLandxBern.GetName(),
+        # }
+        # for i in range(len(pdf_l)):
+        for pdf in pdf_l:
+            hist_data = roo_histData
+            # pdf = pdf_l[i]
+            # core_func_name = pdf_cat_name_dict[i]
+            core_func_name = pdf.GetName()
+            gof_test_name = f"{core_func_name}_cat{target_subCat}"
+            gof_save_path = ""
+            KS_dict = getGOF_KS(mass, hist_data, pdf, gof_test_name, gof_save_path)
+            print(f"KS_dict: {KS_dict}")
+            for region, ks_stat_dict in KS_dict.items():
+                nevents = ks_stat_dict["nevents"]
+                ks_stat = ks_stat_dict["ks_statistic"]
+                # alpha = 0.05
+                # pass_threshold = 1.358 / (nevents**(0.5))
+                alpha = 0.1
+                pass_threshold = 1.22385 / (nevents**(0.5))
+                
+                ks_df.loc[len(ks_df)] = {
+                    "pdf category": gof_test_name,
+                    "region": region,
+                    "KS statistic": ks_stat,
+                    "nevents": nevents,
+                    "alpha": alpha,
+                    "pass threshold": pass_threshold,
+                    "test pass": ks_stat<pass_threshold,
+                }
+
+
+            
     df = pd.DataFrame(df_rows, columns=["BDT cat", "fit function", "chi2ndf"])
     df_pivot = df.pivot(index="BDT cat", columns="fit function", values="chi2ndf")
     print(df)
@@ -565,7 +622,10 @@ def plot_6_19(dataDict_by_subCat, save_fname, nSubCats=5, apply_blind=True):
         df.to_csv(f"{save_fname}_chi2ndf_unblinded.csv")
         df_pivot.to_csv(f"{save_fname}_chi2ndfByFitFunc_unblinded.csv")
     # raise ValueError
-        
+
+    # ks test 
+    ks_df.to_csv(f"{save_fname}_KS_stats.csv")
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

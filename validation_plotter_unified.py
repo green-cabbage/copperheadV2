@@ -74,22 +74,6 @@ def find_group_name(process_name, group_dict):
             return group_name
     return "other"
 
-
-# def fillHist(sample_hist, to_fill_setting, values, weights):
-#     values_filter = values!=-999.0
-#     values = values[values_filter]
-#     weights = weights[values_filter]
-#     to_fill_setting[var] = values
-#     to_fill_value = to_fill_setting.copy()
-#     to_fill_value["val_sumw2"] = "value"
-#     sample_hist.fill(**to_fill_value, weight=weights)
-    
-#     to_fill_sumw2 = to_fill_setting.copy()
-#     to_fill_sumw2["val_sumw2"] = "sumw2"
-#     sample_hist.fill(**to_fill_sumw2, weight=weights * weights)
-#     return sample_hist
-                    
-
 def getPlotVar(var: str):
     """
     Helper function that removes the variations in variable name if they exist
@@ -99,83 +83,6 @@ def getPlotVar(var: str):
     else:
         plot_var = var
     return plot_var
-
-
-# def applyRegionCatCuts(events, category: str, region_name: str, njets: str, process: str, do_vbf_filter_study: bool):
-#     # do mass region cut
-#     mass = events.dimuon_mass
-#     z_peak = ((mass > 70) & (mass < 110))
-#     h_sidebands =  ((mass > 110) & (mass < 115)) | ((mass > 135) & (mass < 150))
-#     h_peak = ((mass > 115) & (mass < 135))
-#     if region_name == "signal":
-#         region = h_sidebands | h_peak
-#     elif region_name == "h-peak":
-#         region = h_peak 
-#     elif region_name == "h-sidebands":
-#         region = h_sidebands 
-#     elif region_name == "z-peak":
-#         region = z_peak 
-#     else: 
-#         print("ERROR: acceptable region!")
-#         raise ValueError
-    
-#     # do category cut
-#     if category == "nocat": 
-#         # print("nocat mode!")
-#         prod_cat_cut =  ak.ones_like(region, dtype="bool")
-#         # prod_cat_cut = ak.fill_none(events.jj_mass_nominal > 400, value=False)
-#         # prod_cat_cut = prod_cat_cut & ak.fill_none(events.jet1_pt_nominal > 35, value=False)
-        
-#     else: # VBF or ggH
-#         btagLoose_filter = ak.fill_none((events.nBtagLoose_nominal >= 2), value=False)
-#         btagMedium_filter = ak.fill_none((events.nBtagMedium_nominal >= 1), value=False) & ak.fill_none((events.njets_nominal >= 2), value=False)
-#         btag_cut = btagLoose_filter | btagMedium_filter
-#         # vbf_cut = ak.fill_none(events.vbf_cut, value=False) # in the future none values will be replaced with False
-#         vbf_cut = (events.jj_mass_nominal > 400) & (events.jj_dEta_nominal > 2.5) & (events.jet1_pt_nominal > 35) 
-#         vbf_cut = ak.fill_none(vbf_cut, value=False)
-#         if category == "vbf":
-#             # print("vbf mode!")
-#             prod_cat_cut =  vbf_cut
-#             prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-#         elif category == "ggh":
-#             # print("ggH mode!")
-#             prod_cat_cut =  ~vbf_cut 
-#             prod_cat_cut = prod_cat_cut & ~btag_cut # btag cut is for VH and ttH categories
-#         else:
-#             print("Error: invalid category option!")
-#             raise ValueError
-
-#     if do_vbf_filter_study:
-#         if "dy_" in process:
-#             is_vbf_filter = ("dy_VBF_filter" in process) or (process =="dy_m105_160_vbf_amc")
-#             if is_vbf_filter:
-#                 # print(f"applying VBF filter cut on: {process}")
-                
-#                 vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False)
-#                 prod_cat_cut =  (prod_cat_cut  
-#                             & vbf_filter
-#                 )
-#             else:
-#                 # print(f"cutting off inclusive dy: {process}")
-#                 vbf_filter = ak.fill_none((events.gjj_mass > 350), value=False) 
-#                 prod_cat_cut =  (
-#                     prod_cat_cut  
-#                     & ~vbf_filter 
-#                 )
-#         else:
-#             # print(f"no extra processing for {process}")
-#             pass
-    
-#     category_selection = (
-#         prod_cat_cut & 
-#         region 
-#     )
-    
-#     # filter events fro selected category
-    
-#     # print(f"len(events) {process} b4 selection: {len(events)}")
-#     events = events[category_selection]
-#     return events
 
 
 def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty, var, plot_settings, category, args):

@@ -310,8 +310,8 @@ if __name__ == "__main__":
     # ----------------------------------
     # Add JEC uncertainties
     # ----------------------------------
-    # variations2validate = ["Absolute"] # FIXME
     variations2validate = variations2validate + config["jec_parameters"]["jec_unc_to_consider"]
+    variations2validate = ["jer5"] # FIXME
 
     
     print(f"variations2validate: {variations2validate}")
@@ -356,7 +356,16 @@ if __name__ == "__main__":
         # -----------------------------------------------
         
         events = dak.from_parquet(filelist)
-        print(f"events.fields : {events.fields}")
+        # print(f"events.fields : {events.fields}")
+
+        # debugging --------------------------------------------------
+        # variables2debug = ["jet1_pt_nominal", "jet1_pt_jer5_up", "jet1_pt_jer5_down"]
+        # for var in variables2debug:
+        #     cut = (events[var] < 50) & (events[var] > 40)
+        #     var_yield = ak.sum(cut).compute()
+        #     print(f"{var} yield: {var_yield}")
+        # raise ValueError
+        # debugging --------------------------------------------------
         # raise ValueError
         computed_hist_dict = compute_variations(events, sample_hist_empty, sample, categories, regions, variables, variations_with_shifts)
         plot_variations(computed_hist_dict, sample, categories, regions, variables, variations2validate, save_path=save_path)

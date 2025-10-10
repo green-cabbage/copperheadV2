@@ -18,3 +18,4 @@ log*.txt
 *.tex
 *.pcm
 *.d
+quick_tests/*

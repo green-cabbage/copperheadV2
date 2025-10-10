@@ -54,7 +54,7 @@ def getColor(name):
         print("Error, color not available for the function!")
         raise ValueError
 
-def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True):
+def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="HIST"):
 
     BDT_scores = bkg_variables["BDT_score"]
     weights = bkg_variables["wgt_nominal"]
@@ -68,11 +68,11 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
     ]
     color_l = [
         rt.kBlack,
-        rt.kRed,
+        rt.kCyan,
         rt.kBlue,
         rt.kOrange,
         rt.kGreen,
-        rt.kCyan,
+        rt.kRed,
     ]
     canvas = ROOT.TCanvas("c", "c", 800, 600)
     leg = ROOT.TLegend(0.75,0.75,1.0,1.0)
@@ -104,8 +104,9 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
         print(f"THist.Integral(): {THist.Integral()}")
         color = color_l[i]
         THist.SetLineColor(color)
+        THist.SetMarkerColor(color)
         # draw_mode = "E"
-        draw_mode = "HIST"
+        # draw_mode = "HIST"
         if i ==0:
             THist.SetTitle("")
             THist.GetXaxis().SetTitle("m_{\mu\mu} [GeV]")
@@ -120,7 +121,10 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
     canvas.SetTicks(2, 2)
     canvas.Update()
     canvas.Draw()
-    canvas.SaveAs(f"{save_fname}.pdf")
+    if "E" in draw_mode:
+        canvas.SaveAs(f"{save_fname}_ErrBar.pdf")
+    else:
+        canvas.SaveAs(f"{save_fname}.pdf")
 
 
 if __name__ == "__main__":
@@ -237,7 +241,8 @@ if __name__ == "__main__":
     # status = "Private"
     status = "Simulation"
 
-    nbins = 50
+    # nbins = 75
+    nbins = 100
     xmin = 110
     xmax = 150
     bdt_edges = [0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 1.0]
@@ -253,6 +258,9 @@ if __name__ == "__main__":
     print(f"bkgMC_BDT_score: {bkgMC_BDT_score}")
     print(f"bkgMC_wgt_nominal: {bkgMC_wgt_nominal}")
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True)
+    # nbins = 75
+    nbins = 100
+    plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E")
     
 
     

@@ -268,8 +268,10 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     for field in events.fields:
         if "dPhi" in field:
             none_val = -999.0
+            # none_val = -1.0 # AN's method # V2_Aug16_2025Reprod_IssueNum2
         else:
             none_val = -999.0
+            # none_val = 0.0 # AN's method # V2_Aug16_2025Reprod_IssueNum2
         events[field] = ak.fill_none(events[field], value=none_val)
     
     print(f"process4gghCategory year: {year}")
@@ -664,7 +666,7 @@ if __name__ == "__main__":
     parser.add_argument(
     "--do_jecUnc",
     dest="do_jecUnc",
-    default=True,
+    default=False,
     action=argparse.BooleanOptionalAction,
     help="If true, add all the fields that JEC variations is applied on",
     )
@@ -723,8 +725,8 @@ if __name__ == "__main__":
             is_signal_MC = True
         elif sample.lower() == "dy":
             # full_load_path = load_path+f"/dy_*/*/*.parquet"
-            full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
-            # full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" #FIXME
+            # full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
+            full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" #FIXME
         elif sample.lower() == "ewk":
             full_load_path = load_path+f"/ewk_lljj_mll50_mjj120/*/*.parquet"
         elif sample.lower() == "tt":
@@ -760,7 +762,9 @@ if __name__ == "__main__":
         for field in events.fields:
             if (("wgt" in field) and not ("separate" in field)) and not ("nominal" in field):
                 wgt_unc_fields.append(field)
-        # wgt_unc_fields = [] # FIXME
+        if args.do_6p7:
+            print("processing for figure 6.7 production, skipping weight uncertainty!")
+            wgt_unc_fields = [] 
         
         if args.do_jecUnc:
             jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"

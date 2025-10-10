@@ -269,7 +269,6 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
     """
     Get KS value for specific value
     """
-    # print(save_path)
     # raise ValueError
     nbins = x.getBins()
     var_name = x.GetName()
@@ -301,7 +300,8 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
     plt.ylabel('')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{save_path}/GoF_cdfs_SignalFitRange_{cat_name}.pdf")
+    if save_path != "":
+        plt.savefig(f"{save_path}/GoF_cdfs_SignalFitRange_{cat_name}.pdf")
     plt.clf()
     
     # Draw the normalized pdf histogram:
@@ -310,7 +310,8 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
     plt.ylabel('')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{save_path}/GoF_pdfs_SignalFitRange_{cat_name}.pdf")
+    if save_path != "":
+        plt.savefig(f"{save_path}/GoF_pdfs_SignalFitRange_{cat_name}.pdf")
     plt.clf()
 
 
@@ -354,7 +355,8 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
         # plt.title('Simple NumPy Plot')
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{save_path}/GoF_cdfs_{test_range_name}_{cat_name}.pdf")
+        if save_path != "":
+            plt.savefig(f"{save_path}/GoF_cdfs_{test_range_name}_{cat_name}.pdf")
         plt.clf()
 
         # Draw the normalized pdf histogram:
@@ -365,7 +367,8 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
         # plt.title('Simple NumPy Plot')
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"{save_path}/GoF_pdfs_{test_range_name}_{cat_name}.pdf")
+        if save_path != "":
+            plt.savefig(f"{save_path}/GoF_pdfs_{test_range_name}_{cat_name}.pdf")
         plt.clf()
         
     return return_dict

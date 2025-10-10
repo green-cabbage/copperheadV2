@@ -1,6 +1,12 @@
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l fullRun_Jul17_2025_qglFixed -y 2017 -m 1)
+
 time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l vbf_dy_validationMay30_2025 -y 2018 -m all -d 1)
 
 time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l fullRun_May30_2025 -y 2018 -m all -d 1)
+
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l synchJun21_2025_afterPR -y 2018 -m 1 -d 1)
+
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l fullRun_Jun21_2025 -y 2018 -m all)
 
 # 30 May 2025 Synch test
 

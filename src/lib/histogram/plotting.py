@@ -6,6 +6,7 @@ import cmsstyle as CMS
 import mplhep as hep
 from hist.intervals import poisson_interval
 from matplotlib.colors import ListedColormap
+import pandas as pd
 
 stat_err_opts = {
     "step": "post",
@@ -216,11 +217,16 @@ def plotDataMC_compare(
             sig_density = sig_arr / np.sum(sig_arr * widths)
             # separation power
             d_val = 0.5 * np.sum(np.abs(sig_density - bkg_density) * widths)
-            y_pos = 0.95 - idx * 0.07
+            if log_scale:
+                y_pos = 0.93 - idx * 0.07
+                x_pos = 0.35
+            else:
+                y_pos = 0.45 - idx * 0.07
+                x_pos = 0.95
             ax_main.text(
-                0.95, y_pos,
+                x_pos, y_pos,
                 f"{sig_name}: d = {d_val:.2f}",
-                ha="right", va="top", 
+                ha="right", va="center", 
                 transform=ax_main.transAxes
             )
             # Dummy entry for extra text
@@ -483,14 +489,31 @@ def plotFig_6_13(
         label='Signal $m_H$=125 GeV', 
         ax=ax_main,
     )
-    
+
     
     ax_main.set_ylabel(y_title)
 
     if log_scale:
         ax_main.set_yscale('log')
         # ax_main.set_ylim(0.01, 1e9)
-            
+    else:
+        ax_main.set_ylim(0.00, 0.055)
+
+    # -----------------------------------------
+    # save hist as csv
+    # -----------------------------------------
+    df = pd.DataFrame({
+        "sig_hist": sig_hist,
+        "bkg_hist": bkg_hist,
+        # "binning":  [binning],
+    })
+    df.to_csv(save_full_path.replace(".pdf", ".csv"))
+    df = pd.DataFrame({
+        # "sig_hist": sig_hist,
+        # "bkg_hist": bkg_hist,
+        "binning":  binning,
+    })
+    df.to_csv(save_full_path.replace(".pdf", "Binning.csv"))
     
     # -----------------------------------------
     # add boundaries

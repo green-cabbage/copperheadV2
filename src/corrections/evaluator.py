@@ -7,6 +7,7 @@ import awkward as ak
 import dask_awkward as dak
 from omegaconf import OmegaConf
 import correctionlib
+import dask
 
 def get_corr_inputs(input_dict, corr_obj):
     """
@@ -509,7 +510,51 @@ def musf_evaluator(lookups, year, mu1, mu2):
 
 
 # LHE SF-------------------------------------------------------------------------
+# def lhe_weights(events, dataset, year): # Source https://github.com/b2g-nano/TTbarAllHadUproot/blob/215604b75d53a9f52ab86356c6037fce9931f23d/cms_utils.py#L206-L248
+#     ## determines the envelope of the muR/muF up and down variations
+#     ## Case 1:
+#     ## LHEScaleWeight[0] -> (0.5, 0.5) # (muR, muF)
+#     ##               [1] -> (0.5, 1)
+#     ##               [2] -> (0.5, 2)
+#     ##               [3] -> (1, 0.5)
+#     ##               [4] -> (1, 1)
+#     ##               [5] -> (1, 2)
+#     ##               [6] -> (2, 0.5)
+#     ##               [7] -> (2, 1)
+#     ##               [8] -> (2, 2)
+                  
+#     ## Case 2:
+#     ## LHEScaleWeight[0] -> (0.5, 0.5) # (muR, muF)
+#     ##               [1] -> (0.5, 1)
+#     ##               [2] -> (0.5, 2)
+#     ##               [3] -> (1, 0.5)
+#     ##               [4] -> (1, 2)
+#     ##               [5] -> (2, 0.5)
+#     ##               [6] -> (2, 1)
+#     ##               [7] -> (2, 2)
 
+#     q2 = ak.ones_like(events.event)
+#     q2Up = ak.ones_like(events.event)
+#     q2Down = ak.ones_like(events.event)
+#     if ("LHEScaleWeight" in ak.fields(events)):
+#         # FIXME: hard code to events.nLHEScaleWeight==9 scenario only for now
+#         # if ak.all(events.nLHEScaleWeight==9):
+#         nom = events.LHEScaleWeight[:,4]
+#         scales = events.LHEScaleWeight[:,[0,1,3,5,7,8]]
+#         q2Up = ak.max(scales,axis=1)/nom
+#         q2Down = ak.min(scales,axis=1)/nom 
+#         # elif ak.all(events.nLHEScaleWeight==8):
+#         scales = events.LHEScaleWeight[:,[0,1,3,4,6,7]]
+#         q2Up = ak.max(scales,axis=1)
+#         q2Down = ak.min(scales,axis=1)
+#     lhe_ren = {"up": q2Up, "down": q2Down}
+#     # lhe_ren = {"up": q2Up, "down": q2Down, "nom": nom}
+#     # lhe_fac = {"up": lhe_fac_up, "down": lhe_fac_down}
+#     print(dask.compute(lhe_ren))
+#     raise ValueError
+
+#     return 
+    
 def lhe_weights(events, dataset, year):
     factor2 = ("dy_m105_160_amc" in dataset) and (("2017" in year) or ("2018" in year))
     if factor2:
@@ -853,7 +898,13 @@ def add_stxs_variations(
                     weightUp=thu_wgts["up"],
                     weightDown=thu_wgts["down"]
         )
+        # print(f"THU name: {name}")
+        # print(f"thu up: {thu_wgts['up'].compute()}")
+        # print(f"thu down: {thu_wgts['down'].compute()}")
+        # raise ValueError
     return
+
+
     
 def stxs_uncert(source, event_STXS, Nsigma, stxs_acc_lookups, powheg_xsec_lookup):
     """

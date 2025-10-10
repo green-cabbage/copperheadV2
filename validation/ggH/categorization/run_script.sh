@@ -31,7 +31,7 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_UL_Apr09_2025_DyMinnloTtStVvEwkGghVbf_hyperParamOnScaleWgt0_75"
 # model_name="V2_UL_Jun09_2025"
 # model_name="V2_fullRun_Jun21_2025_allYear"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised"
+model_name="V2_fullRun_Jun21_2025_1n2Revised"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off"
 # model_name="V2_Aug28_PosWgtRun0p7_removeForwardJet_redo_MassResPow4"
 
@@ -51,12 +51,12 @@ category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields"
 # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
 # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
 
-year="2018"
+# year="2018"
 # year="2017"
 # year="2016"
 # year="2016postVFP"
 # year="2016preVFP"
-# year="all"
+year="all"
 
 # region="z-peak"
 # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
@@ -70,7 +70,7 @@ year="2018"
 # # plot Fig 6.13 from AN-19-124
 region="signal"
 # python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
-# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
 # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 # python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
 # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
@@ -177,23 +177,32 @@ region="signal"
 # model_name="V2_Aug28_PosWgtRun1p1_removeForwardJet_redo"
 # model_name="V2_Aug28_PosWgtRun1p3_removeForwardJet_redo"
 # model_name="V2_Aug28_PosWgtRun0p7_removeForwardJet_redo_MassResPow4"
-model_name="V2_Aug28_PosWgtRun0p7_MassResRun1"
+# model_name="V2_Aug28_PosWgtRun0p7_MassResRun1"
 # model_name="V2_Aug28_PosWgtRun0p7_MassResRun2"
 # model_name="V2_Aug28_PosWgtRun0p7_MassResRun3"
 # model_name="V2_Aug28_PosWgtRun0p7_MassResRun4"
 # model_name="V2_Aug28_PosWgtRun0p7_MassResRun5"
+# model_name="V2_Aug28_PosWgtRun0p7_MassResRun1_removeForwardJets"
+# model_name="V2_Aug16_2025Reprod_IssueNum2"
+# model_name="V2_Aug16_2025DefaultFillNoneBack_IssueNum2"
+# model_name="V2_Aug16_2025DefaultFillNoneBack_AnnhilateNegWgts_IssueNum2"
+# model_name="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_IssueNum2"
+# model_name="V2_Aug16_2025DefaultFillNoneBackFix_IssueNum2"
+# model_name="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRpt_IssueNum2"
+# model_name="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRptNoEarlyStop_IssueNum2"
+model_name="V2_Aug16_2025AddIssue1To3_IssueNum2"
 
 category="${model_name}_ggh" # stage2 ouput name
 year="all"
 # year="2018"
 # year="2017"
 label="fullRun_Jun23_2025_1n2Revised"
-# label="BSC_off_Aug26_2025"
-# label="jetHornStudy_29Apr2025_JecDefaultJerOff"
-# label="DYMiNNLO_11Apr2025"
-# region="signal"
+region="signal"
 python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
-python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
+# python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 
 # year="2018"
 # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}

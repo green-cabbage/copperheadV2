@@ -1,7 +1,7 @@
 {
     "dimuon_mass": {
         "variable": "dimuon_mass",
-        "binning_linspace": [110, 150, 51],
+        "binning_linspace": [110, 150, 41],
         "density": false,
         "ylabel": "Events / 1 GeV",
         "xlabel": "$m_{\\mu\\mu}$ [GeV]",
@@ -299,7 +299,7 @@
     },
     "mu1_pt_over_mass": {
         "variable": "mu1_pt_over_mass",
-        "binning_linspace": [0, 2, 51],
+        "binning_linspace": [0.1, 1.5, 51],
         "density": false,
         "ylabel": "Events",
         "xlabel": "$p_{T}(\\mu_{1})/M_{\\mu\\mu}$ [GeV]",
@@ -331,7 +331,7 @@
     },
     "mu2_pt_over_mass": {
         "variable": "mu2_pt_over_mass",
-        "binning_linspace": [0, 2, 51],
+        "binning_linspace": [0.1, 1.5, 51],
         "density": false,
         "ylabel": "Events",
         "xlabel": "$p_{T}(\\mu_{2})/M_{\\mu\\mu}$ [GeV]",
@@ -431,6 +431,14 @@
         "density": false,
         "ylabel": "Events",
         "xlabel": "pT centrality",
+        "color": "royalblue"
+    },
+    "BDT_score": {
+        "variable": "BDT_score",
+        "binning_linspace": [-0.9, 0.9, 41],
+        "density": false,
+        "ylabel": "Events / 1 GeV",
+        "xlabel": "BDT Score",
         "color": "royalblue"
     }
 }

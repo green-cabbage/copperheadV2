@@ -276,7 +276,7 @@ if __name__ == "__main__":
     # print(f"bdt_edges after transform: {bdt_edges}")
     print(f"binning: {binning}")
     print(f"bdt_edges: {bdt_edges}")
-    bdt_edges4plot = np.append(bdt_edges, [-0.9, 0.9]) # add the extreme edge values, -0.9 and 0.9
+    bdt_edges4plot = np.append(bdt_edges, [-1.0, 1.0]) # add the extreme edge values, -0.9 and 0.9
     bdt_edges4plot.sort() 
     print(f"bdt_edges4plot: {bdt_edges4plot}")
     subCatSignificance_hist = getSignificanceHist(sample_dict)
