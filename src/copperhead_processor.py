@@ -9,9 +9,9 @@ import correctionlib
 from src.corrections.rochester import apply_roccor, apply_roccorRun3
 from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
-from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, get_jet_variation, applyUpDown, applyJetUncertaintyKinematics
+from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear
 # from src.corrections.weight import Weights
-from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old, get_jetpuid_weights_eta_dependent
+from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old
 import json
 from coffea.lumi_tools import LumiMask
 import pandas as pd # just for debugging
@@ -27,8 +27,6 @@ from coffea.analysis_tools import PackedSelection
 
 import logging
 from modules.utils import logger
-import random # for some debugging
-import coffea.nanoevents.methods.candidate as candidate
 
 coffea_nanoevent = TypeVar('coffea_nanoevent')
 ak_array = TypeVar('ak_array')
@@ -38,8 +36,6 @@ save_path = "/depot/cms/users/yun79/results/stage1/DNN_test//2018/f0_1/data_B/0"
 """
 TODO!: add the correct btag working points for rereco samples that you will be working with when adding rereco samples
 """
-
-
 
 
 # def passGoodPV_cut(events):
@@ -88,6 +84,7 @@ def getZptWgts(dimuon_pt, njets, nbins, year, config_path):
         zpt_wgt_by_jet_horizontal = ak.ones_like(dimuon_pt) * coeff
         zpt_wgt_by_jet = ak.where((poly_fit_cutoff < dimuon_pt), zpt_wgt_by_jet_horizontal, zpt_wgt_by_jet)
         # logger.info(f"zpt_wgt_by_jet testing: {ak.all(zpt_wgt_by_jet != -1).compute()}")
+        # raise ValueError
 
         if jet_multiplicity != 2:
             njet_mask = njets == jet_multiplicity
@@ -159,119 +156,6 @@ def getZptWgts_2016postVFP(dimuon_pt, njets, nbins, year, config_path):
     zpt_wgt = ak.where(cutOff_mask, zpt_wgt, ak.ones_like(dimuon_pt))
     return zpt_wgt
 
-def getZptWgts_3region(dimuon_pt, njets, nbins, year, config_path):
-    # config_path = "./data/zpt_rewgt/fitting/zpt_rewgt_params.yaml"
-    # config_path = config["new_zpt_wgt"]
-    logger.info(f"zpt config file: {config_path}")
-    wgt_config = OmegaConf.load(config_path)
-    max_order = 5 #9
-    zpt_wgt = ak.ones_like(dimuon_pt)
-    jet_multiplicies = [0,1,2]
-    # logger.info(f"zpt_wgt: {zpt_wgt}")
-
-    for jet_multiplicity in jet_multiplicies:
-
-        zpt_wgt_by_jet = ak.zeros_like(dimuon_pt)
-        # zpt_wgt_by_jet = ak.ones_like(dimuon_pt) * -1 # debugging
-        # first polynomial fit
-        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
-        for order in range(2+1): # FIXME: Hardcoded polynomial order
-            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"fp{order}"]
-            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
-            polynomial_term = coeff*dimuon_pt**order
-            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
-            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
-            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
-        poly_fit_cutoff_min = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["x_min"]
-        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_min >= dimuon_pt), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
-
-        # polynomial fit
-        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
-        for order in range(max_order+1): # p goes from 0 to max_order
-            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"p{order}"]
-            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
-            polynomial_term = coeff*dimuon_pt**order
-            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
-            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
-            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
-        poly_fit_cutoff_max = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["x_max"]
-        zpt_wgt_by_jet = ak.where(((poly_fit_cutoff_min < dimuon_pt) & (poly_fit_cutoff_max >= dimuon_pt)), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
-
-        # horizontal line beyond poly_fit_cutoff_max
-        coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"horizontal_c0"]
-        zpt_wgt_by_jet_horizontal = ak.ones_like(dimuon_pt) * coeff
-        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_max < dimuon_pt), zpt_wgt_by_jet_horizontal, zpt_wgt_by_jet)
-        # logger.info(f"zpt_wgt_by_jet testing: {ak.all(zpt_wgt_by_jet != -1).compute()}")
-        # raise ValueError
-
-        if jet_multiplicity != 2:
-            njet_mask = njets == jet_multiplicity
-        else:
-            njet_mask = njets >= 2 # njet 2 is inclusive
-        # logger.info(f"njet{jet_multiplicity} order  zpt_wgt_by_jet: {zpt_wgt_by_jet}")
-        zpt_wgt = ak.where(njet_mask, zpt_wgt_by_jet, zpt_wgt) # if matching jet multiplicity, apply the values
-        # logger.info(f"zpt_wgt after njet {jet_multiplicity}: {zpt_wgt}")
-
-    cutOff_mask = dimuon_pt < 200 # ignore wgts from dimuon pT > 200
-    zpt_wgt = ak.where(cutOff_mask, zpt_wgt, ak.ones_like(dimuon_pt))
-    return zpt_wgt
-
-def getZptWgts_3region_new(dimuon_pt, njets, nbins, year, config_path):
-    # config_path = "./data/zpt_rewgt/fitting/zpt_rewgt_params.yaml"
-    # config_path = config["new_zpt_wgt"]
-    logger.info(f"zpt config file: {config_path}")
-    wgt_config = OmegaConf.load(config_path)
-    max_order = 5 #9
-    zpt_wgt = ak.ones_like(dimuon_pt)
-    jet_multiplicies = [0,1,2]
-    # logger.info(f"zpt_wgt: {zpt_wgt}")
-
-    for jet_multiplicity in jet_multiplicies:
-
-        zpt_wgt_by_jet = ak.zeros_like(dimuon_pt)
-        # zpt_wgt_by_jet = ak.ones_like(dimuon_pt) * -1 # debugging
-        # first polynomial fit
-        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
-        for order in range(max_order + 1):  # Dynamically use max_order from the configuration
-            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"f0_p{order}"]
-            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
-            polynomial_term = coeff*dimuon_pt**order
-            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
-            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
-            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
-        poly_fit_cutoff_min = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["xmin1"]
-        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_min >= dimuon_pt), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
-
-        # polynomial fit
-        zpt_wgt_by_jet_poly = ak.zeros_like(dimuon_pt)
-        for order in range(max_order+1): # p goes from 0 to max_order
-            coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"f1_p{order}"]
-            # logger.info(f"njet{jet_multiplicity} order {order} coeff: {coeff}")
-            polynomial_term = coeff*dimuon_pt**order
-            zpt_wgt_by_jet_poly = zpt_wgt_by_jet_poly + polynomial_term
-            # logger.info(f"njet{jet_multiplicity} order {order} polynomial_term: {polynomial_term}")
-            # logger.info(f"njet{jet_multiplicity} order {order} zpt_wgt_by_jet_poly: {zpt_wgt_by_jet_poly}")
-        poly_fit_cutoff_max = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins]["polynomial_range"]["xmax1"]
-        zpt_wgt_by_jet = ak.where(((poly_fit_cutoff_min < dimuon_pt) & (poly_fit_cutoff_max >= dimuon_pt)), zpt_wgt_by_jet_poly, zpt_wgt_by_jet)
-
-        # horizontal line beyond poly_fit_cutoff_max
-        coeff = wgt_config[str(year)][f"njet_{jet_multiplicity}"][nbins][f"horizontal_c0"]
-        zpt_wgt_by_jet_horizontal = ak.ones_like(dimuon_pt) * coeff
-        zpt_wgt_by_jet = ak.where((poly_fit_cutoff_max < dimuon_pt), zpt_wgt_by_jet_horizontal, zpt_wgt_by_jet)
-        # logger.info(f"zpt_wgt_by_jet testing: {ak.all(zpt_wgt_by_jet != -1).compute()}")
-        # raise ValueError
-
-        if jet_multiplicity != 2:
-            njet_mask = njets == jet_multiplicity
-        else:
-            njet_mask = njets >= 2 # njet 2 is inclusive
-        # logger.info(f"njet{jet_multiplicity} order  zpt_wgt_by_jet: {zpt_wgt_by_jet}")
-        zpt_wgt = ak.where(njet_mask, zpt_wgt_by_jet, zpt_wgt) # if matching jet multiplicity, apply the values
-        # logger.info(f"zpt_wgt after njet {jet_multiplicity}: {zpt_wgt}")
-
-    cutOff_mask = dimuon_pt < 200 # ignore wgts from dimuon pT > 200
-    zpt_wgt = ak.where(cutOff_mask, zpt_wgt, ak.ones_like(dimuon_pt))
-    return zpt_wgt
 
 def merge_zpt_wgt(yun_wgt, valerie_wgt, njets, year):
     """
@@ -517,7 +401,7 @@ class EventProcessor(processor.ProcessorABC):
             "do_trigger_match" : True, # False
             "do_roccor" : True,# True
             "do_fsr" : True, # True
-            "do_geofit" : False, 
+            "do_geofit" : False, # True # FIXME: Make it false for always
             "do_beamConstraint": True, # if True, override do_geofit
             "do_nnlops" : True,
             "do_pdf" : True,
@@ -581,7 +465,6 @@ class EventProcessor(processor.ProcessorABC):
         year = self.config["year"]
         # ReInitialize PackedSelection, otherwise processor would merge selection from previous run
         self.selection = PackedSelection()
-        do_jec_unc = False #True 
         """
         TODO: Once you're done with testing and validation, do LHE cut after HLT and trigger match event filtering to save computation
         """
@@ -1162,10 +1045,6 @@ class EventProcessor(processor.ProcessorABC):
         # cache = events.caches[0]
         factory = None
         useclib = False
-        jet_default = ak.pad_none(jets, target=2) # save pre jec and jer Jet for comparison
-        jet1_default = jet_default[:, 0]
-        jet2_default = jet_default[:, 1]
-        
         if do_jec: # old method
             if is_mc:
                 factory = self.jec_factories_mc["jec"]
@@ -1179,34 +1058,20 @@ class EventProcessor(processor.ProcessorABC):
                     logger.debug("JEC factory not recognized!")
                     raise ValueError
 
-            
-            
             # -------------------------------------
-            print("doing JEC + SMEARing!")
-            if do_jec_unc:
-                variation_l = ["nominal"] + self.config["jec_parameters"]["jec_unc_to_consider"]
-            else:
-                variation_l = ["nominal"]
-            jets = do_jec_scale(jets, self.config, is_mc, dataset, uncs=variation_l)
-            # jets = do_jec_scale(jets, self.config, is_mc, dataset)
-            # print(f"jets test: {jets.pt_Absolute_up.compute()}")
-            jets["mass_jec"] = jets.mass
-            jets["pt_jec"] = jets.pt
-            
+            jets = do_jec_scale(jets, self.config, is_mc, dataset)
             if is_mc: # JER smearing
-                jets = do_jer_smear(jets, self.config, events.event, year=year)
+                jets = do_jer_smear(jets, self.config, "nom", events.event)
             sorted_args = ak.argsort(jets.pt, ascending=False)
             jets = (jets[sorted_args])
-
-            # now JER has been applied, we apply unc coeefficients to the latest value
-            variation_l.remove("nominal")
-            jets = applyJetUncertaintyKinematics(jets, variation_l) 
-            
             # -------------------------------------
 
 
             # testJetVector(jets)
             # logger.info(f"jets pt b4 jec: {jets.pt.compute()}")
+            # -------------------------------------
+            # logger.info("do old jec!")
+            # jets = factory.build(jets)
             # -------------------------------------
             # logger.info(f"jets pt after jec: {jets.pt.compute()}")
             # testJetVector(jets)
@@ -1286,17 +1151,17 @@ class EventProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # Calculate other event weights
         # ------------------------------------------------------------#
-        jec_pars = self.config["jec_parameters"]
-        if do_jec_unc:
-            pt_variations = (
-                ["nominal"]
-                + applyUpDown(jec_pars["jec_unc_to_consider"])
-                + jec_pars["jer_variations"]
-            )
-        else:
-            pt_variations = ["nominal"]
+        pt_variations = (
+            ["nominal"]
+            # + jec_pars["jec_variations"]
+            # + jec_pars["jer_variations"]
+        )
+        if is_mc:
+            pass
+            # pt_variations += self.config["jec_parameters"]["jec_variations"]
+            # pt_variations += self.config["jec_parameters"]["jer_variations"]
+            # pt_variations += ['Absolute_up', 'Absolute_down',]
 
-        # pt_variations = ["nominal", "Absolute_up", "Absolute_down"]#FIXME
         if is_mc:
             # moved nnlops reweighting outside of dak process and to run_stage1-----------------
             do_nnlops = self.config["do_nnlops"] and ("ggh" in events.metadata["dataset"])
@@ -1360,8 +1225,7 @@ class EventProcessor(processor.ProcessorABC):
                 and ("nominal" in pt_variations)
                 and ("stage1_1_fine_cat_pTjet30GeV" in events.HTXS.fields)
             )
-            # do_thu = False
-            do_thu = True #FIXME
+            do_thu = False
             if do_thu:
                 logger.info("doing THU!")
                 add_stxs_variations(
@@ -1458,11 +1322,6 @@ class EventProcessor(processor.ProcessorABC):
             "event": events.event,
             "luminosityBlock": events.luminosityBlock,
             "fraction": ak.ones_like(events.event) * events.metadata["fraction"],
-            # add jet default kinematics here
-            "jet1_default_pt_nominal" : jet1_default.pt,
-            "jet1_default_eta_nominal" : jet1_default.eta,
-            "jet2_default_pt_nominal" : jet2_default.pt,
-            "jet2_default_eta_nominal" : jet2_default.eta,
         }
         if is_mc:
             mc_dict = {
@@ -1485,16 +1344,18 @@ class EventProcessor(processor.ProcessorABC):
                 "gjj_dR" : gjj_dR,
             }
             out_dict.update(mc_dict)
+        # test_zip = ak.zip({
+        #     "mu1_iso" : mu1.pfRelIso04_all,
+        #     "mu2_iso" : mu2.pfRelIso04_all,
+        # })
+        # logger.info(f"test_zip.compute 1: {test_zip.to_parquet(save_path)}")
+        # logger.info(f"out_dict.persist 1: {ak.zip(out_dict).persist().to_parquet(save_path)}")
+        # logger.info(f"out_dict.compute 1: {ak.zip(out_dict).to_parquet(save_path)}")
         # ------------------------------------------------------------#
         # Loop over JEC variations and fill jet variables
         # ------------------------------------------------------------#
-        logger.info(f"pt_variations: {pt_variations}")
-        # pt_variations = ["nominal", "Absolute_up", "Absolute_down"] #FIXME
-        # print(f"jets test2: {jets.pt_Absolute_up.compute()}")
-        
+        logger.debug(f"pt_variations: {pt_variations}")
         for variation in pt_variations:
-            # print(f"jets test3: {jets.pt_Absolute_up.compute()}")
-            
             jet_loop_dict = self.jet_loop(
                 events,
                 jets,
@@ -1511,107 +1372,11 @@ class EventProcessor(processor.ProcessorABC):
             )
 
             out_dict.update(jet_loop_dict)
-        logger.debug(f"out_dict.keys() after jet loop: {out_dict.keys()}")
-        # debugging -------------------------------
-        
-        # test_dict = {
-        #     "jet1_pt_nominal" : out_dict['jet1_pt_nominal'][:],
-        #     # "jet1_pt_jer1_up" : out_dict['jet1_pt_jer1_up'][:],
-        #     # "jet1_pt_jer1_down" : out_dict['jet1_pt_jer1_down'][:],
-        #     # "jet1_mass_nominal" : out_dict['jet1_mass_nominal'][:],
-        #     # "jet1_mass_jer1_up" : out_dict['jet1_mass_jer1_up'][:],
-        #     # "jet1_mass_jer1_down" : out_dict['jet1_mass_jer1_down'][:],
-        #     # "jet2_pt_nominal" : out_dict['jet2_pt_nominal'][:],
-        #     # "jet2_pt_jer1_up" : out_dict['jet2_pt_jer1_up'][:],
-        #     # "jet2_pt_jer1_down" : out_dict['jet2_pt_jer1_down'][:],
-        #     # "jet2_mass_nominal" : out_dict['jet2_mass_nominal'][:],
-        #     # "jet2_mass_jer1_up" : out_dict['jet2_mass_jer1_up'][:],
-        #     # "jet2_mass_jer1_down" : out_dict['jet2_mass_jer1_down'][:],
-        #     # "jj_pt_nominal" : out_dict['jj_pt_nominal'][:],
-        #     # "jj_pt_jer1_up" : out_dict['jj_pt_jer1_up'][:],
-        #     # "jj_pt_jer1_down" : out_dict['jj_pt_jer1_down'][:],
-        #     # "jj_mass_nominal" : out_dict['jj_mass_nominal'][:],
-        #     # "jj_mass_jer1_up" : out_dict['jj_mass_jer1_up'][:],
-        #     # "jj_mass_jer1_down" : out_dict['jj_mass_jer1_down'][:],
-        #     # f"mmj1_dEta_nominal" : out_dict["mmj1_dEta_nominal"], 
-        #     # f"mmj1_dPhi_nominal" : out_dict["mmj1_dPhi_nominal"], 
-        #     # f"mmj1_dR_nominal" : out_dict["mmj1_dR_nominal"], 
-        #     # f"mmj2_dEta_nominal" : out_dict["mmj2_dEta_nominal"], 
-        #     # f"mmj2_dPhi_nominal" : out_dict["mmj2_dPhi_nominal"], 
-        #     # f"mmj2_dR_nominal" : out_dict["mmj2_dR_nominal"], 
-        #     # f"mmj_min_dEta_nominal" : out_dict["mmj_min_dEta_nominal"], 
-        #     # f"mmj_min_dPhi_nominal" : out_dict["mmj_min_dPhi_nominal"], 
-        #     # f"mmjj_pt_nominal" : out_dict["mmjj_pt_nominal"], 
-        #     # f"mmjj_eta_nominal" : out_dict["mmjj_eta_nominal"], 
-        #     # f"mmjj_phi_nominal" : out_dict["mmjj_phi_nominal"], 
-        #     # f"mmjj_mass_nominal" : out_dict["mmjj_mass_nominal"], 
-        #     # f"mmj1_dEta_jer1_up" : out_dict["mmj1_dEta_jer1_up"], 
-        #     # f"mmj1_dPhi_jer1_up" : out_dict["mmj1_dPhi_jer1_up"], 
-        #     # f"mmj1_dR_jer1_up" : out_dict["mmj1_dR_jer1_up"], 
-        #     # f"mmj2_dEta_jer1_up" : out_dict["mmj2_dEta_jer1_up"], 
-        #     # f"mmj2_dPhi_jer1_up" : out_dict["mmj2_dPhi_jer1_up"], 
-        #     # f"mmj2_dR_jer1_up" : out_dict["mmj2_dR_jer1_up"], 
-        #     # f"mmj_min_dEta_jer1_up" : out_dict["mmj_min_dEta_jer1_up"], 
-        #     # f"mmj_min_dPhi_jer1_up" : out_dict["mmj_min_dPhi_jer1_up"], 
-        #     # f"mmjj_pt_jer1_up" : out_dict["mmjj_pt_jer1_up"], 
-        #     # f"mmjj_eta_jer1_up" : out_dict["mmjj_eta_jer1_up"], 
-        #     # f"mmjj_phi_jer1_up" : out_dict["mmjj_phi_jer1_up"], 
-        #     # f"mmjj_mass_jer1_up" : out_dict["mmjj_mass_jer1_up"], 
-        #     # f"mmj1_dEta_jer1_down" : out_dict["mmj1_dEta_jer1_down"], 
-        #     # f"mmj1_dPhi_jer1_down" : out_dict["mmj1_dPhi_jer1_down"], 
-        #     # f"mmj1_dR_jer1_down" : out_dict["mmj1_dR_jer1_down"], 
-        #     # f"mmj2_dEta_jer1_down" : out_dict["mmj2_dEta_jer1_down"], 
-        #     # f"mmj2_dPhi_jer1_down" : out_dict["mmj2_dPhi_jer1_down"], 
-        #     # f"mmj2_dR_jer1_down" : out_dict["mmj2_dR_jer1_down"], 
-        #     # f"mmj_min_dEta_jer1_down" : out_dict["mmj_min_dEta_jer1_down"], 
-        #     # f"mmj_min_dPhi_jer1_down" : out_dict["mmj_min_dPhi_jer1_down"], 
-        #     # f"mmjj_pt_jer1_down" : out_dict["mmjj_pt_jer1_down"], 
-        #     # f"mmjj_eta_jer1_down" : out_dict["mmjj_eta_jer1_down"], 
-        #     # f"mmjj_phi_jer1_down" : out_dict["mmjj_phi_jer1_down"], 
-        #     # f"mmjj_mass_jer1_down" : out_dict["mmjj_mass_jer1_down"], 
-        #     # # "jet1_x_nominal" : out_dict['jet1_x_nominal'][:],
-        #     # # "jet1_x_jer1_up" : out_dict['jet1_x_jer1_up'][:],
-        #     # # "jet1_x_jer1_down" : out_dict['jet1_x_jer1_down'][:],
-        #     # # "jet2_x_nominal" : out_dict['jet2_x_nominal'][:],
-        #     # # "jet2_x_jer1_up" : out_dict['jet2_x_jer1_up'][:],
-        #     # # "jet2_x_jer1_down" : out_dict['jet2_x_jer1_down'][:],
-        #     # # "jet2_y_nominal" : out_dict['jet2_y_nominal'][:],
-        #     # # "jet2_y_jer1_up" : out_dict['jet2_y_jer1_up'][:],
-        #     # # "jet2_y_jer1_down" : out_dict['jet2_y_jer1_down'][:],
-        #     # # "jet2_z_nominal" : out_dict['jet2_z_nominal'][:],
-        #     # # "jet2_z_jer1_up" : out_dict['jet2_z_jer1_up'][:],
-        #     # # "jet2_z_jer1_down" : out_dict['jet2_z_jer1_down'][:],
-            
-        # }
-        # # print(f"out_dict.keys(): {out_dict.keys()}")
-        # jec_uncs = self.config["jec_parameters"]["jec_unc_to_consider"]
-        # # jec_uncs = ["Absolute", "jer5","jer6"]#FIXME
-        # jec_uncs = ["jer5","jer6"]#FIXME
-        
-        # for unc in jec_uncs:
-        #     for shift in ["up", "down"]:
-        #         variation = f"{unc}_{shift}"
-        #         unc_dict = {
-        #             f"jet1_pt_{variation}" : out_dict[f'jet1_pt_{variation}'][:],
-        #             # f"jet1_mass_{variation}" : out_dict[f'jet1_mass_{variation}'][:],
-        #             # f"jet2_pt_{variation}" : out_dict[f'jet2_pt_{variation}'][:],
-        #             # f"jet2_mass_{variation}" : out_dict[f'jet2_mass_{variation}'][:],
-        #             # f"jj_pt_{variation}" : out_dict[f'jj_pt_{variation}'][:],
-        #             # f"jj_mass_{variation}" : out_dict[f'jj_mass_{variation}'][:],
-        #             # f"mmj_min_dEta_{variation}" : out_dict[f"mmj_min_dEta_{variation}"], 
-        #             # f"mmj_min_dPhi_{variation}" : out_dict[f"mmj_min_dPhi_{variation}"], 
-                    
-        #         }
-        #         test_dict.update(unc_dict)
-        # test_dict = dask.compute(test_dict)[0]
-        # logger.info(test_dict)
-        # for key, element in test_dict.items():
-        #     # print(element)
-        #     element = ak.to_numpy(element[:])
-        #     print(f"{key}: {element}")
-        
-        # raise ValueError
-        # debugging -------------------------------
+        # logger.info(f"out_dict.keys() after jet loop: {out_dict.keys()}")
+
+        # logger.info(f"out_dict.persist 2: {ak.zip(out_dict).persist().to_parquet(save_path)}")
+        # logger.info(f"out_dict.compute 2: {ak.zip(out_dict).to_parquet(save_path)}")
+
         # # fill in the regions
         mass = dimuon.mass
         z_peak = ((mass > 76) & (mass < 106))
@@ -1640,22 +1405,25 @@ class EventProcessor(processor.ProcessorABC):
         # do zpt weight at the very end
         dataset = events.metadata["dataset"]
         do_zpt = ('dy' in dataset) and is_mc
+        # do_zpt = False # temporary overwrite to obtain for zpt re-wgt
         if do_zpt:
             logger.info("doing zpt!")
-            logger.info("=======================  apply zpt weights =======================")
-            if year == "2018": 
-                if "MiNNLO" in dataset: # old zpt weights
-                    zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-                else:
-                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
-            else:
-                if "MiNNLO" in dataset: # FIXME: temporary fix for MiNNLO samples
-                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-                else:
-                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
-            # else:
-                # zpt_weight_mine_nbins100 = getZptWgts_3region(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            # we explicitly don't directly add zpt weights to the weights variables
+            # due weirdness of btag weight implementation. I suspect it's due to weights being evaluated
+            # once kind of screws with the dak awkward array
+
+            logger.info("======================= old zpt method =======================")
             
+            zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            
+            # logger.info("======================= old zpt weights are commented out =======================")
+            # if year == "2016postVFP" or year=="2018": #FIXME: This is temporary, we need to sync the zpt strategy and update it.
+            #     zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            # else:
+            #     zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+            # logger.info(f"zpt_weight_mine_nbins100: {type(zpt_weight_mine_nbins100)}")
+            # logger.info(f"zpt_weight_mine_nbins100: {(zpt_weight_mine_nbins100)}")
+
             # logger.info("========================= new zpt weights start =========================")
             # sf_dict = load_sf_dict("/depot/cms/users/shar1172/copperheadV2_CheckSetup/data/zpt_rewgt/fitting_mu1mu2pt/sf_data_flat.json")
             # logger.info(f"sf_dict: {sf_dict}")
@@ -1737,6 +1505,7 @@ class EventProcessor(processor.ProcessorABC):
             weight_dict[wgt_name] = weights.partial_weight(include=[weight_type])
         #     logger.info(f"wgt {wgt_name} sum: {ak.sum(weight_dict[wgt_name]).compute()}")
         # logger.info(f"wgt_nominal sum: {ak.sum(wgt_nominal).compute()}")
+        # raise ValueError
 
         # logger.info(f"out_dict.persist 5: {ak.zip(out_dict).persist().to_parquet(save_path)}")
         # logger.info(f"out_dict.compute 5: {ak.zip(out_dict).to_parquet(save_path)}")
@@ -1880,7 +1649,6 @@ class EventProcessor(processor.ProcessorABC):
         do_jerunc = False,
         event_match = None
     ):
-        logger.info(f'variation: {variation}')
         is_mc = events.metadata["is_mc"]
         dataset = events.metadata["dataset"]
         year = self.config["year"]
@@ -1945,18 +1713,6 @@ class EventProcessor(processor.ProcessorABC):
         clean = ak.fill_none(clean, value=True)
 
         # # Select particular JEC variation
-
-        if is_mc and (variation != "nominal"):
-            fields2add = [
-                "puId",
-                "jetId",
-                "qgl",
-                "rho",
-                "area",
-                "btagDeepB",
-            ]
-            jets =  get_jet_variation(jets, variation, fields2add)
-            
         # if "jer" in variation: # https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution#JER_Scaling_factors_and_Uncertai
         #     logger.info("doing JER unc!")
         #     jer_mask_dict ={
@@ -2010,16 +1766,33 @@ class EventProcessor(processor.ProcessorABC):
 
         pass_jet_id = jet_id(jets, self.config)
 
-        logger.info(f"jet loop NanoAODv: {NanoAODv}")
+        logger.debug(f"jet loop NanoAODv: {NanoAODv}")
         is_2017 = "2017" in year
         if NanoAODv == 9  or NanoAODv == 12:
             pass_jet_puid = jet_puid(jets, self.config)
+            # Jet PUID scale factors, which also takes pt < 50 into account within the function
+            if is_mc:
+                if is_2017:
+                    logger.info("doing jet puid weights!")
+                    jet_puid_opt = self.config["jet_puid"]
+                    pt_name = "pt"
+                    puId = jets.puId
+                    jetpuid_weight = get_jetpuid_weights_old(
+                        self.evaluator, year, jets, pt_name,
+                        jet_puid_opt, pass_jet_puid
+                    )
+                    # we add the jetpuid_weight later in the code
         else: # NanoAODv12 doesn't have Jet_PuID yet
             pass_jet_puid = ak.ones_like(pass_jet_id, dtype="bool")
         # ------------------------------------------------------------#
         # Select jets
         # ------------------------------------------------------------#
-        
+        # get QGL cut
+        if NanoAODv == 9 :
+            qgl_cut = (jets.qgl >= -2)
+        else: # NanoAODv12
+            qgl_cut = (jets.btagPNetQvG >= -2) # TODO: find out if -2 is the actual threshold for run3
+            jets["qgl"] = jets.btagPNetQvG # this is for saving btagPNetQvG as "qgl" for stage1 outputs
 
 
         jet_pt_cut = (jets.pt > self.config["jet_pt_cut"])
@@ -2037,18 +1810,23 @@ class EventProcessor(processor.ProcessorABC):
         jet_selection = (
             pass_jet_id
             & pass_jet_puid
+            & qgl_cut
             & clean
             & jet_pt_cut
             & (abs(jets.eta) < self.config["jet_eta_cut"])
         )
 
 
+        # jets = jets[jet_selection] # this causes huuuuge memory overflow close to 100 GB. Without it, it goes to around 20 GB
         jets = jets[jet_selection]
+        # jets = ak.to_layout(jets)
         jets = ak.to_packed(jets)
 
         # apply jetpuid if not have done already
-        if is_mc and (variation=="nominal"):
-            jetpuid_weight = get_jetpuid_weights_eta_dependent(year, jets, self.config) # FIXME
+        if not is_2017 and is_mc:
+            jetpuid_weight =get_jetpuid_weights(year, jets, self.config)
+
+        if is_mc:
             # now we add jetpuid_wgt
             weights.add("jetpuid_wgt",
                     weight=jetpuid_weight,
@@ -2057,34 +1835,48 @@ class EventProcessor(processor.ProcessorABC):
 
 
 
+
+        # jets = ak.where(jet_selection, jets, None)
+        # muons = events.Muon
         njets = ak.num(jets, axis=1)
 
         # ------------------------------------------------------------#
         # Fill jet-related variables
         # ------------------------------------------------------------#
-        
-        # sorted_args = ak.argsort(jets.pt, ascending=False)
-        # sorted_jets = (jets[sorted_args])
-        # jets = sorted_jets
-        # paddedSorted_jets = ak.pad_none(jets, target=2)
-        
-        # jet1 = paddedSorted_jets[:,0]
-        # jet2 = paddedSorted_jets[:,1]
 
-        padded_jets = ak.pad_none(jets, target=2) # padd jets
-        jet1 = padded_jets[:,0]
-        jet2 = padded_jets[:,1]
-        
 
-        
+        # original start ----------------------------------------
+        # padded_jets = ak.pad_none(jets, target=2)
+        # # # jet1 = padded_jets[:,0]
+        # # # jet2 = padded_jets[:,1]
+        # # jet_flip = padded_jets.pt[:,0] < padded_jets.pt[:,1]
+        # # jet_flip = ak.fill_none(jet_flip, value=False)
+        # # # take the subleading muon values if that now has higher pt after corrections
+        # # jet1 = ak.where(jet_flip, padded_jets[:,1], padded_jets[:,0])
+        # # jet2 = ak.where(jet_flip, padded_jets[:,0], padded_jets[:,1])
+        # sorted_args = ak.argsort(padded_jets.pt, ascending=False)
+        # sorted_jets = (padded_jets[sorted_args])
+        # jet1 = sorted_jets[:,0]
+        # jet2 = sorted_jets[:,1]
+        # original end ----------------------------------------
+
+        # test start ----------------------------------------
+        sorted_args = ak.argsort(jets.pt, ascending=False)
+        sorted_jets = (jets[sorted_args])
+        jets = sorted_jets
+        paddedSorted_jets = ak.pad_none(sorted_jets, target=2)
+        jet1 = paddedSorted_jets[:,0]
+        jet2 = paddedSorted_jets[:,1]
+        # test end ----------------------------------------
+        # logger.info(f"event match jet2 pt: {ak.to_numpy(jet2.pt[event_match].compute())}")
+
         dijet = jet1+jet2
+        # logger.info(f"type jet1: {type(jet1.compute())}")
+        # logger.info(f"type jet1_Lvec: {type(jet1_Lvec.compute())}")
+        # dijet = jet1_Lvec+jet2_Lvec
 
-        # print(f"{variation} dijet.mass : {ak.to_numpy(dijet.mass.compute())}")
 
-        # p4_mass = p4_sum_mass(jet1, jet2)
-        # print(f"{variation} p4_mass : {ak.to_numpy(p4_mass.compute())}")
-        
-        
+
         # jet1_4D_vec = ak.zip({"x":jet1.x, "y":jet1.y, "z":jet1.z, "E":jet1.E}, with_name="Momentum4D")
         # jet2_4D_vec = ak.zip({"x":jet2.x, "y":jet2.y, "z":jet2.z, "E":jet2.E}, with_name="Momentum4D")
         # dijet = jet1_4D_vec+jet2_4D_vec
@@ -2144,10 +1936,18 @@ class EventProcessor(processor.ProcessorABC):
             f"jet2_eta_{variation}" : jet2.eta,
             f"jet1_mass_{variation}" : jet1.mass,
             f"jet2_mass_{variation}" : jet2.mass,
-            # f"jet1_rho_{variation}" : jet1.rho,
-            # f"jet2_rho_{variation}" : jet2.rho,
+            f"jet1_pt_raw_{variation}" : jet1.pt_raw,
+            f"jet2_pt_raw_{variation}" : jet2.pt_raw,
+            f"jet1_mass_raw_{variation}" : jet1.mass_raw,
+            f"jet2_mass_raw_{variation}" : jet2.mass_raw,
+            f"jet1_rho_{variation}" : jet1.rho,
+            f"jet2_rho_{variation}" : jet2.rho,
             f"jet1_area_{variation}" : jet1.area,
             f"jet2_area_{variation}" : jet2.area,
+            f"jet1_pt_jec_{variation}" : jet1.pt_jec,
+            f"jet2_pt_jec_{variation}" : jet2.pt_jec,
+            f"jet1_mass_jec_{variation}" : jet1.mass_jec,
+            f"jet2_mass_jec_{variation}" : jet2.mass_jec,
             #-------------------------
             f"jet2_rapidity_{variation}" : jet2_rapidity,  # max rel err: 0.781
             f"jet2_phi_{variation}" : jet2.phi,
@@ -2179,30 +1979,22 @@ class EventProcessor(processor.ProcessorABC):
             f"zeppenfeld_{variation}" : zeppenfeld,
             f"ll_zstar_log_{variation}" : np.log(np.abs(zeppenfeld)),
             f"njets_{variation}" : njets,
-            # test -------------
-            # f"jet1_x_{variation}" : jet1.px,
-            # f"jet2_x_{variation}" : jet2.px,
-            # f"jet1_y_{variation}" : jet1.py,
-            # f"jet2_y_{variation}" : jet2.py,
-            # f"jet1_z_{variation}" : jet1.pz,
-            # f"jet2_z_{variation}" : jet2.pz,
-            # test -------------
+
         }
-        if is_mc and (variation == "nominal"):
-            nominal_dict = {
+        if is_mc:
+            mc_dict = {
                 f"jet1_pt_gen_{variation}" : jet1.pt_gen,
                 f"jet2_pt_gen_{variation}" : jet2.pt_gen,
-                f"jet1_pt_raw_{variation}" : jet1.pt_raw,
-                f"jet2_pt_raw_{variation}" : jet2.pt_raw,
-                f"jet1_mass_raw_{variation}" : jet1.mass_raw,
-                f"jet2_mass_raw_{variation}" : jet2.mass_raw,
-                f"jet1_mass_jec_{variation}" : jet1.mass_jec,
-                f"jet2_mass_jec_{variation}" : jet2.mass_jec,
-                f"jet1_pt_jec_{variation}" : jet1.pt_jec,
-                f"jet2_pt_jec_{variation}" : jet2.pt_jec,
             }
-            jet_loop_out_dict.update(nominal_dict)
+            jet_loop_out_dict.update(mc_dict)
 
+        # jet_loop_out_dict = {
+        #     key: ak.to_numpy(val) for key, val in jet_loop_out_dict.items()
+        # }
+        # jet_loop_placeholder =  pd.DataFrame(
+        #     jet_loop_out_dict
+        # )
+        # jet_loop_placeholder.to_csv("./V2jet_loop.csv")
 
         # ------------------------------------------------------------#
         # Fill soft activity jet variables
@@ -2223,7 +2015,7 @@ class EventProcessor(processor.ProcessorABC):
             }
             sj_dict.update(sj_out)
 
-        logger.debug(f"sj_dict.keys(): {sj_dict.keys()}")
+        logger.info(f"sj_dict.keys(): {sj_dict.keys()}")
         jet_loop_out_dict.update(sj_dict)
 
 
@@ -2256,7 +2048,13 @@ class EventProcessor(processor.ProcessorABC):
                         weightUp=qgl_wgts["up"],
                         weightDown=qgl_wgts["down"]
             )
-
+            # # debugging
+            # # ptOfInterest = (mu1.pt > 75) & (mu1.pt < 150)
+            # # qgl_filtered = qgl_wgts['nom'][ptOfInterest].compute()
+            # # logger.info(f"qgl_wgts: {qgl_filtered}")
+            # # logger.info(f"qgl_wgts mean : {np.mean(qgl_filtered)}")
+            # # logger.info(f"qgl_wgts max : {np.max(qgl_filtered)}")
+            # # logger.info(f"qgl_wgts min : {np.min(qgl_filtered)}")
         #     # --- QGL weights  end --- #
 
 
@@ -2341,6 +2139,7 @@ class EventProcessor(processor.ProcessorABC):
         # logger.info(f"btagLoose_filter sum : {ak.sum(btagLoose_filter, axis=1)[:20].compute()}")
         # logger.info(f"nBtagMedium : {nBtagMedium[:20].compute()}")
         # logger.info(f"btagMedium_filter sum : {ak.sum(btagMedium_filter, axis=1)[:20].compute()}")
+        # raise ValueError
 
         # logger.info(f"nBtagLoose: {jets.btagDeepFlavB.compute()}")
         # logger.info(f"nBtagLoose: {ak.to_numpy(nBtagLoose.compute())}")

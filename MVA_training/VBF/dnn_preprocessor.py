@@ -9,20 +9,20 @@ import argparse
 import os 
 import copy
 import pickle
-from modules.utils import fillEventNans
 
 # def getParquetFiles(path):
     # return glob.glob(path)
 
-# def fillEventNans(events):
-#     """
-#     """
-#     for field in events.fields:
-#         if "phi" in field:
-#             events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
-#         else: # for all other fields (this may need to be changed)
-#             events[field] = ak.fill_none(events[field], value=0)
-#     return events
+def fillEventNans(events):
+    """
+    checked that this function is unnecssary for vbf category, but have it for robustness
+    """
+    for field in events.fields:
+        if "phi" in field:
+            events[field] = ak.fill_none(events[field], value=-10) # we're working on a DNN, so significant deviation may be warranted
+        else: # for all other fields (this may need to be changed)
+            events[field] = ak.fill_none(events[field], value=0)
+    return events
 
 # def replaceSidebandMass(events):
 #     for field in events.fields:
@@ -120,14 +120,10 @@ def weighted_std(values, weights):
 
     values, weights -- Numpy ndarrays with the same shape.
     """
-    weights = np.abs(weights) # force negative weights. Otherwise we get negative variances
     average = np.average(values, weights=weights, axis=0)
     # print(f"average.shape: {average.shape}")
     variance = np.average((values - average)**2, weights=weights, axis=0)
     # print(f"variance.shape: {variance.shape}")
-    print(f"weighted_std average: {average}")
-    print(f"weighted_std variance: {variance}")
-    
     return np.sqrt(variance)
 
 # def mixup(x_train, label_train):
@@ -248,13 +244,17 @@ def mixup(data, alpha=4, concat=False, batch_size=None, seed=1352):
         # print(f"mixup index with no replacement: {index2}")
     else:
         # with replacement
+        # index = np.random.randint(0, data_len, size=batch_size)
         index1 = np.random.randint(0, data_len, size=batch_size)
         index2 = np.random.randint(0, data_len, size=batch_size)
+        # print(f"mixup index with replacement: {index1}")
+        # print(f"mixup index with replacement: {index2}")
 
 
     # data = data.sample(frac=1)
     data_orig = data
 
+    # print(f"data_orig: {data_orig}")
     # Cut data into specified size
     # data1 = resize_data(data, batch_size).reset_index(drop=True)
     data1 = data_orig.iloc[index1]
@@ -278,6 +278,9 @@ def mixup(data, alpha=4, concat=False, batch_size=None, seed=1352):
     if concat is True:
         data_new = pd.concat([data_orig, data_mix])
 
+    # print(f"data1: {data1.head()}")
+    # print(f"data2: {data2.head()}")
+    # print(f"data_mix: {data_mix.head()}")
     return data_new
 
 def cartesian(arrays, out=None):
@@ -500,33 +503,11 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         # "pt_centrality",
     #     "year",
     # ]
-    training_features = [ # this is the full list of Run2 VBF category DNN training features
-        "dimuon_mass",
-        "dimuon_pt",
-        "dimuon_pt_log",
-        "dimuon_rapidity",
-        "dimuon_ebe_mass_res",
-        "dimuon_ebe_mass_res_rel",
-        "dimuon_cos_theta_cs",
-        "dimuon_phi_cs",
-        "jet1_pt",
-        "jet1_eta",
-        "jet1_phi",
-        "jet1_qgl",
-        "jet2_pt",
-        "jet2_eta",
-        "jet2_phi",
-        "jet2_qgl",
-        "jj_mass",
-        "jj_mass_log",
-        "jj_dEta",
-        "rpt",
-        "ll_zstar_log",
-        "mmj_min_dEta",
-        "nsoftjets5", 
-        "htsoft2",
-        "pt_centrality",
-        "year",
+    training_features = [
+        'dimuon_mass', 'dimuon_pt', 'dimuon_pt_log', 'dimuon_rapidity', \
+         'dimuon_cos_theta_cs', 'dimuon_phi_cs',
+         'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_qgl',\
+         'jj_mass', 'jj_mass_log', 'jj_dEta', 'rpt', 'll_zstar_log', 'mmj_min_dEta', 'nsoftjets5', 'htsoft2'
     ]
     # generate directory to save training_features
     save_path = f"dnn/trained_models/{run_label}"
@@ -541,49 +522,24 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
     
     # TODO: add mixup
     # sig and bkg processes defined at line 1976 of AN-19-124. IDK why ggH is not included here
-    # sig_processes = ["vbf_powheg_dipole", "ggh_powhegPS"]
-    sig_processes = ["vbf_powheg_dipole"]
-    # bkg_processes = ["dy_M-100To200", "ewk_lljj_mll105_160_ptj0","ttjets_dl","ttjets_sl"]
-    bkg_processes = [
-        # "dy_M-100To200_MiNNLO", 
-        "dy_M-100To200_aMCatNLO",
-        "dy_VBF_filter_NewZWgt",
-        "ewk_lljj_mll50_mjj120",
-        "ttjets_dl",
-        "ttjets_sl"
-    ]
-
-    
+    sig_processes = ["vbf_powheg_dipole", "ggh_powhegPS"]
+    bkg_processes = ["dy_M-100To200", "ewk_lljj_mll105_160_ptj0","ttjets_dl","ttjets_sl"]
     # sig_processes = ["ggh_powhegPS"] # testing
     # bkg_processes = ["ewk_lljj_mll105_160_ptj0"] # testing
 
-    print(f"base_path: {base_path}")
     sig_events_dict = {}
     for process in sig_processes:
-        print(f"process: {process}")
-        
         filenames = glob.glob(f"{base_path}/{process}/*/*.parquet")
-        # print(filenames)
-        # print(f"{base_path}/{process}/*/*.parquet")
-        if len(filenames) == 0:
-            continue
         sig_events = dak.from_parquet(filenames)
         sig_events_dict[process] = sig_events
-        # print(f"sig_events.year: {sig_events.year[:10].compute()}")
-        
+    
     bkg_events_dict = {}
     for process in bkg_processes:
-        print(f"process: {process}")
         filenames = glob.glob(f"{base_path}/{process}/*/*.parquet")
-        if len(filenames) == 0:
-            continue
         bkg_events = dak.from_parquet(filenames)
-        # print(f"bkg_events: {bkg_events.fields}")
-        # print(f"bkg_events.year: {bkg_events.year[:10].compute()}")
-        
         bkg_events_dict[process] = bkg_events
 
-    # raise ValueError
+    
     
     training_features = prepare_features(sig_events, training_features) # add variation to features
     # print(f"training_features: {training_features}")
@@ -644,19 +600,20 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         df_eval = df_total[eval_filter]
 
         
+        
         # scale data, save the mean and std. This has to be done b4 mixup
         x_train = df_train[training_features].values
-        # print(f"x_train shape b4 mixup: {x_train.shape}")
+        print(f"x_train shape b4 mixup: {x_train.shape}")
         label_train = df_train.label.values
         wgt_train = df_train.wgt_nominal.values
         x_mean = np.average(x_train,axis=0, weights=wgt_train)
         x_std = weighted_std(x_train, wgt_train)
-        # replace zero std dev with one, since we will divide input by x_std) 
-        where_cond = np.isclose(np.zeros_like(x_std), x_std)
-        x_std = np.where(where_cond, np.ones_like(x_std), x_std)
+        print(f"x_mean: {x_mean}")
+        print(f"x_std: {x_std}")
+        # np.save(f"output/trained_models/{model}/scalers_{fold_idx}", [x_mean, x_std])
         
         np.save(f"{save_path}/scalers_{i}", [x_mean, x_std])
-        
+
 
         # print(f"df_train b4 mixup: {df_train}")
         do_mixup = False
@@ -669,6 +626,8 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
             for process in processes2keep:
                 proc_filter = proc_filter | (df_mixup.process == process)
             df_mixup = df_mixup[proc_filter]
+            print(f"df_mixup process: {df_mixup.process}")
+            print(f"df_mixup label: {np.all(df_mixup.label==1)}")
 
             # drop process column. can't have non-numeric value for mixup, We don't need it for training anyways
             df_mixup = df_mixup.drop("process", axis=1)
@@ -698,8 +657,6 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
             print(f"x_train shape after mixup: {x_train.shape}")
             
 
-        print(f"x_train b4 scaling {x_train}")
-        
         # apply scaling to data, and save the data for training
         x_train = (x_train-x_mean)/x_std
 
@@ -711,26 +668,10 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         label_eval = df_eval.label.values
 
 
-        print(f"x_train after: {x_train}")
-        print(f"x_mean: {x_mean}")
-        print(f"x_std: {x_std}")
-        print(f"wgt_train: {np.sum(wgt_train)}")
-        print(f"wgt_train: {np.any(np.isnan(wgt_train))}")
-        print(f"df_train.columns: {df_train.columns}")
-
-        
-        print(f"training_features: {training_features}")
-        
-        pt_centrality = df_train.pt_centrality_nominal
-        print(f"pt_centrality: {np.sum(pt_centrality)}")
-        print(f"pt_centrality: {np.any(np.isnan(pt_centrality))}")
-        
-        
         # update the values on df and save that bc we need "process" column for analysis
         df_train[training_features] = x_train
         df_val[training_features] = x_val
         df_eval[training_features] = x_eval
-
 
         # save the df
         data_dict = {
@@ -743,37 +684,31 @@ def preprocess(base_path, region="h-peak", category="vbf", do_mixup=False, run_l
         
     
     
-
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-l",
+    "--label",
+    dest="label",
+    default="test",
+    action="store",
+    help="Unique run label (to create output path)",
+)
+parser.add_argument(
+    "-cat",
+    "--category",
+    dest="category",
+    default="vbf",
+    action="store",
+    help="production mode category. Options: vbf or ggh",
+)
+args = parser.parse_args()
     
 if __name__ == "__main__":  
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-l",
-        "--label",
-        dest="label",
-        default="test",
-        action="store",
-        help="Unique run label (to create output path)",
-    )
-    parser.add_argument(
-        "-cat",
-        "--category",
-        dest="category",
-        default="vbf",
-        action="store",
-        help="production mode category. Options: vbf or ggh",
-    )
-    args = parser.parse_args()
-    
     from distributed import LocalCluster, Client
     cluster = LocalCluster(processes=True)
     cluster.adapt(minimum=8, maximum=31) #min: 8 max: 32
     client = Client(cluster)
     
-    # base_path = f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/2018/f1_0/"
-    # base_path = f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/stage1_output/*/f1_0/"
-    # base_path = f"/depot/cms/users/shar1172/hmm/copperheadV1clean/{args.label}/stage1_output/2018/f1_0/"
-    base_path = f"/depot/cms/users/shar1172/hmm/copperheadV1clean/{args.label}/stage1_output/2018/compacted/"
-    
+    base_path = f"/depot/cms/users/yun79/hmm/copperheadV1clean/V2_Dec22_HEMVetoOnZptOn_RerecoBtagSF_XS_Rereco/stage1_output/2018/f1_0/"
     preprocess(base_path, run_label=args.label, category=args.category)
     print("Success!")

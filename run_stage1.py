@@ -106,7 +106,7 @@ def dataset_loop(processor, dataset_dict, file_idx=0, test=False, save_path=None
 
     dataset_fraction = dataset_dict["metadata"]["fraction"]
 
-    # logger.info(f"out_collections keys: {out_collections.keys()}")
+    logger.info(f"out_collections keys: {out_collections.keys()}")
 
     skim_dict = out_collections
     skim_dict["fraction"] = dataset_fraction*(ak.ones_like(out_collections["event"]))
@@ -165,7 +165,6 @@ if __name__ == "__main__":
         dest="max_file_len",
         type=int,
         default = 3000,
-        # default = 2500,
         help = "How many maximum files to process simultaneously.",
     )
     parser.add_argument(

@@ -67,40 +67,31 @@ data_l_dict["2018"]="A B C D"
 data_l_dict["2022preEE"]="C D"
 data_l_dict["2022postEE"]="E F G"
 
-data_l_dict["2018"]=""
-data_l_dict["2017"]=""
-data_l_dict["2016postVFP"]=""
-data_l_dict["2016preVFP"]=""
-# bkg_l="DY Top VV EWK VVV"
-bkg_l="DY"
+# data_l_dict["2018"]=""
+# data_l_dict["2017"]=""
+# data_l_dict["2016postVFP"]=""
+# data_l_dict["2016preVFP"]=""
+bkg_l="DY Top VV EWK VVV"
+# bkg_l="Top VV EWK VVV"
+# bkg_l=""
 # sig_l="Higgs"
 sig_l=""
-
-# bkg_l="DY" # FIXME
-data_l_dict["2016preVFP"]="" # FIXME
-data_l_dict["2016postVFP"]="" # FIXME
-
 
 # If debug is on, then run only for one era in each year.
 if [[ "$debug" == "1" ]]; then
     echo "Debug mode is on. Running only for 2018."
     # years=("2016postVFP" "2016preVFP")
-    
-    # years=("2022preEE")
-    # Also update the associated data list.
-    # # this is for synch CI
-    # years=("2018")
-    # data_l_dict["2018"]="A B C D"
-    bkg_l="EWK"
-    sig_l="Higgs"
     years=("2018")
-    data_l_dict["2018"]=""
+    # Also update the associated data list.
+    data_l_dict["2018"]="C"
     data_l_dict["2017"]="B C D E F"
-    data_l_dict["2016preVFP"]=""
-    data_l_dict["2016postVFP"]=""
+    data_l_dict["2016preVFP"]="B C D E F"
+    data_l_dict["2016postVFP"]="F G H"
     # data_l_dict["2017"]="B C D E F"
-    data_l_dict["2022preEE"]="C D"
+    # data_l_dict["2022preEE"]="C D"
     # data_l_dict["2022preEE"]=""
+    bkg_l=""
+    sig_l=""
 fi
 
 chunksize=300000
@@ -135,27 +126,17 @@ for year in "${years[@]}"; do
     echo "Signal: $sig_l" >> $log_file
 
     # command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv --xcache "
-    command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv  --use_gateway "
-    # command0="python run_prestage.py  --NanoAODv $NanoAODv --change_fraction 0.2"
-    # command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv  --use_gateway --skipBadFiles "
-    # command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv "
-    # command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv --use_gateway  --max_file_len 2500 "
-    # command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv --isCutflow "
-    # command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv "
-    command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv --use_gateway "
-    # command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv "
+    command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv  --use_gateway  "
+    command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv --use_gateway  --max_file_len 2500 "
     command2="python validation/zpt_rewgt/validation.py -y $year --label $label --in $save_path --data $data_l --background $bkg_l --signal $sig_l  --use_gateway "
 
     command3="python src/lib/ebeMassResCalibration/ebeMassResPlotter.py --path $save_path"
     command4="python src/lib/ebeMassResCalibration/calibration_factor.py --path $save_path"
 
     if [[ "$debug" == "1" ]]; then
-        # command0+="--log-level DEBUG " #
-        # command1+="--log-level DEBUG " #
-        # command2+="--log-level DEBUG --debug"
-        command0+=" --log-level INFO"
-        command1+=" --log-level INFO"
-        command2+=" --log-level INFO"
+        command0+="--log-level DEBUG " #
+        command1+="--log-level DEBUG " #
+        command2+="--log-level DEBUG --debug"
     else
         command0+=" --log-level INFO"
         command1+=" --log-level INFO"
@@ -165,7 +146,6 @@ for year in "${years[@]}"; do
     if [[ "$frac" == "1" ]]; then
         command0+=" -frac 0.1"
         command1+=" --test_mode"
-        # command1+=" -frac 0.1"
     fi
 
     if [[ "$skipBadFiles" == "1" ]]; then

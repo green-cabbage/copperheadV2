@@ -16,11 +16,7 @@ from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 import mplhep as hep
 plt.style.use(hep.style.CMS)
-import concurrent
-torch.multiprocessing.set_sharing_strategy('file_descriptor') # reason: https://discuss.pytorch.org/t/training-crashes-due-to-insufficient-shared-memory-shm-nn-dataparallel/26396/44
-
-def transformDnnScore(dnn_scores):
-    return np.atanh(dnn_scores)
+# hep.style.use("CMS")
 
 class FocalLoss(nn.Module):
     def __init__(self, alpha=1, gamma=2):
@@ -239,7 +235,7 @@ def plotSigVsBkg(score_dict, bins, plt_save_path, transformPrediction=False, nor
     plt.clf()
 
 
-def customROC_curve_AN(label, pred, weight, ucsd_mode=False):
+def customROC_curve_AN(label, pred, weight):
     """
     generates signal and background efficiency consistent with the AN,
     as described by Fig 4.6 of Dmitry's PhD thesis
@@ -267,14 +263,11 @@ def customROC_curve_AN(label, pred, weight, ucsd_mode=False):
 
         
 
-        
-        if ucsd_mode:
-            effBkg = FP / (TN + FP) # AN-19-124 ggH Cat definition
-            effSig = TP / (FN + TP) # AN-19-124 ggH Cat definition
-        else:
-            effBkg = TN / (TN + FP) # Dmitry PhD thesis definition
-            effSig = FN / (FN + TP) # Dmitry PhD thesis definition
-            
+
+        # effBkg = TN / (TN + FP) # Dmitry PhD thesis definition
+        # effSig = FN / (FN + TP) # Dmitry PhD thesis definition
+        effBkg = FP / (TN + FP) # AN-19-124 ggH Cat definition
+        effSig = TP / (FN + TP) # AN-19-124 ggH Cat definition
         effBkg_total[ix] = effBkg
         effSig_total[ix] = effSig
 
@@ -298,66 +291,32 @@ def customROC_curve_AN(label, pred, weight, ucsd_mode=False):
     return (effBkg_total, effSig_total, thresholds)
 
 
-# def plotROC(score_dict, plt_save_path):
-#     """
-#     """
-#     fig, ax_main = plt.subplots()
-#     status = "Private Work 2018"
-#     CenterOfMass = "13"
-#     hep.cms.label(data=True, loc=0, label=status, com=CenterOfMass, ax=ax_main)
-#     plt.yscale('log')
-#     plt.ylim((0.001, 1e3))
-#     for stage, output_dict in score_dict.items():
-#         pred_total = output_dict["prediction"]
-#         label_total = output_dict["label"]
-#         wgt_total = output_dict["weight"]
-#         eff_bkg, eff_sig, thresholds = customROC_curve_AN(label_total, pred_total, wgt_total)
-#         plt.plot(eff_sig, eff_bkg, label=f"{stage}")
-
-#     plt.vlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
-#     plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
-#     # plt.hlines(eff_bkg, 0, eff_sig, linestyle="dashed")
-#     plt.xlim([0.0, 1.0])
-#     plt.ylim([0.0001, 1.0])
-#     plt.xlabel('$\\epsilon_{sig}$')
-#     plt.ylabel('$\\epsilon_{bkg}$')
-#     plt.yscale("log")
-#     plt.ylim([0.0001, 1.0])
-    
-#     plt.legend(loc="lower right")
-#     # plt.title(f'ROC curve for ggH BDT {year}')
-#     plt.savefig(plt_save_path)
-#     plt.clf()
-
-
 def plotROC(score_dict, plt_save_path):
     """
+    TODO: add weights
     """
-    ucsd_mode = "ucsd" in plt_save_path
     fig, ax_main = plt.subplots()
     status = "Private Work 2018"
     CenterOfMass = "13"
     hep.cms.label(data=True, loc=0, label=status, com=CenterOfMass, ax=ax_main)
+    plt.yscale('log')
+    plt.ylim((0.001, 1e3))
     for stage, output_dict in score_dict.items():
         pred_total = output_dict["prediction"]
         label_total = output_dict["label"]
         wgt_total = output_dict["weight"]
-        eff_bkg, eff_sig, thresholds = customROC_curve_AN(label_total, pred_total, wgt_total, ucsd_mode=ucsd_mode)
+        eff_bkg, eff_sig, thresholds = customROC_curve_AN(label_total, pred_total, wgt_total)
         plt.plot(eff_sig, eff_bkg, label=f"{stage}")
 
     plt.vlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
-    # plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
+    plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
     # plt.hlines(eff_bkg, 0, eff_sig, linestyle="dashed")
     plt.xlim([0.0, 1.0])
-    if ucsd_mode:
-        plt.hlines(np.logspace(-4,0,5), 0, 1, linestyle="dashed", color="grey")
-        plt.yscale('log')
-        plt.ylim([0.001, 1.0])
-    else:
-        plt.ylim([0.0, 1.0])
-        plt.hlines(np.linspace(0,1,11), 0, 1, linestyle="dashed", color="grey")
+    plt.ylim([0.0001, 1.0])
     plt.xlabel('$\\epsilon_{sig}$')
     plt.ylabel('$\\epsilon_{bkg}$')
+    plt.yscale("log")
+    plt.ylim([0.0001, 1.0])
     
     plt.legend(loc="lower right")
     # plt.title(f'ROC curve for ggH BDT {year}')
@@ -407,11 +366,14 @@ def dnnEvaluateLoop(model, dataloader, loss_fn, device="cpu"):
 
 
 
-
-def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs, save_path):
-    # nWorkers = 30
-    nWorkers = 2
-    pin_memory_flag = True # True
+def dnn_train(model, data_dict, training_features=[], batch_size=65536, nepochs=101, save_path=""):
+    if save_path == "save_path":
+        print("ERROR: please define the save path for the results")
+        raise ValueError
+    if len(training_features) == 0:
+        print("ERROR: please define the training features the DNN will train on")
+        raise ValueError
+    
     # divide our data into 4 folds
     # input_arr_train, label_arr_train = data_dict["train"]
     # input_arr_valid, label_arr_valid = data_dict["validation"]
@@ -425,7 +387,7 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
     label_arr_valid = df_valid.label.values
     input_arr_eval = df_eval[training_features].values
     label_arr_eval = df_eval.label.values
-
+    
     loss_fn = torch.nn.BCELoss()
     # loss_fn = FocalLoss(alpha=1, gamma=2)
     # loss_fn = HingeLoss()
@@ -433,20 +395,19 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
     # Iterating through the DataLoader
     # 
     device = "cuda"
-    # device = "cpu"
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     dataset_train = NumpyDataset(input_arr_train, label_arr_train)
-    dataloader_train_ordered = DataLoader(dataset_train, batch_size=batch_size, shuffle=False, num_workers=nWorkers, pin_memory=pin_memory_flag) # for plotting
+    dataloader_train_ordered = DataLoader(dataset_train, batch_size=batch_size, shuffle=False) # for plotting
     dataset_valid = NumpyDataset(input_arr_valid, label_arr_valid)
-    dataloader_valid = DataLoader(dataset_valid, batch_size=batch_size, shuffle=False, num_workers=nWorkers, pin_memory=pin_memory_flag)
+    dataloader_valid = DataLoader(dataset_valid, batch_size=batch_size, shuffle=False)
     dataset_eval = NumpyDataset(input_arr_eval, label_arr_eval)
-    dataloader_eval = DataLoader(dataset_eval, batch_size=batch_size, shuffle=False, num_workers=nWorkers, pin_memory=pin_memory_flag)
+    dataloader_eval = DataLoader(dataset_eval, batch_size=batch_size, shuffle=False)
     best_significance = 0
     for epoch in range(nepochs):
         model.train()
         # every epoch, reshuffle train data loader (could be unncessary)
-        dataloader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True, num_workers=nWorkers, pin_memory=pin_memory_flag)
+        dataloader_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
         
         epoch_loss = 0
         batch_losses = []
@@ -454,16 +415,13 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             inputs = inputs.to(device)
             labels = labels.to(device).reshape((-1,1))
             
+    
             
             optimizer.zero_grad()
     
             # Make predictions for this batch
             pred = model(inputs)
-
-            # print(f"inputs: {inputs}")
-            # print(f"labels: {labels}")
-            # print(f"pred: {pred}")
-
+    
             # Compute the loss and its gradients
             loss = loss_fn(pred, labels)
             loss.backward()
@@ -476,9 +434,9 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             epoch_loss += batch_loss
             batch_losses.append(batch_loss)
 
-        # print(f"fold {i} epoch {epoch} train total loss: {epoch_loss}")
-        # print(f"fold {i} epoch {epoch} train average batch loss: {np.mean(batch_losses)}")
-        validate_interval = 20
+        print(f"fold {i} epoch {epoch} train total loss: {epoch_loss}")
+        print(f"fold {i} epoch {epoch} train average batch loss: {np.mean(batch_losses)}")
+        validate_interval = 5
         if (epoch==0) or ((epoch % validate_interval) == (validate_interval-1)):            
             
             # x_l = [] # sanity check
@@ -543,7 +501,6 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             valid_loss = valid_loop_dict["total_loss"]
             batch_losses = valid_loop_dict["batch_losses"]
             auc_score = roc_auc_score(label_total, pred_total)
-            i = fold_idx
             print(f"fold {i} epoch {epoch} validation total loss: {valid_loss}")
             print(f"fold {i} epoch {epoch} validation average batch loss: {np.mean(batch_losses)}")
             print(f"fold {i} epoch {epoch} validation AUC: {auc_score}")
@@ -580,9 +537,6 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             # plot ROC curve 
             plt_save_path = f"{fold_save_path}/epoch{epoch}_ROC.png"
             plotROC(score_dict, plt_save_path)
-            plt_save_path = f"{fold_save_path}/epoch{epoch}_ROC_ucsd.png" # plot with sig eff and bkg eff in AN-19-124
-            plotROC(score_dict, plt_save_path)
-            
 
             bins = np.linspace(0, 1, 30) 
             plt_save_path = f"{fold_save_path}/epoch{epoch}_DNN_combined_dist_bySigBkg.png"
@@ -660,7 +614,6 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
                 proc_filter = df_valid.process == proc
                 # print(f"proc_filter: {proc_filter}")
                 dnn_scores = pred_total[proc_filter]
-                dnn_scores = transformDnnScore(dnn_scores)
                 wgt_proc = df_valid.wgt_nominal[proc_filter]
                 hist_proc, bins_proc = np.histogram(dnn_scores, bins=bins, weights=wgt_proc)
                 # print(f"{proc} hist: {hist_proc}")
@@ -673,6 +626,8 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             plt.savefig(f"{fold_save_path}/epoch{epoch}_DNN_validation_dist_byProcess.png")
             plt.clf()
 
+
+           
 
 
             # Do the logscale plot
@@ -689,7 +644,6 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             for proc in bkg_processes:
                 proc_filter = df_valid.process == proc
                 dnn_scores = pred_total[proc_filter]
-                dnn_scores = transformDnnScore(dnn_scores)
                 wgt = df_valid.wgt_nominal[proc_filter]
                 hist_proc, bins_proc = np.histogram(dnn_scores, bins=bins, weights=wgt)
                 # print(f"{proc} hist: {hist_proc}")
@@ -714,9 +668,6 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
             for proc in sig_processes:
                 proc_filter = df_valid.process == proc
                 dnn_scores = pred_total[proc_filter]
-                # print(f"min dnn_scores: {np.min(dnn_scores)}")
-                # print(f"max dnn_scores: {np.max(dnn_scores)}")
-                dnn_scores = transformDnnScore(dnn_scores)
                 wgt = df_valid.wgt_nominal[proc_filter]
                 hist_proc, bins_proc = np.histogram(dnn_scores, bins=bins, weights=wgt)
                 # print(f"{proc} hist: {hist_proc}")
@@ -729,40 +680,27 @@ def dnn_train(model, data_dict, fold_idx, training_features, batch_size, nepochs
                     # color =  "black",
                     ax=ax_main,
                 )
+
             ax_main.set_xlabel('arctanh Score')
             ax_main.set_ylabel("Events")
 
             sig_hist_total = np.sum(sig_hist_l)
             bkg_hist_total = np.sum(bkg_hist_l)
             significance = calculateSignificance(sig_hist_total, bkg_hist_total)
-            # if significance > best_significance:
-            #     best_significance = significance
-            #     # save state_dict
-            #     model.eval()
-            #     torch.save(model.state_dict(), f'{fold_save_path}/best_model_weights.pt')
-            #     # save torch jit version for coffea torch_wrapper while you're at it
-            #     dummy_input = torch.rand(100, len(training_features))
-            #     # temporarily move model to cpu
-            #     model.to("cpu")
-            #     torch.jit.trace(model, dummy_input).save(f'{fold_save_path}/best_model_torchJit_ver.pt')
-            #     model.to(device)
-            #     model.train() # turn model back to train mode
-            #     print(f"new best significance for fold {i} is {best_significance} from {epoch} epoch")
+            if significance > best_significance:
+                best_significance = significance
+                # save state_dict
+                model.eval()
+                torch.save(model.state_dict(), f'{fold_save_path}/best_model_weights.pt')
+                # save torch jit version for coffea torch_wrapper while you're at it
+                dummy_input = torch.rand(100, len(training_features))
+                # temporarily move model to cpu
+                model.to("cpu")
+                torch.jit.trace(model, dummy_input).save(f'{fold_save_path}/best_model_torchJit_ver.pt')
+                model.to(device)
+                model.train() # turn model back to train mode
+                print(f"new best significance for fold {i} is {best_significance} from {epoch} epoch")
 
-            best_significance = significance
-            # save state_dict
-            model.eval()
-            torch.save(model.state_dict(), f'{fold_save_path}/best_model_weights.pt')
-            # save torch jit version for coffea torch_wrapper while you're at it
-            dummy_input = torch.rand(100, len(training_features))
-            # temporarily move model to cpu
-            model.to("cpu")
-            torch.jit.trace(model, dummy_input).save(f'{fold_save_path}/best_model_torchJit_ver.pt')
-            model.to(device)
-            model.train() # turn model back to train mode
-            print(f"new best significance for fold {i} is {best_significance} from {epoch} epoch")
-
-            
             # add significance to plot
             significance = str(significance)[:5] # round to 3 d.p.
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
@@ -810,18 +748,17 @@ def calculateSignificance(sig_hist, bkg_hist):
     value = np.sum(value)
     return np.sqrt(value)
    
-
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-l",
+    "--label",
+    dest="label",
+    default="test",
+    action="store",
+    help="Unique run label (to create output path)",
+)
+args = parser.parse_args()
 if __name__ == "__main__":  
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-l",
-        "--label",
-        dest="label",
-        default="test",
-        action="store",
-        help="Unique run label (to create output path)",
-    )
-    args = parser.parse_args()
     save_path = f"dnn/trained_models/{args.label}"
     # training_features = [
     #     'dimuon_mass', 'dimuon_pt', 'dimuon_pt_log', 'dimuon_eta', \
@@ -833,26 +770,23 @@ if __name__ == "__main__":
         training_features = pickle.load(f)
     
     nfolds = 4 #4 
-    # model = Net(22)
-    # model = Net(26)
-    #Parallelization list intitializtation
-    model_l = []
-    data_dict_l = []
-    fold_l = []
-    training_features_l = []
-    save_path_l = []
-    batch_size_l = []
-    nepochs_l = []
+    model = Net(22)
     for i in range(nfolds):       
-        model = Net(26)
-        
+        # input_arr_train = np.load(f"{save_path}/data_input_train_{i}.npy")
+        # label_arr_train = np.load(f"{save_path}/data_label_train_{i}.npy")
+        # input_arr_valid = np.load(f"{save_path}/data_input_validation_{i}.npy")
+        # label_arr_valid = np.load(f"{save_path}/data_label_validation_{i}.npy")
+        # data_dict = {
+        #     "train": (input_arr_train, label_arr_train),
+        #     "validation": (input_arr_valid, label_arr_valid)
+        # }
+        # dnn_train(model, data_dict, save_path=save_path)
         df_train = pd.read_parquet(f"{save_path}/data_df_train_{i}") # these have been already scaled
         df_valid = pd.read_parquet(f"{save_path}/data_df_validation_{i}") # these have been already scaled
         df_eval = pd.read_parquet(f"{save_path}/data_df_evaluation_{i}") # these have been already scaled
 
         training_features = prepare_features(df_train, training_features) # add variation to the name
         print(f"new training_features: {training_features}")
-        print(f"df_train: {df_train}")
         data_dict = {
             "train": df_train,
             "validation": df_valid,
@@ -860,29 +794,7 @@ if __name__ == "__main__":
         }
         nepochs = 100 # 100
         batch_size = 65536
-        # dnn_train(model, data_dict, i, training_features, batch_size, nepochs, save_path)
+        dnn_train(model, data_dict,training_features=training_features, save_path=save_path,batch_size=batch_size,nepochs=nepochs)
 
-        # collect the input parameters
-        model_l.append(model)
-        data_dict_l.append(data_dict)
-        fold_l.append(i)
-        training_features_l.append(training_features)
-        save_path_l.append(save_path)
-        batch_size_l.append(batch_size)
-        nepochs_l.append(nepochs)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=nfolds) as executor:
-        # Submit each file check to the executor
-        result_l = list(executor.map(
-            dnn_train, 
-            model_l,
-            data_dict_l,
-            fold_l,
-            training_features_l,
-            batch_size_l,
-            nepochs_l,
-            save_path_l,
-        ))
-        print(f"result_l: {result_l}")
-        print("Success!")
 
