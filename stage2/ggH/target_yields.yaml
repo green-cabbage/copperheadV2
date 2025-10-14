@@ -49,9 +49,39 @@
 # - 0.35
 # - 0.06
 # - 0.02
-target_yields:  # fullRun_Jun23_2025_1n2Revised_x_V2_Aug28_PosWgtRun0p7_MassResRun1 (trained over all years)
-- 0.27
-- 0.37
-- 0.19
-- 0.11
-- 0.06
+# target_yields:  # fullRun_Jun23_2025_1n2Revised_x_V2_Aug28_PosWgtRun0p7_MassResRun1 (trained over all years)
+# - 0.27
+# - 0.37
+# - 0.19
+# - 0.11
+# - 0.06
+# target_yields:  # fullRun_Jun23_2025_1n2Revised/V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRptNoEarlyStop_IssueNum2_ggh/stage2_output (trained over all years)
+# - 0.21
+# - 0.33
+# - 0.24
+# - 0.15
+# - 0.07
+# target_yields:  # fullRun_Jun23_2025_1n2Revised/V2_Aug16_2025Reprod_IssueNum2_ggh/stage2_output (trained over all years)
+# - 0.22
+# - 0.29
+# - 0.41
+# - 0.06
+# - 0.02
+# target_yields:  # fullRun_Jun23_2025_1n2Revised/V2_Aug16_2025DefaultFillNoneBackFix_IssueNum2_ggh/stage2_output (trained over all years)
+# - 0.25
+# - 0.33
+# - 0.35
+# - 0.05
+# - 0.02
+target_yields:  # fullRun_Jun23_2025_1n2Revised/V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_IssueNum2_ggh/stage2_output (trained over all years)
+- 0.21
+- 0.32
+- 0.25
+- 0.15
+- 0.07
+# target_yields:  # fullRun_Jun23_2025_1n2Revised/V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRpt_IssueNum2_ggh/stage2_output (trained over all years)
+# - 0.21
+# - 0.33
+# - 0.38
+# - 0.06
+# - 0.02

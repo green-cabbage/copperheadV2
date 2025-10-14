@@ -9,8 +9,6 @@ set -e
 # label="fullRun_Jun21_2025"
 label="fullRun_Jun23_2025_1n2Revised/"
 
-sample_l="data ggh vbf" 
-
 category="ggh"
 # model="V2_UL_Apr09_2025_DyMinnloTtStVvEwkGghVbf_hyperParamOnScaleWgt0_75"
 # model="V2_UL_Apr11_2025_DyTtStVvEwkGghVbf"
@@ -18,7 +16,12 @@ category="ggh"
 # model="V2_UL_Jun09_2025"
 # model="V2_fullRun_Jun21_2025_allYear"
 # model="V2_fullRun_Jun21_2025_1n2Revised"
-model="V2_Aug28_PosWgtRun0p7_MassResRun1"
+# model="V2_Aug28_PosWgtRun0p7_MassResRun1"
+model="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRptNoEarlyStop_IssueNum2"
+# model="V2_Aug16_2025Reprod_IssueNum2"
+# model="V2_Aug16_2025DefaultFillNoneBackFix_IssueNum2"
+# model="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_IssueNum2"
+# model="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRpt_IssueNum2"
 
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/$category/stage2_output" 

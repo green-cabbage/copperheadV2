@@ -35,18 +35,22 @@ def getBadFile(fname):
         tmp_path = f"/tmp/{uuid.uuid4().hex}.parquet"
         if "Muon_pt" in up_file["Events"].keys():
             # apply parquet tests for lzma error
-            ak.to_parquet(up_file["Events"]['Muon_pt'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Muon_eta'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Muon_phi'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Muon_mass'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Jet_pt'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Jet_eta'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Jet_phi'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Jet_mass'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Electron_pt'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Electron_eta'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Electron_phi'].array(),tmp_path)
-            ak.to_parquet(up_file["Events"]['Electron_mass'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Muon_pt'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Muon_eta'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Muon_phi'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Muon_mass'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Jet_pt'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Jet_eta'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Jet_phi'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Jet_mass'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Electron_pt'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Electron_eta'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Electron_phi'].array(),tmp_path)
+            # ak.to_parquet(up_file["Events"]['Electron_mass'].array(),tmp_path)
+
+            # # test for HLT_IsoMu27
+            # up_file["Events"]['HLT_IsoMu27'].array()
+            up_file["Events"]['Muon_pt'].array()
 
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
@@ -486,7 +490,7 @@ if __name__ == "__main__":
                 total_events += preprocess_metadata["nGenEvts"]
 
             # test start -------------------------------
-            if sample_name == "dy_VBF_filter":
+            if sample_name == "dy_VBF_filter_weird": #FIXME
                 """
                 Starting from coffea 2024.4.1, this if statement is technically as obsolite preprocess
                 can now handle thousands of root files no problem, but this "manual" is at least three
