@@ -8,6 +8,8 @@ import dask_awkward as dak
 from omegaconf import OmegaConf
 import correctionlib
 import dask
+from functools import reduce
+import operator
 
 def get_corr_inputs(input_dict, corr_obj):
     """
@@ -1595,9 +1597,39 @@ def btag_weights_json(processor, systs, jets, weights, bjet_sel_mask, btag_file)
 #     return btag.wgt, btag_syst
 
 
+def GetBtagSF_byWorkingPoint(jets, btag_evaluator, working_points):
+    """
+    correctionlib and working point based SF evaluation method
+    NOTE: This is specifically for 2024, which seems to only take working point as the input
+    Source: https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/btvExample.py#L18-27
 
+    """
+    flavour_var = "hadronFlavour"
+    bc_jets_filter = (jets[flavour_var] == 4) | (jets[flavour_var] == 5) 
+    bc_jets = jets[bc_jets_filter]
+    # print(f"bc_jets_filter sum: {ak.sum(bc_jets_filter).compute()}")
 
-
+    debug_filter = ak.sum(bc_jets_filter, axis=1) > 0
+    print(f"debug_filter: {debug_filter.compute()}")
+    
+    sf_l_by_wp = []
+    for wp in working_points:
+        # evaluate('systematic', 'working_point', 'flavor', 'abseta', 'pt')
+        # bc_jet_sf = btag_evaluator.evaluate("central", "M", bc_jets[flavour_var], abs(bc_jets.eta), bc_jets.pt)
+        # evaluate('working_point')
+        bc_jet_sf = btag_evaluator.evaluate(wp)
+        bc_jet_sf = ak.ones_like(bc_jets.pt)*bc_jet_sf
+        # print(f"bc_jet_sf b4 prod: {bc_jet_sf.compute()}")
+        print(f"bc_jet_sf b4 prod: {bc_jet_sf[debug_filter].compute()}")
+        bc_jet_sf = ak.prod(bc_jet_sf, axis=1) # events with no bc_jets get value of one
+        # print(f"bc_jet_sf after prod: {bc_jet_sf.compute()}")
+        print(f"bc_jet_sf after prod: {bc_jet_sf[debug_filter].compute()}")
+        sf_l_by_wp.append(bc_jet_sf)
+    print(f"sf_l_by_wp: {sf_l_by_wp}")
+    sf_l_total =  reduce(operator.mul, sf_l_by_wp)
+    # print(f"sf_l_total: {sf_l_total.compute()}")
+    print(f"sf_l_total: {sf_l_total[debug_filter].compute()}")
+    raise ValueError
 
 # -----------------------------------------------------------
 #
