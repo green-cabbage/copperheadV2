@@ -52,7 +52,7 @@ pu_file_mc: # source https://github.com/cms-sw/cmssw/blob/CMSSW_10_6_X/SimGenera
   '2018_RERECO': data/pileup/mcPileup2018.root
   2022preEE: data/pileup/2022_Summer22/puWeights.json.gz
   2022postEE: data/pileup/2022_Summer22EE/puWeights.json.gz
-  '2024': data/pileup/mix_2018_25ns_UltraLegacy_PoissonOOTPU_cfi.yaml #FIXME
+  '2024': data/pileup/puWeights2024_temp.json #Source: Ram's friend Oct 21 2025
 muSFFileList:
   2016preVFP:
   - id:

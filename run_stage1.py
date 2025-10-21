@@ -216,12 +216,14 @@ if __name__ == "__main__":
                 "http://dask-gateway-k8s.geddes.rcac.purdue.edu/",
                 proxy_address="traefik-dask-gateway-k8s.cms.geddes.rcac.purdue.edu:8786",
             )
-            cluster_info = gateway.list_clusters()[0]# get the first cluster by default. There only should be one anyways
+            # cluster_info = gateway.list_clusters()[0]# get the first cluster by default. There only should be one anyways
+            cluster_info = gateway.list_clusters()[-1]# get the first cluster by default. There only should be one anyways
             client = gateway.connect(cluster_info.name).get_client()
             logger.debug(f"client: {client}")
             logger.info("Gateway Client created")
         else:
-            client = Client(n_workers=60,  threads_per_worker=1, processes=True, memory_limit='10 GiB')
+            # client = Client(n_workers=60,  threads_per_worker=1, processes=True, memory_limit='10 GiB')
+            client = Client(n_workers=1,  threads_per_worker=1, processes=True, memory_limit='10 GiB')
             logger.info("Local scale Client created")
         #-------------------------------------------------------------------------------------
         sample_path = "./prestage_output/processor_samples_"+args.year+"_NanoAODv"+str(args.NanoAODv)+".json" # INFO: Hardcoded filename        logger.debug(f"Sample path: {sample_path}")

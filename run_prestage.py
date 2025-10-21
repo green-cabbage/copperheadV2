@@ -369,7 +369,8 @@ if __name__ == "__main__":
             logger.debug(f"is data?: {is_data}")
 
             dataset_name = dataset[sample_name]
-            allowlist_sites=["T2_US_Purdue", "T2_US_MIT","T2_US_FNAL", "T2_CH_CERN", "T2_US_Vanderbilt", "T2_US_Florida", "T2_IT_Pisa", "T2_DE_RWTH"]
+            allowlist_sites=["T2_US_Purdue", "T2_US_Florida", "T2_US_MIT","T2_US_FNAL", "T2_CH_CERN", "T2_US_Vanderbilt",  "T2_IT_Pisa", "T2_DE_RWTH"]
+            # allowlist_sites=["T3_US_Rutgers", "T2_US_Purdue", "T2_US_MIT","T2_US_FNAL", "T2_CH_CERN", "T2_US_Vanderbilt",  "T2_IT_Pisa", "T2_DE_RWTH"]
 
             # print(f"type(dataset_name): {type(dataset_name)}")
             is_some_list_type = isinstance(dataset_name, Sequence) and not isinstance(dataset_name, str)

@@ -1,3 +1,5 @@
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l test -y 2024 -m 1)
+
 time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l fullRun_Jul17_2025_qglFixed -y 2017 -m 1)
 
 time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l vbf_dy_validationMay30_2025 -y 2018 -m all -d 1)

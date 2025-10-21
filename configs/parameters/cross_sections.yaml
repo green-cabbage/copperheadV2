@@ -103,8 +103,13 @@ cross_sections: # cross-section unit: pb
   wwz: 0.1651 # source: AN-19-124 table 2.8
   wzz: 0.05565 # source: AN-19-124 table 2.8
   zzz: 0.01398 # source: AN-19-124 table 2.8
-  # ggh_powheg: 0.01057
-  ggh_powhegPS: 0.01057
+  # ggh_powhegPS: 0.01057
+  ggh_powhegPS:
+    '2016PreVFP': 0.01057
+    '2016PostVFP': 0.01057
+    '2017': 0.01057
+    '2018': 0.01057
+    '2024': 0.01138614 # source: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHWG136TeVxsec_extrap
   ggh_amcPS: 0.01057
   ggh_amcPS_TuneCP5down: 0.01057
   ggh_amcPS_TuneCP5up: 0.01057
@@ -121,6 +126,8 @@ cross_sections: # cross-section unit: pb
   vbf_amcPS_TuneCP5up: 0.0008228
   vbf_amcPS: 0.0008228
   vbf_amc: 0.0008228
+  vbf_aMCatNLO:
+    '2024': 0.000889004 # source: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHWG136TeVxsec_extrap
   ggh_powhegPS_m120: 0.012652906
   ggh_amcPS_m120: 0.012652906
   vbf_powhegPS_m120: 0.0009534505

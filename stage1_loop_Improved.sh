@@ -66,16 +66,15 @@ data_l_dict["2017"]="B C D E F"
 data_l_dict["2018"]="A B C D"
 data_l_dict["2022preEE"]="C D"
 data_l_dict["2022postEE"]="E F G"
+data_l_dict["2024"]="C D E F G H I"
+# data_l_dict["2024"]="F G H I"
 
-# data_l_dict["2018"]=""
-# data_l_dict["2017"]=""
-# data_l_dict["2016postVFP"]=""
-# data_l_dict["2016preVFP"]=""
-bkg_l="DY Top VV EWK VVV"
-# bkg_l="Top VV EWK VVV"
-# bkg_l=""
-# sig_l="Higgs"
-sig_l=""
+# bkg_l="DY TT ST VV EWK VVV"
+# bkg_l="DY Top VV EWK VVV"
+bkg_l="DY"
+
+sig_l="Higgs"
+# sig_l=""
 
 # If debug is on, then run only for one era in each year.
 if [[ "$debug" == "1" ]]; then
@@ -127,7 +126,9 @@ for year in "${years[@]}"; do
 
     # command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv --xcache "
     command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv  --use_gateway  "
+    # command0="python run_prestage.py --chunksize $chunksize -y $year --yaml $datasetYAML --data $data_l --background $bkg_l --signal $sig_l  --NanoAODv $NanoAODv   "
     command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv --use_gateway  --max_file_len 2500 "
+    # command1="python -W ignore run_stage1.py -y $year --save_path $save_path --NanoAODv $NanoAODv --max_file_len 2500 "
     command2="python validation/zpt_rewgt/validation.py -y $year --label $label --in $save_path --data $data_l --background $bkg_l --signal $sig_l  --use_gateway "
 
     command3="python src/lib/ebeMassResCalibration/ebeMassResPlotter.py --path $save_path"

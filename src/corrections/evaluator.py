@@ -7,6 +7,7 @@ import awkward as ak
 import dask_awkward as dak
 from omegaconf import OmegaConf
 import correctionlib
+import dask
 
 def get_corr_inputs(input_dict, corr_obj):
     """
@@ -155,6 +156,7 @@ def pu_evaluator(parameters, ntrueint, onTheSpot=False, Run=2, is_rereco=False):
     distinction for run2 and run3 is not the most elegant method, but it should
     be good enough for the time being
     """
+    year = parameters["year"]
     if Run ==2:
         if onTheSpot:
             # lookups = pu_lookups(parameters, auto=ntrueint)
@@ -173,12 +175,16 @@ def pu_evaluator(parameters, ntrueint, onTheSpot=False, Run=2, is_rereco=False):
         jsonGz_path = parameters["pu_file_mc"]
         print(f"jsonGz_path: {jsonGz_path}")
         ceval = correctionlib.CorrectionSet.from_file(jsonGz_path)
-        key = list(ceval.keys())[0]
+        key = list(ceval.keys())[0] # there's only one key
         pu_lookup = ceval[key]
         pu_weights = {}
         pu_weights["nom"] = pu_lookup.evaluate(ntrueint,"nominal")
         pu_weights["up"] = pu_lookup.evaluate(ntrueint,"up")
         pu_weights["down"] = pu_lookup.evaluate(ntrueint,"down")
+        # print(f"pu weight correctionlib keys: {list(ceval.keys())}")
+        # print(f"pu weight correctionlib key: {key}")
+        # print(f"pu_weights: {dask.compute(pu_weights)}")
+        
     else:
         print("ERROR: unacceptable Run value is given!")
         raise ValueError
