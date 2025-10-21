@@ -11,7 +11,7 @@ from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
 from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, has_run2_year
 # from src.corrections.weight import Weights
-from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old
+from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old, GetBtagSF_byWorkingPoint
 import json
 from coffea.lumi_tools import LumiMask
 import pandas as pd # just for debugging
@@ -495,7 +495,12 @@ class EventProcessor(processor.ProcessorABC):
         is_mc = events.metadata['is_mc']
         logger.debug(f"NanoAODv: {NanoAODv}")
         # LHE cut original start -----------------------------------------------------------------------------
-        if 'dy_M-50' in dataset: # if dy_M-50, apply LHE cut
+        if ("022" in year) or ("023" in year) or ("024" in year) or ("025" in year) or ("026" in year):
+            run_campaign = 3
+        else:
+            run_campaign = 2
+            
+        if ('dy_M-50' in dataset) and (run_campaign==2): # if dy_M-50, apply LHE cut
             logger.info("doing dy_M-50 LHE cut!")
             LHE_particles = events.LHEPart #has unique pdgIDs of [ 1,  2,  3,  4,  5, 11, 13, 15, 21]
             bool_filter = (abs(LHE_particles.pdgId) == 11) | (abs(LHE_particles.pdgId) == 13) | (abs(LHE_particles.pdgId) == 15)
@@ -564,7 +569,7 @@ class EventProcessor(processor.ProcessorABC):
 
             # obtain PU reweighting b4 event filtering, and apply it after we finalize event_filter
             logger.debug(f"year: {year}")
-            if ("22" in year) or ("23" in year) or ("24" in year):
+            if ("022" in year) or ("023" in year) or ("024" in year) or ("025" in year) or ("026" in year):
                 run_campaign = 3
             else:
                 run_campaign = 2
@@ -1414,6 +1419,7 @@ class EventProcessor(processor.ProcessorABC):
         # do zpt weight at the very end
         dataset = events.metadata["dataset"]
         do_zpt = ('dy' in dataset) and is_mc
+        do_zpt = False
         if do_zpt:
             logger.info("doing zpt!")
             logger.info("=======================  apply zpt weights =======================")
@@ -2024,32 +2030,45 @@ class EventProcessor(processor.ProcessorABC):
 
 
         #     # # --- Btag weights  start--- #
-            do_btag_wgt = True # True
-            if NanoAODv ==12:
-                do_btag_wgt = False # temporary condition
+            do_btag_wgt = False # FIXME
             if do_btag_wgt:
                 logger.info("doing btag wgt!")
                 bjet_sel_mask = ak.ones_like(njets) #& two_jets & vbf_cut
                 btag_systs = self.config["btag_systs"] #if do_btag_syst else []
-                if "RERECO" in year:
-                # if True:
+                if "2024" in year: 
+                    # w.p. based SF https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/btvExample.py#L18-27
+                    btag_file =  correctionlib.CorrectionSet.from_file(self.config["btag_sf_json"],)
+                    btag_evaluator = btag_file["UParTAK4_wp_values"]
+                    working_points = ["L", "M"]
+                    GetBtagSF_byWorkingPoint(jets, btag_evaluator, working_points)
+                    # print(f"unique partonFlavour values: {np.unique(ak.to_numpy(ak.flatten(jets.partonFlavour.compute())))}") # -> results = [-5 -4 -3 -2 -1  0  1  2  3  4  5 21]
+                    # print(f"unique hadronFlavour values: {np.unique(ak.to_numpy(ak.flatten(jets.hadronFlavour.compute())))}") # -> results = [0 4 5]
+                    raise ValueError
+                elif "RERECO" in year:
                     btag_json = BTagScaleFactor(
                     self.config["btag_sf_csv"],
                     BTagScaleFactor.RESHAPE,
                     "iterativefit,iterativefit,iterativefit",
-                )
+                    )
+                    # keep dims start -------------------------------------
+                    btag_wgt, btag_syst = btag_weights_jsonKeepDim(
+                                self, btag_systs, jets, weights, bjet_sel_mask, btag_json
+                    )
+                    weights.add("btag_wgt",
+                            weight=btag_wgt,
+                    )
                 else:
                     btag_file =  correctionlib.CorrectionSet.from_file(self.config["btag_sf_json"],)
                     # btag_json=btag_file["deepJet_shape"]
                     btag_json=btag_file["deepCSV_shape"]
 
-                # keep dims start -------------------------------------
-                btag_wgt, btag_syst = btag_weights_jsonKeepDim(
-                            self, btag_systs, jets, weights, bjet_sel_mask, btag_json
-                )
-                weights.add("btag_wgt",
-                        weight=btag_wgt,
-                )
+                    # keep dims start -------------------------------------
+                    btag_wgt, btag_syst = btag_weights_jsonKeepDim(
+                                self, btag_systs, jets, weights, bjet_sel_mask, btag_json
+                    )
+                    weights.add("btag_wgt",
+                            weight=btag_wgt,
+                    )
                  # --- Btag weights variations --- #
                 for name, bs in btag_syst.items():
                     logger.info(f"{name} value: {bs}")
@@ -2060,9 +2079,6 @@ class EventProcessor(processor.ProcessorABC):
                     )
                 # TODO: add btag systematics by adding seperate wgts
                 # keep dims end -------------------------------------
-                # logger.info(f"btag_wgt: {ak.to_numpy(btag_wgt.compute())}")
-                # logger.info(f"btag_syst['jes_up']: {ak.to_numpy(btag_syst['jes']['up'].compute())}")
-                # logger.info(f"btag_syst['jes_down']: {ak.to_numpy(btag_syst['jes']['down'].compute())}")
             # # --- Btag weights end --- #
 
 
@@ -2093,8 +2109,10 @@ class EventProcessor(processor.ProcessorABC):
             btagLoose_filter = (jets.btagDeepB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
             btagMedium_filter = (jets.btagDeepB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
         else:
-            btagLoose_filter = (jets.btagPNetB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
-            btagMedium_filter = (jets.btagPNetB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
+            jet_bTagger_name = self.config["jet_bTagger_name"]
+            print(f"jet_bTagger_name: {jet_bTagger_name}")
+            btagLoose_filter = (jets[jet_bTagger_name] > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
+            btagMedium_filter = (jets[jet_bTagger_name] > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
         btagLoose_filter = ak.fill_none(btagLoose_filter, value=False)
         btagMedium_filter = ak.fill_none(btagMedium_filter, value=False)
 
@@ -2104,8 +2122,10 @@ class EventProcessor(processor.ProcessorABC):
         # #quick sanity check
         # logger.info(f"nBtagLoose : {nBtagLoose[:20].compute()}")
         # logger.info(f"btagLoose_filter sum : {ak.sum(btagLoose_filter, axis=1)[:20].compute()}")
+        # logger.info(f"btagLoose_filter sum : {ak.sum(btagLoose_filter, axis=None).compute()}")
         # logger.info(f"nBtagMedium : {nBtagMedium[:20].compute()}")
         # logger.info(f"btagMedium_filter sum : {ak.sum(btagMedium_filter, axis=1)[:20].compute()}")
+        # logger.info(f"btagMedium_filter sum : {ak.sum(btagMedium_filter, axis=None).compute()}")
         # raise ValueError
 
         # logger.info(f"nBtagLoose: {jets.btagDeepFlavB.compute()}")
