@@ -9,6 +9,7 @@ roccor_file:
   '2018_RERECO': data/roch_corr/RoccoR2018.txt
   2022preEE: data/roch_corr/RoccoR2018UL.txt
   2022postEE: data/roch_corr/RoccoR2018UL.txt
+  '2024': data/roch_corr/RoccoR2018UL.txt #FIXME
 res_calib_path:
   2016preVFP:
     MC: data/res_calib/res_calib_MC_2016.root
@@ -37,6 +38,9 @@ res_calib_path:
   2022postEE:
     MC: data/res_calib/res_calib_MC_2018.root
     Data: data/res_calib/res_calib_Data_2018.root
+  '2024': #FIXME
+    MC: data/res_calib/res_calib_MC_2018.root
+    Data: data/res_calib/res_calib_Data_2018.root
 BS_res_calib_path:
   2016preVFP:
     MC: data/res_calib/res_calib_BS_correction_2016preVFP_nanoAODv12_MC.json
@@ -55,3 +59,6 @@ BS_res_calib_path:
   '2018_RERECO': dummy
   2022preEE: dummy
   2022postEE: dummy
+  '2024': #FIXME
+    MC: data/res_calib/res_calib_BS_correction_2018_nanoAODv12_MC.json
+    Data: data/res_calib/res_calib_BS_correction_2018_nanoAODv12.json

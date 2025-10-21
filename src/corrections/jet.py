@@ -214,11 +214,27 @@ def get_jec_factories(jec_parameters: dict, year):
     return jec_factories, jec_factories_data
 
 
+def has_run2_year(year_str: str) -> bool:
+    """
+    Returns True if the input string mentions 2016, 2017, or 2018.
+    """
+    if not isinstance(year_str, str):
+        return False  # only handle strings safely
+    
+    return any(y in year_str for y in ["2016", "2017", "2018"])
+
 
 def jet_id(jets, config):
-    # logger.debug(f"jets parameters: {parameters}")
-    pass_jet_id = ak.ones_like(jets.jetId, dtype=bool)
     year = config["year"]
+
+    is_run2 = has_run2_year(year)
+    # pass_jet_id = ak.ones_like(jets.jetId, dtype=bool)
+    pass_jet_id = ak.ones_like(jets.pt, dtype=bool)
+    
+    if not is_run2:
+        return pass_jet_id
+
+    #if run2, continue the method
     if ("2016" in year) and ("RERECO" in year):  # 2016RERECO
         if "loose" in config["jet_id"]:
             pass_jet_id = jets.jetId >= 1
@@ -240,11 +256,15 @@ def jet_id(jets, config):
 def jet_puid(jets, config):
     jet_puid2use = config["jet_puid"]
     year = config["year"]
+    is_run2 =  has_run2_year(year)
+
     if year=="2017_RERECO":
         logger.debug("using puId 17!")
         puId = jets.puId17
-    else:
+    elif is_run2:
         puId = jets.puId
+    else:
+        puId = jets.puIdDisc
     # jet puid for standard wps are different for 2016 vs 2017,2018 as shown in https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL#Working_Points
     # only apply jet puid to jets with pt < 50, else, pass
     # as stated in https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL
@@ -261,7 +281,8 @@ def jet_puid(jets, config):
             "medium": (puId >= 6) | (jets.pt >= 50),
             "tight": (puId >= 7) | (jets.pt >= 50),
         }
-    pass_jet_puid = ak.ones_like(jets.jetId, dtype=bool)
+    # pass_jet_puid = ak.ones_like(jets.jetId, dtype=bool)
+    pass_jet_puid = ak.ones_like(jets.pt, dtype=bool)
 
     if "2017" in year: # for misreco due ot ECAL endcap noise
         eta_window = (abs(jets.eta) > 2.6) & (abs(jets.eta) < 3.0)
@@ -397,7 +418,12 @@ def applyHemVeto(jets, run, event_num, config, is_mc: bool):
     """
     Apply HEM veto for 2018 UL as recommended on https://cms-talk.web.cern.ch/t/question-about-hem15-16-issue-in-2018-ultra-legacy/38654/5
     """
-    puId = jets.puId
+    year = config["year"]
+    is_run2 =  has_run2_year(year)
+    if is_run2:
+        puId = jets.puId
+    else:
+        puId = jets.puIdDisc
     # jet puid selection
     jet_puid_wps = {
             "loose": (puId >= 4) | (jets.pt >= 50),

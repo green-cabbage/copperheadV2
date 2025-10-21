@@ -8,6 +8,7 @@ jet_pt_cut:
   '2018_RERECO': 25.0
   2022preEE: 25.0
   2022postEE: 25.0
+  '2024': 25.0
 jet_eta_cut:
   2016preVFP: 4.7
   2016postVFP: 4.7
@@ -18,6 +19,7 @@ jet_eta_cut:
   '2018_RERECO': 4.7
   2022preEE: 4.7
   2022postEE: 4.7
+  '2024': 4.7
 jet_id:
   2016preVFP: tight # For 2016UL, we don't have loose ID, so make it just tight https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookNanoAOD#Jets
   2016postVFP: tight # For 2016UL, we don't have loose ID, so make it just tight https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookNanoAOD#Jets
@@ -28,6 +30,7 @@ jet_id:
   '2018_RERECO': tight
   2022preEE: tight
   2022postEE: tight
+  '2024': tight
 jet_puid:
   2016preVFP: loose
   2016postVFP: loose
@@ -38,6 +41,7 @@ jet_puid:
   '2018_RERECO': loose
   2022preEE: loose
   2022postEE: loose
+  '2024': loose
 min_dr_mu_jet:
   2016preVFP: 0.4
   2016postVFP: 0.4
@@ -48,6 +52,7 @@ min_dr_mu_jet:
   '2018_RERECO': 0.4
   2022preEE: 0.4
   2022postEE: 0.4
+  '2024': 0.4
 btag_loose_wp: # for DeepCSV, DeepJet is different
   2016preVFP: 0.2027
   2016postVFP: 0.1918
@@ -58,6 +63,7 @@ btag_loose_wp: # for DeepCSV, DeepJet is different
   '2018_RERECO': 0.1241
   2022preEE: 0.12
   2022postEE: 0.12
+  '2024': 0.1208 #FIXME
 btag_medium_wp: # for DeepCSV, DeepJet is different
   2016preVFP: 0.6001
   2016postVFP: 0.5847
@@ -68,6 +74,7 @@ btag_medium_wp: # for DeepCSV, DeepJet is different
   '2018_RERECO': 0.4184
   2022preEE: 0.4168
   2022postEE: 0.4168
+  '2024': 0.4168 #FIXME
 softjet_dr2:
   2016preVFP: 0.16
   2016postVFP: 0.16
@@ -78,6 +85,7 @@ softjet_dr2:
   '2018_RERECO': 0.16
   2022preEE: 0.16
   2022postEE: 0.16
+  '2024': 0.16 #FIXME
 do_HemVeto:
   2016preVFP: false
   2016postVFP: false
@@ -88,6 +96,7 @@ do_HemVeto:
   '2018_RERECO': false
   2022preEE: false
   2022postEE: false
+  '2024': false
 HemVeto_ratio: # ratio of HemVeto applicable run / total nevents for 2018UL
   2016preVFP: 0.0
   2016postVFP: 0.0
@@ -98,3 +107,4 @@ HemVeto_ratio: # ratio of HemVeto applicable run / total nevents for 2018UL
   '2018_RERECO': 0.0
   2022preEE: 0.0
   2022postEE: 0.0
+  '2024': 0.0

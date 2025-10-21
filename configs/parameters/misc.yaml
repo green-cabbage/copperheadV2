@@ -98,6 +98,17 @@ sths_names:
   - Mjj1500
   - PTH25
   - JET01
+  '2024': #FIXME
+  - Yield
+  - PTH200
+  - Mjj60
+  - Mjj120
+  - Mjj350
+  - Mjj700
+  - Mjj1000
+  - Mjj1500
+  - PTH25
+  - JET01
 btag_systs:
   2016preVFP:
   - jes
@@ -180,6 +191,16 @@ btag_systs:
   - lfstats1
   - lfstats2
   2022postEE:
+  - jes
+  - lf
+  - hfstats1
+  - hfstats2
+  - cferr1
+  - cferr2
+  - hf
+  - lfstats1
+  - lfstats2
+  '2024': #FIXME
   - jes
   - lf
   - hfstats1
@@ -280,6 +301,14 @@ event_flags: # MET/Noise filters source: https://twiki.cern.ch/twiki/bin/view/CM
   - BadPFMuonDzFilter
   - hfNoisyHitsFilter
   - eeBadScFilter
+  '2024': #FIXME
+  - BadPFMuonFilter
+  - EcalDeadCellTriggerPrimitiveFilter
+  - globalSuperTightHalo2016Filter
+  - goodVertices
+  - BadPFMuonDzFilter
+  - hfNoisyHitsFilter
+  - eeBadScFilter
 do_l1prefiring_wgts:
   2016preVFP: true
   2016postVFP: true
@@ -290,6 +319,7 @@ do_l1prefiring_wgts:
   '2018_RERECO': false
   2022preEE: false
   2022postEE: false
+  '2024': false
 n_pdf_variations:
   2016preVFP: 100
   2016postVFP: 100
@@ -300,6 +330,7 @@ n_pdf_variations:
   '2018_RERECO': 33
   2022preEE: 33
   2022postEE: 33
+  '2024': 33 #FIXME
 dnn_max:
   2016preVFP: 1.75
   2016postVFP: 1.75
@@ -310,3 +341,4 @@ dnn_max:
   '2018_RERECO': 2.35
   2022preEE: 2.35
   2022postEE: 2.35
+  '2024': 2.35 #FIXME

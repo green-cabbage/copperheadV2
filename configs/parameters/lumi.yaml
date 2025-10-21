@@ -5,6 +5,7 @@ integrated_lumis: # source: https://github.com/TopEFT/topeft/blob/252c6454e06e49
   '2018': 59830.0
   2022preEE: 59970.0
   2022postEE: 59970.0
+  '2024': 108960.0 # source: https://docs.google.com/presentation/d/1EHxQcWzw8IxPgCn8hm1prwSP-EktFtiuaEzH8WkQNVY/edit?slide=id.g36971dee1d1_0_0#slide=id.g36971dee1d1_0_0
   2016_RERECO: 35920.0
   2017_RERECO: 41529.0
   2018_RERECO: 59740.0
@@ -18,3 +19,4 @@ lumimask:
   2016_RERECO: data/lumimasks/RERECO/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt # RERECO source https://twiki.cern.ch/twiki/bin/viewauth/CMS/DCUserPage#Early2018Re_Reco_datasets_17Sep2 and https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation
   '2017_RERECO': data/lumimasks/RERECO/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt
   '2018_RERECO': data/lumimasks/RERECO/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt
+  '2024': /cvmfs/cms-griddata.cern.ch/cat/metadata/DC/Collisions24/latest/Cert_Collisions2024_378981_386951_Golden.json # source: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json

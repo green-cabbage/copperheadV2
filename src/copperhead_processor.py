@@ -9,7 +9,7 @@ import correctionlib
 from src.corrections.rochester import apply_roccor, apply_roccorRun3
 from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
-from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear
+from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, has_run2_year
 # from src.corrections.weight import Weights
 from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old
 import json
@@ -399,7 +399,7 @@ class EventProcessor(processor.ProcessorABC):
         dict_update = {
             # "hlt" :["IsoMu24"],
             "do_trigger_match" : True, # False
-            "do_roccor" : True,# True
+            "do_roccor" : False,# True
             "do_fsr" : True, # True
             "do_geofit" : False, # True # FIXME: Make it false for always
             "do_beamConstraint": True, # if True, override do_geofit
@@ -413,26 +413,26 @@ class EventProcessor(processor.ProcessorABC):
         extractor_instance = extractor()
         year = self.config["year"]
         # Z-pT reweighting
-        zpt_filename = self.config["zpt_weights_file"]
-        extractor_instance.add_weight_sets([f"* * {zpt_filename}"])
+        # zpt_filename = self.config["zpt_weights_file"]
+        # extractor_instance.add_weight_sets([f"* * {zpt_filename}"])
 
-        if "2016" in year:
-            # self.zpt_path = "zpt_weights_all" # Valerie
-            self.zpt_path = "zpt_weights/2016_value" # Dmitry
-        else:
-            # self.zpt_path = "zpt_weights_all" # Valerie
-            self.zpt_path = "zpt_weights/2017_value" # Dmitry
-        # Calibration of event-by-event mass resolution
+        # if "2016" in year:
+        #     # self.zpt_path = "zpt_weights_all" # Valerie
+        #     self.zpt_path = "zpt_weights/2016_value" # Dmitry
+        # else:
+        #     # self.zpt_path = "zpt_weights_all" # Valerie
+        #     self.zpt_path = "zpt_weights/2017_value" # Dmitry
+        # # Calibration of event-by-event mass resolution
 
-        # add valerie Zpt
-        zpt_filename = self.config["zpt_weights_file_valerie"]
-        extractor_instance.add_weight_sets([f"* * {zpt_filename}"])
-        self.zpt_path_valerie = "zpt_weights_all" # Valerie
+        # # add valerie Zpt
+        # zpt_filename = self.config["zpt_weights_file_valerie"]
+        # extractor_instance.add_weight_sets([f"* * {zpt_filename}"])
+        # self.zpt_path_valerie = "zpt_weights_all" # Valerie
 
         for mode in ["Data", "MC"]:
             if "2016" in year: # 2016PreVFP, 2016PostVFP, 2016_RERECO
                 yearUL = "2016"
-            elif ("22" in year) or ("23" in year):# FIXME: temporary solution until I can generate my own dimuon mass resolution
+            elif ("22" in year) or ("23" in year) or ("2024" in year):# FIXME: temporary solution until I can generate my own dimuon mass resolution
                 yearUL = "2018"
             elif "RERECO" in year: # 2017_RERECO. 2018_RERECO
                 yearUL=year.replace("_RERECO","")
@@ -452,7 +452,7 @@ class EventProcessor(processor.ProcessorABC):
         extractor_instance.finalize()
         self.evaluator = extractor_instance.make_evaluator()
 
-        self.evaluator[self.zpt_path]._axes = self.evaluator[self.zpt_path]._axes[0]# this exists in Dmitry's code
+        # self.evaluator[self.zpt_path]._axes = self.evaluator[self.zpt_path]._axes[0]# this exists in Dmitry's code
 
 
         # Initialize PackedSelection
@@ -547,8 +547,11 @@ class EventProcessor(processor.ProcessorABC):
 
         else:
             logger.debug(f'self.config["lumimask"]: {self.config["lumimask"]}')
-            lumi_info = LumiMask(self.config["lumimask"])
-            lumi_mask = lumi_info(events.run, events.luminosityBlock)
+            if self.config["lumimask"] == "dummy" :
+                lumi_mask = ak.ones_like(event_filter, dtype="bool")
+            else:
+                lumi_info = LumiMask(self.config["lumimask"])
+                lumi_mask = lumi_info(events.run, events.luminosityBlock)
             self.selection.add("lumi_mask", lumi_mask)
 
 
@@ -636,7 +639,9 @@ class EventProcessor(processor.ProcessorABC):
                 apply_roccorRun3(events, self.config["roccor_file"], is_mc)
             events["Muon", "pt"] = events.Muon.pt_roch
             # logger.info(f"df.Muon.pt after roccor: {events.Muon.pt.compute()}")
-
+        else:
+            events["Muon", "pt_roch"] = events.Muon.pt
+            
 
         muon_selection = (
             (events.Muon.pt_raw > self.config["muon_pt_cut"]) # pt_raw is pt b4 rochester
@@ -1031,12 +1036,8 @@ class EventProcessor(processor.ProcessorABC):
 
         year = self.config["year"]
         jets = events.Jet
-        self.jec_factories_mc, self.jec_factories_data = get_jec_factories(
-            self.config["jec_parameters"],
-            year
-        )
 
-        do_jec = True # True # FIXME: Hardcoded
+        do_jec = False # True # FIXME: Hardcoded
         # do_jecunc = self.config["do_jecunc"]
         # do_jerunc = self.config["do_jerunc"]
         #testing
@@ -1045,6 +1046,13 @@ class EventProcessor(processor.ProcessorABC):
         # cache = events.caches[0]
         factory = None
         useclib = False
+
+        if do_jec or do_jecunc or do_jerunc:
+            self.jec_factories_mc, self.jec_factories_data = get_jec_factories(
+                self.config["jec_parameters"],
+                year
+            )
+        
         if do_jec: # old method
             if is_mc:
                 factory = self.jec_factories_mc["jec"]
@@ -1405,67 +1413,19 @@ class EventProcessor(processor.ProcessorABC):
         # do zpt weight at the very end
         dataset = events.metadata["dataset"]
         do_zpt = ('dy' in dataset) and is_mc
-        # do_zpt = False # temporary overwrite to obtain for zpt re-wgt
         if do_zpt:
             logger.info("doing zpt!")
-            # we explicitly don't directly add zpt weights to the weights variables
-            # due weirdness of btag weight implementation. I suspect it's due to weights being evaluated
-            # once kind of screws with the dak awkward array
-
-            logger.info("======================= old zpt method =======================")
-            
-            zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-            
-            # logger.info("======================= old zpt weights are commented out =======================")
-            # if year == "2016postVFP" or year=="2018": #FIXME: This is temporary, we need to sync the zpt strategy and update it.
-            #     zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-            # else:
-            #     zpt_weight_mine_nbins100 = getZptWgts(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
-            # logger.info(f"zpt_weight_mine_nbins100: {type(zpt_weight_mine_nbins100)}")
-            # logger.info(f"zpt_weight_mine_nbins100: {(zpt_weight_mine_nbins100)}")
-
-            # logger.info("========================= new zpt weights start =========================")
-            # sf_dict = load_sf_dict("/depot/cms/users/shar1172/copperheadV2_CheckSetup/data/zpt_rewgt/fitting_mu1mu2pt/sf_data_flat.json")
-            # logger.info(f"sf_dict: {sf_dict}")
-            # zpt_weight_mine_nbins100 = getZptWgts_new(mu1.pt, mu2.pt, acoplanarity, njets, sf_dict)
-            # logger.info(f"zpt_weight_mine_nbins100: {type(zpt_weight_mine_nbins100)}")
-            # logger.info(f"zpt_weight_mine_nbins100: {(zpt_weight_mine_nbins100)}")
-
-            # get using correction lib /depot/cms/private/users/shar1172/copperheadV2_CheckSetup/data/zpt_rewgt/fitting_mu1mu2pt/sf_data_correctionlib.json
-
-            # correction_set = correctionlib.CorrectionSet.from_file(self.config["BS_res_calib_path"])
-            # # Access the specific correction by name
-            # correction = correction_set["BS_ebe_mass_res_calibration"]
-            # logger.info(f"correction_set: {correction_set}")
-            # logger.info(f"correction: {correction}")
-
-            # calibration = correction.evaluate(mu1.pt, abs(mu1.eta), abs(mu2.eta))
-            #
-            # correction_set = correctionlib.CorrectionSet.from_file("/depot/cms/private/users/shar1172/copperheadV2_CheckSetup/data/zpt_rewgt/fitting_mu1mu2pt/sf_data_correctionlib.json")
-            # correction_set = correctionlib.CorrectionSet.from_file("/depot/cms/private/users/shar1172/copperheadV2_CheckSetup/data/zpt_rewgt/fitting_mu1mu2pt/sf_data_correctionlib_variable_acop.json")
-            # correction = correction_set["acoplanaritySF"]
-            # logger.info(f"correction_set: {correction_set}")
-            # logger.info(f"correction: {correction}")
-            # zpt_weight = correction.evaluate(mu1.pt, mu2.pt, njets, acoplanarity)
-            # logger.info(f"zpt_weight: {zpt_weight}")
-
-            # logger.info( f"zpt_weight_mine_nbins100 after new sf_dict: {zpt_weight_mine_nbins100.compute()}")
-
-            # new zpt wgt Jan 09 2025
-            # logger.info(f"self.zpt_path: {self.zpt_path}")
-            # correction_set = correctionlib.CorrectionSet.from_file(self.config["new_zpt_weights_file"])
-
-            # # Access the specific correction by name
-            # correction = correction_set["Zpt_rewgt"]
-            # zpt_weight = correction.evaluate(njets, dimuon.pt)
-            # # clip zpt weights to one for dimuon pt cases bigger than 200 GeV (line 672 of AN-19-124)
-            # ones = ak.ones_like(zpt_weight)
-            # zpt_weight = ak.where((dimuon.pt<=200), zpt_weight, ones)
-
-            # zpt_weight = zpt_weight_valerie
-            # zpt_weight = merge_zpt_wgt(zpt_weight_mine_nbins100, zpt_weight_valerie, njets, year)
-            # zpt_weight = ak.where((dimuon.pt<=200), zpt_weight, ones)
-            # # out_dict["wgt_nominal_zpt_wgt"] =  zpt_weight
+            logger.info("=======================  apply zpt weights =======================")
+            if year == "2018": 
+                if "MiNNLO" in dataset: # old zpt weights
+                    zpt_weight_mine_nbins100 = getZptWgts_2016postVFP(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+                else:
+                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
+            else:
+                if "MiNNLO" in dataset: # FIXME: temporary fix for MiNNLO samples
+                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file"])
+                else:
+                    zpt_weight_mine_nbins100 = getZptWgts_3region_new(dimuon.pt, njets, 100, year, self.config["new_zpt_weights_file_aMCatNLO"])
 
             zpt_weight = zpt_weight_mine_nbins100
             weights.add("zpt_wgt",
@@ -1800,7 +1760,11 @@ class EventProcessor(processor.ProcessorABC):
         # # source: https://nam04.safelinks.protection.outlook.com/?url=https%3A%2F%2Findico.cern.ch%2Fevent%2F1434807%2Fcontributions%2F6040633%2Fattachments%2F2893077%2F5071932%2FJERC%2520meeting%252009_07.pdf&data=05%7C02%7Cyun79%40purdue.edu%7C3d76cc7f47974533372708dd896f875a%7C4130bd397c53419cb1e58758d6d63f21%7C0%7C0%7C638817834635140303%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=fh11i5iJCGo0EQKYBdw0Df8oaesOX2hCnJ%2FU78o37%2BU%3D&reserved=0
         jetHorn_region = abs(jets.eta) > 2.5
         jetHorn_pt_cut = (jets.pt > self.config["jet_pt_cut"]) # pt cut on jethorn doesn't change
-        jetHorn_puid_cut = (jets.puId >= 7) | (jets.pt >= 50) # tight pu Id
+        if "puId" in jets.fields:
+            jet_puid_val = jets.puId
+        else: #2024
+            jet_puid_val = jets.puIdDisc
+        jetHorn_puid_cut = (jet_puid_val >= 7) | (jets.pt >= 50) # tight pu Id
         jetHorn_cut = jetHorn_pt_cut & jetHorn_puid_cut 
         jet_pt_cut = ak.where(jetHorn_region, jetHorn_cut, jet_pt_cut)
 
@@ -1930,8 +1894,8 @@ class EventProcessor(processor.ProcessorABC):
             f"jet1_rapidity_{variation}" : jet1_rapidity,  # max rel err: 0.7394
             f"jet1_phi_{variation}" : jet1.phi,
             f"jet1_qgl_{variation}" : jet1.qgl,
-            f"jet1_jetId_{variation}" : jet1.jetId,
-            f"jet1_puId_{variation}" : jet1.puId,
+            # f"jet1_jetId_{variation}" : jet1.jetId,
+            # f"jet1_puId_{variation}" : jet1.puId,
             f"jet2_pt_{variation}" : jet2.pt,
             f"jet2_eta_{variation}" : jet2.eta,
             f"jet1_mass_{variation}" : jet1.mass,
@@ -1952,8 +1916,8 @@ class EventProcessor(processor.ProcessorABC):
             f"jet2_rapidity_{variation}" : jet2_rapidity,  # max rel err: 0.781
             f"jet2_phi_{variation}" : jet2.phi,
             f"jet2_qgl_{variation}" : jet2.qgl,
-            f"jet2_jetId_{variation}" : jet2.jetId,
-            f"jet2_puId_{variation}" : jet2.puId,
+            # f"jet2_jetId_{variation}" : jet2.jetId,
+            # f"jet2_puId_{variation}" : jet2.puId,
             f"jj_mass_{variation}" : dijet.mass,
             # f"jj_mass_{variation}" : p4_sum_mass(jet1,jet2),
             f'jj_mass_log_{variation}': np.log(dijet.mass),
@@ -2117,17 +2081,19 @@ class EventProcessor(processor.ProcessorABC):
         #         weights.add_weight(f"btag_wgt_{name}", bs, how="only_vars")
 
         # Separate from ttH and VH phase space
-
+        is_run2 = has_run2_year(year)
         if "RERECO" in year:
             btagLoose_filter = (jets.btagDeepB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5) # original value
             btagMedium_filter = (jets.btagDeepB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
-        else: # UL
+        elif is_run2: # UL
             # NOTE: maybe keep the nBtagLoose and nBtagMedium deepbFlavB as a separate variable for quick testing
             # btagLoose_filter = (jets.btagDeepFlavB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
             # btagMedium_filter = (jets.btagDeepFlavB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
             btagLoose_filter = (jets.btagDeepB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
             btagMedium_filter = (jets.btagDeepB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
-
+        else:
+            btagLoose_filter = (jets.btagPNetB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
+            btagMedium_filter = (jets.btagPNetB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
         btagLoose_filter = ak.fill_none(btagLoose_filter, value=False)
         btagMedium_filter = ak.fill_none(btagMedium_filter, value=False)
 
