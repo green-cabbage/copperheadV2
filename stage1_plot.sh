@@ -3,9 +3,9 @@
 set -e
 
 #
-data_l="A B C D E F G H"
+data_l="A B C D E F G H I"
 bkg_l="DY TT ST VV EWK OTHER"
-# bkg_l="DY"
+bkg_l="DY"
 
 # bkg_l="DY VV EWK OTHER"
 
@@ -44,10 +44,12 @@ status="Private_Work"
 # label="fullRun_Jul08_2025_BscFitOff"
 # label="fullRun_Jul17_2025_qglFixed"
 # label="fullRun05Aug_2025"
-label="fullRun_Jun23_2025_1n2Revised"
+# label="fullRun_Jun23_2025_1n2Revised"
+label="Run3Oct21_2025"
 
-year="2018"
-lumi="59.83"
+
+# year="2018"
+# lumi="59.83"
 
 # year="2017"
 # lumi="41.48"
@@ -71,36 +73,46 @@ lumi="59.83"
 load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
 # load_path="/depot/cms/users/shar1172/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
 
-vars2plot="jet dijet dimuon mu"
+# vars2plot="jet dijet dimuon mu"
 # vars2plot="jet dijet"
 # vars2plot="jet dimuon"
 # vars2plot="jet"
-# vars2plot="dimuon "
+vars2plot="dimuon "
 
-region="z-peak signal h-sidebands"
+# region="z-peak signal h-sidebands"
 # region="h-sidebands"
 # region="z-peak h-sidebands signal"
 # region="h-sidebands"
 # region="signal"
 # region="z-peak signal"
-# region="z-peak"
+region="z-peak"
 
-# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label --use_gateway 
-# python validation_plotter_unified_quick.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat vbf -reg $region --label $label 
-# python validation_plotter_unified_quick.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat vbf -reg $region --label $label  --vbf_filter_study
+# # python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label --use_gateway 
+# # python validation_plotter_unified_quick.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat vbf -reg $region --label $label 
+# # python validation_plotter_unified_quick.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat vbf -reg $region --label $label  --vbf_filter_study
 
-# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat ggh -reg $region --label $label  --vbf_filter_study --use_gateway 
-python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
+# # python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat ggh -reg $region --label $label  --vbf_filter_study --use_gateway 
+# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
 
 
-year="2017"
-lumi="41.48"
-python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
+# year="2017"
+# lumi="41.48"
+# load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
+# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
 
-year="2016postVFP"
-lumi="19.50"
-python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
+# year="2016postVFP"
+# lumi="19.50"
+# load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
+# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
 
-year="2016preVFP"
-lumi="16.81"
-python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
+# year="2016preVFP"
+# lumi="16.81"
+# load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
+# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
+
+
+year="2024"
+lumi="122"
+load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
+# python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
+python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat -reg $region --label $label  --use_gateway 

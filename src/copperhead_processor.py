@@ -1188,26 +1188,26 @@ class EventProcessor(processor.ProcessorABC):
 
 
             #do mu SF start -------------------------------------
-            logger.info("doing musf!")
-            musf_lookup = get_musf_lookup(self.config)
-            muID, muIso, muTrig = musf_evaluator(
-                musf_lookup, self.config["year"], mu1, mu2
-            )
-            weights.add("muID",
-                    weight=muID["nom"],
-                    weightUp=muID["up"],
-                    weightDown=muID["down"]
-            )
-            weights.add("muIso",
-                    weight=muIso["nom"],
-                    weightUp=muIso["up"],
-                    weightDown=muIso["down"]
-            )
-            weights.add("muTrig",
-                    weight=muTrig["nom"],
-                    weightUp=muTrig["up"],
-                    weightDown=muTrig["down"]
-            )
+            # logger.info("doing musf!")
+            # musf_lookup = get_musf_lookup(self.config)
+            # muID, muIso, muTrig = musf_evaluator(
+            #     musf_lookup, self.config["year"], mu1, mu2
+            # )
+            # weights.add("muID",
+            #         weight=muID["nom"],
+            #         weightUp=muID["up"],
+            #         weightDown=muID["down"]
+            # )
+            # weights.add("muIso",
+            #         weight=muIso["nom"],
+            #         weightUp=muIso["up"],
+            #         weightDown=muIso["down"]
+            # )
+            # weights.add("muTrig",
+            #         weight=muTrig["nom"],
+            #         weightUp=muTrig["up"],
+            #         weightDown=muTrig["down"]
+            # )
             #do mu SF end -------------------------------------
 
 

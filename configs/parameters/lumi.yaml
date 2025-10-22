@@ -6,6 +6,7 @@ integrated_lumis: # source: https://github.com/TopEFT/topeft/blob/252c6454e06e49
   2022preEE: 59970.0
   2022postEE: 59970.0
   '2024': 108960.0 # source: https://docs.google.com/presentation/d/1EHxQcWzw8IxPgCn8hm1prwSP-EktFtiuaEzH8WkQNVY/edit?slide=id.g36971dee1d1_0_0#slide=id.g36971dee1d1_0_0
+  # '2024': 122000.0 # page2, https://indico.cern.ch/event/1582945/contributions/6671279/subcontributions/571401/attachments/3144772/5582642/document.pdf
   2016_RERECO: 35920.0
   2017_RERECO: 41529.0
   2018_RERECO: 59740.0

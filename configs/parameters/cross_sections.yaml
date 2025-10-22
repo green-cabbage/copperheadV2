@@ -4,14 +4,28 @@ cross_sections: # cross-section unit: pb
   dy_M-50_MiNNLO_V2: 2002
   dy_M-50_nocut: 6450.0
   # dy_M-100To200: 247.9 # precision: NLO source: GenAnalyzer tool at https://github.com/green-cabbage/genproductions
-  dy_M-100To200_aMCatNLO: 233.8592627 # precision: NNLO
-  dy_M-100To200_MiNNLO: 77.95
+  dy_M-100To200_aMCatNLO: # precision: NNLO
+    '2016PreVFP': 233.8592627
+    '2016PostVFP': 233.8592627
+    '2017': 233.8592627
+    '2018': 233.8592627
+  dy_M-100To200_MiNNLO:
+    '2016PreVFP': 77.95
+    '2016PostVFP': 77.95
+    '2017': 77.95
+    '2018': 77.95
   dy_to2Mu_2J_M-105To160: 45.592 # NNLO level. NLO xsec: 49.21, k factor: 0.92648 Source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?searchQuery=process_name%3DDYto2Mu-2Jets_MLL-105To160_TuneCP5_13p6TeV_amcatnloFXFX-pythia8, k factor source: Andrea email, subject: "Question about Privately produced DYToMuMu samples"
   dy_VBF_filter: 2.01  # subjet to change
   dy_VBF_filter_customJMEoff: 2.01 # subjet to change
   dy_VBF_filter_fromGenSim: 2.01 # subjet to change
   dy_M-50To120: 254.2 # subjet to change
   dy_M-120To200: 254.2 # subjet to change
+  dyTo2Mu_M-10To50: # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYto2Mu_Bin-MLL-10to50_TuneCP5_13p6TeV_powheg-pythia8
+    '2024': 6744
+  dyTo2Mu_M-50To120: # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYto2Mu_Bin-MLL-50to120_TuneCP5_13p6TeV_powheg-pythia8
+    '2024': 2219
+  dyTo2Mu_M-120To200: # https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYto2Mu_Bin-MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8
+    '2024': 21.65
   dy_0j: 4620.52
   dy_1j: 922.5
   dy_2j: 293.6
@@ -104,12 +118,12 @@ cross_sections: # cross-section unit: pb
   wzz: 0.05565 # source: AN-19-124 table 2.8
   zzz: 0.01398 # source: AN-19-124 table 2.8
   # ggh_powhegPS: 0.01057
-  ggh_powhegPS:
+  ggh_powhegPS: # Run2 BR = 2.18*10^-4. Source: AN-19-124
     '2016PreVFP': 0.01057
     '2016PostVFP': 0.01057
     '2017': 0.01057
     '2018': 0.01057
-    '2024': 0.01138614 # source: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHWG136TeVxsec_extrap
+    '2024': 0.0135096 # source: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHWG136TeVxsec_extrap. BR = 2.6 * 10^-4 source: PDG, Higgs mass = 125.38. source: Fig 9 from https://cms-results.web.cern.ch/cms-results/public-results/publications/HIG-19-004/
   ggh_amcPS: 0.01057
   ggh_amcPS_TuneCP5down: 0.01057
   ggh_amcPS_TuneCP5up: 0.01057
@@ -127,7 +141,7 @@ cross_sections: # cross-section unit: pb
   vbf_amcPS: 0.0008228
   vbf_amc: 0.0008228
   vbf_aMCatNLO:
-    '2024': 0.000889004 # source: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHWG136TeVxsec_extrap
+    '2024': 0.00105742 # source: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHWG136TeVxsec_extrap. BR = 2.6 * 10^-4 source: PDG, Higgs mass = 125.38. source: Fig 9 from https://cms-results.web.cern.ch/cms-results/public-results/publications/HIG-19-004/
   ggh_powhegPS_m120: 0.012652906
   ggh_amcPS_m120: 0.012652906
   vbf_powhegPS_m120: 0.0009534505

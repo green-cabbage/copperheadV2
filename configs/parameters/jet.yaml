@@ -63,7 +63,7 @@ btag_loose_wp: # for DeepCSV, DeepJet is different
   '2018_RERECO': 0.1241
   2022preEE: 0.12
   2022postEE: 0.12
-  '2024': 0.1208 #FIXME
+  '2024': 0.0246 #  btagUParTAK4B. source https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer24/#ak4-b-tagging
 btag_medium_wp: # for DeepCSV, DeepJet is different
   2016preVFP: 0.6001
   2016postVFP: 0.5847
@@ -74,7 +74,7 @@ btag_medium_wp: # for DeepCSV, DeepJet is different
   '2018_RERECO': 0.4184
   2022preEE: 0.4168
   2022postEE: 0.4168
-  '2024': 0.4168 #FIXME
+  '2024': 0.1272 # btagUParTAK4B. source https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer24/#ak4-b-tagging
 softjet_dr2:
   2016preVFP: 0.16
   2016postVFP: 0.16
@@ -108,3 +108,11 @@ HemVeto_ratio: # ratio of HemVeto applicable run / total nevents for 2018UL
   2022preEE: 0.0
   2022postEE: 0.0
   '2024': 0.0
+jet_bTagger_name:
+  2016preVFP: "btagDeepB"
+  2016postVFP: "btagDeepB"
+  '2017': "btagDeepB"
+  '2018': "btagDeepB"
+  2022preEE: "btagUParTAK4B"
+  2022postEE: "btagUParTAK4B"
+  '2024': "btagUParTAK4B"
