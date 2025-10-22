@@ -220,7 +220,7 @@ if __name__ == "__main__":
             cluster_info = gateway.list_clusters()[-1]# get the first cluster by default. There only should be one anyways
             client = gateway.connect(cluster_info.name).get_client()
             client.run_on_scheduler(lambda dask_scheduler: setattr(
-                dask_scheduler, "heartbeat_timeout", 70
+                dask_scheduler, "heartbeat_timeout", 150
             ))
             logger.debug(f"client: {client}")
             logger.info("Gateway Client created")
