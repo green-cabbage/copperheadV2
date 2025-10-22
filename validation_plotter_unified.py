@@ -25,7 +25,7 @@ def get_scalar_ptCentrality(events):
     
 
 # real process arrangement
-group_data_processes = ["data_A", "data_B", "data_C", "data_D", "data_E",  "data_F", "data_G", "data_H"]
+group_data_processes = ["data_A", "data_B", "data_C", "data_D", "data_E",  "data_F", "data_G", "data_H", "data_I"]
 # group_DY_processes = ["dy_M-100To200", "dy_M-50"] # dy_M-50 is not used in ggH BDT training input
 # group_DY_processes = ["dy_M-100To200"]
 # group_DY_processes = ["dy_M-100To200","dy_VBF_filter"]
@@ -44,8 +44,12 @@ group_DY_processes = [
     # "dyTo2L_M-50_2j",
     # "dyTo2L_M-50_incl",
     "dy_M-100To200_MiNNLO",
-    "dy_M-50_MiNNLO"
+    "dy_M-50_MiNNLO",
+    "dyTo2Mu_M-10To50",
+    "dyTo2Mu_M-50To120",
+    "dyTo2Mu_M-120To200",
 ]
+
 
 
 # group_DY_processes = ["dy_M-100To200","dy_VBF_filter_customJMEoff"]
@@ -56,7 +60,7 @@ group_Ewk_processes = ["ewk_lljj_mll50_mjj120"]
 group_VV_processes = ["ww_2l2nu", "wz_3lnu", "wz_2l2q", "wz_1l1nu2q", "zz"]# diboson
 # group_ggH_processes = ["ggh_amcPS"]
 group_ggH_processes = ["ggh_powhegPS"]
-group_VBF_processes = ["vbf_powheg_dipole"]
+group_VBF_processes = ["vbf_powheg_dipole", "vbf_aMCatNLO"]
 
 group_dict = {
     "data": group_data_processes,
@@ -185,7 +189,7 @@ def getDaskHist2Compute(sample_hist_dictByVar2compute, events, sample_hist_empty
                 # print(f"fraction_weight: {fraction_weight.compute()}")
                 # print(f"weights after: {weights.compute()}")
             group_name = find_group_name(process, group_dict)
-            # print(f"group_name for {process}: {group_name}")
+            print(f"group_name for {process}: {group_name}")
             to_fill_setting = {
             "region" : region_name,
             "channel" : category,
@@ -261,12 +265,10 @@ def plotComputedHistograms(sample_hist_dictByVarComputed, var, plot_settings, fu
         os.makedirs(full_save_path)
     full_save_fname = f"{full_save_path}/{var}.pdf"
     print(f"full_save_fname: {full_save_fname}")
-    # raise ValueError
 
     plot_var = getPlotVar(var)
     if binning is None:
         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
-      
     plotDataMC_compare(
         binning, 
         data_dict, 
@@ -489,7 +491,9 @@ if __name__ == "__main__":
                 # available_processes.append("dy_M-100To200_aMCatNLO")
                 # available_processes.append("dy_M-50_aMCatNLO")
                 # available_processes.append("dy_VBF_filter_NewZWgt")
-            
+                available_processes.append("dyTo2Mu_M-10To50")
+                available_processes.append("dyTo2Mu_M-50To120")
+                available_processes.append("dyTo2Mu_M-120To200")
             elif bkg_sample.upper() == "TT": # enforce upper case to prevent confusion
                 available_processes.append("ttjets_dl")
                 available_processes.append("ttjets_sl")
@@ -524,7 +528,8 @@ if __name__ == "__main__":
                 # available_processes.append("ggh_amcPS")
                 available_processes.append("ggh_powhegPS")
             elif sig_sample.upper() == "VBF": # enforce upper case to prevent confusion
-                available_processes.append("vbf_powheg_dipole")
+                # available_processes.append("vbf_powheg_dipole")
+                available_processes.append("vbf_aMCatNLO") # FIXME
             else:
                 print(f"unknown signal {sig_sample} was given!")
     # gather variables to plot:
@@ -784,7 +789,8 @@ if __name__ == "__main__":
         # print(f"hist_dictByVar2compute_by_cat: {hist_dictByVar2compute_by_cat}")
         hist_dictByVar2compute[category] = hist_dictByVar2compute_by_cat
         
-    
+    # print(f"hist_dictByVar2compute_by_cat: {hist_dictByVar2compute_by_cat}")
+    # raise ValueError
     # done with looping over process and variables we now compute
     sample_hist_dictByVarComputed = dask.compute(hist_dictByVar2compute)[0]
     # print(f"sample_hist_dictByVarComputed: {sample_hist_dictByVarComputed}")
@@ -796,7 +802,7 @@ if __name__ == "__main__":
         else: # in no cat case, just use vbfCat plot settings
             plot_setting_fname = "./src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
         # print(f"plot_setting_fname: {plot_setting_fname}")
-        print(f"sample_hist_dictByVarComputed_byCat: {sample_hist_dictByVarComputed_byCat}")
+        # print(f"sample_hist_dictByVarComputed_byCat: {sample_hist_dictByVarComputed_byCat}")
         with open(plot_setting_fname, "r") as file:
             plot_settings = json.load(file)
         
