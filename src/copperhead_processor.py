@@ -1794,14 +1794,14 @@ class EventProcessor(processor.ProcessorABC):
         jets = ak.to_packed(jets)
 
         # apply jetpuid if not have done already
-        if not is_2017 and is_mc:
-            jetpuid_weight =get_jetpuid_weights(year, jets, self.config)
+        # if not is_2017 and is_mc:
+        #     jetpuid_weight =get_jetpuid_weights(year, jets, self.config)
 
-        if is_mc:
-            # now we add jetpuid_wgt
-            weights.add("jetpuid_wgt",
-                    weight=jetpuid_weight,
-            )
+        # if is_mc:
+        #     # now we add jetpuid_wgt
+        #     weights.add("jetpuid_wgt",
+        #             weight=jetpuid_weight,
+        #     )
 
 
 
@@ -1950,7 +1950,13 @@ class EventProcessor(processor.ProcessorABC):
             f"zeppenfeld_{variation}" : zeppenfeld,
             f"ll_zstar_log_{variation}" : np.log(np.abs(zeppenfeld)),
             f"njets_{variation}" : njets,
-
+            # btag score study ---------------------
+            f"jet1_btagPNetB_{variation}" : jet1.btagPNetB,
+            f"jet1_btagDeepFlavB_{variation}" : jet1.btagDeepFlavB,
+            f"jet1_btagUParTAK4B_{variation}" : jet1.btagUParTAK4B,
+            f"jet2_btagPNetB_{variation}" : jet2.btagPNetB,
+            f"jet2_btagDeepFlavB_{variation}" : jet2.btagDeepFlavB,
+            f"jet2_btagUParTAK4B_{variation}" : jet2.btagUParTAK4B,
         }
         if is_mc:
             mc_dict = {

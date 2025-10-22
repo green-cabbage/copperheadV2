@@ -112,7 +112,7 @@ region="z-peak"
 
 
 year="2024"
-lumi="122"
+lumi="108.96"
 load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/${year}/f1_0/"
 # python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat ggh vbf -reg $region --label $label  --use_gateway 
 python validation_plotter_unified.py -y $year --load_path $load_path -var $vars2plot --data $data_l --background $bkg_l --signal $sig_l --lumi $lumi --status $status -cat nocat -reg $region --label $label  --use_gateway 
