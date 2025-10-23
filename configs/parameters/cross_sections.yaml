@@ -72,8 +72,18 @@ cross_sections: # cross-section unit: pb
     '2018': 0.0789
   ewk_m50: 3.998
   st_top: 136.02
-  st_tw_top: 32.45 # UL #FIXME
-  st_tw_antitop: 32.45 # UL #FIXME
+  st_tw_top:
+    '2016PreVFP': 32.45 # UL
+    '2016PostVFP': 32.45 # UL
+    '2017': 32.45 # UL
+    '2018': 32.45 # UL
+    '2024': 35.99 # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20TWminusto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
+  st_tw_antitop:
+    '2016PreVFP': 32.45 # UL
+    '2016PostVFP': 32.45 # UL
+    '2017': 32.45 # UL
+    '2018': 32.45 # UL
+    '2024': 36.05 # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20TbarWplusto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
   # st_tw_top: 35.85 # rereco
   # st_tw_antitop: 35.85 # rereco
   st_t_top: 136.02 #FIXME source: AN-19-124 table 2.8
@@ -81,7 +91,12 @@ cross_sections: # cross-section unit: pb
   st_s_lep: 3.549
   st_s_had: 7.14
   tZq_ll: 0.07561
-  ttjets_dl: 86.65 # UL
+  ttjets_dl:
+    '2016PreVFP': 86.65 # UL
+    '2016PostVFP': 86.65 # UL
+    '2017': 86.65 # UL
+    '2018': 86.65 # UL
+    '2024': 762.1 # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
   ttjets_sl: 358.57 # UL
   TTWjets_LNu: 0.2159
   TTWJets_QQ: 0.4369
