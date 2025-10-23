@@ -66,15 +66,15 @@ data_l_dict["2017"]="B C D E F"
 data_l_dict["2018"]="A B C D"
 data_l_dict["2022preEE"]="C D"
 data_l_dict["2022postEE"]="E F G"
-data_l_dict["2024"]="C D E F G H I"
-# data_l_dict["2024"]="F G H I"
+# data_l_dict["2024"]="C D E F G H I"
+data_l_dict["2024"]=""
 
 # bkg_l="DY TT ST VV EWK VVV"
 # bkg_l="DY Top VV EWK VVV"
-bkg_l="DY"
+bkg_l="Top"
 
-sig_l="Higgs"
-# sig_l=""
+# sig_l="Higgs"
+sig_l=""
 
 # If debug is on, then run only for one era in each year.
 if [[ "$debug" == "1" ]]; then

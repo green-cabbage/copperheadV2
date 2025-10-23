@@ -5,7 +5,7 @@ set -e
 #
 data_l="A B C D E F G H I"
 bkg_l="DY TT ST VV EWK OTHER"
-bkg_l="DY"
+# bkg_l="DY"
 
 # bkg_l="DY VV EWK OTHER"
 
