@@ -399,7 +399,7 @@ class EventProcessor(processor.ProcessorABC):
         dict_update = {
             # "hlt" :["IsoMu24"],
             "do_trigger_match" : True, # False
-            "do_roccor" : False,# True
+            "do_roccor" : True,# True
             "do_fsr" : True, # True
             "do_geofit" : False, # True # FIXME: Make it false for always
             "do_beamConstraint": True, # if True, override do_geofit

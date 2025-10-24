@@ -218,10 +218,12 @@ if __name__ == "__main__":
             )
             # cluster_info = gateway.list_clusters()[0]# get the first cluster by default. There only should be one anyways
             cluster_info = gateway.list_clusters()[-1]# get the first cluster by default. There only should be one anyways
-            client = gateway.connect(cluster_info.name).get_client()
-            client.run_on_scheduler(lambda dask_scheduler: setattr(
-                dask_scheduler, "heartbeat_timeout", 150
-            ))
+            cluster =gateway.connect(cluster_info.name)
+            client = cluster.get_client()
+            # client = Client(cluster, retries=3)
+            # client.run_on_scheduler(lambda dask_scheduler: setattr(
+            #     dask_scheduler, "heartbeat_timeout", 300
+            # ))
             logger.debug(f"client: {client}")
             logger.info("Gateway Client created")
         else:
@@ -258,8 +260,8 @@ if __name__ == "__main__":
             for dataset, sample in tqdm.tqdm(samples.items()):
                 sample_step = time.time()
                 smaller_files = list(divide_chunks(sample["files"], args.max_file_len))
-                logger.debug(f"max_file_len: {args.max_file_len}")
-                logger.debug(f"len(smaller_files): {len(smaller_files)}")
+                logger.info(f"max_file_len: {args.max_file_len}")
+                logger.info(f"len(smaller_files): {len(smaller_files)}")
                 for idx in tqdm.tqdm(range(len(smaller_files)), leave=False):
                     # if idx < 50 or idx > 51: continue # for testing purposes
                     # if idx < 2: continue

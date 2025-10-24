@@ -4,8 +4,8 @@ set -e
 
 #
 data_l="A B C D E F G H I"
-bkg_l="DY TT ST VV EWK OTHER"
-# bkg_l="DY"
+# bkg_l="DY TT ST VV EWK OTHER"
+bkg_l="DY"
 
 # bkg_l="DY VV EWK OTHER"
 
@@ -45,8 +45,8 @@ status="Private_Work"
 # label="fullRun_Jul17_2025_qglFixed"
 # label="fullRun05Aug_2025"
 # label="fullRun_Jun23_2025_1n2Revised"
-label="Run3Oct21_2025"
-
+# label="Run3Oct21_2025"
+label="Run3Oct22_2025_KITMuScaleSmearOn"
 
 # year="2018"
 # lumi="59.83"
@@ -75,9 +75,9 @@ load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/${label}/stage1_output/$
 
 # vars2plot="jet dijet dimuon mu"
 # vars2plot="jet dijet"
-# vars2plot="jet dimuon"
+vars2plot="jet dimuon"
 # vars2plot="jet"
-vars2plot="dimuon "
+# vars2plot="dimuon "
 
 # region="z-peak signal h-sidebands"
 # region="h-sidebands"

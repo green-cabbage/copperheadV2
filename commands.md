@@ -1,3 +1,7 @@
+time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l Run3Oct22_2025_KITMuScaleSmearOnDyIncl -y 2024 -m all)
+
+ time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l Run3Oct22_2025_KITMuScaleSmearOn -y 2024 -m 1)
+
 time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l test -y 2024 -m 1)
 
 time(bash stage1_loop_Improved.sh  -c configs/datasets/dataset_nanoAODv12.yaml -v 12 -l fullRun_Jul17_2025_qglFixed -y 2017 -m 1)
