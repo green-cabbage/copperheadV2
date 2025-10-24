@@ -41,7 +41,9 @@ muon_id:
   '2018_RERECO': mediumId
   2022preEE: mediumId
   2022postEE: mediumId
-  '2024': mediumId
+  '2024': looseId
+  # '2024': mediumId
+  # '2024': tightId
 muon_flags:
   2016preVFP: []
   2016postVFP: []
