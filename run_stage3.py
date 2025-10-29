@@ -17,7 +17,6 @@ import os
 import copy
 import pandas as pd
 from modules.utils import getGOF_KS
-import glob
 
 def normalizeFlatHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHist :
     """
@@ -300,7 +299,7 @@ if __name__ == "__main__":
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_data.parquet"
     print(f"load_path: {load_path}")
-    # filelist = glob.glob(load_path)
+    # processed_eventsData = ak.from_parquet(load_path)
     processed_eventsData = dak.from_parquet(load_path).compute()
     print(f"processed_eventsData length: {ak.num(processed_eventsData.dimuon_mass, axis=0)}")
     print("events loaded!")
@@ -371,13 +370,11 @@ if __name__ == "__main__":
 
 
     name = f"BWZ_Redux_a_coeff"
-    # a_coeff = rt.RooRealVar(name,name, 3.9611e-02,-0.02,0.02) # this converges to -1.2561e-03
-    a_coeff = rt.RooRealVar(name,name, -1.0e-02,-0.02,0) # this converges to -1.2561e-03
+    a_coeff = rt.RooRealVar(name,name, 3.9611e-02,-0.02,0.02) # this converges to -1.2561e-03
     name = f"BWZ_Redux_b_coeff"
-    # b_coeff = rt.RooRealVar(name,name, -9.9358e-05,-0.02,0.02) # this converges to  2.1729e-05,
-    b_coeff = rt.RooRealVar(name,name, 2.0e-05,0.0,0.02) # this converges to  2.1729e-05,
+    b_coeff = rt.RooRealVar(name,name, -9.9358e-05,-0.02,0.02) # this converges to  2.1729e-05,
     name = f"BWZ_Redux_c_coeff"
-    c_coeff = rt.RooRealVar(name,name, 1.3e+00,1,2.0) # this converges to 1.7082e+00
+    c_coeff = rt.RooRealVar(name,name, 1.9978e+00,1,2.5) # this converges to 1.7082e+00
 
     # name = f"BWZ_Redux_a_coeff"
     # a_coeff = rt.RooRealVar(name,name, -1.2561e-03,-0.02,0.02) # this converges to -1.2561e-03
@@ -397,7 +394,7 @@ if __name__ == "__main__":
     # a1_subCat0 = rt.RooRealVar("a1_subCat0", "a1_subCat0", 0.5, -0.5, 0.5)
     # a3_subCat0 = rt.RooRealVar("a3_subCat0", "a3_subCat0", 0.5, -0.5, 0.5)
     # old end --------------------------------------------------------------------
-    a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.03756867559, -0.4, 0.4)
+    a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.03756867559, -1, 1)
     a1_subCat0 = rt.RooRealVar("a1_subCat0", "a1_subCat0", -0.001975507853, -0.5, 0.5)
     a3_subCat0 = rt.RooRealVar("a3_subCat0", "a3_subCat0", -0.001975507853, -0.5, 0.5)
     # a0_subCat0 = rt.RooRealVar("a0_subCat0", "a0_subCat0", -0.03756867559, -0.06, 0.06)
@@ -434,7 +431,7 @@ if __name__ == "__main__":
     # a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", 0.5, -0.5, 0.5)
     # values from AN workspace
     a0_subCat1 = rt.RooRealVar("a0_subCat1", "a0_subCat1", 0.01949329222, -0.5, 0.5)
-    a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", -0.001657932368, -0.2, 0.2)
+    a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", -0.001657932368, -0.5, 0.5)
     # a0_subCat1 = rt.RooRealVar("a0_subCat1", "a0_subCat1", 0.01949329222, -0.1, 0.1)
     # a1_subCat1 = rt.RooRealVar("a1_subCat1", "a1_subCat1", -0.001657932368, -0.06, 0.06)
     # a0_subCat1.setConstant(True)
@@ -461,7 +458,7 @@ if __name__ == "__main__":
     # a0_subCat2 = rt.RooRealVar("a0_subCat2", "a0_subCat2", 0.04460447882, -0.001, 0.06)
     # a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", -3.46E-05, -0.001, 0.06)
     a0_subCat2 = rt.RooRealVar("a0_subCat2", "a0_subCat2", 0.04460447882, -0.5, 0.5)
-    a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", -3.46E-05, -0.2, 0.2)
+    a1_subCat2 = rt.RooRealVar("a1_subCat2", "a1_subCat2", -3.46E-05, -0.5, 0.5)
     # a0_subCat2.setConstant(True)
     # a1_subCat2.setConstant(True)
     name = "subCat2_SMF"
@@ -612,9 +609,9 @@ if __name__ == "__main__":
     # trying bigger range do that I don't get warning message from combine like: [WARNING] Found parameter BWZ_Redux_a_coeff at boundary (within ~1sigma) # Jun 30 parameter
     # # new start --------------------------------------------------
     name = f"RooSumTwoExpPdf_a1_coeff"
-    a1_coeff = rt.RooRealVar(name,name, -1.4756e-01,-0.5,0)
+    a1_coeff = rt.RooRealVar(name,name, -1.4756e-01,-2.0,1)
     name = f"RooSumTwoExpPdf_a2_coeff"
-    a2_coeff = rt.RooRealVar(name,name, -3.4552e-02,-0.5,0)
+    a2_coeff = rt.RooRealVar(name,name, -3.4552e-02,-2.0,1)
     name = f"RooSumTwoExpPdf_f_coeff"
     f_coeff = rt.RooRealVar(name,name,  2.4864e-01,0.0,1.0)
     # # new end --------------------------------------------------
@@ -887,11 +884,11 @@ if __name__ == "__main__":
     name = f"FEWZxBern_c1"
     c1 = rt.RooRealVar(name,name, 1.0) # extra frozen parameter is needed. Source: https://root-forum.cern.ch/t/roobernstein-correction/41800
     name = f"FEWZxBern_c2"
-    c2 = rt.RooRealVar(name,name, 9.6443e-01,0.55,1.9)
+    c2 = rt.RooRealVar(name,name, 9.6443e-01,0,10)
     name = f"FEWZxBern_c3"
-    c3 = rt.RooRealVar(name,name, 9.6222e-01,0.1,2)
+    c3 = rt.RooRealVar(name,name, 9.6222e-01,0,10)
     name = f"FEWZxBern_c4"
-    c4 = rt.RooRealVar(name,name, 9.2745e-01,0.1,2)
+    c4 = rt.RooRealVar(name,name, 9.2745e-01,0,10)
     # new end --------------------------------------------------
     BernCoeff_list = [c1, c2, c3, c4] # we use RooBernstein, which requires n+1 parameters https://root.cern.ch/doc/master/classRooBernstein.html
     # c1.setConstant(True)
@@ -1351,8 +1348,8 @@ if __name__ == "__main__":
     cat_subCat0 = rt.RooCategory("pdf_index_ggh","Index of Pdf which is active"); # name of category index should stay same across subCategories
     
     # // Make a RooMultiPdf object. The order of the pdfs will be the order of their index, ie for below
-    # // 0 == sumExp
-    # // 1 == BWZ_Redux
+    # // 0 == BWZ_Redux
+    # // 1 == sumExp
     # // 2 == FEWZxBern
     
     # FEWZxBern Sumexp is less dependent to dimuon mass as stated in line 1585 of RERECO AN
@@ -1546,10 +1543,6 @@ if __name__ == "__main__":
     }
     gof_save_path = f"{plot_save_path}/gof"
     os.makedirs(gof_save_path, exist_ok=True)
-    #----------------------------------------------------------------------------
-    # KS test with 90% CL
-    # ---------------------------------------------------------------------------
-
     gof_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass"])
     for i in range(len(corePDF_subCats)):
         hist_data = hist_datas[i]
@@ -1578,39 +1571,8 @@ if __name__ == "__main__":
                     "pass threshold": pass_threshold,
                     "test pass": ks_stat<pass_threshold,
                 }
-    gof_df.to_csv(f"{gof_save_path}/KS_stats_alpha0p1.csv")
+    gof_df.to_csv(f"{gof_save_path}/KS_stats.csv")
 
-    #----------------------------------------------------------------------------
-    # KS test with 98% CL
-    # ---------------------------------------------------------------------------
-    gof_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass"])
-    for i in range(len(corePDF_subCats)):
-        hist_data = hist_datas[i]
-        corePDF_subCat = corePDF_subCats[i]
-        multi_pdf_cat = multi_pdf_cats[i]
-        for cat_ix in range(len(pdf_cat_name_dict.keys())):
-            multi_pdf_cat.setIndex(cat_ix)
-            print(f"multi_pdf_cat.getIndex(): {multi_pdf_cat.getIndex()}")
-            core_func_name = pdf_cat_name_dict[cat_ix]
-            gof_test_name = f"ggh_cat{i}_{core_func_name}"
-            KS_dict = getGOF_KS(mass, hist_data, corePDF_subCat, gof_test_name, gof_save_path)
-            for region, ks_stat_dict in KS_dict.items():
-                nevents = ks_stat_dict["nevents"]
-                ks_stat = ks_stat_dict["ks_statistic"]
-                alpha = 0.02
-                pass_threshold = 1.51743 / (nevents**(0.5))
-                
-                
-                gof_df.loc[len(gof_df)] = {
-                    "pdf category": gof_test_name,
-                    "region": region,
-                    "KS statistic": ks_stat,
-                    "nevents": nevents,
-                    "alpha": alpha,
-                    "pass threshold": pass_threshold,
-                    "test pass": ks_stat<pass_threshold,
-                }
-    gof_df.to_csv(f"{gof_save_path}/KS_stats_alpha0p02.csv")
         
     # raise ValueError
 
@@ -1685,6 +1647,7 @@ if __name__ == "__main__":
         load_path = f"{args.load_path}/2016*/processed_events_sigMC_ggh.parquet"
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_ggh.parquet"
+    # processed_eventsSignalMC = ak.from_parquet(load_path)
     processed_eventsSignalMC = dak.from_parquet(load_path).compute()
     print(f"ggH yield: {np.sum(processed_eventsSignalMC.wgt_nominal)}")
     print("signal events loaded")
@@ -2166,6 +2129,7 @@ if __name__ == "__main__":
     else:
         load_path = f"{args.load_path}/{args.year}/processed_events_sigMC_vbf.parquet" # Fig 6.15 was only with qqH process, though with all 2016, 2017 and 2018
     
+    # processed_eventsSignalMC_vbf = ak.from_parquet(load_path)
     processed_eventsSignalMC_vbf = dak.from_parquet(load_path).compute()
     print(f"qqH yield: {np.sum(processed_eventsSignalMC_vbf.wgt_nominal)}")
     print("signal events loaded")
@@ -2594,12 +2558,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat0_signal.GetName()
     data_subCat0_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat0.getVal():.2f} +/- {sigma_subCat0.getError():.2f}"
+    name = signal_subCat0.GetName()
     signal_subCat0.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2617,13 +2580,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
-    # legend = rt.TLegend(0.65,0.45,0.9,0.7)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat1_signal.GetName()
     data_subCat1_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat1.getVal():.2f} +/- {sigma_subCat1.getError():.2f}"
+    name = signal_subCat1.GetName()
     signal_subCat1.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2640,13 +2601,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
-    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat2_signal.GetName()
     data_subCat2_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat2.getVal():.2f} +/- {sigma_subCat2.getError():.2f}"
+    name = signal_subCat2.GetName()
     signal_subCat2.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2663,13 +2622,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
-    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat3_signal.GetName()
     data_subCat3_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat3.getVal():.2f} +/- {sigma_subCat3.getError():.2f}"
+    name = signal_subCat3.GetName()
     signal_subCat3.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2686,13 +2643,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
-    # legend = rt.TLegend(0.65,0.55,0.9,0.7)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat4_signal.GetName()
     data_subCat4_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat4.getVal():.2f} +/- {sigma_subCat4.getError():.2f}"
+    name = signal_subCat4.GetName()
     signal_subCat4.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2713,12 +2668,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat0_vbf_signal.GetName()
     data_subCat0_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat0_vbf.getVal():.2f} +/- {sigma_subCat0_vbf.getError():.2f}"
+    name = signal_subCat0_vbf.GetName()
     signal_subCat0_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2735,12 +2689,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat1_vbf_signal.GetName()
     data_subCat1_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat1_vbf.getVal():.2f} +/- {sigma_subCat1_vbf.getError():.2f}"
+    name = signal_subCat1_vbf.GetName()
     signal_subCat1_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2757,12 +2710,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat2_vbf_signal.GetName()
     data_subCat2_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat2_vbf.getVal():.2f} +/- {sigma_subCat2_vbf.getError():.2f}"
+    name = signal_subCat2_vbf.GetName()
     signal_subCat2_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2779,12 +2731,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat3_vbf_signal.GetName()
     data_subCat3_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat3_vbf.getVal():.2f} +/- {sigma_subCat3_vbf.getError():.2f}"
+    name = signal_subCat3_vbf.GetName()
     signal_subCat3_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -2801,12 +2752,11 @@ if __name__ == "__main__":
     canvas = rt.TCanvas(name,name,800, 800) # giving a specific name for each canvas prevents segfault?
     canvas.cd()
     frame = mass.frame()
-    legend = rt.TLegend(0.5,0.65,1.0,0.9)
-    legend.SetTextSize(0.04)
+    legend = rt.TLegend(0.65,0.55,0.9,0.7)
     name = data_subCat4_vbf_signal.GetName()
     data_subCat4_vbf_signal.plotOn(frame, DataError="SumW2", Name=name)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "P")
-    name = f"\n sigma = {sigma_subCat4_vbf.getVal():.2f} +/- {sigma_subCat4_vbf.getError():.2f}"
+    name = signal_subCat4_vbf.GetName()
     signal_subCat4_vbf.plotOn(frame, Name=name, LineColor=rt.kGreen)
     legend.AddEntry(frame.getObject(int(frame.numItems())-1),name, "L")
     
@@ -3449,5 +3399,4 @@ if __name__ == "__main__":
     plotBkgBySubCat(mass, model_dict_by_subCat, data_dict_by_subCat, plot_save_path)
 
     
-
 
