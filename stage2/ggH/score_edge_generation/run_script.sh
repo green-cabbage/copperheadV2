@@ -22,13 +22,15 @@ category="ggh"
 # model="V2_Aug16_2025DefaultFillNoneBackFix_IssueNum2"
 # model="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_IssueNum2"
 # model="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRpt_IssueNum2"
-model="V2_fullRun_Jun21_2025_1n2Revised"
+# model="V2_fullRun_Jun21_2025_1n2Revised"
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed"
 
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/$category/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output"  # I like to specify the category in the save path
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreateOct24_2025/stage2_output" 
-stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields/stage2_output"  # I like to specify the category in the save path
+# stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields/stage2_output"  # I like to specify the category in the save path
+stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025_BDTJune23Recreated/stage2_output" 
 
 
 years="2016preVFP 2016postVFP 2017 2018"

@@ -43,12 +43,12 @@
 # - 0.2
 # - 0.21
 # - 0.09
-target_yields:  # fullRun_Jun23_2025_1n2Revised_X_V2_fullRun_Jun21_2025_1n2Revised (trained over all years)
-- 0.27
-- 0.3
-- 0.35
-- 0.06
-- 0.02
+# target_yields:  # fullRun_Jun23_2025_1n2Revised_X_V2_fullRun_Jun21_2025_1n2Revised (trained over all years)
+# - 0.27
+# - 0.3
+# - 0.35
+# - 0.06
+# - 0.02
 # target_yields:  # fullRun_Jun23_2025_1n2Revised_x_V2_Aug28_PosWgtRun0p7_MassResRun1 (trained over all years)
 # - 0.27
 # - 0.37
@@ -85,3 +85,9 @@ target_yields:  # fullRun_Jun23_2025_1n2Revised_X_V2_fullRun_Jun21_2025_1n2Revis
 # - 0.38
 # - 0.06
 # - 0.02
+target_yields:  # V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_ggh_recreate1_87SigOct28_2025_BDTJune23Recreated 
+- 0.24
+- 0.3
+- 0.2
+- 0.16
+- 0.10
