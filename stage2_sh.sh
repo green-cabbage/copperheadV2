@@ -38,8 +38,9 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run2"
-model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed"
+# model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_repeat"
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProd_AddRpt"
 
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
@@ -48,7 +49,8 @@ model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed"
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_w_allYearBDT_w_newBDTTargetYields/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025_BDTJune23Recreated/stage2_output" 
-stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025_BDTJune23Recreated_newEdgeTarget/stage2_output" 
+# stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025_BDTJune23Recreated_newEdgeTarget/stage2_output" 
+stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct31_2025_newEdgeTarget/stage2_output" 
 
 
 bdt_edge_config_path="/work/users/yun79/Run3/copperheadV2/configs/MVA/ggH/BDT_edges.yaml"
@@ -78,38 +80,38 @@ bdt_edge_config_path="/work/users/yun79/Run3/copperheadV2/configs/MVA/ggH/BDT_ed
 # python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
 #------------------------------------------------------
 
-# year="2018"
-# sample_l="ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
-# python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
-# # sample_l="ggh vbf dy ewk tt st ww wz zz other" 
-# sample_l="data ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+year="2018"
+sample_l="ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
+# sample_l="ggh vbf dy ewk tt st ww wz zz other" 
+sample_l="data ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
 
-# year="2017"
-# sample_l="ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
-# python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
-# # sample_l="ggh vbf dy ewk tt st ww wz zz other" 
-# sample_l="data ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+year="2017"
+sample_l="ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
+# sample_l="ggh vbf dy ewk tt st ww wz zz other" 
+sample_l="data ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
 
 
-# year="2016postVFP"
-# sample_l="ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
-# python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
-# # sample_l="ggh vbf dy ewk tt st ww wz zz other" 
-# sample_l="data ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+year="2016postVFP"
+sample_l="ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
+# sample_l="ggh vbf dy ewk tt st ww wz zz other" 
+sample_l="data ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
 
-# year="2016preVFP"
-# sample_l="ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
-# python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
-# # sample_l="ggh vbf dy ewk tt st ww wz zz other" 
-# sample_l="data ggh vbf" 
-# python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+year="2016preVFP"
+sample_l="ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
+# sample_l="ggh vbf dy ewk tt st ww wz zz other" 
+sample_l="data ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
 
 # # ------------------
 # # stage2 specifically for fig 6.7
@@ -160,7 +162,8 @@ bdt_edge_config_path="/work/users/yun79/Run3/copperheadV2/configs/MVA/ggH/BDT_ed
 # stage3_label="${label}_X_${model}_recreate1_87SigOct29_2025_BDT_Run3"
 # stage3_label="${label}_X_${model}_recreate1_87SigOct29_2025_BDT_Run3_repeat"
 # stage3_label="${label}_X_${model}_recreate1_87SigOct29_2025_BDT_Run3_recalculateBDTEdges"
-stage3_label="${label}_X_${model}_recreate1_87SigOct29_2025_BDT_Run3_recalculateTargYieldNBDTEdges"
+# stage3_label="${label}_X_${model}_recreate1_87SigOct29_2025_BDT_Run3_recalculateTargYieldNBDTEdges"
+stage3_label="${label}_X_${model}_recreate1_87SigOct31_2025_BDT_AddRpt_recalculateTargYieldNBDTEdges"
 
 echo "stage2 path: ${stage2_save_path}"
 year="all"
