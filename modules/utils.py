@@ -6,13 +6,11 @@ import os
 import sys
 import awkward as ak
 import ROOT as rt
-import ROOT
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
 import pandas as pd
 import copy
-import ROOT as rt
 
 LOGGER_NAME = "CopperHead"
 NO_GIT_INFO_AVAILABLE = "No git info available"
@@ -250,7 +248,7 @@ def getNewRangeHist(hist2copy: rt.TH1D, new_hist_name: str, xlow_new: float, xhi
     # print(bin_dict)
     new_nbins = len(bin_dict["content"])
 
-    new_hist = ROOT.TH1D(new_hist_name, new_hist_name, new_nbins, xlow_new, xhigh_new)
+    new_hist = rt.TH1D(new_hist_name, new_hist_name, new_nbins, xlow_new, xhigh_new)
     for i in range(1, new_hist.GetNbinsX() + 1):
         content = bin_dict["content"][i-1]
         new_hist.SetBinContent(i, content)
@@ -273,7 +271,7 @@ def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_nam
     nbins = x.getBins()
     var_name = x.GetName()
     # # Generate toy dataset
-    # data = pdf.generate(ROOT.RooArgSet(x), 1000)
+    # data = pdf.generate(rt.RooArgSet(x), 1000)
     hist_data_orig = data.createHistogram(var_name).Clone("clone")# clone it just in case
     # Create a histogram of the PDF
     hist_pdf_orig = pdf.createHistogram(var_name, nbins)

@@ -10,13 +10,12 @@ from typing import Tuple, List, Dict
 import glob, os
 
 from src.lib.MVA_functions import prepare_features, evaluate_bdt, evaluate_dnn, apply_variation
-from src.corrections.jet import getJecJerUncertainties
 import argparse
 import time
 import sys, inspect
 import configs.categories.category_cuts as category_cuts
 import json
-from modules.utils import removeForwardJets, fromPdDftoAkZip
+# from modules.utils import removeForwardJets, fromPdDftoAkZip
 
 def prepare_features(events, features, variation="nominal"):
     features_var = []
@@ -767,6 +766,7 @@ if __name__ == "__main__":
             wgt_unc_fields = [] 
         
         if args.do_jecUnc:
+            from src.corrections.jet import getJecJerUncertainties
             jec_yml_path = "/work/users/yun79/Run3/copperheadV2/configs/parameters/jec.yaml"
             jec_unc_fields = getJecJerUncertainties(jec_yml_path, year=args.year) # jec_unc_fields = ["Absolute", etc]
             jec_unc_fields = applyUpDown(jec_unc_fields) # jec_unc_fields = ["Absolute_up", "Absolute_down", etc]

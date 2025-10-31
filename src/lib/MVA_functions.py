@@ -1,5 +1,4 @@
 from typing import Tuple, List, Dict
-import ROOT as rt
 import numpy as np
 import pickle
 import awkward as ak
