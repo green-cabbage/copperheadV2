@@ -91,9 +91,21 @@
 # - 0.2
 # - 0.16
 # - 0.10
-target_yields:  # V2_fullRun_Jun21_2025_1n2Revised_ReProd_AddRpt_ggh_recreate1_87SigOct28_2025_BDTJune23Recreated_newEdgeTarget 
+# target_yields:  # V2_fullRun_Jun21_2025_1n2Revised_ReProd_AddRpt_ggh_recreate1_87SigOct28_2025_BDTJune23Recreated_newEdgeTarget 
+# - 0.23
+# - 0.29
+# - 0.19
+# - 0.18
+# - 0.11
+# target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProd_RemoveRptKeepYr_ggh_recreate1_87SigOct31_2025_newEdgeTarget
+# - 0.23
+# - 0.27
+# - 0.22
+# - 0.17
+# - 0.11
+target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_FillNoneCorrected_ggh_recreate1_87SigOct31_2025_newEdgeTarget
 - 0.23
-- 0.29
+- 0.27
 - 0.19
-- 0.18
-- 0.11
+- 0.22
+- 0.09

@@ -6,7 +6,6 @@ from distributed import Client
 from omegaconf import OmegaConf
 
 from typing import Tuple, List, Dict
-# import ROOT as rt
 import glob, os
 
 from src.lib.MVA_functions import prepare_features, evaluate_bdt, evaluate_dnn, apply_variation

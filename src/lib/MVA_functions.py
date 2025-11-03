@@ -2,10 +2,10 @@ from typing import Tuple, List, Dict
 import numpy as np
 import pickle
 import awkward as ak
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 
 
 
