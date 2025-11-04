@@ -115,9 +115,15 @@
 # - 0.21
 # - 0.21
 # - 0.09
-target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_applyClassWgtBalance_ggh_recreate1_87SigOct31_2025_newEdgeTarget
-- 0.3
+# target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_applyClassWgtBalance_ggh_recreate1_87SigOct31_2025_newEdgeTarget
+# - 0.3
+# - 0.36
+# - 0.17
+# - 0.11
+# - 0.06
+target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_addOnlyRpt_ggh_recreate1_87SigOct31_2025_newEdgeTarget
+- 0.29
 - 0.36
 - 0.17
-- 0.11
+- 0.12
 - 0.06
