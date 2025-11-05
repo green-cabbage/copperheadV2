@@ -127,9 +127,15 @@
 # - 0.17
 # - 0.12
 # - 0.06
-target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_addRptNYear_ggh_recreate1_87SigOct31_2025_newEdgeTarget
-- 0.31
-- 0.35
-- 0.18
-- 0.1
+# target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_addRptNYear_ggh_recreate1_87SigOct31_2025_newEdgeTarget
+# - 0.31
+# - 0.35
+# - 0.18
+# - 0.1
+# - 0.06
+target_yields:  #  V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_addOnlyYear_ggh_recreate1_87SigOct31_2025_newEdgeTarget
+- 0.3
+- 0.36
+- 0.17
+- 0.11
 - 0.06
