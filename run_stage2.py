@@ -157,7 +157,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     else:
         year_param = year
 
-    # year_param="all"  
+    year_param="all"  
     print(f"year_param: {year_param}")
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
@@ -669,7 +669,7 @@ if __name__ == "__main__":
     help="If true, add all the fields that JEC variations is applied on",
     )
     start_time = time.time()
-    client =  Client(n_workers=40,  threads_per_worker=1, processes=True, memory_limit='30 GiB') 
+    client =  Client(n_workers=50,  threads_per_worker=1, processes=True, memory_limit='30 GiB') 
 
 
     # from dask_gateway import Gateway
