@@ -7,7 +7,7 @@ Before running the script `run_script.sh`, please update `label`, `year` and `mv
 if region is specified as `h-peak`, the data histogram is automatically blinded.
 
 ```bash
-cd ./validation/VBF/
+cd ./validation/ggH/categorization
 bash run_script.sh
 ```
 

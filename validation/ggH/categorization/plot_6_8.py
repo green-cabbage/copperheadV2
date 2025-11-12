@@ -238,6 +238,8 @@ if __name__ == "__main__":
     plot_var = "BDT_score"
     binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
     save_fname = f"plots/{args.label}_x_{args.category}/{args.year}_signal/Fig6_8"
+    # Make directory if it doesn't exist
+    os.makedirs(os.path.dirname(save_fname), exist_ok=True)
     # status = "Private"
     status = "Simulation"
 

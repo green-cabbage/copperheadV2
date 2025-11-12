@@ -497,7 +497,8 @@ def plotFig_6_13(
         ax_main.set_yscale('log')
         # ax_main.set_ylim(0.01, 1e9)
     else:
-        ax_main.set_ylim(0.00, 0.055)
+        # ax_main.set_ylim(0.00, 0.055)
+        ax_main.set_ylim(0.00, 0.07)
 
     # -----------------------------------------
     # save hist as csv

@@ -280,6 +280,8 @@ if __name__ == "__main__":
     bdt_edges4plot.sort() 
     print(f"bdt_edges4plot: {bdt_edges4plot}")
     subCatSignificance_hist = getSignificanceHist(sample_dict)
+    # Make directory if it doesn't exist
+    os.makedirs(os.path.dirname(save_fname), exist_ok=True)
     plotFig_6_13(
         binning, bkg_MC, sig_MC, save_fname,
         title = "", 

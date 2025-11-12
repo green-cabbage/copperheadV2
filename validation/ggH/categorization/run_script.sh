@@ -34,7 +34,7 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_fullRun_Jun21_2025_1n2Revised"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off"
 # model_name="V2_Aug28_PosWgtRun0p7_removeForwardJet_redo_MassResPow4"
-model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight"
+model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight_addOnlyYear"
 
 
 # # category="${model_name}_ggh"
@@ -51,7 +51,7 @@ model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_ann
 # # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_jet1Pt_Vars"
 # # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
 # # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
-category="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct31_2025_newEdgeTarget/stage2_output" 
+category="${model_name}_ggh_recreate1_87SigOct31_2025_newEdgeTarget" 
 
 # year="2018"
 # year="2017"
@@ -60,138 +60,29 @@ category="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${categor
 # year="2016preVFP"
 year="all"
 
-region="z-peak"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-region="signal"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-region="h-sidebands"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
 # # plot Fig 6.13 from AN-19-124
 region="signal"
-python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
 python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
-python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+# python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
+# # -----------------------------------------------------
+# plot 6.7 
+# # -----------------------------------------------------
+
 python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+
 
 # # # -----------------------------------------------------
 # # plot 6.7 
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_orig"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_wgt_1e6"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_noSigWgt"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off_oldBDT_amcDY"
-# # model_name="V2_UL_Jan18_2025"
-# # model_name="V2_UL_Jan19_2025_addTTST_Aug26"
-# # model_name="V2_UL_Jan19_2025_addTTST_Aug28_MiNNLO"
-# # model_name="V2_UL_Mar24_2025_Aug28_MiNNLO_scalePosWgtOff"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff_noVBFsig"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff_noVBFsig_noJetEtas"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff_noVBFsig_noJetVars1"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff_noVBFsig_noJetVars2"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff_noVBFsig_noJetVars3"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainOff_noVBFsig_noJetVars4"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly_noVBFsig_noJetVars4"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars4"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars3"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars5"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars6"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars7"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_jjdPhi"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_dPhisOn"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars8"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars9"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars10"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars11"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars12"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars13"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars13_1n2Revised"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars13_1n2Revised"
-# # model_name="V2_fullRun_Jun21_2025_1n2Revised_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars13_bkgWgtApplied"
-# # model_name="V2_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noVBFsig_noJetVars13_bkgWgtApplied_removeForwardJet"
-# # model_name="V2_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars13_bkgWgtApplied_removeForwardJet"
-# # model_name="V2_Aug28_scalePosWgtOff_AllMCAllYr_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars14_bkgWgtApplied_removeForwardJet"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars14_bkgWgtApplied_removeForwardJet"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars15_bkgWgtApplied_removeForwardJet"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear_posSumWgt"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear_fillNoneChange"
-# # model_name="V2_Aug28_scalePosWgtOff_AllYears_noEarlyStop_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear_fillNoneChange_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_2018Only_inclRestBkgMC"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_noJetVars16_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr2_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr3_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr3_NormalizeSigBdtWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr2_NormalizeSigBdtWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr_NormalizeSigBdtWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr4_NormalizeSigBdtWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_RemoveNegWgt_inclRestBkgMC_bigEbeMassContr3_addRpt_NormalizeSigBdtWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_AnnhilateNegWgt_inclRestBkgMC_bigEbeMassContr3_addRpt_NormalizeSigBdtWgt_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_AnnhilateNegWgt_inclRestBkgMC_bigEbeMassContr3_addRpt_NormalizeSigBdtWgt_addAllUlYr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_AnnhilateNegWgt_inclRestBkgMC_bigEbeMassContr5_addRpt_NormalizeSigBdtWgt_addAllUlYr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJet_AddYear_AnnhilateNegWgt_inclRestBkgMC_bigEbeMassContr6_addRpt_NormalizeSigBdtWgt_addAllUlYr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_removeForwardJetFix_AddYear_AnnhilateNegWgt_inclRestBkgMC_bigEbeMassContr3_addRpt_NormalizeSigBdtWgt_addAllUlYr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_bigEbeMassContr3_addRpt_NormalizeSigBdtWgt_addAllUlYr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassQuad_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun1_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun2_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun3_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun4_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun5_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgtApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun5_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun4_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun3_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun2_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun1_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun6_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun7_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_ebeMassSq_PosWgtRun6_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_scalePosWgtOff_wgtTrainEbeMassResonly4Sig_bkgWgctApplied_AddYear_AnnhilateNegWgt_inclRestBkgMC_NormalizeEbeMassRes_addRpt_NormalizeSigBdtWgt_addAllUlYr_addEbeFacDY_ebeMassSq_PosWgtRun6_removeForwardJet_2018Only_inclOtherBkg"
-# # model_name="V2_Aug28_PosWgtRun6_removeForwardJet_2018Only_inclOtherBkgButOnlyDyInTrain"
-# # model_name="V2_Aug28_PosWgtRun6_removeForwardJet_inclOtherBkgButOnlyDyInTrain_2018Only"
-# # model_name="V2_Aug28_PosWgtRun6_removeForwardJet_2018Only"
-# # model_name="V2_Aug28_PosWgtRun6_removeForwardJet_inclOtherBkgButOnlyDyInTrainDfValInc_2018Only"
-# # model_name="V2_Aug28_PosWgtRun6_removeForwardJet_redo_2018Only"
-# # model_name="V2_Aug28_PosWgtRun6_removeForwardJet_redo"
-# # model_name="V2_Aug28_PosWgtRun0p7_removeForwardJet_redo"
-# # model_name="V2_Aug28_PosWgtRun0p9_removeForwardJet_redo"
-# # model_name="V2_Aug28_PosWgtRun1p0_removeForwardJet_redo"
-# # model_name="V2_Aug28_PosWgtRun1p1_removeForwardJet_redo"
-# # model_name="V2_Aug28_PosWgtRun1p3_removeForwardJet_redo"
-# # model_name="V2_Aug28_PosWgtRun0p7_removeForwardJet_redo_MassResPow4"
-# # model_name="V2_Aug28_PosWgtRun0p7_MassResRun1"
-# # model_name="V2_Aug28_PosWgtRun0p7_MassResRun2"
-# # model_name="V2_Aug28_PosWgtRun0p7_MassResRun3"
-# # model_name="V2_Aug28_PosWgtRun0p7_MassResRun4"
-# # model_name="V2_Aug28_PosWgtRun0p7_MassResRun5"
-# # model_name="V2_Aug28_PosWgtRun0p7_MassResRun1_removeForwardJets"
-# # model_name="V2_Aug16_2025Reprod_IssueNum2"
-# # model_name="V2_Aug16_2025DefaultFillNoneBack_IssueNum2"
-# # model_name="V2_Aug16_2025DefaultFillNoneBack_AnnhilateNegWgts_IssueNum2"
-# # model_name="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_IssueNum2"
-# # model_name="V2_Aug16_2025DefaultFillNoneBackFix_IssueNum2"
-# # model_name="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRpt_IssueNum2"
-# # model_name="V2_Aug16_2025DefaultFillNoneBackFix_AnnhilateNegWgts_AddRptNoEarlyStop_IssueNum2"
+# # # -----------------------------------------------------
+
 # model_name="V2_Aug16_2025AddIssue1To3_IssueNum2"
 
 # category="${model_name}_ggh" # stage2 ouput name
@@ -216,20 +107,20 @@ python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 # # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
 
-# # # -----------------------------------------------------
-# # year="all"
+# # # # -----------------------------------------------------
+# # # year="all"
 
-# # region="z-peak"
-# # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# # # region="z-peak"
+# # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-# # region="signal"
-# # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# # # region="signal"
+# # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-# # region="h-sidebands"
-# # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# # # region="h-sidebands"
+# # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-# # # plot Fig 6.13 from AN-19-124
-# # region="signal"
-# # python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-# # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+# # # # plot Fig 6.13 from AN-19-124
+# # # region="signal"
+# # # python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# # # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 

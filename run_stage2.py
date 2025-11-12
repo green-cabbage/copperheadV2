@@ -724,7 +724,10 @@ if __name__ == "__main__":
         elif sample.lower() == "dy":
             # full_load_path = load_path+f"/dy_*/*/*.parquet"
             # full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
-            full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" #FIXME
+            if args.do_6p7:
+                full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" # we don't need incl DY
+            else:
+                full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
         elif sample.lower() == "ewk":
             full_load_path = load_path+f"/ewk_lljj_mll50_mjj120/*/*.parquet"
         elif sample.lower() == "tt":
