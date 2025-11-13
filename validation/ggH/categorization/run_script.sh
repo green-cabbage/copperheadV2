@@ -34,8 +34,8 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_fullRun_Jun21_2025_1n2Revised"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_BigEbeMassResContrib_Aug25_2025_DYSigOnly_BSC_Off"
 # model_name="V2_Aug28_PosWgtRun0p7_removeForwardJet_redo_MassResPow4"
-# model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight_addOnlyYear"
-model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight_separateYears_Nov11repeat"
+model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight_addOnlyYear"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight_separateYears_Nov11repeat"
 
 
 # # category="${model_name}_ggh"
@@ -61,67 +61,71 @@ category="${model_name}_ggh_recreate1_87SigOct31_2025_newEdgeTarget"
 # year="2016preVFP"
 year="all"
 
-region="z-peak"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-region="h-sidebands"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="h-sidebands"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
-# # plot Fig 6.13 from AN-19-124
 region="signal"
-python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
-python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
-python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
-# # -----------------------------------------------------
-# plot 6.7 
-# # -----------------------------------------------------
-
-python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
 
+# # # plot Fig 6.13 from AN-19-124
+# region="signal"
+# python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+# python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
 # # # -----------------------------------------------------
 # # plot 6.7 
 # # # -----------------------------------------------------
 
-# model_name="V2_Aug16_2025AddIssue1To3_IssueNum2"
-
-# category="${model_name}_ggh" # stage2 ouput name
-# year="all"
-# # year="2018"
-# # year="2017"
-# label="fullRun_Jun23_2025_1n2Revised"
-# region="signal"
 # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
-# # python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
-# # python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
-# # python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
-# # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
-
-# # year="2018"
-# # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
-# # year="2017"
-# # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
-# # year="2016postVFP"
-# # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
-# # year="2016preVFP"
-# # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
 
 
 # # # # -----------------------------------------------------
-# # # year="all"
+# # # plot 6.7 
+# # # # -----------------------------------------------------
 
-# # # region="z-peak"
-# # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# # model_name="V2_Aug16_2025AddIssue1To3_IssueNum2"
 
-# # # region="signal"
-# # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# # # region="h-sidebands"
-# # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
-
-# # # # plot Fig 6.13 from AN-19-124
-# # # region="signal"
+# # category="${model_name}_ggh" # stage2 ouput name
+# # year="all"
+# # # year="2018"
+# # # year="2017"
+# # label="fullRun_Jun23_2025_1n2Revised"
+# # region="signal"
+# # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+# # # python plot_6_8.py -label $label -cat $category -y ${year} --region ${region}
+# # # python getTable_6_2And6_12.py -label $label -cat $category -y ${year} --region ${region}
 # # # python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
 # # # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
+
+# # # year="2018"
+# # # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+# # # year="2017"
+# # # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+# # # year="2016postVFP"
+# # # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+# # # year="2016preVFP"
+# # # python plot_6_7.py -label $label -cat $category -y ${year} --region ${region}
+
+
+# # # # # -----------------------------------------------------
+# # # # year="all"
+
+# # # # region="z-peak"
+# # # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # # # region="signal"
+# # # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # # # region="h-sidebands"
+# # # # python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+
+# # # # # plot Fig 6.13 from AN-19-124
+# # # # region="signal"
+# # # # python plot_6_13.py -label $label -cat $category -y ${year} --region ${region}
+# # # # python plot_6_19.py -label $label -cat $category -y ${year} --region ${region}
 

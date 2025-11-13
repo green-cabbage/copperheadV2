@@ -203,7 +203,10 @@ if __name__ == "__main__":
     
     sub_cats = ["all", 0,1,2,3,4]
     # sub_cats = range(5)
-    variables = ["BDT_score", "dimuon_mass_unblinded", "dimuon_mass_blinded"]
+    if args.region == "signal":
+        variables = ["BDT_score", "dimuon_mass_blinded"]
+    else:
+        variables = ["BDT_score", "dimuon_mass_unblinded", "dimuon_mass_blinded"]
     # variables = ["dimuon_mass_blinded"]
 
     for var in variables:

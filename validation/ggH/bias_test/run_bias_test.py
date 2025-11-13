@@ -8,12 +8,17 @@ from omegaconf import OmegaConf
 from typing import Tuple, List, Dict
 import ROOT as rt
 import ROOT
-from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23, plot_6_26, getSigBkgPdf
-from modules.fit_functions import getBWZ_gamma, getBWZxBern, getLandxBern, getFEWZxBern, getPowerLaw
 import argparse
 import os
 import copy
 import pandas as pd
+
+# get parent directory of current file
+import sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+sys.path.append(parent_dir)
+from modules.fit_functions import MakeFEWZxBernDof3, plot_6_23, plot_6_26, getSigBkgPdf
+from modules.fit_functions import getBWZ_gamma, getBWZxBern, getLandxBern, getFEWZxBern, getPowerLaw
 from modules.utils import getGOF_KS
 
 
@@ -70,7 +75,7 @@ def create_core_pdf(pdf_type, subcat_index, x, init_vals):
         return pdf, param_l
         
     elif pdf_type == "FEWZxBern":
-        pdf, param_l = getFEWZxBern(x, init_vals, fewz_workspace_path="modules/ucsd_workspace/")
+        pdf, param_l = getFEWZxBern(x, init_vals, fewz_workspace_path="../../../modules/ucsd_workspace/")
         return pdf, param_l
         
     elif pdf_type == "LandauxBern":
@@ -461,7 +466,7 @@ if __name__ == "__main__":
             fitResult.Print("v")
 
     df = pd.DataFrame(df_rows, columns=["BDT cat", "fit function", "chi2ndf"])
-    df.to_csv(f"test_chi2ndf.csv")
+    df.to_csv(f"{base_path}/test_chi2ndf.csv")
     # raise ValueError
     # print(f"all_params after fitting: {[param.Print() for param in all_params]}")
     print(f"coreFunction_dict: {coreFunction_dict}")
