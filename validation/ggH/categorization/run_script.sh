@@ -38,7 +38,8 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_setRandomSeed_annhilateWeight_separateYears_Nov11repeat"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_applyClassWgtBalance_addOnlyYear_Nov14repeat"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_applyClassWgtBalance_addOnlyYear_noEbeMass"
-model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ebeSigOnly"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ebeSigOnly"
+model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt"
 
 
 # # category="${model_name}_ggh"
