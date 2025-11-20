@@ -40,9 +40,9 @@ def create_core_pdf(pdf_type, subcat_index, x, init_vals):
 
     if pdf_type == "BWZRedux":
         a = rt.RooRealVar(f"{prefix}_a_coeff", f"{prefix}_a_coeff", 
-                          init_vals["a_coeff"], -0.1,0.1)
+                          init_vals["a_coeff"], -0.0,0.2)
         b = rt.RooRealVar(f"{prefix}_b_coeff", f"{prefix}_b_coeff", 
-                          init_vals["b_coeff"], -0.02, 0.02)
+                          init_vals["b_coeff"], -0.01, 0.01)
         c = rt.RooRealVar(f"{prefix}_c_coeff", f"{prefix}_c_coeff", 
                           init_vals["c_coeff"], 0,5) 
         pdf = rt.RooModZPdf(prefix, prefix, x, a, b, c)
