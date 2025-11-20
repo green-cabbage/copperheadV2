@@ -56,7 +56,8 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ebeSigOnly"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation1"
-model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation2"
+# model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation2"
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_addEbeMassRel"
 
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 

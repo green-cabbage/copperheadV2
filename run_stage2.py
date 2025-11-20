@@ -335,6 +335,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         "wgt_nominal",
         "event", 
         "dimuon_ebe_mass_res",
+        'dimuon_ebe_mass_res_rel',
         # misc fields below ------------------
         # "BDT_score_val", # val fold
         # "BDT_score_train", # train fold

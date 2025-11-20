@@ -11,5 +11,19 @@ cd ./validation/ggH/categorization
 bash run_script.sh
 ```
 
+## Running bias test
+
+```bash
+cd ./validation/ggH/bias_test
+bash run_script.sh
+```
+## Getting NLL scan curves
+copy output root files from `./validation/ggH/bias_test/run_script.sh` to `HMuMuCombine/NLL_scan` (github link:"https://github.com/green-cabbage/HMuMuCombine/tree/master") and paste them to my_workspace and then follow the instructions in `HMuMuCombine/NLL_scan/README.md`
+
+
+## Getting core function biass test values
+copy output root files from `./validation/ggH/bias_test/run_script.sh` to `HMuMuCombine/coreFuncScan` (github link:"https://github.com/green-cabbage/HMuMuCombine/tree/master") and paste them to my_workspace and then follow the instructions in `HMuMuCombine/coreFuncScan/README.md`
+
+
 
 # References/Important links
