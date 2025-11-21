@@ -54,8 +54,7 @@ def getColor(name):
         print("Error, color not available for the function!")
         raise ValueError
 
-def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="HIST"):
-
+def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="HIST", cat_idx=None):        
     BDT_scores = bkg_variables["BDT_score"]
     weights = bkg_variables["wgt_nominal"]
     dimuon_mass = bkg_variables["dimuon_mass"]
@@ -77,7 +76,11 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
     canvas = ROOT.TCanvas("c", "c", 800, 600)
     leg = ROOT.TLegend(0.75,0.75,1.0,1.0)
     hist_l = []
-    for i, m in enumerate(masks):
+    BDT_cats = enumerate(masks)
+    for i, m in BDT_cats:
+        if cat_idx is not None:
+            if i != cat_idx: # skip plotting cat_idx not specified
+                continue
         legend_str = f"{bdt_edges[i]:.2f} <= BDT < {bdt_edges[i+1]:.2f}"
         # bin_bdt_scores = BDT_scores[m]
         bin_dimuon_mass = dimuon_mass[m]
@@ -121,10 +124,15 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
     canvas.SetTicks(2, 2)
     canvas.Update()
     canvas.Draw()
-    if "E" in draw_mode:
-        canvas.SaveAs(f"{save_fname}_ErrBar.pdf")
+
+    if cat_idx is not None:
+        save_fname_addendum = f"_cat{cat_idx}"
     else:
-        canvas.SaveAs(f"{save_fname}.pdf")
+        save_fname_addendum = ""
+    if "E" in draw_mode:
+        canvas.SaveAs(f"{save_fname}_ErrBar{save_fname_addendum}.pdf")
+    else:
+        canvas.SaveAs(f"{save_fname}{save_fname_addendum}.pdf")
 
 
 if __name__ == "__main__":
@@ -248,6 +256,7 @@ if __name__ == "__main__":
     xmin = 110
     xmax = 150
     bdt_edges = [0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 1.0]
+    n_bdt_cats = len(bdt_edges) -1
     bkgMC_BDT_score = ak.to_numpy(bkgMC_BDT_score)
     bkgMC_wgt_nominal = ak.to_numpy(bkgMC_wgt_nominal)
     bkgMC_dimuon_mass = ak.to_numpy(bkgMC_dimuon_mass)
@@ -260,9 +269,13 @@ if __name__ == "__main__":
     print(f"bkgMC_BDT_score: {bkgMC_BDT_score}")
     print(f"bkgMC_wgt_nominal: {bkgMC_wgt_nominal}")
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True)
+    for cat_idx in range(n_bdt_cats):
+        plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, cat_idx=cat_idx)
     # nbins = 75
     nbins = 100
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E")
+    for cat_idx in range(n_bdt_cats):
+        plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E", cat_idx=cat_idx)
     
 
     
