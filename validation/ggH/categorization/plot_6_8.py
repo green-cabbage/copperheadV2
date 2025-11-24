@@ -134,6 +134,86 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
     else:
         canvas.SaveAs(f"{save_fname}{save_fname_addendum}.pdf")
 
+def plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="HIST", cat_idx=None):        
+    subCategory_idx = bkg_variables["subCategory_idx"]
+    weights = bkg_variables["wgt_nominal"]
+    dimuon_mass = bkg_variables["dimuon_mass"]
+    max_cat = np.max(subCategory_idx)
+    bdt_edges = np.array(bdt_edges)
+    # build one mask per bin [edges[i], edges[i+1])
+    masks = [
+        (subCategory_idx ==i)
+        for i in range(max_cat + 1)
+    ]
+    color_l = [
+        rt.kBlack,
+        rt.kCyan,
+        rt.kBlue,
+        rt.kOrange,
+        rt.kGreen,
+        rt.kRed,
+    ]
+    canvas = ROOT.TCanvas("c", "c", 800, 600)
+    leg = ROOT.TLegend(0.75,0.75,1.0,1.0)
+    hist_l = []
+    BDT_cats = enumerate(masks)
+    for i, m in BDT_cats:
+        if cat_idx is not None:
+            if i != cat_idx: # skip plotting cat_idx not specified
+                continue
+        legend_str = f"BDT category {i}"
+        # bin_bdt_scores = BDT_scores[m]
+        bin_dimuon_mass = dimuon_mass[m]
+        bin_wgts = weights[m]
+
+        # print(f"bin_bdt_scores: {bin_bdt_scores}")
+        print(f"bin_wgts: {bin_wgts}")
+        print(f"bin_dimuon_mass: {bin_dimuon_mass}")
+        
+        bin_dimuon_mass = array('d', bin_dimuon_mass) # make the array double
+        bin_wgts = array('d', bin_wgts) # make the array double
+
+        THist = ROOT.TH1F(f"{i}_hist", f"{i}_hist", nbins, xmin, xmax)
+        THist.FillN(len(bin_dimuon_mass), bin_dimuon_mass, bin_wgts)
+        leg.AddEntry(THist, legend_str,"l")
+        
+        # Normalize
+        if normalize and (THist.Integral()>0):
+            THist.Scale(1/THist.Integral())
+            THist.GetYaxis().SetTitle("A.U.")
+            
+
+        
+        print(f"THist.Integral(): {THist.Integral()}")
+        color = color_l[i]
+        THist.SetLineColor(color)
+        THist.SetMarkerColor(color)
+        # draw_mode = "E"
+        # draw_mode = "HIST"
+        if i ==0:
+            THist.SetTitle("")
+            THist.GetXaxis().SetTitle("m_{\mu\mu} [GeV]")
+            
+            THist.Draw(f"{draw_mode}")
+        else:
+            THist.Draw(f"{draw_mode} SAME")
+
+        hist_l.append(THist) # add to list so that THist doesn't get garbage collected in for loop
+
+    leg.Draw()
+    canvas.SetTicks(2, 2)
+    canvas.Update()
+    canvas.Draw()
+
+    if cat_idx is not None:
+        save_fname_addendum = f"_cat{cat_idx}"
+    else:
+        save_fname_addendum = ""
+    if "E" in draw_mode:
+        canvas.SaveAs(f"{save_fname}BySubCat_ErrBar{save_fname_addendum}.pdf")
+    else:
+        canvas.SaveAs(f"{save_fname}BySubCat{save_fname_addendum}.pdf")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -238,6 +318,7 @@ if __name__ == "__main__":
     bkgMC_BDT_score = bkgMC_events.BDT_score.compute()
     bkgMC_wgt_nominal = bkgMC_events.wgt_nominal.compute()
     bkgMC_dimuon_mass = bkgMC_events.dimuon_mass.compute()
+    bkgMC_subCategory_idx = bkgMC_events.subCategory_idx.compute()
 
     plot_setting_fname = "../../../src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
     # plot_setting_fname = "plot_settings_vbfCat_MVA_input.json"
@@ -265,17 +346,21 @@ if __name__ == "__main__":
         "BDT_score" : bkgMC_BDT_score,
         "wgt_nominal" : bkgMC_wgt_nominal,
         "dimuon_mass" : bkgMC_dimuon_mass,
+        "subCategory_idx" : bkgMC_subCategory_idx,
     }
     print(f"bkgMC_BDT_score: {bkgMC_BDT_score}")
     print(f"bkgMC_wgt_nominal: {bkgMC_wgt_nominal}")
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True)
     for cat_idx in range(n_bdt_cats):
         plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, cat_idx=cat_idx)
+        plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, cat_idx=cat_idx)
+        
     # nbins = 75
     nbins = 100
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E")
     for cat_idx in range(n_bdt_cats):
         plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E", cat_idx=cat_idx)
+        plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E", cat_idx=cat_idx)
     
 
     
