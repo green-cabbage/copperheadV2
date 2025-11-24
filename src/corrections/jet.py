@@ -246,6 +246,8 @@ def jet_puid(jets, config):
     if year=="2017_RERECO":
         logger.debug("using puId 17!")
         puId = jets.puId17
+    elif "puId" not in jets.fields:
+        puId = jets.puIdDisc # nanoV15
     else:
         puId = jets.puId
     # jet puid for standard wps are different for 2016 vs 2017,2018 as shown in https://twiki.cern.ch/twiki/bin/viewauth/CMS/PileupJetIDUL#Working_Points
@@ -264,7 +266,7 @@ def jet_puid(jets, config):
             "medium": (puId >= 6) | (jets.pt >= 50),
             "tight": (puId >= 7) | (jets.pt >= 50),
         }
-    pass_jet_puid = ak.ones_like(jets.jetId, dtype=bool)
+    pass_jet_puid = ak.ones_like(puId, dtype=bool)
 
     if "2017" in year: # for misreco due ot ECAL endcap noise
         eta_window = (abs(jets.eta) > 2.6) & (abs(jets.eta) < 3.0)
@@ -768,7 +770,10 @@ def do_jer_smear(jets, config, event_id, year="2018", syst_l=["nom", "up", "down
         # jer_smearing = applyStrat1(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
         # jer_smearing = applyStrat2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
         # jer_smearing = applyStrat1n2(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta)
-        jer_smearing = applyStrat1n2Revised(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta, year)
+        if "puId" not in jets.fields: # nanoV15
+            jer_smearing = applyStrat1n2Revised(apply_scaling, jer_smearing, jets.puIdDisc, pt_jec, jets.eta, year)
+        else:
+            jer_smearing = applyStrat1n2Revised(apply_scaling, jer_smearing, jets.puId, pt_jec, jets.eta, year)
     
         # jets["pt"] = jer_smearing * pt_jec # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
         jets[f"pt_jer_{syst}"] = jer_smearing * pt_jec  # Source: https://github.com/cms-jet/JECDatabase/blob/4d736bfcc4db71a539f5e31a3b66d014df9add72/scripts/JERC2JSON/minimalDemo.py#L111
@@ -811,3 +816,52 @@ def get_jet_variation(jets_orig, variation, fields2add):
     
     
     return new_jets
+
+
+def passTightJetIdManual(jets, year):
+    if year == "2017": # source: https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVUL#Jet_Identification_for_the_13_Te
+        eta = jets.eta
+        aeta = abs(eta)
+    
+        neHEF = jets.neHEF
+        neEmEF = jets.neEmEF
+        chHEF = jets.chHEF
+        chEmEF = jets.chEmEF
+        muEF = jets.muEF
+    
+        chMult = jets.chMultiplicity
+        neMult = jets.neMultiplicity
+
+        nConstituents = jets.nConstituents
+    
+        # tight ID definition
+        barrel_tight = (
+            (aeta <= 2.6)
+            & (neHEF < 0.90) 
+            & (neEmEF < 0.90)
+            & (nConstituents > 1)
+            & (chHEF > 0) 
+            & (chMult > 0)
+        )
+        transition_tight = (
+            (aeta > 2.6) & (aeta <= 2.7) 
+            & (neHEF < 0.90) 
+            & (neEmEF < 0.99)
+            & (chMult > 0)
+        )
+        endcap_tight = (
+            (aeta > 2.7) & (aeta <= 3.0) 
+            & (neEmEF > 0.01) & (neEmEF < 0.99)
+            & (neMult > 1)
+        )
+        forward_tight = (
+            (aeta > 3.0) 
+            & (neHEF > 0.2) 
+            & (neEmEF < 0.9)
+            & (neMult > 10) 
+        )
+        pass_tight = barrel_tight | transition_tight | endcap_tight | forward_tight
+        return pass_tight
+    else:
+        print("Error: year not yet supported in passTightJetIdManual!")
+        raise ValueError

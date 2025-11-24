@@ -9,7 +9,7 @@ import correctionlib
 from src.corrections.rochester import apply_roccor, apply_roccorRun3
 from src.corrections.fsr_recovery import fsr_recovery, fsr_recoveryV1
 from src.corrections.geofit import apply_geofit
-from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, get_jet_variation, applyUpDown, applyJetUncertaintyKinematics
+from src.corrections.jet import get_jec_factories, jet_id, jet_puid, fill_softjets, applyHemVeto, do_jec_scale, do_jer_smear, get_jet_variation, applyUpDown, applyJetUncertaintyKinematics, passTightJetIdManual
 # from src.corrections.weight import Weights
 from src.corrections.evaluator import pu_evaluator, nnlops_weights, musf_evaluator, get_musf_lookup, lhe_weights, stxs_lookups, add_stxs_variations, add_pdf_variations,  qgl_weights_keepDim, qgl_weights_V2, btag_weights_json, btag_weights_jsonKeepDim, get_jetpuid_weights, get_jetpuid_weights_old, get_jetpuid_weights_eta_dependent
 import json
@@ -509,7 +509,7 @@ class EventProcessor(processor.ProcessorABC):
         pre-made json file
         """
         self.config = config
-        self.isCutflow = isCutflow
+        self.isCutflow = True # isCutflow
 
         self.test_mode = test_mode
         dict_update = {
@@ -2007,15 +2007,32 @@ class EventProcessor(processor.ProcessorABC):
         # # ------------------------------------------------------------#
         # # Apply jetID and PUID
         # # ------------------------------------------------------------#
-
-        pass_jet_id = jet_id(jets, self.config)
-
+        if "jetId" not in jets.fields:
+            pass_jet_id = passTightJetIdManual(jets, year)
+        else:
+            pass_jet_id = jet_id(jets, self.config)
+        jets["pass_jetId"] = pass_jet_id
+        
+        
         logger.info(f"jet loop NanoAODv: {NanoAODv}")
         is_2017 = "2017" in year
+        
+        
         if NanoAODv == 9  or NanoAODv == 12:
             pass_jet_puid = jet_puid(jets, self.config)
         else: # NanoAODv12 doesn't have Jet_PuID yet
             pass_jet_puid = ak.ones_like(pass_jet_id, dtype="bool")
+        jets["pass_puId"] = pass_jet_puid
+        
+
+        
+        # pass_jet_puid_custom = passTightJetIdManual(jets, year)
+        # print(f"pass_jet_puid: {pass_jet_puid[:20].compute()}")
+        # print(f"passTightJetIdManual: {passTightJetIdManual[:20].compute()}")
+        # check = ak.all(pass_jet_puid==pass_jet_puid_custom)
+        # print(f"check: {check.compute()}")
+        
+        # raise ValueError
         # ------------------------------------------------------------#
         # Select jets
         # ------------------------------------------------------------#
@@ -2027,7 +2044,10 @@ class EventProcessor(processor.ProcessorABC):
         # # source: https://nam04.safelinks.protection.outlook.com/?url=https%3A%2F%2Findico.cern.ch%2Fevent%2F1434807%2Fcontributions%2F6040633%2Fattachments%2F2893077%2F5071932%2FJERC%2520meeting%252009_07.pdf&data=05%7C02%7Cyun79%40purdue.edu%7C3d76cc7f47974533372708dd896f875a%7C4130bd397c53419cb1e58758d6d63f21%7C0%7C0%7C638817834635140303%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=fh11i5iJCGo0EQKYBdw0Df8oaesOX2hCnJ%2FU78o37%2BU%3D&reserved=0
         jetHorn_region = abs(jets.eta) > 2.5
         jetHorn_pt_cut = (jets.pt > self.config["jet_pt_cut"]) # pt cut on jethorn doesn't change
-        jetHorn_puid_cut = (jets.puId >= 7) | (jets.pt >= 50) # tight pu Id
+        if "puId" not in jets.fields:
+            jetHorn_puid_cut = (jets.puIdDisc >= 7) | (jets.pt >= 50) # tight pu Id
+        else:
+            jetHorn_puid_cut = (jets.puId >= 7) | (jets.pt >= 50) # tight pu Id
         jetHorn_cut = jetHorn_pt_cut & jetHorn_puid_cut 
         jet_pt_cut = ak.where(jetHorn_region, jetHorn_cut, jet_pt_cut)
 
@@ -2137,9 +2157,9 @@ class EventProcessor(processor.ProcessorABC):
             f"jet1_eta_{variation}" : jet1.eta,
             f"jet1_rapidity_{variation}" : jet1_rapidity,  # max rel err: 0.7394
             f"jet1_phi_{variation}" : jet1.phi,
-            f"jet1_qgl_{variation}" : jet1.qgl,
-            f"jet1_jetId_{variation}" : jet1.jetId,
-            f"jet1_puId_{variation}" : jet1.puId,
+            # f"jet1_qgl_{variation}" : jet1.qgl,
+            f"jet1_pass_jetId_{variation}" : jet1.pass_jetId,
+            f"jet1_pass_puId_{variation}" : jet1.pass_puId,
             f"jet2_pt_{variation}" : jet2.pt,
             f"jet2_eta_{variation}" : jet2.eta,
             f"jet1_mass_{variation}" : jet1.mass,
@@ -2151,9 +2171,9 @@ class EventProcessor(processor.ProcessorABC):
             #-------------------------
             f"jet2_rapidity_{variation}" : jet2_rapidity,  # max rel err: 0.781
             f"jet2_phi_{variation}" : jet2.phi,
-            f"jet2_qgl_{variation}" : jet2.qgl,
-            f"jet2_jetId_{variation}" : jet2.jetId,
-            f"jet2_puId_{variation}" : jet2.puId,
+            # f"jet2_qgl_{variation}" : jet2.qgl,
+            f"jet2_pass_jetId_{variation}" : jet2.pass_jetId,
+            f"jet2_pass_puId_{variation}" : jet2.pass_puId,
             f"jj_mass_{variation}" : dijet.mass,
             # f"jj_mass_{variation}" : p4_sum_mass(jet1,jet2),
             f'jj_mass_log_{variation}': np.log(dijet.mass),
@@ -2249,13 +2269,13 @@ class EventProcessor(processor.ProcessorABC):
 
             # keep dims start -------------------------------------
             # qgl_wgts = qgl_weights_keepDim(jet1, jet2, njets, isHerwig)
-            qgl_wgts = qgl_weights_V2(jets, self.config, isHerwig)
-            # keep dims end -------------------------------------
-            weights.add("qgl_wgt",
-                        weight=qgl_wgts["nom"],
-                        weightUp=qgl_wgts["up"],
-                        weightDown=qgl_wgts["down"]
-            )
+            # qgl_wgts = qgl_weights_V2(jets, self.config, isHerwig)
+            # # keep dims end -------------------------------------
+            # weights.add("qgl_wgt",
+            #             weight=qgl_wgts["nom"],
+            #             weightUp=qgl_wgts["up"],
+            #             weightDown=qgl_wgts["down"]
+            # )
 
         #     # --- QGL weights  end --- #
 
@@ -2327,9 +2347,12 @@ class EventProcessor(processor.ProcessorABC):
             # NOTE: maybe keep the nBtagLoose and nBtagMedium deepbFlavB as a separate variable for quick testing
             # btagLoose_filter = (jets.btagDeepFlavB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
             # btagMedium_filter = (jets.btagDeepFlavB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
-            btagLoose_filter = (jets.btagDeepB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
-            btagMedium_filter = (jets.btagDeepB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
+            # btagLoose_filter = (jets.btagDeepB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5)
+            # btagMedium_filter = (jets.btagDeepB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5)
+            btagLoose_filter = (jets.btagPNetB > self.config["btag_loose_wp"]) & (abs(jets.eta) < 2.5) # FIXME
+            btagMedium_filter = (jets.btagPNetB > self.config["btag_medium_wp"]) & (abs(jets.eta) < 2.5) # FIXME
 
+        
         btagLoose_filter = ak.fill_none(btagLoose_filter, value=False)
         btagMedium_filter = ak.fill_none(btagMedium_filter, value=False)
 
