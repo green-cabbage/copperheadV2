@@ -42,7 +42,8 @@ stage2_load_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/stage1_out
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation1"
 # model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation2"
-model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_addEbeMassRel"
+# model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_addEbeMassRel"
+model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide"
 
 
 # # category="${model_name}_ggh"
@@ -68,8 +69,8 @@ category="${model_name}_ggh_recreate1_87SigOct31_2025_newEdgeTarget"
 # year="2016preVFP"
 year="all"
 
-region="z-peak"
-python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
+# region="z-peak"
+# python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}
 
 region="h-sidebands"
 python validation_plot.py -label $label -cat $category --samples $sample_l -y $year --region ${region}

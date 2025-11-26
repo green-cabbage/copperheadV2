@@ -206,6 +206,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
             'zeppenfeld_nominal',
             'njets_nominal',
             'rpt_nominal', # this technically is not in BDT, but add just in case 
+            # 'dimuon_ebe_mass_res_rel',
         ]
     fields2load += bdt_inputs
 
@@ -335,7 +336,7 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
         "wgt_nominal",
         "event", 
         "dimuon_ebe_mass_res",
-        'dimuon_ebe_mass_res_rel',
+        # 'dimuon_ebe_mass_res_rel',
         # misc fields below ------------------
         # "BDT_score_val", # val fold
         # "BDT_score_train", # train fold
@@ -670,7 +671,7 @@ if __name__ == "__main__":
     help="If true, add all the fields that JEC variations is applied on",
     )
     start_time = time.time()
-    client =  Client(n_workers=50,  threads_per_worker=1, processes=True, memory_limit='30 GiB') 
+    client =  Client(n_workers=30,  threads_per_worker=1, processes=True, memory_limit='30 GiB') 
 
 
     # from dask_gateway import Gateway
@@ -728,7 +729,8 @@ if __name__ == "__main__":
             if args.do_6p7:
                 full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" # we don't need incl DY
             else:
-                full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
+                full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" # we don't need incl DY
+                # full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
             print(f"DY full_load_path: {full_load_path}")
         elif sample.lower() == "ewk":
             full_load_path = load_path+f"/ewk_lljj_mll50_mjj120/*/*.parquet"
