@@ -263,6 +263,20 @@ def getNewRangeHist(hist2copy: rt.TH1D, new_hist_name: str, xlow_new: float, xhi
     # raise ValueError
     return new_hist
 
+def getChi2NdfCorePdf(x: rt.RooRealVar, data: rt.RooDataHist, core_pdf: rt.RooAbsPdf, nfree_params = 5, fit_range="hiSB,loSB", device="cpu"):
+    """
+    get chi2ndf from core-pdf implementation
+    """
+    frame = x.frame()
+    data.plotOn(frame, Name=data.GetName(),)
+    fitResult = core_pdf.fitTo(data, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    
+    core_pdf.plotOn(frame, DataError="SumW2", Name=core_pdf.GetName())
+    chi2ndf = frame.chiSquare(data.GetName(), core_pdf.GetName(), nfree_params)
+    print(chi2ndf)
+    raise ValueError
+    return chi2ndf
+
 def getGOF_KS(x: rt.RooRealVar, data: rt.RooDataHist, pdf: rt.RooAbsPdf, cat_name:str, save_path:str):
     """
     Get KS value for specific value

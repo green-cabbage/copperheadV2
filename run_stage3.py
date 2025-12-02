@@ -16,7 +16,7 @@ import argparse
 import os
 import copy
 import pandas as pd
-from modules.utils import getGOF_KS
+from modules.utils import getGOF_KS,getChi2NdfCorePdf
 
 def normalizeFlatHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHist :
     """
@@ -1543,7 +1543,10 @@ if __name__ == "__main__":
     }
     gof_save_path = f"{plot_save_path}/gof"
     os.makedirs(gof_save_path, exist_ok=True)
-    gof_df = pd.DataFrame(columns=["pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass"])
+    gof_df = pd.DataFrame(columns=[
+        "pdf category", "region", "KS statistic", "nevents", "alpha", "pass threshold", "test pass",
+        # "chi2_ndf loSB + hiSB",
+    ])
     for i in range(len(corePDF_subCats)):
         hist_data = hist_datas[i]
         corePDF_subCat = corePDF_subCats[i]
@@ -1554,6 +1557,7 @@ if __name__ == "__main__":
             core_func_name = pdf_cat_name_dict[cat_ix]
             gof_test_name = f"ggh_cat{i}_{core_func_name}"
             KS_dict = getGOF_KS(mass, hist_data, corePDF_subCat, gof_test_name, gof_save_path)
+            # chi2_ndf = getChi2NdfCorePdf(mass, hist_data, corePDF_subCat)
             for region, ks_stat_dict in KS_dict.items():
                 nevents = ks_stat_dict["nevents"]
                 ks_stat = ks_stat_dict["ks_statistic"]
@@ -1570,6 +1574,7 @@ if __name__ == "__main__":
                     "alpha": alpha,
                     "pass threshold": pass_threshold,
                     "test pass": ks_stat<pass_threshold,
+                    # "chi2_ndf loSB + hiSB" : chi2_ndf,
                 }
     gof_df.to_csv(f"{gof_save_path}/KS_stats.csv")
 
