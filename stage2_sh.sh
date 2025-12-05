@@ -58,8 +58,9 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation1"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Variation2"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_addEbeMassRel"
-model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide"
+# model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Peking"
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ClsWgtC1000"
 
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
@@ -69,8 +70,8 @@ model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide"
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025_BDTJune23Recreated/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct28_2025_BDTJune23Recreated_newEdgeTarget/stage2_output" 
-# stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct31_2025_newEdgeTarget/stage2_output" 
-stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_Dec01_2025_diffTargetYield/stage2_output" 
+stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreate1_87SigOct31_2025_newEdgeTarget/stage2_output" 
+# stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_Dec01_2025_diffTargetYield/stage2_output" 
 
 
 bdt_edge_config_path="/work/users/yun79/Run3/copperheadV2/configs/MVA/ggH/BDT_edges.yaml"
