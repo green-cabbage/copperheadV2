@@ -61,7 +61,8 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Peking"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ClsWgtC1000"
-model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_HyperParamBigtest" 	
+# model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_HyperParamBigtest" 	
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide_HyperParamed"
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreateOct24_2025/stage2_output" 
@@ -180,7 +181,7 @@ python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $
 # stage3_label="${label}_X_${model}_recreate1_87SigOct31_2025_BDT_AddRpt_recalculateTargYieldNBDTEdges"
 # stage3_label="${label}_X_${model}_recreate1_87_test"
 # stage3_label="${label}_X_${model}_recreate2_00SigNov11_2015"
-stage3_label="${label}_X_${model}_diffTargetYield"
+stage3_label="${label}_X_${model}"
 
 echo "stage2 path: ${stage2_save_path}"
 year="all"
