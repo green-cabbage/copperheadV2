@@ -130,9 +130,18 @@ def plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=
     else:
         save_fname_addendum = ""
     if "E" in draw_mode:
-        canvas.SaveAs(f"{save_fname}_ErrBar{save_fname_addendum}.pdf")
+        save_fname_final = f"{save_fname}_ErrBar{save_fname_addendum}"
     else:
-        canvas.SaveAs(f"{save_fname}{save_fname_addendum}.pdf")
+        save_fname_final = f"{save_fname}{save_fname_addendum}"
+
+    # save canvas as pdf and root file
+    print(f"save_fname_final: {save_fname_final}")
+    canvas.SaveAs(f"{save_fname_final}.pdf")
+    f = ROOT.TFile(f"{save_fname_final}.root", "RECREATE")
+    d = f.mkdir("plots")
+    d.cd()
+    canvas.Write()   # writes inside /plots/
+    f.Close()
 
 def plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="HIST", cat_idx=None):        
     subCategory_idx = bkg_variables["subCategory_idx"]
@@ -210,10 +219,17 @@ def plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, no
     else:
         save_fname_addendum = ""
     if "E" in draw_mode:
-        canvas.SaveAs(f"{save_fname}BySubCat_ErrBar{save_fname_addendum}.pdf")
+        save_fname_final = f"{save_fname}BySubCat_ErrBar{save_fname_addendum}"
     else:
-        canvas.SaveAs(f"{save_fname}BySubCat{save_fname_addendum}.pdf")
+        save_fname_final = f"{save_fname}BySubCat{save_fname_addendum}"
 
+    # save canvas as pdf and root file
+    canvas.SaveAs(f"{save_fname_final}.pdf")
+    f = ROOT.TFile(f"{save_fname_final}.root", "RECREATE")
+    d = f.mkdir("plots")
+    d.cd()
+    canvas.Write()   # writes inside /plots/
+    f.Close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -267,7 +283,7 @@ if __name__ == "__main__":
     action="store",
     help="region value to plot, available regions are: h_peak, h_sidebands, z_peak and signal (h_peak OR h_sidebands)",
     )
-    client =  Client(n_workers=63,  threads_per_worker=1, processes=True, memory_limit='10 GiB') 
+    client =  Client(n_workers=30,  threads_per_worker=1, processes=True, memory_limit='10 GiB') 
     
     args = parser.parse_args()
     # load_path =f"/depot/cms/users/yun79/hmm/copperheadV1clean/{args.label}/{args.category}/stage2_output/*/"
@@ -332,8 +348,7 @@ if __name__ == "__main__":
     # status = "Private"
     status = "Simulation"
 
-    # nbins = 75
-    nbins = 100
+    
     xmin = 110
     xmax = 150
     bdt_edges = [0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 1.0]
@@ -350,14 +365,20 @@ if __name__ == "__main__":
     }
     print(f"bkgMC_BDT_score: {bkgMC_BDT_score}")
     print(f"bkgMC_wgt_nominal: {bkgMC_wgt_nominal}")
+
+
+    # nbins = 75
+    nbins = 100
+    # nbins = 120
+    
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True)
+    plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True)
     for cat_idx in range(n_bdt_cats):
         plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, cat_idx=cat_idx)
         plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, cat_idx=cat_idx)
         
-    # nbins = 75
-    nbins = 100
     plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E")
+    plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E")
     for cat_idx in range(n_bdt_cats):
         plot_6_8(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E", cat_idx=cat_idx)
         plot_6_8BySubCat(bkg_variables, bdt_edges, nbins, xmin, xmax, save_fname, normalize=True, draw_mode="E", cat_idx=cat_idx)
