@@ -62,7 +62,8 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Peking"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ClsWgtC1000"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_HyperParamBigtest" 	
-model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide_HyperParamed"
+# model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide_HyperParamed"
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_DavidePerYear"
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreateOct24_2025/stage2_output" 
@@ -79,7 +80,7 @@ bdt_edge_config_path="/work/users/yun79/Run3/copperheadV2/configs/MVA/ggH/BDT_ed
 
 
 # -----------------------------------------------------
-# for BDT edge calculation
+# # for BDT edge calculation
 # year="2018"
 # # sample_l="ggh vbf dy ewk tt st ww wz zz other" 
 # sample_l="ggh vbf data" 
@@ -195,6 +196,3 @@ python run_stage3.py -load $stage2_save_path -cat $category --year $year --label
 # python run_stage3.py -load $stage2_save_path -cat $category --year $year --label $stage3_label
 # year="2016preVFP"
 # python run_stage3.py -load $stage2_save_path -cat $category --year $year --label $stage3_label
-
-
-
