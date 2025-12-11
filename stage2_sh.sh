@@ -63,7 +63,8 @@ category="ggh"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_ClsWgtC1000"
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_HyperParamBigtest" 	
 # model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_Davide_HyperParamed"
-model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_DavidePerYear"
+# model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_DavidePerYear"
+model="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_DavideEbeSigOnly"
 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}/stage2_output" 
 # stage2_save_path="/depot/cms/users/yun79/hmm/copperheadV1clean/$label/${model}_${category}_recreateOct24_2025/stage2_output" 
@@ -117,6 +118,11 @@ python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $
 python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
 sample_l="data ggh vbf dy ewk tt st ww wz zz other" 
 # sample_l="data ggh vbf" 
+python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
+
+
+year="2016postVFP"
+sample_l="ggh vbf" 
 python run_stage2.py -load $stage2_load_path -save $stage2_save_path --samples $sample_l -cat $category --fraction 1.0 --year $year --model_name $model
 python stage2/ggH/calculate_score_edges.py -load $stage2_save_path --year $year --edge_cfg_path ${bdt_edge_config_path}
 sample_l="data ggh vbf dy ewk tt st ww wz zz other" 

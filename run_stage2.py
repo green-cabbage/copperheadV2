@@ -151,13 +151,13 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     
     extra_variations = wgt_unc_fields + jec_unc_fields
 
-    # merged 2016preVFP and 2016postVFP for BDT training
-    if "2016" in year:
-        year_param = "2016"
-    else:
-        year_param = year
+    # # merged 2016preVFP and 2016postVFP for BDT training
+    # if "2016" in year:
+    #     year_param = "2016"
+    # else:
+    #     year_param = year
 
-    # year_param="all"  # make all year to take one BDT trained over all years
+    year_param="all"  # make all year to take one BDT trained over all years
     print(f"year_param: {year_param}")
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
@@ -725,12 +725,10 @@ if __name__ == "__main__":
             is_signal_MC = True
         elif sample.lower() == "dy":
             # full_load_path = load_path+f"/dy_*/*/*.parquet"
-            # full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
             if args.do_6p7:
                 full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" # we don't need incl DY
             else:
-                full_load_path = load_path+f"/dy_M-100To200_MiNNLO/*/*.parquet" # we don't need incl DY
-                # full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
+                full_load_path = load_path+f"/dy_*MiNNLO/*/*.parquet"
             print(f"DY full_load_path: {full_load_path}")
         elif sample.lower() == "ewk":
             full_load_path = load_path+f"/ewk_lljj_mll50_mjj120/*/*.parquet"
