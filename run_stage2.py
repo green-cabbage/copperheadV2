@@ -151,13 +151,13 @@ def process4gghCategory(events: ak.Record, year:str, model_name:str, wgt_unc_fie
     
     extra_variations = wgt_unc_fields + jec_unc_fields
 
-    # # merged 2016preVFP and 2016postVFP for BDT training
-    # if "2016" in year:
-    #     year_param = "2016"
-    # else:
-    #     year_param = year
+    # merged 2016preVFP and 2016postVFP for BDT training
+    if "2016" in year:
+        year_param = "2016"
+    else:
+        year_param = year
 
-    year_param="all"  # make all year to take one BDT trained over all years
+    # year_param="all"  # make all year to take one BDT trained over all years
     print(f"year_param: {year_param}")
     model_path = f"/work/users/yun79/Run2_MVA_trainer/output/bdt_{model_name}_{year_param}"
     training_feat_path = f"{model_path}/training_features.json"
