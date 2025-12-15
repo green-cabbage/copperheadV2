@@ -393,7 +393,8 @@ class EventProcessor(processor.ProcessorABC):
         pre-made json file
         """
         self.config = config
-        self.isCutflow = isCutflow
+        # self.isCutflow = isCutflow
+        self.isCutflow = True
 
         self.test_mode = test_mode
         dict_update = {
@@ -470,33 +471,33 @@ class EventProcessor(processor.ProcessorABC):
         """
 
         # Mass binned study start -------------------------------------------------
-        logger.info("doing mass binned study!")
-        LHE_particles = events.LHEPart #has unique pdgIDs of [ 1,  2,  3,  4,  5, 11, 13, 15, 21]
-        bool_filter = (abs(LHE_particles.pdgId) == 11) | (abs(LHE_particles.pdgId) == 13) | (abs(LHE_particles.pdgId) == 15)
-        LHE_leptons = LHE_particles[bool_filter]
+        # logger.info("doing mass binned study!")
+        # LHE_particles = events.LHEPart #has unique pdgIDs of [ 1,  2,  3,  4,  5, 11, 13, 15, 21]
+        # bool_filter = (abs(LHE_particles.pdgId) == 11) | (abs(LHE_particles.pdgId) == 13) | (abs(LHE_particles.pdgId) == 15)
+        # LHE_leptons = LHE_particles[bool_filter]
 
 
-        """
-        TODO: maybe we can get faster by just indexing first and second, instead of argmax and argmins
-        When I had a quick look, all LHE_leptons had either two or zero leptons per event, never one,
-        so just indexing first and second could work
-        """
-        max_idxs = ak.argmax(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for normal lepton
-        min_idxs = ak.argmin(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for anti lepton
-        LHE_lepton_barless = LHE_leptons[max_idxs]
-        LHE_lepton_bar = LHE_leptons[min_idxs]
-        LHE_dilepton_mass =  (LHE_lepton_barless +LHE_lepton_bar).mass
+        # """
+        # TODO: maybe we can get faster by just indexing first and second, instead of argmax and argmins
+        # When I had a quick look, all LHE_leptons had either two or zero leptons per event, never one,
+        # so just indexing first and second could work
+        # """
+        # max_idxs = ak.argmax(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for normal lepton
+        # min_idxs = ak.argmin(LHE_leptons.pdgId , axis=1,keepdims=True) # get idx for anti lepton
+        # LHE_lepton_barless = LHE_leptons[max_idxs]
+        # LHE_lepton_bar = LHE_leptons[min_idxs]
+        # LHE_dilepton_mass =  (LHE_lepton_barless +LHE_lepton_bar).mass
 
-        mass_min = 110
-        mass_max = 150
-        # mass_min = 0
-        # mass_max = 49.9
+        # mass_min = 110
+        # mass_max = 150
+        # # mass_min = 0
+        # # mass_max = 49.9
         
-        LHE_filter = (((LHE_dilepton_mass >= mass_min) & (LHE_dilepton_mass < mass_max)))[:,0]
-        # print(f"LHE_filter: {LHE_filter[:5].compute()}")
-        print(f"LHE_filter sum: {ak.sum(LHE_filter).compute()}")
-        print(f"not LHE_filter sum: {ak.sum(~LHE_filter).compute()}")
-        raise ValueError
+        # LHE_filter = (((LHE_dilepton_mass >= mass_min) & (LHE_dilepton_mass < mass_max)))[:,0]
+        # # print(f"LHE_filter: {LHE_filter[:5].compute()}")
+        # print(f"LHE_filter sum: {ak.sum(LHE_filter).compute()}")
+        # print(f"not LHE_filter sum: {ak.sum(~LHE_filter).compute()}")
+        # raise ValueError
         # Mass binned study end -------------------------------------------------
 
 

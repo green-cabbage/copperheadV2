@@ -4,7 +4,7 @@ cross_sections: # cross-section unit: pb
     '2016PostVFP': 6077.22 # precision: NNLO source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
     '2017': 6077.22 # precision: NNLO source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
     '2018': 6077.22 # precision: NNLO source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
-    '2024': 5558.0 # precision: NLO source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8
+    '2024': 2124.08 # precision: FEWZ NNLO source: https://cms-generators.docs.cern.ch/about-cross-sections/higher-order-calculation/fewz/#dy-cross-section-results
   dy_M-50_MiNNLO: 1976
   dy_M-50_MiNNLO_V2: 2002
   dy_M-50_nocut: 6450.0
@@ -28,7 +28,7 @@ cross_sections: # cross-section unit: pb
   dyTo2Mu_M-10To50: # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYto2Mu_Bin-MLL-10to50_TuneCP5_13p6TeV_powheg-pythia8
     '2024': 6744
   dyTo2Mu_M-50To120: # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYto2Mu_Bin-MLL-50to120_TuneCP5_13p6TeV_powheg-pythia8
-    '2024': 2219
+    '2024': 2219 #Scale up value : 2097.822859 
   dyTo2Mu_M-120To200: # https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20DYto2Mu_Bin-MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8
     '2024': 21.65
   dy_0j: 4620.52
@@ -101,8 +101,13 @@ cross_sections: # cross-section unit: pb
     '2016PostVFP': 86.65 # UL
     '2017': 86.65 # UL
     '2018': 86.65 # UL
-    '2024': 762.1 # source: https://xsecdb-xsdb-official.app.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%20%3D%20TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
-  ttjets_sl: 358.57 # UL
+    '2024': 98.04 
+  ttjets_sl: #358.57 # UL
+    '2016PreVFP': 358.57 # UL
+    '2016PostVFP': 358.57 # UL
+    '2017': 358.57 # UL
+    '2018': 358.57 # UL
+    '2024': 405.69 
   TTWjets_LNu: 0.2159
   TTWJets_QQ: 0.4369
   TTZ_LLnunu: 0.2439
@@ -110,12 +115,39 @@ cross_sections: # cross-section unit: pb
   TTTW: 0.0007298
   TTTJ: 0.0004010
   TTWW: 0.007002
-  ww_2l2nu: 11.09 # UL
-  wz_3lnu: 5.22 # UL
-  wz_2l2q: 6.45 # UL
-  wz_1l1nu2q: 9.12 # UL
-  zz: 12.17 # UL #FIXME
+  ww_2l2nu: # 11.09 # UL
+    '2016PreVFP': 11.09 # UL
+    '2016PostVFP': 11.09 # UL
+    '2017': 11.09 # UL
+    '2018': 11.09 # UL
+    '2024': 11.79 
+  wz_3lnu: # 5.22 # UL
+    '2016PreVFP': 5.22 # UL
+    '2016PostVFP': 5.22 # UL
+    '2017': 5.22 # UL
+    '2018': 5.22 # UL
+    '2024': 4.924 
+  wz_2l2q: #6.45 # UL
+    '2016PreVFP': 6.45 # UL
+    '2016PostVFP': 6.45 # UL
+    '2017': 6.45 # UL
+    '2018': 6.45 # UL
+    '2024': 7.568
+  wz_1l1nu2q: # 9.12 # UL
+    '2016PreVFP': 9.12 # UL
+    '2016PostVFP': 9.12 # UL
+    '2017': 9.12 # UL
+    '2018': 9.12 # UL
+    '2024': 15.87 
+  zz: # 12.17 # UL #FIXME
+    '2016PreVFP': 12.17 # UL
+    '2016PostVFP': 12.17 # UL
+    '2017': 12.17 # UL
+    '2018': 12.17 # UL
+    '2024': 12.75 
   zz_2mu2nu: 0.001583
+  zz_2l2nu: 
+    '2024': 1.031 
   zz_2l2q: 3.698
   zz_4l: 1.325
   GluGluContin_ZZ2e2mu: 3.292
