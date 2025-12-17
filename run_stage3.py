@@ -1055,22 +1055,14 @@ if __name__ == "__main__":
                                 }, 
                                 allSubCat_sample,
     )
-    # ---------------------------------------------------
-    # Perform a simultaneous fit
-    # ---------------------------------------------------
-     
-    # start = time.time()
 
-    # _ = allSubCat_simPdf.fitTo(allSubCat_combData, rt.RooFit.Range(fit_range), EvalBackend=device,  PrintLevel=0 ,Save=True, Strategy=0)
-    # fitResult = allSubCat_simPdf.fitTo(allSubCat_combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,)
-    # end = time.time()
-    
-    # fitResult.Print()
-
+    #----------------------------------------------------------------------------
     # fit core functions separately
+    #----------------------------------------------------------------------------
+
     # BWZ redux
-    fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
+    # fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
+    # fitResult.Print()
     
     _ = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
