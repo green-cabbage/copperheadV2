@@ -67,7 +67,8 @@ model_name="V2_fullRun_Jun21_2025_1n2Revised_ReProduction_Run3_StdClsWgt_DavideE
 # # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_jet1Pt_Vars"
 # # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1Pt_Vars"
 # # category="${model_name}_ggh_w_allYearBDT_w_newBDTTargetYields_noEbeMassRes_Dimu_Mu1_Mu2_jet1jet2Pt_Vars"
-category="${model_name}_ggh_recreate1_87SigOct31_2025_newEdgeTarget" 
+# category="${model_name}_ggh_recreate1_87SigOct31_2025_newEdgeTarget" 
+category="${model_name}_ggh_Dec14_2025_diffTargetYield/" 
 
 # year="2018"
 # year="2017"
