@@ -435,7 +435,7 @@
     },
     "BDT_score": {
         "variable": "BDT_score",
-        "binning_linspace": [-0.9, 0.9, 41],
+        "binning_linspace": [-1.0, 1.0, 45],
         "density": false,
         "ylabel": "Events / 1 GeV",
         "xlabel": "BDT Score",
