@@ -16,7 +16,7 @@ import argparse
 import os
 import copy
 import pandas as pd
-from modules.utils import getGOF_KS,getChi2NdfCorePdf
+from modules.utils import getGOF_KS, getChi2NdfCorePdf, print_workspace_vars, freeze_all_vars
 
 def normalizeFlatHist(x: rt.RooRealVar,rooHist: rt.RooDataHist) -> rt.RooDataHist :
     """
@@ -1070,8 +1070,7 @@ if __name__ == "__main__":
     # fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     # fitResult.Print()
     # fitResult = coreBWZRedux_SubCat0.fitTo(data_allSubCat_BWZ, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
-    # raise ValueError
+    # fitResult.Print()
     
     # sum exp
     _ = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
@@ -1080,7 +1079,7 @@ if __name__ == "__main__":
     # fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range("loSB"), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     # fitResult.Print()
     # fitResult = coreSumExp_SubCat0.fitTo(data_allSubCat_sumExp, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
-    fitResult.Print()
+    # fitResult.Print()
     
     # fit FEWZxBern separately
     _ = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
@@ -1090,6 +1089,7 @@ if __name__ == "__main__":
     # fitResult.Print()
     # fitResult = coreFEWZxBern_SubCat0.fitTo(data_allSubCat_FEWZxBern, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     # fitResult.Print()
+    # raise ValueError
 
     #----------------------------------------------------------------------------
     # freeze core pdf params b4 SMF fitting
@@ -1206,6 +1206,8 @@ if __name__ == "__main__":
 
     fitResult = simPdf.fitTo(combData, rt.RooFit.Range(fit_range), EvalBackend=device, PrintLevel=0 ,Save=True,SumW2Error=True)
     fitResult.Print()
+    # raise ValueError
+
     # # ---------------------------------------------------
     # # unfreeze the core function params b4 fitting again
     # # BWZ redux
@@ -1884,10 +1886,7 @@ if __name__ == "__main__":
     yield_df = pd.concat([yield_df, new_row], ignore_index=True)
 
     # define normalization value from signal MC event weights 
-    flat_MC_SF = 1.00
-    # flat_MC_SF = 0.92 # temporary flat SF to match my Data/MC agreement to that of AN's
-    norm_val = np.sum(wgt_subCat0_SigMC)* flat_MC_SF 
-    # norm_val = 254.528077 # quick test
+    norm_val = data_subCat0_signal.sumEntries()
     sig_norm_subCat0 = rt.RooRealVar(signal_subCat0.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat0 norm_val: {norm_val}")
     sig_norm_subCat0.setConstant(True)
@@ -1921,8 +1920,7 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat1_SigMC)* flat_MC_SF
-    # norm_val = 295.214 # quick test
+    norm_val = data_subCat1_signal.sumEntries()
     sig_norm_subCat1 = rt.RooRealVar(signal_subCat1.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat1 norm_val: {norm_val}")
     sig_norm_subCat1.setConstant(True)
@@ -1955,8 +1953,7 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat2_SigMC) * flat_MC_SF
-    # norm_val = 124.0364 # quick test
+    norm_val = data_subCat2_signal.sumEntries()
     sig_norm_subCat2 = rt.RooRealVar(signal_subCat2.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat2 norm_val: {norm_val}")
     sig_norm_subCat2.setConstant(True)
@@ -1989,8 +1986,7 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat3_SigMC)* flat_MC_SF
-    # norm_val = 116.4918 # quick test
+    norm_val = data_subCat3_signal.sumEntries()
     sig_norm_subCat3 = rt.RooRealVar(signal_subCat3.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat3 norm_val: {norm_val}")
     sig_norm_subCat3.setConstant(True)
@@ -2021,14 +2017,18 @@ if __name__ == "__main__":
     new_row = pd.DataFrame(new_row)
     yield_df = pd.concat([yield_df, new_row], ignore_index=True)
     print(f"yield_df after ggH: {yield_df}")
+    print(f"ak.sum(processed_eventsSignalMC.wgt_nominal) : {ak.sum(processed_eventsSignalMC.wgt_nominal)}")
+    signal_region_filter = (processed_eventsSignalMC.dimuon_mass >= 110) & (processed_eventsSignalMC.dimuon_mass <= 150)
+    print(f"ak.sum(processed_eventsSignalMC[signal_region_filter].wgt_nominal) : {ak.sum(processed_eventsSignalMC[signal_region_filter].wgt_nominal)}")
+    
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat4_SigMC)* flat_MC_SF
-    # norm_val = 45.423052 # quick test
+    norm_val = data_subCat4_signal.sumEntries()
     sig_norm_subCat4 = rt.RooRealVar(signal_subCat4.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat4 norm_val: {norm_val}")
     sig_norm_subCat4.setConstant(True)
+    # raise ValueError
     
     # ---------------------------------------------------
     # Fit signal model simultaneously. Sigma, and left and right tails are different for each category
@@ -2105,6 +2105,7 @@ if __name__ == "__main__":
     fit_result = signal_subCat4.fitTo(data_subCat4_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
         # fit_result.Print()
+    
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat4.setConstant(True)
@@ -2286,10 +2287,7 @@ if __name__ == "__main__":
     yield_df = pd.concat([yield_df, new_row], ignore_index=True)
 
     # define normalization value from signal MC event weights 
-    flat_MC_SF = 1.00
-    # flat_MC_SF = 0.92 # temporary flat SF to match my Data/MC agreement to that of AN's
-    norm_val = np.sum(wgt_subCat0_vbf_SigMC)* flat_MC_SF 
-    # norm_val = 254.528077 # quick test
+    norm_val = data_subCat0_vbf_signal.sumEntries()
     sig_norm_subCat0_vbf = rt.RooRealVar(signal_subCat0_vbf.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat0_vbf norm_val: {norm_val}")
     sig_norm_subCat0_vbf.setConstant(True)
@@ -2322,8 +2320,7 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat1_vbf_SigMC)* flat_MC_SF
-    # norm_val = 295.214 # quick test
+    norm_val = data_subCat1_vbf_signal.sumEntries()
     sig_norm_subCat1_vbf = rt.RooRealVar(signal_subCat1_vbf.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat1_vbf norm_val: {norm_val}")
     sig_norm_subCat1_vbf.setConstant(True)
@@ -2356,8 +2353,7 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat2_vbf_SigMC) * flat_MC_SF
-    # norm_val = 124.0364 # quick test
+    norm_val = data_subCat2_vbf_signal.sumEntries()
     sig_norm_subCat2_vbf = rt.RooRealVar(signal_subCat2_vbf.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat2_vbf norm_val: {norm_val}")
     sig_norm_subCat2_vbf.setConstant(True)
@@ -2390,8 +2386,7 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat3_vbf_SigMC)* flat_MC_SF
-    # norm_val = 116.4918 # quick test
+    norm_val = data_subCat3_vbf_signal.sumEntries()
     sig_norm_subCat3_vbf = rt.RooRealVar(signal_subCat3_vbf.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat3_vbf norm_val: {norm_val}")
     sig_norm_subCat3_vbf.setConstant(True)
@@ -2425,10 +2420,11 @@ if __name__ == "__main__":
 
     # define normalization value from signal MC event weights 
     
-    norm_val = np.sum(wgt_subCat4_vbf_SigMC)* flat_MC_SF
+    norm_val = data_subCat4_vbf_signal.sumEntries()
     sig_norm_subCat4_vbf = rt.RooRealVar(signal_subCat4_vbf.GetName()+"_norm","Number of signal events",norm_val)
     print(f"signal_subCat4_vbf norm_val: {norm_val}")
     sig_norm_subCat4_vbf.setConstant(True)
+    # raise ValueError
     
     # ---------------------------------------------------
     # Fit signal model individually, not simultaneous. Sigma, and left and right tails are different for each category
@@ -2517,6 +2513,7 @@ if __name__ == "__main__":
     fit_result = signal_subCat4_vbf.fitTo(data_subCat4_vbf_signal,  EvalBackend=device, Save=True, SumW2Error=True)
     # if fit_result is not None:
         # fit_result.Print()
+    
 
     # freeze Signal's shape parameters before adding to workspace as specified in line 1339 of the Run2 RERECO AN
     sigma_subCat4_vbf.setConstant(True)
@@ -2771,7 +2768,10 @@ if __name__ == "__main__":
     workspace_path = f"{base_path}/workspaces"
     if not os.path.exists(workspace_path):
         os.makedirs(workspace_path)
-
+    # post fit
+    postFitWorkspace_path = f"{workspace_path}/post_fit"
+    if not os.path.exists(postFitWorkspace_path):
+        os.makedirs(postFitWorkspace_path)
 
     # unfreeze the hmm sigma and peak b4 saving
     CMS_hmm_sigma_cat0_ggh.setConstant(False)
@@ -2825,6 +2825,16 @@ if __name__ == "__main__":
     wout.Import(corePdf_subCat0);
     # wout.Print();
     wout.Write();
+    # print_workspace_vars(wout)
+
+    # -------------------------------
+    # freeze all fit params for post-fit
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_bkg_cat0_{category}.root","RECREATE")
+    freeze_all_vars(wout, make_exception=["mh_ggh", "_norm"]) # normalization is explicitly linked with the r (our POI) so we keep that floating)
+    wout.Write();
+    print_workspace_vars(wout)
+    # raise ValueError
 
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat0_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2844,6 +2854,13 @@ if __name__ == "__main__":
     wout.Import(sig_norm_subCat0_vbf); 
     
     # wout.Print();
+    wout.Write();
+
+    # -------------------------------
+    # copy signal workspace to post-fit path too
+    # All relevant params are frozen in signal, so just copy paste
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_sig_cat0_{category}.root","RECREATE")
     wout.Write();
     
 
@@ -2865,6 +2882,16 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # -------------------------------
+    # freeze all fit params for post-fit
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_bkg_cat1_{category}.root","RECREATE")
+    freeze_all_vars(wout, make_exception=["mh_ggh", "_norm"]) # normalization is explicitly linked with the r (our POI) so we keep that floating)
+    wout.Write();
+    # print_workspace_vars(wout)
+    # raise ValueError
+
+
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat1_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
     # matching names consistent with UCSD's naming scheme
@@ -2884,6 +2911,13 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # -------------------------------
+    # copy signal workspace to post-fit path too
+    # All relevant params are frozen in signal, so just copy paste
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_sig_cat1_{category}.root","RECREATE")
+    wout.Write();
+
     # subCat 2
     fout = rt.TFile(f"{workspace_path}/workspace_bkg_cat2_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2901,6 +2935,16 @@ if __name__ == "__main__":
     wout.Import(corePdf_subCat2);
     # wout.Print();
     wout.Write();
+    # print_workspace_vars(wout)
+
+    # -------------------------------
+    # freeze all fit params for post-fit
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_bkg_cat2_{category}.root","RECREATE")
+    freeze_all_vars(wout, make_exception=["mh_ggh", "_norm"]) # normalization is explicitly linked with the r (our POI) so we keep that floating)
+    wout.Write();
+    # print_workspace_vars(wout)
+    # raise ValueError
 
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat2_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2921,6 +2965,13 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # -------------------------------
+    # copy signal workspace to post-fit path too
+    # All relevant params are frozen in signal, so just copy paste
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_sig_cat2_{category}.root","RECREATE")
+    wout.Write();
+
 
     # subCat 3
     fout = rt.TFile(f"{workspace_path}/workspace_bkg_cat3_{category}.root","RECREATE")
@@ -2939,6 +2990,16 @@ if __name__ == "__main__":
     wout.Import(corePdf_subCat3);
     # wout.Print();
     wout.Write();
+    # print_workspace_vars(wout)
+
+    # -------------------------------
+    # freeze all fit params for post-fit
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_bkg_cat3_{category}.root","RECREATE")
+    freeze_all_vars(wout, make_exception=["mh_ggh", "_norm"]) # normalization is explicitly linked with the r (our POI) so we keep that floating)
+    wout.Write();
+    # print_workspace_vars(wout)
+    # raise ValueError
 
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat3_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2959,6 +3020,14 @@ if __name__ == "__main__":
     # wout.Print();
     wout.Write();
 
+    # -------------------------------
+    # copy signal workspace to post-fit path too
+    # All relevant params are frozen in signal, so just copy paste
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_sig_cat3_{category}.root","RECREATE")
+    wout.Write();
+    
+
     # subCat 4
     fout = rt.TFile(f"{workspace_path}/workspace_bkg_cat4_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2976,6 +3045,16 @@ if __name__ == "__main__":
     wout.Import(corePdf_subCat4);
     # wout.Print();
     wout.Write();
+    # print_workspace_vars(wout)
+
+    # -------------------------------
+    # freeze all fit params for post-fit
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_bkg_cat4_{category}.root","RECREATE")
+    freeze_all_vars(wout, make_exception=["mh_ggh", "_norm"]) # normalization is explicitly linked with the r (our POI) so we keep that floating)
+    wout.Write();
+    # print_workspace_vars(wout)
+    # raise ValueError
 
     fout = rt.TFile(f"{workspace_path}/workspace_sig_cat4_{category}.root","RECREATE")
     wout = rt.RooWorkspace("w","workspace")
@@ -2995,8 +3074,16 @@ if __name__ == "__main__":
     wout.Import(roo_histData_subCat4_vbf_signal);
     # wout.Print();
     wout.Write();
+    # print_workspace_vars(wout)
 
-    
+    # -------------------------------
+    # copy signal workspace to post-fit path too
+    # All relevant params are frozen in signal, so just copy paste
+    # -------------------------------
+    fout = rt.TFile(f"{postFitWorkspace_path}/workspace_sig_cat4_{category}.root","RECREATE")
+    wout.Write();
+
+
     # ---------------------------------------------------
     # Group plotting start here
     # ---------------------------------------------------
