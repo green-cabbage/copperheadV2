@@ -4,18 +4,18 @@ import pandas as pd
 from modules.classify_year import is_run3
 
 
-def filterRegion(events, region="h-peak"):
+def filterRegion(events, region="h-peak", mass_field="dimuon_mass"):
     if isinstance(events, pd.DataFrame):
         fields = events.columns
     else: # awkward zip
         fields = events.fields  
-    if "dimuon_mass" not in fields:
-        raise ValueError("dimuon_mass not found in events fields for region selection.")
-    dimuon_mass = events["dimuon_mass"]
-    z_peak = (dimuon_mass >= 70.0) & (dimuon_mass < 110.0)
-    h_peak = (dimuon_mass >= 115.0) & (dimuon_mass < 135.0)
-    h_sidebands = ((dimuon_mass >= 110.0) & (dimuon_mass < 115.0)) | (
-        (dimuon_mass >= 135.0) & (dimuon_mass < 150.0)
+    if mass_field not in fields:
+        raise ValueError(f"{mass_field} not found in events fields for region selection.")
+    mass = events[mass_field]
+    z_peak = (mass >= 70.0) & (mass < 110.0)
+    h_peak = (mass >= 115.0) & (mass < 135.0)
+    h_sidebands = ((mass >= 110.0) & (mass < 115.0)) | (
+        (mass >= 135.0) & (mass < 150.0)
     )
     if region == "z-peak":
         mask = z_peak
@@ -35,7 +35,98 @@ def filterRegion(events, region="h-peak"):
     return mask, events[mask]
 
 
-def applyRegionCatCuts(
+def applyRegionCatCuts_XZZ2l2nu(
+    events,
+    category: str,
+    region_name: str,
+    variation: str = "nominal",
+    njets_selection: str = "inclusive",  # available options ["inclusive", "0", "1", "2"]
+):
+    """Select an XZZ -> 2l2nu dilepton channel and mass region."""
+    channel_fields = {
+        "mumu": "is_mm",
+        "ee": "is_ee",
+        "emu": "is_em",
+    }
+
+    if category not in channel_fields:
+        raise ValueError(
+            f"Invalid XZZ -> 2l2nu category: {category}. "
+            f"Valid options are: 'mumu', 'ee', 'emu'."
+        )
+
+    channel_field = channel_fields[category]
+    fields = events.columns if isinstance(events, pd.DataFrame) else events.fields
+    if channel_field not in fields:
+        raise KeyError(
+            f"[selection] Missing required field for {category} selection: "
+            f"{channel_field}"
+        )
+
+    channel_cut = events[channel_field]
+    if isinstance(events, pd.DataFrame):
+        channel_cut = channel_cut.fillna(False)
+    else:
+        channel_cut = ak.fill_none(channel_cut, value=False)
+
+    if category in ("mumu", "ee"):
+        if "PuppiMET_pt" not in fields:
+            raise KeyError(
+                "[selection] Missing required field for XZZ -> 2l2nu "
+                "MET selection: PuppiMET_pt"
+            )
+        met_cut = events["PuppiMET_pt"] < 100.0
+        if isinstance(events, pd.DataFrame):
+            met_cut = met_cut.fillna(False)
+        else:
+            met_cut = ak.fill_none(met_cut, value=False)
+        channel_cut = channel_cut & met_cut
+
+    # ---------------------------------------------------------
+    #  Select events based on number of jets
+    # ---------------------------------------------------------
+    if njets_selection != "inclusive":
+        use_var = (
+            "nominal"
+            if (isinstance(variation, str) and variation.startswith("wgt"))
+            else variation
+        )
+        for cand in (f"njets_{use_var}", "njets_nominal", "njets"):
+            if cand in fields:
+                njets = events[cand]
+                break
+        else:
+            raise KeyError(
+                f"[selection] Missing required field for njets selection: tried "
+                f"njets_{use_var}, njets_nominal, njets"
+            )
+
+        if njets_selection == "0":
+            njets_mask = njets == 0
+        elif njets_selection == "1":
+            njets_mask = njets == 1
+        elif njets_selection == "2":
+            njets_mask = njets >= 2
+        else:
+            raise ValueError(
+                f"Invalid njets_selection='{njets_selection}'. Valid options: 'inclusive', '0', '1', '2'."
+            )
+
+        if isinstance(events, pd.DataFrame):
+            njets_mask = njets_mask.fillna(False)
+        else:
+            njets_mask = ak.fill_none(njets_mask, value=False)
+        channel_cut = channel_cut & njets_mask
+
+    region_cut, _ = filterRegion(
+        events,
+        region=region_name,
+        mass_field="dilepton_mass",
+    )
+    return events[channel_cut & region_cut]
+
+
+def applyRegionCatCuts_HMuMu(
     events,
     category: str,
     region_name: str,
@@ -227,6 +318,46 @@ def applyRegionCatCuts(
     category_selection = prod_cat_cut & region
     events = events[category_selection]
     return events
+
+
+def applyRegionCatCuts(
+    events,
+    category: str,
+    region_name: str,
+    process: str,
+    variation: str,
+    do_vbf_filter_study: bool = False,
+    do_VH_veto: bool = False,
+    jj_eta_region: str = "all",
+    njets_selection: str = "inclusive",
+    year: str | None = None,
+    analysis: str = "HMuMu",
+):
+    """Dispatch region/category selection for the requested analysis."""
+    if analysis == "XZZ2l2nu":
+        return applyRegionCatCuts_XZZ2l2nu(
+            events,
+            category,
+            region_name,
+            variation=variation,
+            njets_selection=njets_selection,
+        )
+    if analysis == "HMuMu":
+        return applyRegionCatCuts_HMuMu(
+            events,
+            category,
+            region_name,
+            process,
+            variation,
+            do_vbf_filter_study=do_vbf_filter_study,
+            do_VH_veto=do_VH_veto,
+            jj_eta_region=jj_eta_region,
+            njets_selection=njets_selection,
+            year=year,
+        )
+    raise ValueError(
+        f"Invalid analysis: {analysis}. Valid options are: 'HMuMu', 'XZZ2l2nu'."
+    )
 
 
 def applyRegionCatCutsByScore(
