@@ -1259,7 +1259,7 @@ class EventProcessor(processor.ProcessorABC):
         is_mm = is_mm[event_filter == True]
         is_em = is_em[event_filter == True]
         is_ee = is_ee[event_filter == True]
-        channel = ak.where(is_mm, 0, ak.where(is_em, 1, 2))  # 0=mm, 1=em, 2=ee
+        # channel = ak.where(is_mm, 0, ak.where(is_em, 1, 2))  # 0=mm, 1=em, 2=ee
 
         # Recompute selected electrons on filtered events (used by em and ee channels)
         ecal_gap_filt = (1.44 < abs(events.Electron.eta)) & (1.57 > abs(events.Electron.eta))
@@ -1936,9 +1936,12 @@ class EventProcessor(processor.ProcessorABC):
             "PuppiMET_sumEt": PuppiMET.sumEt,
         })
 
-        # X->ZZ->2l2nu: channel, lepton counts, unified dilepton, and MET-derived variables
+        # X->ZZ->2l2nu: lepton counts, unified dilepton, and MET-derived variables
         _add_block(out_dict, {
-            "channel": channel,                    # 0=mm, 1=em, 2=ee
+            # "channel": channel,                    # 0=mm, 1=em, 2=ee
+            "is_mm": is_mm,
+            "is_em": is_em,
+            "is_ee": is_ee,
             "nMuons": nmuons,
             "nElectrons": nelectrons_filt,
             "pass_z_mass_window": pass_z_mass_window,
@@ -2332,14 +2335,17 @@ class EventProcessor(processor.ProcessorABC):
         logger.info(f"[timing] various region (z-peak) fill time: {t18 - t17:.2f} seconds")
 
         # do zpt weight at the very end
-        # Z-pT reweighting is only meaningful for H→µµ analysis (DY Z→µµ correction).
-        # Explicitly disabled for X→ZZ→2l2ν and any future analysis that is not HMuMu.
+        # Z-pT reweighting that is meaningful for H→µµ analysis (DY Z→µµ correction), but possibly.
+        # for other analyses as well.
+        # The analysis-specific do_zpt switch controls whether this is enabled for the current mode.
+        # NOTE: the zpt re-wgt is derived over mumu events, so for ee and emu events, the weight
+        # may not be correct (TODO: check this claim)
         dataset = events.metadata["dataset"]
         do_zpt = (
             ('dy' in dataset)
             and is_mc
             and self.config["switches"]["do_zpt"]
-            and self.config.get("analysis", "HMuMu") == "HMuMu"
+            # and self.config.get("analysis", "HMuMu") == "HMuMu"
         )
         if do_zpt:
             njets_reco = out_dict["njets_nominal"]

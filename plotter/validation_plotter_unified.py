@@ -393,8 +393,8 @@ if __name__ == "__main__":
         raise ValueError(f"Unsupported year: {args.year}")
 
     if args.lumi == "":
-        # read lumi value from configs/parameters/lumi.yaml
-        infile_lumi = os.path.join("configs", "parameters", "lumi.yaml")
+        # read lumi value from the shared parameter configuration
+        infile_lumi = os.path.join("configs", "parameters", "common", "lumi.yaml")
         import yaml
         with open(infile_lumi, "r") as f:
             lumi_config = yaml.safe_load(f)
@@ -621,7 +621,11 @@ if __name__ == "__main__":
     # initialize histograms
     # FIXME: Is it mandatory to use all regions and channels name below? Or I can just replace it with args.regions and args.category?
     regions = ["z-peak", "signal", "h-peak", "h-sidebands"] # full list of possible regions to loop over
-    channels = ["nocat", "vbf", "ggh"] # full list of possible channels to loop over
+    channels = (
+        ["2l2nu_mumu", "2l2nu_ee", "2l2nu_emu"]
+        if args.analysis == "XZZ2l2nu"
+        else ["nocat", "vbf", "ggh"]
+    )
     variations = ["nominal"]
     sample_groups = list(group_dict.keys()) + ["other"]
     logger.info(f"sample_groups: {sample_groups}")
@@ -733,6 +737,7 @@ if __name__ == "__main__":
                     jj_eta_region=args.jj_eta_region,
                     njets_selection=str(args.njets),
                     year=args.year,
+                    analysis=args.analysis,
                 )
 
                 #  FOR DEBUG PURPOSES

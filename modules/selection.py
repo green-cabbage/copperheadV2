@@ -44,15 +44,15 @@ def applyRegionCatCuts_XZZ2l2nu(
 ):
     """Select an XZZ -> 2l2nu dilepton channel and mass region."""
     channel_fields = {
-        "mumu": "is_mm",
-        "ee": "is_ee",
-        "emu": "is_em",
+        "2l2nu_mumu": "is_mm",
+        "2l2nu_ee": "is_ee",
+        "2l2nu_emu": "is_em",
     }
 
     if category not in channel_fields:
         raise ValueError(
             f"Invalid XZZ -> 2l2nu category: {category}. "
-            f"Valid options are: 'mumu', 'ee', 'emu'."
+            f"Valid options are: '2l2nu_mumu', '2l2nu_ee', '2l2nu_emu'."
         )
 
     channel_field = channel_fields[category]
@@ -69,7 +69,7 @@ def applyRegionCatCuts_XZZ2l2nu(
     else:
         channel_cut = ak.fill_none(channel_cut, value=False)
 
-    if category in ("mumu", "ee"):
+    if category in ("2l2nu_mumu", "2l2nu_ee"):
         if "PuppiMET_pt" not in fields:
             raise KeyError(
                 "[selection] Missing required field for XZZ -> 2l2nu "
