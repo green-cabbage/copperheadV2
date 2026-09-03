@@ -47,12 +47,20 @@ def applyRegionCatCuts_XZZ2l2nu(
         "2l2nu_mumu": "is_mm",
         "2l2nu_ee": "is_ee",
         "2l2nu_emu": "is_em",
+        "2l2nu_vbf_mumu": "is_mm",
+        "2l2nu_njet1_mumu": "is_mm",
+        "2l2nu_njet0_mumu": "is_mm",
+    }
+    jet_categories = {
+        "2l2nu_vbf_mumu": "vbf",
+        "2l2nu_njet1_mumu": "njet1",
+        "2l2nu_njet0_mumu": "njet0",
     }
 
     if category not in channel_fields:
         raise ValueError(
             f"Invalid XZZ -> 2l2nu category: {category}. "
-            f"Valid options are: '2l2nu_mumu', '2l2nu_ee', '2l2nu_emu'."
+            f"Valid options are: {', '.join(repr(name) for name in channel_fields)}."
         )
 
     channel_field = channel_fields[category]
@@ -69,7 +77,11 @@ def applyRegionCatCuts_XZZ2l2nu(
     else:
         channel_cut = ak.fill_none(channel_cut, value=False)
 
-    if category in ("2l2nu_mumu", "2l2nu_ee"):
+
+    # apply Z pt cut
+    channel_cut = channel_cut & (events["dimuon_pt"] > 55.0)
+
+    if channel_field in ("is_mm", "is_ee"):
         if "PuppiMET_pt" not in fields:
             raise KeyError(
                 "[selection] Missing required field for XZZ -> 2l2nu "
@@ -81,6 +93,68 @@ def applyRegionCatCuts_XZZ2l2nu(
         else:
             met_cut = ak.fill_none(met_cut, value=False)
         channel_cut = channel_cut & met_cut
+
+    jet_category = jet_categories.get(category)
+    if jet_category is not None:
+        use_var = (
+            "nominal"
+            if (isinstance(variation, str) and variation.startswith("wgt"))
+            else variation
+        )
+
+        def varcol(base):
+            for candidate in (f"{base}_{use_var}", f"{base}_nominal", base):
+                if candidate in fields:
+                    return events[candidate]
+            raise KeyError(
+                f"[selection] Missing required field for {category}: tried "
+                f"{base}_{use_var}, {base}_nominal, {base}"
+            )
+
+        def fill_false(mask):
+            if isinstance(events, pd.DataFrame):
+                return mask.fillna(False)
+            return ak.fill_none(mask, value=False)
+
+        has_jet30 = fill_false(varcol("jet1_pt") > 30.0)
+
+        if jet_category == "njet0":
+            category_cut = ~has_jet30
+        else:
+            jet1_eta = varcol("jet1_eta")
+            jet2_eta = varcol("jet2_eta")
+            eta_min = np.minimum(jet1_eta, jet2_eta)
+            eta_max = np.maximum(jet1_eta, jet2_eta)
+            leptons_between_jets = ( # FIXME: apply this for leptons in general
+                (events["mu1_eta"] > eta_min)
+                & (events["mu1_eta"] < eta_max)
+                & (events["mu2_eta"] > eta_min)
+                & (events["mu2_eta"] < eta_max)
+            )
+
+            # Stage-1 stores up to four jets; use jets 3 and 4 for the
+            # paper's veto on additional pT > 30 GeV jets inside the gap.
+            central_extra_jet = has_jet30 & False # initialize False array
+            for jet_index in (3, 4):
+                jet_pt = varcol(f"jet{jet_index}_pt")
+                jet_eta = varcol(f"jet{jet_index}_eta")
+                central_extra_jet = central_extra_jet | fill_false(
+                    (jet_pt > 30.0) & (jet_eta > eta_min) & (jet_eta < eta_max)
+                )
+
+            vbf_cut = fill_false(
+                (varcol("jet2_pt") > 30.0)
+                & (varcol("jj_dEta") > 4.0)
+                & (varcol("jj_mass") > 500.0)
+                & leptons_between_jets
+                & (~central_extra_jet)
+            )
+            if jet_category == "vbf":
+                category_cut = vbf_cut
+            else: # 2l2nu njet 1 category
+                category_cut = has_jet30 & (~vbf_cut)
+
+        channel_cut = channel_cut & category_cut
 
     # ---------------------------------------------------------
     #  Select events based on number of jets
