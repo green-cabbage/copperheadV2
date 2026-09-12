@@ -50,11 +50,24 @@ def applyRegionCatCuts_XZZ2l2nu(
         "2l2nu_vbf_mumu": "is_mm",
         "2l2nu_njet1_mumu": "is_mm",
         "2l2nu_njet0_mumu": "is_mm",
+        "2l2nu_vbf_ee": "is_ee",
+        "2l2nu_njet1_ee": "is_ee",
+        "2l2nu_njet0_ee": "is_ee",
     }
     jet_categories = {
         "2l2nu_vbf_mumu": "vbf",
         "2l2nu_njet1_mumu": "njet1",
         "2l2nu_njet0_mumu": "njet0",
+        "2l2nu_vbf_ee": "vbf",
+        "2l2nu_njet1_ee": "njet1",
+        "2l2nu_njet0_ee": "njet0",
+    }
+    # Leading/subleading lepton eta fields of each channel. The muon columns are
+    # pad_none'd in stage1, so ee events have null mu*_eta and vice versa.
+    lepton_eta_fields = {
+        "is_mm": ("mu1_eta", "mu2_eta"),
+        "is_ee": ("el1_eta", "el2_eta"),
+        "is_em": ("mu1_eta", "el1_eta"),
     }
 
     if category not in channel_fields:
@@ -65,21 +78,33 @@ def applyRegionCatCuts_XZZ2l2nu(
 
     channel_field = channel_fields[category]
     fields = events.columns if isinstance(events, pd.DataFrame) else events.fields
+
+    def fill_false(mask):
+        if isinstance(events, pd.DataFrame):
+            return mask.fillna(False)
+        return ak.fill_none(mask, value=False)
+
     if channel_field not in fields:
         raise KeyError(
             f"[selection] Missing required field for {category} selection: "
             f"{channel_field}"
         )
 
-    channel_cut = events[channel_field]
-    if isinstance(events, pd.DataFrame):
-        channel_cut = channel_cut.fillna(False)
+    channel_cut = fill_false(events[channel_field])
+
+
+    # apply Z pt cut. dilepton_pt is the channel-aware Z candidate (mm -> dimuon,
+    # ee -> diele, em -> e+mu); dimuon_pt is the fallback for older stage1 output
+    # and is null outside the mm channel.
+    for zpt_field in ("dilepton_pt", "dimuon_pt"): # FIXME: we should probably just use dilepton_pt.
+        if zpt_field in fields:
+            break
     else:
-        channel_cut = ak.fill_none(channel_cut, value=False)
-
-
-    # apply Z pt cut
-    channel_cut = channel_cut & (events["dimuon_pt"] > 55.0)
+        raise KeyError(
+            "[selection] Missing required field for XZZ -> 2l2nu Z pt "
+            "selection: tried dilepton_pt, dimuon_pt"
+        )
+    channel_cut = channel_cut & fill_false(events[zpt_field] > 55.0)
 
     if channel_field in ("is_mm", "is_ee"):
         if "PuppiMET_pt" not in fields:
@@ -87,12 +112,7 @@ def applyRegionCatCuts_XZZ2l2nu(
                 "[selection] Missing required field for XZZ -> 2l2nu "
                 "MET selection: PuppiMET_pt"
             )
-        met_cut = events["PuppiMET_pt"] < 100.0
-        if isinstance(events, pd.DataFrame):
-            met_cut = met_cut.fillna(False)
-        else:
-            met_cut = ak.fill_none(met_cut, value=False)
-        channel_cut = channel_cut & met_cut
+        channel_cut = channel_cut & fill_false(events["PuppiMET_pt"] < 100.0)
 
     jet_category = jet_categories.get(category)
     if jet_category is not None:
@@ -111,11 +131,6 @@ def applyRegionCatCuts_XZZ2l2nu(
                 f"{base}_{use_var}, {base}_nominal, {base}"
             )
 
-        def fill_false(mask):
-            if isinstance(events, pd.DataFrame):
-                return mask.fillna(False)
-            return ak.fill_none(mask, value=False)
-
         has_jet30 = fill_false(varcol("jet1_pt") > 30.0)
 
         if jet_category == "njet0":
@@ -125,11 +140,20 @@ def applyRegionCatCuts_XZZ2l2nu(
             jet2_eta = varcol("jet2_eta")
             eta_min = np.minimum(jet1_eta, jet2_eta)
             eta_max = np.maximum(jet1_eta, jet2_eta)
-            leptons_between_jets = ( # FIXME: apply this for leptons in general
-                (events["mu1_eta"] > eta_min)
-                & (events["mu1_eta"] < eta_max)
-                & (events["mu2_eta"] > eta_min)
-                & (events["mu2_eta"] < eta_max)
+            lep1_field, lep2_field = lepton_eta_fields[channel_field]
+            for lep_field in (lep1_field, lep2_field):
+                if lep_field not in fields:
+                    raise KeyError(
+                        f"[selection] Missing required field for {category}: "
+                        f"{lep_field}"
+                    )
+            lep1_eta = events[lep1_field]
+            lep2_eta = events[lep2_field]
+            leptons_between_jets = (
+                (lep1_eta > eta_min)
+                & (lep1_eta < eta_max)
+                & (lep2_eta > eta_min)
+                & (lep2_eta < eta_max)
             )
 
             # Stage-1 stores up to four jets; use jets 3 and 4 for the
@@ -186,11 +210,7 @@ def applyRegionCatCuts_XZZ2l2nu(
                 f"Invalid njets_selection='{njets_selection}'. Valid options: 'inclusive', '0', '1', '2'."
             )
 
-        if isinstance(events, pd.DataFrame):
-            njets_mask = njets_mask.fillna(False)
-        else:
-            njets_mask = ak.fill_none(njets_mask, value=False)
-        channel_cut = channel_cut & njets_mask
+        channel_cut = channel_cut & fill_false(njets_mask)
 
     region_cut, _ = filterRegion(
         events,

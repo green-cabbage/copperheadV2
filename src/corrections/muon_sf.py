@@ -90,7 +90,9 @@ def add_muon_sfs_correctionlib(mu1, mu2, config):
     # Define trigger SF acceptance window
 
     trig_eta_upper_limit = config["muon_eta_cut"]
-    trig_pt_lower_limit = config["muon_leading_pt"]
+    # Validity floor of the trigger SF binning, NOT the analysis pT cut. Falls back to
+    # muon_leading_pt so older configs without the key behave exactly as before.
+    trig_pt_lower_limit = config.get("muon_trigsf_pt_min", config["muon_leading_pt"])
     logger.debug(f"trig_eta_upper_limit: {trig_eta_upper_limit}")
     logger.debug(f"trig_pt_lower_limit: {trig_pt_lower_limit}")
     in_bounds = (mu1.pt_raw > trig_pt_lower_limit) & (abs(mu1.eta_raw) < trig_eta_upper_limit)

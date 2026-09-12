@@ -528,7 +528,9 @@ def lhe_weights(events, dataset, year):
     for i in nLHEScaleWeights_to_iterate:
         cut = nLHEScaleWeight > i
         cut_ak = nLHEScaleWeight > i
-        ones = ak.ones_like(events.Muon.pt[:,0])
+        # per-event array of ones. Built from the LHE weight count rather than from
+        # Muon.pt[:, 0], which raises IndexError on events with no muon (ee channel).
+        ones = ak.values_astype(ak.ones_like(nLHEScaleWeight), np.float32)
         # print(f'copperheadV2 lepton sf ones: \n {ak.to_numpy(ones)}')
         lhe_events[f"LHE{i}"] = ak.where(cut, padded_LHEScaleWeight[:, i], ones)
         # print(f'copperheadV2 lepton sf lhe_events[f"LHE{i}"]: \n {ak.to_numpy(lhe_events[f"LHE{i}"])}')

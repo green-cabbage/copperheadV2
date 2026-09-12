@@ -1059,15 +1059,18 @@ class EventProcessor(processor.ProcessorABC):
         # muons = ak.to_packed(events.Muon[muon_selection])
 
         # do the separate mu1 leading pt cut that copperheadV1 does instead of trigger matching
+        # NOTE: the mask is only built here; it is applied further down, once the electron
+        # selection exists, so that zero-muon (ee) events can be judged on their leading
+        # electron instead of on a muon they do not have.
+        pass_leading_mu_pt = None
         if do_seperate_mu1_leading_pt_cut:
             muons_padded = ak.pad_none(muons, 2)
             sorted_args = ak.argsort(muons_padded.pt_raw, ascending=False) # since we're applying cut onver raw pt, we sort by raw pt. Sorting by reco pt gives us fewer events
             muons_sorted = (muons_padded[sorted_args])
             mu1 = muons_sorted[:,0]
-            pass_leading_pt = ak.fill_none((mu1.pt_raw > self.config["muon_leading_pt"]), value=False)
-            event_filter = event_filter & pass_leading_pt
+            pass_leading_mu_pt = ak.fill_none((mu1.pt_raw > self.config["muon_leading_pt"]), value=False)
 
-            self.selection.add("leading_muon_pt", pass_leading_pt)
+            self.selection.add("leading_muon_pt", pass_leading_mu_pt)
 
         t6d = time.perf_counter()
         logger.info(f"[timing] Separate leading muon pT cut time: {t6d - t6c:.2f} seconds")
@@ -1159,6 +1162,29 @@ class EventProcessor(processor.ProcessorABC):
         ee_os = (ee_charge_sum == 0)  # OS pair: +1 + (-1) = 0
         is_ee = (nelectrons == 2) & ee_os & (nmuons == 0)
         self.selection.add("is_ee", is_ee)
+
+        # Apply the leading lepton pT cut built above, now that we know the flavour content.
+        # Events with at least one selected muon keep exactly the muon-only requirement they
+        # had before; zero-muon (ee) events are judged on their leading selected electron.
+        if pass_leading_mu_pt is not None:
+            electrons_lead_sorted = events.Electron[electron_selection]
+            electrons_lead_sorted = electrons_lead_sorted[
+                ak.argsort(electrons_lead_sorted.pt, ascending=False)
+            ]
+            el1_lead = ak.firsts(electrons_lead_sorted)
+            # NOTE: electron_pt_cut is already imposed on every electron by
+            # electron_selection, so for ee events this is satisfied by construction and
+            # the leading-lepton requirement is effectively a no-op. Point this at a
+            # dedicated, tighter threshold if the ee channel needs a trigger-plateau cut.
+            pass_leading_el_pt = ak.fill_none(
+                (el1_lead.pt > self.config["electron_pt_cut"]), value=False
+            )
+            pass_leading_lepton_pt = ak.where(
+                nmuons > 0, pass_leading_mu_pt, pass_leading_el_pt
+            )
+            event_filter = event_filter & pass_leading_lepton_pt
+
+            self.selection.add("leading_lepton_pt", pass_leading_lepton_pt)
 
         event_filter = event_filter & (is_mm | is_em | is_ee)
 
@@ -2311,7 +2337,8 @@ class EventProcessor(processor.ProcessorABC):
                 do_jerunc = do_jer_unc,
                 # event_match=event_match # debugging
                 dnn_year=dnn_year,
-                do_jet_horn_puid = self.config["switches"]["do_jet_horn_puid"]
+                do_jet_horn_puid = self.config["switches"]["do_jet_horn_puid"],
+                electrons = electrons_sel,
             )
 
             _add_block(out_dict, jet_loop_dict)
@@ -2554,6 +2581,7 @@ class EventProcessor(processor.ProcessorABC):
                 "HemVeto",
                 "trigger_match",
                 "leading_muon_pt",
+                "leading_lepton_pt",
                 "jet_veto_maps",
                 "dimuon_mass_window_76_106",
                 "h_peak_115_135",
@@ -2715,6 +2743,7 @@ class EventProcessor(processor.ProcessorABC):
         event_match = None,
         dnn_year = None,
         do_jet_horn_puid = False,
+        electrons = None,
     ):
         logger.debug(f'variation: {variation}')
         is_mc = events.metadata["is_mc"]
@@ -2747,8 +2776,28 @@ class EventProcessor(processor.ProcessorABC):
         matched_mu2_jet = mu2_jet_dR <= 0.4
         matched_mu2_jet = ak.fill_none(matched_mu2_jet, value=False)
 
-        matched_mu_pass = matched_mu1_jet | matched_mu2_jet
-        clean = ~matched_mu_pass
+        matched_lepton_pass = matched_mu1_jet | matched_mu2_jet
+
+        # Same cross-cleaning against the selected electrons. The NanoAOD Jet collection is
+        # not lepton-cleaned: AK4 clustering runs over PF candidates, so a selected electron
+        # leaves an entry in Jet (measured on 2017 data_D ee events: 93.9% of leading jets
+        # have Jet_nElectrons >= 1 and a median chEmEF of 0.91). Without this an ee event
+        # carries ~2 spurious jets and every jet-multiplicity category is meaningless.
+        # Gated so analyses that veto electrons keep byte-identical Stage-1 output.
+        if self.config["switches"].get("do_jet_electron_cleaning", False) and electrons is not None:
+            electrons_padded = ak.pad_none(electrons, 2)
+            for i in range(2):
+                el_i = electrons_padded[:, i]
+                _, _, el_jet_dR = delta_r_V1(
+                    el_i[:, np.newaxis].eta,
+                    jets.eta,
+                    el_i[:, np.newaxis].phi,
+                    jets.phi,
+                )
+                matched_el_jet = ak.fill_none(el_jet_dR <= 0.4, value=False)
+                matched_lepton_pass = matched_lepton_pass | matched_el_jet
+
+        clean = ~matched_lepton_pass
         clean = ak.fill_none(clean, value=True)
 
         # INFO: Below patch is basically applying the eta selection and returns new jet

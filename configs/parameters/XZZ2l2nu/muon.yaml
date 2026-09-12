@@ -1,16 +1,16 @@
-muon_pt_cut:
-    2016preVFP: 20.0
-    2016postVFP: 20.0
-    "2017": 20.0
-    "2018": 20.0
-    2016_RERECO: 20.0
-    "2017_RERECO": 20.0
-    "2018_RERECO": 20.0
-    2022preEE: 20.0
-    2022postEE: 20.0
-    "2023": 20.0
-    "2023BPix": 20.0
-    "2024": 20.0
+muon_pt_cut: # AN2016_325_v6 sec 4.4: both leptons pT > 25 GeV
+    2016preVFP: 25.0
+    2016postVFP: 25.0
+    "2017": 25.0
+    "2018": 25.0
+    2016_RERECO: 25.0
+    "2017_RERECO": 25.0
+    "2018_RERECO": 25.0
+    2022preEE: 25.0
+    2022postEE: 25.0
+    "2023": 25.0
+    "2023BPix": 25.0
+    "2024": 25.0
 muon_eta_cut:
     2016preVFP: 2.4
     2016postVFP: 2.4
@@ -63,7 +63,24 @@ muon_flags:
     "2023": []
     "2023BPix": []
     "2024": []
-muon_leading_pt:
+muon_leading_pt: # AN2016_325_v6 has no asymmetric leading-lepton cut; equal to muon_pt_cut makes it a no-op
+    2016preVFP: 25.0
+    2016postVFP: 25.0
+    "2017": 25.0
+    "2018": 25.0
+    2016_RERECO: 25.0
+    "2017_RERECO": 25.0
+    "2018_RERECO": 25.0
+    2022preEE: 25.0
+    2022postEE: 25.0
+    "2023": 25.0
+    "2023BPix": 25.0
+    "2024": 25.0
+muon_trigsf_pt_min: # Lower validity edge of the muon trigger scale-factor binning.
+    # Kept separate from muon_leading_pt: that is the analysis's kinematic cut, this is a
+    # property of the correction file. They coincide for HMuMu but must not be coupled, or
+    # lowering the analysis cut pushes correctionlib below its binning and it raises
+    # "Index below bounds in Binning". Muons below this get a trigger SF of 1.0.
     2016preVFP: 26.0
     2016postVFP: 26.0
     "2017": 29.0

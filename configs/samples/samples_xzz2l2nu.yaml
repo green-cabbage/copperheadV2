@@ -1,0 +1,225 @@
+# XZZ2l2nu sample configuration.
+#
+# Copy of configs/samples/samples.yaml differing ONLY in the 2017 DY group,
+# which uses dyTo2L_M-50_aMCatNLO instead of the HMuMu MiNNLO pair. Kept as a
+# separate file so HMuMu's samples.yaml stays byte-identical. If samples.yaml
+# gains groups or years, mirror the change here.
+#
+data:
+    label: -1
+
+    groups:
+        DATA:
+            processes: []
+            processes_per_year:
+                2016preVFP:
+                    - data_B
+                    - data_C
+                    - data_D
+                    - data_E
+                    - data_F
+                2016postVFP:
+                    - data_F
+                    - data_G
+                    - data_H
+                2017:
+                    - data_B
+                    - data_C
+                    - data_D
+                    - data_E
+                    - data_F
+                2018:
+                    - data_A
+                    - data_B
+                    - data_C
+                    - data_D
+                2022preEE:
+                    - data_C
+                    - data_D
+                2022postEE:
+                    - data_E
+                    - data_F
+                    - data_G
+                2023:
+                    - data_C
+                2023BPix:
+                    - data_D
+                2024:
+                    - data_C
+                    - data_D
+                    - data_E
+                    - data_F
+                    - data_G
+                    - data_H
+                    - data_I
+
+# --------------------------------------------------
+
+background:
+    label: 0
+
+    groups:
+        DY:
+            processes:
+                - dyTo2L_M-50_incl
+            processes_per_year:
+                2024:
+                    - dyTo2Mu_M-50_aMCatNLO
+                2018:
+                    - dyTo2L_M-50_aMCatNLO
+                2017:
+                    # XZZ2l2nu scheme: inclusive DYJetsToLL aMC@NLO is the only DY
+                    # sample. Unlike the HMuMu MiNNLO pair (DYJetsToMuMu at generator
+                    # level) it populates the ee and em channels, which this analysis
+                    # needs. Intentional and confirmed; do not swap back to MiNNLO.
+                    - dyTo2L_M-50_aMCatNLO
+                2016postVFP:
+                    - dyTo2L_M-50_aMCatNLO
+                2016preVFP:
+                    - dyTo2L_M-50_aMCatNLO
+        DYVBF:
+            processes:
+                - dy_VBF_filter
+            processes_per_year: {}
+
+        TT:
+            processes:
+                - ttjets_dl
+                - ttjets_sl
+            processes_per_year: {}
+
+        ST:
+            # NOTE: names below match the prestage sample names exactly. The former
+            # st_tw_top / st_t_top spellings matched no real sample.
+            processes:
+                - st_tW_top
+                - st_tW_antitop
+                - st_tchannel_top
+                - st_tchannel_antitop
+            processes_per_year:
+                2017:
+                    - st_tW_top
+                    - st_tW_antitop
+                    - st_tchannel_top
+                    - st_tchannel_antitop
+                    - st_schannel_had
+                    - st_schannel_lep
+                2022preEE: {}
+                2022postEE: {}
+                2023: {}
+                2023BPix: {}
+                2024: {}
+
+        EWK:
+            processes:
+                # - ewk_lljj_mll105_160_ptj0
+                # - ewk_lljj_mll105_160_py_dipole
+                # - ewk_lljj_mll50_mjj120
+                # - ewk_lljj
+                - ewk_mmjj_mll_105_160
+            processes_per_year:
+                2022preEE:
+                    - ewk_mmjj_mll_105_160
+                2022postEE:
+                    - ewk_mmjj_mll_105_160
+                2023:
+                    - ewk_mmjj_mll_105_160
+                2023BPix:
+                    - ewk_mmjj_mll_105_160
+                2018:
+                    - ewk_zlljj
+                2017:
+                    - ewk_zlljj
+                2016postVFP:
+                    - ewk_zlljj
+                2016preVFP:
+                    - ewk_zlljj
+        VV:
+            processes:
+                - ww_2l2nu
+                - wz_3lnu
+                - wz_2l2q
+                - wz_1l1nu2q
+                - zz_2l2nu
+                - zz_2l2q
+                - zz_4l
+                # - zz
+            processes_per_year:
+                2018:
+                    - ww_2l2nu
+                    - wz_1l1nu2q
+                    - wz_2l2q
+                    - wz_3lnu
+                    - zz_2l2q
+                    - zz_4l
+                2017:
+                    - ww_2l2nu
+                    - wz_1l1nu2q
+                    - wz_2l2q
+                    - wz_3lnu
+                    - zz_2l2q
+                    - zz_4l
+                2016postVFP:
+                    - ww_2l2nu
+                    - wz_1l1nu2q
+                    - wz_2l2q
+                    - wz_3lnu
+                    - zz_2l2q
+                    - zz_4l
+                2016preVFP:
+                    - ww_2l2nu
+                    - wz_1l1nu2q
+                    - wz_2l2q
+                    - wz_3lnu
+                    - zz_2l2q
+                    - zz_4l
+        VVV:
+            processes:
+                - www
+                - wwz
+                - wzz
+                - zzz
+            processes_per_year:
+                2022preEE: {}
+                2022postEE: {}
+                2023: {}
+                2023BPix: {}
+
+# --------------------------------------------------
+
+signal:
+    label: 1
+
+    groups:
+        VBF:
+            processes:
+                - vbf_powheg_dipole # pythia dipole
+                # - vbf_powheg_herwig # herwig
+                # - vbf_powhegPS # pythia 8
+            processes_per_year:
+                2023:
+                    - vbf_powheg
+                2023BPix:
+                    - vbf_powheg
+                2024:
+                    - vbf_powheg
+        GGH:
+            processes:
+                - ggh_powhegPS
+            processes_per_year: {}
+
+        # HIGGS:
+        #     # Combined signal category (useful for inclusive plots / training)
+        #     processes:
+        #         - vbf_powheg_dipole
+        #         - ggh_powhegPS
+        #     processes_per_year:
+        #         2023:
+        #             - vbf_powheg
+        #             - ggh_powhegPS
+        #         2023BPix:
+        #             - vbf_powheg
+        #             - ggh_powhegPS
+        #         2024:
+        #             - vbf_powheg
+        #             - ggh_powhegPS
