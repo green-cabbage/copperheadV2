@@ -35,6 +35,196 @@ def filterRegion(events, region="h-peak", mass_field="dimuon_mass"):
     return mask, events[mask]
 
 
+# Z candidate mass window of the XZZ -> 2l2nu reference analysis
+# (HZZ_220526_X_zz_2l2v_update.pdf, slide 7): 76 < m(ll) < 106 GeV. This is
+# narrower than the shared filterRegion() 'z-peak' window and is the same
+# window stage 1 stores as the pass_z_mass_window column.
+XZZ2L2NU_Z_WINDOW = (76.0, 106.0)
+
+
+def filterRegion_XZZ2l2nu(events, region="z-window", mass_field="dilepton_mass"):
+    """Mass-region selection for XZZ -> 2l2nu.
+
+    Kept separate from filterRegion() for two reasons: the 2l2nu control regions
+    need the 76-106 GeV window above and its complement, neither of which the
+    shared HMuMu regions provide, and routing 2l2nu through its own function
+    leaves filterRegion() untouched for the HMuMu analysis.
+
+    Any region name that is not 2l2nu-specific is delegated to filterRegion(),
+    so categories that ask for 'z-peak' keep the exact selection they had.
+    """
+    if isinstance(events, pd.DataFrame):
+        fields = events.columns
+    else:  # awkward zip
+        fields = events.fields
+    if mass_field not in fields:
+        raise ValueError(
+            f"{mass_field} not found in events fields for region selection."
+        )
+
+    if region not in ("z-window", "z-sideband"):
+        return filterRegion(events, region=region, mass_field=mass_field)
+
+    mass_low, mass_high = XZZ2L2NU_Z_WINDOW
+    in_window = (mass_low < events[mass_field]) & (events[mass_field] < mass_high)
+    mask = in_window if region == "z-window" else ~in_window
+    return mask, events[mask]
+
+
+# Declarative table of XZZ -> 2l2nu categories. Each entry fully describes one
+# selection, so adding a category is a table edit rather than another branch in
+# the cut code. Keys, with their defaults in _XZZ2L2NU_CAT_DEFAULTS:
+#   channel       stage-1 dilepton flavour flag ('is_mm' / 'is_ee' / 'is_em')
+#   met           ('<' or '>', threshold) applied to PuppiMET_pt, or None
+#   region        mass region forced by the category; None keeps the caller's
+#                 region_name, which is what the signal-like categories do
+#   btag_veto     require nBtagMedium == 0
+#   jet_category  'vbf' / 'njet1' / 'njet0', or None for no jet categorisation
+#   lepton_pt_min symmetric leading/subleading lepton pT threshold, or None
+XZZ2L2NU_CATEGORIES = {
+    # --- Signal-like categories. Behaviour is unchanged from before the
+    # control regions were added; the reference analysis' signal region is a
+    # separate question still to be settled, so nothing here is re-tuned.
+    "2l2nu_mumu": {"channel": "is_mm", "met": ("<", 100.0)},
+    "2l2nu_ee": {"channel": "is_ee", "met": ("<", 100.0)},
+    "2l2nu_emu": {"channel": "is_em"},
+    "2l2nu_vbf_mumu": {
+        "channel": "is_mm",
+        "met": ("<", 100.0),
+        "jet_category": "vbf",
+    },
+    "2l2nu_njet1_mumu": {
+        "channel": "is_mm",
+        "met": ("<", 100.0),
+        "jet_category": "njet1",
+    },
+    "2l2nu_njet0_mumu": {
+        "channel": "is_mm",
+        "met": ("<", 100.0),
+        "jet_category": "njet0",
+    },
+    "2l2nu_vbf_ee": {"channel": "is_ee", "met": ("<", 100.0), "jet_category": "vbf"},
+    "2l2nu_njet1_ee": {
+        "channel": "is_ee",
+        "met": ("<", 100.0),
+        "jet_category": "njet1",
+    },
+    "2l2nu_njet0_ee": {
+        "channel": "is_ee",
+        "met": ("<", 100.0),
+        "jet_category": "njet0",
+    },
+    # --- Control regions of the reference analysis, slide 7. The three differ
+    # only in flavour channel, MET direction and mass window; the pT(Z) > 55,
+    # b-tag veto and 25 GeV lepton cuts are common to all three.
+    #
+    # Low MET control region: same-flavour, MET < 100, inside the Z window.
+    "2l2nu_lowmet_mumu": {
+        "channel": "is_mm",
+        "met": ("<", 100.0),
+        "region": "z-window",
+        "btag_veto": True,
+        "lepton_pt_min": 25.0,
+    },
+    "2l2nu_lowmet_ee": {
+        "channel": "is_ee",
+        "met": ("<", 100.0),
+        "region": "z-window",
+        "btag_veto": True,
+        "lepton_pt_min": 25.0,
+    },
+    # M(ll) sideband control region: same-flavour, MET > 100, outside the Z
+    # window. The sideband deliberately spans the full mass range on both sides
+    # of the window, which is why it cannot reuse the 'z-peak' region.
+    "2l2nu_mllsb_mumu": {
+        "channel": "is_mm",
+        "met": (">", 100.0),
+        "region": "z-sideband",
+        "btag_veto": True,
+        "lepton_pt_min": 25.0,
+    },
+    "2l2nu_mllsb_ee": {
+        "channel": "is_ee",
+        "met": (">", 100.0),
+        "region": "z-sideband",
+        "btag_veto": True,
+        "lepton_pt_min": 25.0,
+    },
+    # e-mu control region: opposite-flavour by construction, so unlike the two
+    # above it has no mumu/ee split. MET > 100, inside the Z window.
+    "2l2nu_emu_cr": {
+        "channel": "is_em",
+        "met": (">", 100.0),
+        "region": "z-window",
+        "btag_veto": True,
+        "lepton_pt_min": 25.0,
+    },
+}
+
+# Jet-category splits of the three control regions. Each control region above is
+# jet-inclusive; these add the vbf / njet1 / njet0 breakdown, reusing the exact
+# jet definitions the signal-like categories use (vbf = 2 jets over 30 GeV with
+# dEta(jj) > 4, m(jj) > 500, both leptons inside the gap and no third jet in it;
+# njet1 = a 30 GeV jet that fails vbf; njet0 = no 30 GeV jet).
+#
+# These are generated rather than written out so the control-region cuts cannot
+# drift between the jet splits: each variant is exactly its parent CR plus one
+# jet_category, and editing the parent propagates to all three.
+#
+# Naming keeps the existing convention, jet category before the flavour suffix:
+#   2l2nu_lowmet_mumu -> 2l2nu_lowmet_{vbf,njet1,njet0}_mumu
+#   2l2nu_emu_cr      -> 2l2nu_emu_cr_{vbf,njet1,njet0}   (no flavour suffix)
+_XZZ2L2NU_CR_BASES = (
+    "2l2nu_lowmet_mumu",
+    "2l2nu_lowmet_ee",
+    "2l2nu_mllsb_mumu",
+    "2l2nu_mllsb_ee",
+    "2l2nu_emu_cr",
+)
+
+for _cr_base in _XZZ2L2NU_CR_BASES:
+    _head, _, _suffix = _cr_base.rpartition("_")
+    for _cr_jet_category in ("vbf", "njet1", "njet0"):
+        if _suffix in ("mumu", "ee"):
+            _cr_name = f"{_head}_{_cr_jet_category}_{_suffix}"
+        else:  # the e-mu CR has no flavour suffix to insert before
+            _cr_name = f"{_cr_base}_{_cr_jet_category}"
+        XZZ2L2NU_CATEGORIES[_cr_name] = {
+            **XZZ2L2NU_CATEGORIES[_cr_base],
+            "jet_category": _cr_jet_category,
+        }
+
+del _cr_base, _head, _suffix, _cr_jet_category, _cr_name
+
+_XZZ2L2NU_CAT_DEFAULTS = {
+    "channel": None,
+    "met": None,
+    "region": None,
+    "btag_veto": False,
+    "jet_category": None,
+    "lepton_pt_min": None,
+}
+
+# Leading/subleading lepton fields of each channel. The muon columns are
+# pad_none'd in stage1, so ee events have null mu*_* and vice versa. For the
+# e-mu channel there is one lepton of each flavour and no pT ordering between
+# them, so a symmetric threshold on both is what the reference analysis' cut on
+# the leading and subleading lepton amounts to.
+XZZ2L2NU_LEPTON_ETA_FIELDS = {
+    "is_mm": ("mu1_eta", "mu2_eta"),
+    "is_ee": ("el1_eta", "el2_eta"),
+    "is_em": ("mu1_eta", "el1_eta"),
+}
+XZZ2L2NU_LEPTON_PT_FIELDS = {
+    "is_mm": ("mu1_pt", "mu2_pt"),
+    "is_ee": ("el1_pt", "el2_pt"),
+    "is_em": ("mu1_pt", "el1_pt"),
+}
+
+# pT of the Z candidate, common to every 2l2nu category.
+XZZ2L2NU_ZPT_MIN = 55.0
+
+
 def applyRegionCatCuts_XZZ2l2nu(
     events,
     category: str,
@@ -42,41 +232,21 @@ def applyRegionCatCuts_XZZ2l2nu(
     variation: str = "nominal",
     njets_selection: str = "inclusive",  # available options ["inclusive", "0", "1", "2"]
 ):
-    """Select an XZZ -> 2l2nu dilepton channel and mass region."""
-    channel_fields = {
-        "2l2nu_mumu": "is_mm",
-        "2l2nu_ee": "is_ee",
-        "2l2nu_emu": "is_em",
-        "2l2nu_vbf_mumu": "is_mm",
-        "2l2nu_njet1_mumu": "is_mm",
-        "2l2nu_njet0_mumu": "is_mm",
-        "2l2nu_vbf_ee": "is_ee",
-        "2l2nu_njet1_ee": "is_ee",
-        "2l2nu_njet0_ee": "is_ee",
-    }
-    jet_categories = {
-        "2l2nu_vbf_mumu": "vbf",
-        "2l2nu_njet1_mumu": "njet1",
-        "2l2nu_njet0_mumu": "njet0",
-        "2l2nu_vbf_ee": "vbf",
-        "2l2nu_njet1_ee": "njet1",
-        "2l2nu_njet0_ee": "njet0",
-    }
-    # Leading/subleading lepton eta fields of each channel. The muon columns are
-    # pad_none'd in stage1, so ee events have null mu*_eta and vice versa.
-    lepton_eta_fields = {
-        "is_mm": ("mu1_eta", "mu2_eta"),
-        "is_ee": ("el1_eta", "el2_eta"),
-        "is_em": ("mu1_eta", "el1_eta"),
-    }
+    """Select an XZZ -> 2l2nu dilepton channel and mass region.
 
-    if category not in channel_fields:
+    The cuts of every category are read from XZZ2L2NU_CATEGORIES rather than
+    hardcoded here, so the control regions of the reference analysis and the
+    signal-like categories share one implementation.
+    """
+    if category not in XZZ2L2NU_CATEGORIES:
         raise ValueError(
             f"Invalid XZZ -> 2l2nu category: {category}. "
-            f"Valid options are: {', '.join(repr(name) for name in channel_fields)}."
+            f"Valid options are: "
+            f"{', '.join(repr(name) for name in XZZ2L2NU_CATEGORIES)}."
         )
 
-    channel_field = channel_fields[category]
+    spec = {**_XZZ2L2NU_CAT_DEFAULTS, **XZZ2L2NU_CATEGORIES[category]}
+    channel_field = spec["channel"]
     fields = events.columns if isinstance(events, pd.DataFrame) else events.fields
 
     def fill_false(mask):
@@ -84,19 +254,38 @@ def applyRegionCatCuts_XZZ2l2nu(
             return mask.fillna(False)
         return ak.fill_none(mask, value=False)
 
-    if channel_field not in fields:
+    def require(*names):
+        """Raise a single, explicit error naming the missing stage-1 column."""
+        for name in names:
+            if name not in fields:
+                raise KeyError(
+                    f"[selection] Missing required field for {category}: {name}"
+                )
+
+    use_var = (
+        "nominal"
+        if (isinstance(variation, str) and variation.startswith("wgt"))
+        else variation
+    )
+
+    def varcol(base):
+        """Resolve a JES/JER-varied column, falling back to nominal."""
+        for candidate in (f"{base}_{use_var}", f"{base}_nominal", base):
+            if candidate in fields:
+                return events[candidate]
         raise KeyError(
-            f"[selection] Missing required field for {category} selection: "
-            f"{channel_field}"
+            f"[selection] Missing required field for {category}: tried "
+            f"{base}_{use_var}, {base}_nominal, {base}"
         )
 
+    # --- dilepton flavour channel ---
+    require(channel_field)
     channel_cut = fill_false(events[channel_field])
 
-
-    # apply Z pt cut. dilepton_pt is the channel-aware Z candidate (mm -> dimuon,
-    # ee -> diele, em -> e+mu); dimuon_pt is the fallback for older stage1 output
-    # and is null outside the mm channel.
-    for zpt_field in ("dilepton_pt", "dimuon_pt"): # FIXME: we should probably just use dilepton_pt.
+    # --- pT(Z) cut. dilepton_pt is the channel-aware Z candidate (mm -> dimuon,
+    # ee -> diele, em -> e+mu); dimuon_pt is the fallback for older stage1
+    # output and is null outside the mm channel.
+    for zpt_field in ("dilepton_pt", "dimuon_pt"):
         if zpt_field in fields:
             break
     else:
@@ -104,33 +293,32 @@ def applyRegionCatCuts_XZZ2l2nu(
             "[selection] Missing required field for XZZ -> 2l2nu Z pt "
             "selection: tried dilepton_pt, dimuon_pt"
         )
-    channel_cut = channel_cut & fill_false(events[zpt_field] > 55.0)
+    channel_cut = channel_cut & fill_false(events[zpt_field] > XZZ2L2NU_ZPT_MIN)
 
-    if channel_field in ("is_mm", "is_ee"):
-        if "PuppiMET_pt" not in fields:
-            raise KeyError(
-                "[selection] Missing required field for XZZ -> 2l2nu "
-                "MET selection: PuppiMET_pt"
-            )
-        channel_cut = channel_cut & fill_false(events["PuppiMET_pt"] < 100.0)
+    # --- MET ---
+    if spec["met"] is not None:
+        met_direction, met_threshold = spec["met"]
+        require("PuppiMET_pt")
+        met = events["PuppiMET_pt"]
+        met_cut = met < met_threshold if met_direction == "<" else met > met_threshold
+        channel_cut = channel_cut & fill_false(met_cut)
 
-    jet_category = jet_categories.get(category)
-    if jet_category is not None:
-        use_var = (
-            "nominal"
-            if (isinstance(variation, str) and variation.startswith("wgt"))
-            else variation
+    # --- b-tagged jet veto ---
+    if spec["btag_veto"]:
+        channel_cut = channel_cut & fill_false(varcol("nBtagMedium") == 0)
+
+    # --- symmetric lepton pT threshold ---
+    if spec["lepton_pt_min"] is not None:
+        lep1_pt_field, lep2_pt_field = XZZ2L2NU_LEPTON_PT_FIELDS[channel_field]
+        require(lep1_pt_field, lep2_pt_field)
+        channel_cut = channel_cut & fill_false(
+            (events[lep1_pt_field] > spec["lepton_pt_min"])
+            & (events[lep2_pt_field] > spec["lepton_pt_min"])
         )
 
-        def varcol(base):
-            for candidate in (f"{base}_{use_var}", f"{base}_nominal", base):
-                if candidate in fields:
-                    return events[candidate]
-            raise KeyError(
-                f"[selection] Missing required field for {category}: tried "
-                f"{base}_{use_var}, {base}_nominal, {base}"
-            )
-
+    # --- jet category ---
+    jet_category = spec["jet_category"]
+    if jet_category is not None:
         has_jet30 = fill_false(varcol("jet1_pt") > 30.0)
 
         if jet_category == "njet0":
@@ -140,13 +328,8 @@ def applyRegionCatCuts_XZZ2l2nu(
             jet2_eta = varcol("jet2_eta")
             eta_min = np.minimum(jet1_eta, jet2_eta)
             eta_max = np.maximum(jet1_eta, jet2_eta)
-            lep1_field, lep2_field = lepton_eta_fields[channel_field]
-            for lep_field in (lep1_field, lep2_field):
-                if lep_field not in fields:
-                    raise KeyError(
-                        f"[selection] Missing required field for {category}: "
-                        f"{lep_field}"
-                    )
+            lep1_field, lep2_field = XZZ2L2NU_LEPTON_ETA_FIELDS[channel_field]
+            require(lep1_field, lep2_field)
             lep1_eta = events[lep1_field]
             lep2_eta = events[lep2_field]
             leptons_between_jets = (
@@ -158,7 +341,7 @@ def applyRegionCatCuts_XZZ2l2nu(
 
             # Stage-1 stores up to four jets; use jets 3 and 4 for the
             # paper's veto on additional pT > 30 GeV jets inside the gap.
-            central_extra_jet = has_jet30 & False # initialize False array
+            central_extra_jet = has_jet30 & False  # initialize False array
             for jet_index in (3, 4):
                 jet_pt = varcol(f"jet{jet_index}_pt")
                 jet_eta = varcol(f"jet{jet_index}_eta")
@@ -175,7 +358,7 @@ def applyRegionCatCuts_XZZ2l2nu(
             )
             if jet_category == "vbf":
                 category_cut = vbf_cut
-            else: # 2l2nu njet 1 category
+            else:  # 2l2nu njet 1 category
                 category_cut = has_jet30 & (~vbf_cut)
 
         channel_cut = channel_cut & category_cut
@@ -184,11 +367,6 @@ def applyRegionCatCuts_XZZ2l2nu(
     #  Select events based on number of jets
     # ---------------------------------------------------------
     if njets_selection != "inclusive":
-        use_var = (
-            "nominal"
-            if (isinstance(variation, str) and variation.startswith("wgt"))
-            else variation
-        )
         for cand in (f"njets_{use_var}", "njets_nominal", "njets"):
             if cand in fields:
                 njets = events[cand]
@@ -212,9 +390,11 @@ def applyRegionCatCuts_XZZ2l2nu(
 
         channel_cut = channel_cut & fill_false(njets_mask)
 
-    region_cut, _ = filterRegion(
+    # --- mass region. A category that pins its own region (the control
+    # regions) overrides the caller's region_name; the rest keep it.
+    region_cut, _ = filterRegion_XZZ2l2nu(
         events,
-        region=region_name,
+        region=spec["region"] or region_name,
         mass_field="dilepton_mass",
     )
     return events[channel_cut & region_cut]

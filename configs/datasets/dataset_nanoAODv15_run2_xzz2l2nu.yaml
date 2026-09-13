@@ -1,3 +1,10 @@
+# XZZ2l2nu dataset configuration, Run2 UL NanoAODv15.
+#
+# MC follows ref_materials/HZZ_2l2nu_stage1/HZZ_220526_X_zz_2l2v_text_report.md:
+#   background = section 5.4 table (same entries as dataset_nanoAODv15_run2_xzz2l2nu_AN_MC.yaml),
+#   signal     = GluGluHToZZTo2L2Nu / VBF_HToZZTo2L2Nu mass points listed in section 6.
+# The earlier HMuMu-derived MC was removed; Data blocks are unchanged.
+#
 years:
     "2017":
         Data:
@@ -87,180 +94,78 @@ years:
                     golden_json_official: null
 
         DY:
-            dy_VBF_filter:
-                skip_sample: False
-                datasets:
-                    -  /eos/purdue/store/user/rasharma/customNanoAODv15/hadded/UL2017/DYJets_NanoAOD/
-                cross_section_pb: 2.01
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-                    
-            dyTo2Mu_M-10to50_MiNNLO:
-                skip_sample: True
-                datasets:
-                    - /DYJetsToMuMu_M-10to50_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                    - /DYJetsToMuMu_M-10to50_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            dyTo2Mu_M-100to200_MiNNLO:
-                skip_sample: False
-                datasets:
-                    - /DYJetsToMuMu_M-100to200_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 77.95
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            dyTo2Mu_M-50_MiNNLO:
-              skip_sample: False
-              datasets:
-                - /DYJetsToMuMu_M-50_massWgtFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: 1976
-              cross_section_source: null
-              kfactor: { value: 1.0, source: null }
-              filter_efficiency: null
-              references: [null]
-
-            dyTo2Mu_M-200to400_MiNNLO:
-                skip_sample: True
-                datasets:
-                    - /DYJetsToMuMu_M-200to400_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            dyTo2L_M-10to50_aMCatNLO:
-                skip_sample: True
-                datasets:
-                    - /DYJetsToLL_M-10to50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            dyTo2L_M-50_aMCatNLO:
-                skip_sample: False
-                datasets:
-                    - /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 6077.22
-                cross_section_source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            dy_M-50_MLM:
-                skip_sample: False
-                datasets:
-                    - /DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v2/NANOAODSIM
-                    - /DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
-                cross_section_pb: 6450.0
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
             dy_PtZ_0To50:
-                skip_sample: True
+                skip_sample: False
+                note: AN name DYJetsToLL_Pt-0To50; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 1485
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
             dy_PtZ_50To100:
-                skip_sample: True
+                skip_sample: False
+                note: AN name DYJetsToLL_Pt-50To100; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 397.4
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
             dy_PtZ_100To250:
-                skip_sample: True
+                skip_sample: False
+                note: AN name DYJetsToLL_Pt-100To250; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 97.2
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
             dy_PtZ_250To400:
-                skip_sample: True
+                skip_sample: False
+                note: AN name DYJetsToLL_Pt-250To400; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 3.701
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
             dy_PtZ_400To650:
-                skip_sample: True
+                skip_sample: False
+                note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 1.768
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
             dy_PtZ_650ToInf:
-                skip_sample: True
+                skip_sample: False
+                note: AN name DYJetsToLL_Pt-650ToInf; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 0.0473
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -269,12 +174,16 @@ years:
                     - null
 
         Top:
-            tt_inclusive_amcatnlo:
-                skip_sample: True
+            # WARNING: overlaps with ttjets_dl (TTTo2L2Nu) below. TTJets amc@NLO is inclusive in tt decays,
+            # so it contains the dilepton events: 831.76 pb x BR(tt->2l2nu, incl. tau) ~ 0.105 = ~87 pb,
+            # i.e. the ~88.29 pb TTTo2L2Nu sample. Enabling both double-counts dilepton tt; use only one
+            # in a summed background stack (e.g. keep this one for an NLO cross-check against ttjets_dl).
+            tt_jets_amcatnlo:
+                skip_sample: False
                 datasets:
                     - /TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                cross_section_pb: 831.76
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -286,151 +195,68 @@ years:
                 skip_sample: False
                 datasets:
                     - /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v2/NANOAODSIM
-                cross_section_pb: 86.65
-                cross_section_source: null
+                cross_section_pb: 88.29
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-            ttjets_sl:
+            ttw_lnu:
                 skip_sample: False
                 datasets:
-                    - /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v2/NANOAODSIM
-                cross_section_pb: 358.57
-                cross_section_source: null
+                    - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: 0.2159
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-            ttjets_fh:
-                skip_sample: True
+            ttz_llnunu_m10:
+                skip_sample: False
                 datasets:
-                    - /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v2/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                    - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: 0.2439
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
             st_tW_top:
                 skip_sample: False
                 datasets:
                     - /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
                 cross_section_pb: 32.45
-                cross_section_source: null
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-            st_tW_antitop:
-                skip_sample: False
-                datasets:
-                    - /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 32.45
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            st_tchannel_top:
-                skip_sample: False
-                datasets:
-                    - /ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 136.02
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            st_tchannel_antitop:
-                skip_sample: False
-                datasets:
-                    - /ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 80.95
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            st_schannel_had:
-                skip_sample: False
-                datasets:
-                    - /ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 7.14
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
             st_schannel_lep:
                 skip_sample: False
                 datasets:
                     - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
                 cross_section_pb: 3.549
-                cross_section_source: null
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-
-            xzz_v15_ttw_lnu:
-              skip_sample: false
-              datasets:
-              - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: 0.2159
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
-            xzz_v15_ttz_llnunu_m10:
-              skip_sample: false
-              datasets:
-              - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: 0.2439
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
-        VV:
-            ww_1l1nu2q:
-                skip_sample: True
+            st_schannel_had:
+                skip_sample: False
                 datasets:
-                    - /WWTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
+                    - /ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: 7.104
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -438,12 +264,13 @@ years:
                 references:
                     - null
 
+        WW:
             ww_2l2nu:
                 skip_sample: False
                 datasets:
                     - /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
                 cross_section_pb: 11.09
-                cross_section_source: null
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -451,51 +278,96 @@ years:
                 references:
                     - null
 
-            ww_4q:
-                skip_sample: True
-                datasets:
-                    - /WWTo4Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            wz_1l1nu2q:
+        WJets:
+            wjets_lnu_ht_70to100:
                 skip_sample: False
                 datasets:
-                    - /WZTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 9.12
-                cross_section_source: null
+                    - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                cross_section_pb: 1273
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-            wz_1l3nu:
-                skip_sample: True
-                datasets:
-                    - /WZTo1L3Nu_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            wz_3lnu:
+            wjets_lnu_ht_100to200:
                 skip_sample: False
                 datasets:
-                    - /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 5.22
-                cross_section_source: null
+                    - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                cross_section_pb: 1255
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: null
+                references:
+                    - null
+            wjets_lnu_ht_200to400:
+                skip_sample: False
+                datasets:
+                    - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                cross_section_pb: 336.1
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: null
+                references:
+                    - null
+            wjets_lnu_ht_400to600:
+                skip_sample: False
+                datasets:
+                    - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext2-v1/NANOAODSIM
+                cross_section_pb: 45.24
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: null
+                references:
+                    - null
+            wjets_lnu_ht_600to800:
+                skip_sample: False
+                datasets:
+                    - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext2-v1/NANOAODSIM
+                cross_section_pb: 10.98
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: null
+                references:
+                    - null
+            wjets_lnu_ht_800to1200:
+                skip_sample: False
+                datasets:
+                    - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext2-v1/NANOAODSIM
+                cross_section_pb: 4.924
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: null
+                references:
+                    - null
+            wjets_lnu_ht_1200to2500:
+                skip_sample: False
+                datasets:
+                    - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                    - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext2-v1/NANOAODSIM
+                cross_section_pb: 1.157
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -503,12 +375,13 @@ years:
                 references:
                     - null
 
+        WZ:
             wz_2l2q:
                 skip_sample: False
                 datasets:
                     - /WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 6.45
-                cross_section_source: null
+                cross_section_pb: 6.419
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -516,64 +389,26 @@ years:
                 references:
                     - null
 
-            wz_2q2nu:
-                skip_sample: True
-                datasets:
-                    - /WZTo2Q2Nu_4f_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            zz_2l2nu:
-                skip_sample: True
-                datasets:
-                    - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            zz_2nu2q:
-                skip_sample: True
-                datasets:
-                    - /ZZTo2Nu2Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
+        ZZ:
             zz_2l2q:
                 skip_sample: False
                 datasets:
                     - /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 3.698
-                cross_section_source: null
+                cross_section_pb: 3.696
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-            zz_4l:
+            zz_2l2nu:
                 skip_sample: False
+                note: AN name ZZTo2L2Nu_TuneCP5_13TeV-pythia8; only the _powheg_pythia8 dataset exists in UL
                 datasets:
-                    - /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 1.325
-                cross_section_source: null
+                    - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: 0.9738
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -581,108 +416,40 @@ years:
                 references:
                     - null
 
-            zz_4q:
-                skip_sample: True
-                datasets:
-                    - /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: null
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-
-            xzz_v15_ggzz_2mu2nu:
-              skip_sample: false
-              datasets:
-              - /GluGluToContinToZZTo2mu2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
-            xzz_v15_ggzz_2e2nu:
-              skip_sample: false
-              datasets:
-              - /GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
-        VVV:
-            www:
-                skip_sample: False
-                datasets:
-                    - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                    - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
-                cross_section_pb: 0.2086
-                cross_section_source: AN-19-124 table 2.8
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            wwz:
-                skip_sample: False
-                datasets:
-                    - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                    - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
-                cross_section_pb: 0.1651
-                cross_section_source: AN-19-124 table 2.8
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
-            wzz:
-                skip_sample: False
-                datasets:
-                    - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                    - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
-                cross_section_pb: 0.05565
-                cross_section_source: AN-19-124 table 2.8
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: null
-                references:
-                    - null
-
+        Triboson:
             zzz:
                 skip_sample: False
                 datasets:
                     - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
                     - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
-                cross_section_pb: 0.01398
-                cross_section_source: AN-19-124 table 2.8
+                cross_section_pb: 0.01476
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
                 filter_efficiency: null
                 references:
                     - null
-
-        EWK:
-            ewk_zlljj:
+            wzz:
                 skip_sample: False
                 datasets:
-                    - /EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 3.998
-                cross_section_source: null
+                    - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                cross_section_pb: 0.05709
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: null
+                references:
+                    - null
+            wwz:
+                skip_sample: False
+                datasets:
+                    - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                    - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1_ext1-v1/NANOAODSIM
+                cross_section_pb: 0.1707
+                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
                 kfactor:
                     value: 1.0
                     source: null
@@ -691,286 +458,163 @@ years:
                     - null
 
         Higgs:
-            ggh_powhegPS:
-                skip_sample: False
-                datasets:
-                    - /GluGluHToMuMu_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 0.01057
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: 1.0
-                references:
-                - null
-
-            vbf_powheg_dipole:
-                skip_sample: False
-                datasets:
-                - /VBFHToMuMu_M125_TuneCP5_withDipoleRecoil_13TeV-powheg-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 0.0008228
-                cross_section_source: null
-                kfactor:
-                    value: 1.0
-                    source: null
-                filter_efficiency: 1.0
-                references:
-                - null
-
             xzz_v15_ggh_m180:
-              skip_sample: false
-              datasets:
-              - /GluGluHToZZTo2L2Nu_M180_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /GluGluHToZZTo2L2Nu_M180_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_ggh_m2500:
-              skip_sample: false
-              datasets:
-              - /GluGluHToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /GluGluHToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_ggh_m3000:
-              skip_sample: false
-              datasets:
-              - /GluGluHToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /GluGluHToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_ggh_m300:
-              skip_sample: false
-              datasets:
-              - /GluGluHToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /GluGluHToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_ggh_m500:
-              skip_sample: false
-              datasets:
-              - /GluGluHToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /GluGluHToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m170:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M170_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M170_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m180:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M180_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M180_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m210:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M210_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M210_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m350:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m400:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m450:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M450_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M450_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m600:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
             xzz_v15_vbf_m800:
-              skip_sample: false
-              datasets:
-              - /VBF_HToZZTo2L2Nu_M800_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-              cross_section_pb: null
-              cross_section_source: null
-              kfactor:
-                value: 1.0
-                source: null
-              filter_efficiency: 1.0
-              references:
-              - null
+                skip_sample: False
+                datasets:
+                    - /VBF_HToZZTo2L2Nu_M800_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
+                cross_section_pb: null
+                cross_section_source: null
+                kfactor:
+                    value: 1.0
+                    source: null
+                filter_efficiency: 1.0
+                references:
+                    - null
 
-        WJets:
-          xzz_v15_wjets_lnu:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_100to200:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_200to400:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_400to600:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_600to800:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_800to1200:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_1200to2500:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
-          xzz_v15_wjets_lnu_ht_2500toinf:
-            skip_sample: false
-            datasets:
-            - /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-            cross_section_pb: null
-            cross_section_source: null
-            kfactor:
-              value: 1.0
-              source: null
-            filter_efficiency: 1.0
-            references:
-            - null
     "2018": # FIXME: From here onwards below is the automated version of chatGPT from codimd doc (https://codimd.web.cern.ch/aK_Yxu91QHqpsjeWaa4aIw#Parts-missing). So there's a good chance that there's errors
       Data:
         total_lumi_pb: 59830.0
@@ -1023,507 +667,374 @@ years:
             golden_json_official: null
 
       DY:
-        dy_VBF_filter:
-            skip_sample: False
-            datasets:
-                - /eos/purdue/store/user/rasharma/customNanoAODv15/hadded/UL2018/DYJets_NanoAOD/
-            cross_section_pb: 2.01
-            cross_section_source: null
-            kfactor:
-                value: 1.0
-                source: null
-            filter_efficiency: null
-            references:
-                - null
-                    
-        dyTo2Mu_M-10to50_MiNNLO:
-          skip_sample: True
-          datasets:
-            - /DYJetsToMuMu_M-10to50_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-            - /DYJetsToMuMu_M-10to50_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-100to200_MiNNLO:
-          skip_sample: False
-          datasets:
-            - /DYJetsToMuMu_M-100to200_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 77.95
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-50_MiNNLO:
-          skip_sample: False
-          datasets:
-            - /DYJetsToMuMu_M-50_massWgtFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 1976
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-200to400_MiNNLO:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2L_M-10to50_aMCatNLO:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2L_M-50_aMCatNLO:
-          skip_sample: False
-          datasets:
-            - /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 6077.22
-          cross_section_source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dy_M-50_MLM:
-          skip_sample: False
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: 6450.0
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
         dy_PtZ_0To50:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-0To50; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 1485
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         dy_PtZ_50To100:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-50To100; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 397.4
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         dy_PtZ_100To250:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-100To250; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 97.2
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         dy_PtZ_250To400:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-250To400; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 3.701
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         dy_PtZ_400To650:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 1.768
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         dy_PtZ_650ToInf:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2018 UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-650ToInf; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.0473
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
       Top:
-        tt_inclusive_amcatnlo:
-          skip_sample: True
+        # WARNING: overlaps with ttjets_dl (TTTo2L2Nu) below. TTJets amc@NLO is inclusive in tt decays,
+        # so it contains the dilepton events: 831.76 pb x BR(tt->2l2nu, incl. tau) ~ 0.105 = ~87 pb,
+        # i.e. the ~88.29 pb TTTo2L2Nu sample. Enabling both double-counts dilepton tt; use only one
+        # in a summed background stack (e.g. keep this one for an NLO cross-check against ttjets_dl).
+        tt_jets_amcatnlo:
+          skip_sample: False
           datasets:
             - /TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 831.76
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
         ttjets_dl:
           skip_sample: False
           datasets:
             - /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v2/NANOAODSIM
-          cross_section_pb: 86.65
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 88.29
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        ttjets_sl:
+          references:
+            - null
+        ttw_lnu:
           skip_sample: False
           datasets:
-            - /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v2/NANOAODSIM
-          cross_section_pb: 358.57
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.2159
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        ttjets_fh:
-          skip_sample: True
+          references:
+            - null
+        ttz_llnunu_m10:
+          skip_sample: False
           datasets:
-            - /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v2/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.2439
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         st_tW_top:
           skip_sample: False
           datasets:
             - /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: 32.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tW_antitop:
-          skip_sample: False
-          datasets:
-            - /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 32.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tchannel_top:
-          skip_sample: False
-          datasets:
-            - /ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 136.02
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tchannel_antitop:
-          skip_sample: False
-          datasets:
-            - /ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 80.95
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-
-        xzz_v15_ttw_lnu:
-          skip_sample: false
-          datasets:
-          - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.2159
-          cross_section_source: null
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-        xzz_v15_ttz_llnunu_m10:
-          skip_sample: false
+            - null
+        st_schannel_lep:
+          skip_sample: False
           datasets:
-          - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.2439
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_st_schannel_lep:
-          skip_sample: false
-          datasets:
-          - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: 3.549
-          cross_section_source: null
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-      VV:
-        ww_1l1nu2q:
-          skip_sample: True
-          datasets:
-            - /WWTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        st_schannel_had:
+          skip_sample: False
+          datasets:
+            - /ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 7.104
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
+      WW:
         ww_2l2nu:
           skip_sample: False
           datasets:
             - /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: 11.09
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
-        ww_4q:
-          skip_sample: True
-          datasets:
-            - /WWTo4Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wz_1l1nu2q:
+      WJets:
+        wjets_lnu_ht_70to100:
           skip_sample: False
           datasets:
-            - /WZTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 9.12
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 1273
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        wz_1l3nu:
-          skip_sample: True
-          datasets:
-            - /WZTo1L3Nu_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wz_3lnu:
+          references:
+            - null
+        wjets_lnu_ht_100to200:
           skip_sample: False
           datasets:
-            - /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 5.22
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 1255
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        wjets_lnu_ht_200to400:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 336.1
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_400to600:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 45.24
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_600to800:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 10.98
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_800to1200:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 4.924
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_1200to2500:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 1.157
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
+      WZ:
         wz_2l2q:
           skip_sample: False
           datasets:
             - /WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 6.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 6.419
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
-        wz_2q2nu:
-          skip_sample: True
-          datasets:
-            - /WZTo2Q2Nu_4f_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_2l2nu:
-          skip_sample: True
-          datasets:
-            - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_2nu2q:
-          skip_sample: True
-          datasets:
-            - /ZZTo2Nu2Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
+      ZZ:
         zz_2l2q:
           skip_sample: False
           datasets:
             - /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 3.698
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_4l:
-          skip_sample: False
-          datasets:
-            - /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 1.325
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_4q:
-          skip_sample: True
-          datasets:
-            - /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-
-        xzz_v15_ggzz_2mu2nu:
-          skip_sample: false
-          datasets:
-          - /GluGluToContinToZZTo2mu2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
+          cross_section_pb: 3.696
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-        xzz_v15_ggzz_2e2nu:
-          skip_sample: false
+            - null
+        zz_2l2nu:
+          skip_sample: False
+          note: AN name ZZTo2L2Nu_TuneCP5_13TeV-pythia8; only the _powheg_pythia8 dataset exists in UL
           datasets:
-          - /GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
+            - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.9738
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-      VVV:
-        www:
-          skip_sample: False
-          datasets:
-            - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-            - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.2086
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
+            - null
 
-        wwz:
-          skip_sample: False
-          datasets:
-            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.1651
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wzz:
-          skip_sample: False
-          datasets:
-            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.05565
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
+      Triboson:
         zzz:
           skip_sample: False
           datasets:
             - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
             - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.01398
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 0.01476
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-      EWK:
-        ewk_zlljj:
+          references:
+            - null
+        wzz:
           skip_sample: False
           datasets:
-            - /EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 3.998
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 0.05709
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        wwz:
+          skip_sample: False
+          datasets:
+            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 0.1707
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
       Higgs:
-        ggh_powhegPS:
-          skip_sample: False
-          datasets:
-            - /GluGluHToMuMu_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.01057
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: 1.0
-          references: [null]
-
-        vbf_powheg_dipole:
-          skip_sample: False
-          datasets:
-            - /VBFHToMuMu_M125_TuneCP5_withDipoleRecoil_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v2/NANOAODSIM
-          cross_section_pb: 0.0008228
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: 1.0
-          references: [null]
-
-
-
         xzz_v15_ggh_m1000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1531,11 +1042,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m1500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M1500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M1500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1543,11 +1054,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m160:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M160_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M160_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1555,11 +1066,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m2000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1567,11 +1078,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m230:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M230_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M230_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1579,11 +1090,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m2500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1591,11 +1102,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m250:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M250_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M250_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1603,11 +1114,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m270:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M270_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M270_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1615,11 +1126,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m3000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1627,11 +1138,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m300:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1639,11 +1150,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m350:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1651,11 +1162,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m400:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1663,11 +1174,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m450:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M450_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M450_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1675,11 +1186,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1687,11 +1198,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m550:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M550_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M550_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1699,11 +1210,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m600:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1711,11 +1222,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m800:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M800_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M800_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1723,11 +1234,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m900:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1735,11 +1246,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m1000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1747,11 +1258,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m125:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M125_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M125_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1759,11 +1270,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m170:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M170_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M170_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1771,11 +1282,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m180:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M180_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M180_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1783,11 +1294,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m2000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1795,11 +1306,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m200:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M200_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M200_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1807,11 +1318,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m250:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M250_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M250_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1819,11 +1330,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m3000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1831,11 +1342,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m300:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1843,11 +1354,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m350:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1855,11 +1366,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1867,11 +1378,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m550:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M550_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M550_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1879,11 +1390,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m700:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M700_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M700_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1891,11 +1402,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m900:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -1903,106 +1414,8 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
 
-      WJets:
-        xzz_v15_wjets_lnu:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_100to200:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_200to400:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_400to600:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_600to800:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_800to1200:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_1200to2500:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_2500toinf:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext1-v1/NANOAODSIM
-          - /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1_ext2-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
     "2016postVFP":
       Data:
         total_lumi_pb: 16810.0
@@ -2043,416 +1456,370 @@ years:
             golden_json_official: null
 
       DY:
-        dy_VBF_filter:
-            skip_sample: False
-            datasets:
-                -  /eos/purdue/store/user/rasharma/customNanoAODv15/hadded/UL2016/DYJets_NanoAOD/
-            cross_section_pb: 2.01
-            cross_section_source: null
-            kfactor:
-                value: 1.0
-                source: null
-            filter_efficiency: null
-            references:
-                - null
-
-        dyTo2Mu_M-10to50_MiNNLO:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2016postVFP UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-100to200_MiNNLO:
+        dy_PtZ_0To50:
           skip_sample: False
+          note: AN name DYJetsToLL_Pt-0To50; UL dataset is LHEFilterPtZ
           datasets:
-            - /DYJetsToMuMu_M-100to200_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 77.95
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 1485
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-50_MiNNLO:
+          references:
+            - null
+        dy_PtZ_50To100:
           skip_sample: False
+          note: AN name DYJetsToLL_Pt-50To100; UL dataset is LHEFilterPtZ
           datasets:
-            - /DYJetsToMuMu_M-50_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 1976
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 397.4
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        dyTo2L_M-50_aMCatNLO:
+          references:
+            - null
+        dy_PtZ_100To250:
           skip_sample: False
+          note: AN name DYJetsToLL_Pt-100To250; UL dataset is LHEFilterPtZ
           datasets:
-            - /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 6077.22
-          cross_section_source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
-          kfactor: { value: 1.0, source: null }
+            - /DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 97.2
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        dy_PtZ_250To400:
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-250To400; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 3.701
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        dy_PtZ_400To650:
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 1.768
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        dy_PtZ_650ToInf:
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-650ToInf; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.0473
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
       Top:
-        tt_inclusive_amcatnlo:
-          skip_sample: True
+        # WARNING: overlaps with ttjets_dl (TTTo2L2Nu) below. TTJets amc@NLO is inclusive in tt decays,
+        # so it contains the dilepton events: 831.76 pb x BR(tt->2l2nu, incl. tau) ~ 0.105 = ~87 pb,
+        # i.e. the ~88.29 pb TTTo2L2Nu sample. Enabling both double-counts dilepton tt; use only one
+        # in a summed background stack (e.g. keep this one for an NLO cross-check against ttjets_dl).
+        tt_jets_amcatnlo:
+          skip_sample: False
           datasets:
             - /TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 831.76
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
         ttjets_dl:
           skip_sample: False
           datasets:
             - /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v2/NANOAODSIM
-          cross_section_pb: 86.65
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 88.29
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        ttjets_sl:
+          references:
+            - null
+        ttw_lnu:
           skip_sample: False
           datasets:
-            - /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v2/NANOAODSIM
-          cross_section_pb: 358.57
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.2159
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        ttjets_fh:
-          skip_sample: True
+          references:
+            - null
+        ttz_llnunu_m10:
+          skip_sample: False
           datasets:
-            - /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v2/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.2439
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         st_tW_top:
           skip_sample: False
           datasets:
             - /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: 32.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tW_antitop:
-          skip_sample: False
-          datasets:
-            - /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 32.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tchannel_top:
-          skip_sample: False
-          datasets:
-            - /ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 136.02
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tchannel_antitop:
-          skip_sample: False
-          datasets:
-            - /ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 80.95
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-
-        xzz_v15_ttw_lnu:
-          skip_sample: false
-          datasets:
-          - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.2159
-          cross_section_source: null
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-        xzz_v15_ttz_llnunu_m10:
-          skip_sample: false
+            - null
+        st_schannel_lep:
+          skip_sample: False
           datasets:
-          - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.2439
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_st_schannel_lep:
-          skip_sample: false
-          datasets:
-          - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: 3.549
-          cross_section_source: null
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-      VV:
-        ww_1l1nu2q:
-          skip_sample: True
-          datasets:
-            - /WWTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        st_schannel_had:
+          skip_sample: False
+          datasets:
+            - /ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 7.104
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
+      WW:
         ww_2l2nu:
           skip_sample: False
           datasets:
             - /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: 11.09
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
-        ww_4q:
-          skip_sample: True
-          datasets:
-            - /WWTo4Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wz_1l1nu2q:
+      WJets:
+        wjets_lnu_ht_70to100:
           skip_sample: False
           datasets:
-            - /WZTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 9.12
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 1273
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        wz_1l3nu:
-          skip_sample: True
-          datasets:
-            - /WZTo1L3Nu_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wz_3lnu:
+          references:
+            - null
+        wjets_lnu_ht_100to200:
           skip_sample: False
           datasets:
-            - /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 5.22
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 1255
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        wjets_lnu_ht_200to400:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 336.1
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_400to600:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 45.24
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_600to800:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 10.98
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_800to1200:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 4.924
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_1200to2500:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 1.157
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
+      WZ:
         wz_2l2q:
           skip_sample: False
           datasets:
             - /WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 6.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 6.419
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
-        wz_2q2nu:
-          skip_sample: True
-          datasets:
-            - /WZTo2Q2Nu_4f_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_2l2nu:
-          skip_sample: True
-          datasets:
-            - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_2nu2q:
-          skip_sample: True
-          datasets:
-            - /ZZTo2Nu2Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
+      ZZ:
         zz_2l2q:
           skip_sample: False
           datasets:
             - /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 3.698
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_4l:
-          skip_sample: False
-          datasets:
-            - /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v2/NANOAODSIM
-          cross_section_pb: 1.325
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_4q:
-          skip_sample: True
-          datasets:
-            - /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-
-        xzz_v15_ggzz_2mu2nu:
-          skip_sample: false
-          datasets:
-          - /GluGluToContinToZZTo2mu2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
+          cross_section_pb: 3.696
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-        xzz_v15_ggzz_2e2nu:
-          skip_sample: false
+            - null
+        zz_2l2nu:
+          skip_sample: False
+          note: AN name ZZTo2L2Nu_TuneCP5_13TeV-pythia8; only the _powheg_pythia8 dataset exists in UL
           datasets:
-          - /GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
+            - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+          cross_section_pb: 0.9738
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-      VVV:
-        www:
-          skip_sample: False
-          datasets:
-            - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-            - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.2086
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
+            - null
 
-        wwz:
-          skip_sample: False
-          datasets:
-            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.1651
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wzz:
-          skip_sample: False
-          datasets:
-            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.05565
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
+      Triboson:
         zzz:
           skip_sample: False
           datasets:
             - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
             - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.01398
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 0.01476
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-      EWK:
-        ewk_zlljj:
+          references:
+            - null
+        wzz:
           skip_sample: False
           datasets:
-            - /EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 3.998
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 0.05709
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        wwz:
+          skip_sample: False
+          datasets:
+            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 0.1707
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
       Higgs:
-        ggh_powhegPS:
-          skip_sample: False
-          datasets:
-            - /GluGluHToMuMu_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.01057
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: 1.0
-          references: [null]
-
-        vbf_powheg_dipole:
-          skip_sample: False
-          datasets:
-            - /VBFHToMuMu_M125_TuneCP5_withDipoleRecoil_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 0.0008228
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: 1.0
-          references: [null]
-
-
-
         xzz_v15_ggh_m210:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M210_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M210_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2460,11 +1827,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m3000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2472,11 +1839,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m350:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2484,11 +1851,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m400:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2496,11 +1863,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m700:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M700_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M700_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2508,11 +1875,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m270:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M270_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M270_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2520,11 +1887,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m600:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -2532,105 +1899,8 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
 
-      WJets:
-        xzz_v15_wjets_lnu:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_100to200:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_200to400:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_400to600:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_600to800:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_800to1200:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_1200to2500:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_2500toinf:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
     "2016preVFP":
       Data:
         total_lumi_pb: 19500.0
@@ -2697,413 +1967,374 @@ years:
             golden_json_official: null
 
       DY:
-        dy_VBF_filter:
-            skip_sample: False
-            datasets:
-                - /eos/purdue/store/user/rasharma/customNanoAODv15/hadded/UL2016APV/DYJets_NanoAOD
-            cross_section_pb: 2.01
-            cross_section_source: null
-            kfactor:
-                value: 1.0
-                source: null
-            filter_efficiency: null
-            references:
-                - null
-                
-        dyTo2Mu_M-10to50_MiNNLO:
-          skip_sample: True
-          datasets: []
-          note: Missing in samples.md for 2016preVFP UL
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-100to200_MiNNLO:
+        dy_PtZ_0To50:
           skip_sample: False
+          note: AN name DYJetsToLL_Pt-0To50; UL dataset is LHEFilterPtZ
           datasets:
-            - /DYJetsToMuMu_M-100to200_H2ErratumFix_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 77.95
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /DYJetsToLL_LHEFilterPtZ-0To50_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 1485
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        dyTo2Mu_M-50_MiNNLO:
+          references:
+            - null
+        dy_PtZ_50To100:
           skip_sample: False
+          note: AN name DYJetsToLL_Pt-50To100; UL dataset is LHEFilterPtZ
           datasets:
-            - /DYJetsToMuMu_M-50_TuneCP5_13TeV-powhegMiNNLO-pythia8-photos/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 1976
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /DYJetsToLL_LHEFilterPtZ-50To100_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 397.4
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        dyTo2L_M-50_aMCatNLO:
+          references:
+            - null
+        dy_PtZ_100To250:
           skip_sample: False
+          note: AN name DYJetsToLL_Pt-100To250; UL dataset is LHEFilterPtZ
           datasets:
-            - /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 6077.22
-          cross_section_source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
-          kfactor: { value: 1.0, source: null }
+            - /DYJetsToLL_LHEFilterPtZ-100To250_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 97.2
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        dy_PtZ_250To400:
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-250To400; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-250To400_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 3.701
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        dy_PtZ_400To650:
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 1.768
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        dy_PtZ_650ToInf:
+          skip_sample: False
+          note: AN name DYJetsToLL_Pt-650ToInf; UL dataset is LHEFilterPtZ
+          datasets:
+            - /DYJetsToLL_LHEFilterPtZ-650ToInf_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 0.0473
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
       Top:
-        tt_inclusive_amcatnlo:
-          skip_sample: True
+        # WARNING: overlaps with ttjets_dl (TTTo2L2Nu) below. TTJets amc@NLO is inclusive in tt decays,
+        # so it contains the dilepton events: 831.76 pb x BR(tt->2l2nu, incl. tau) ~ 0.105 = ~87 pb,
+        # i.e. the ~88.29 pb TTTo2L2Nu sample. Enabling both double-counts dilepton tt; use only one
+        # in a summed background stack (e.g. keep this one for an NLO cross-check against ttjets_dl).
+        tt_jets_amcatnlo:
+          skip_sample: False
           datasets:
             - /TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v2/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 831.76
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
         ttjets_dl:
           skip_sample: False
           datasets:
             - /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v2/NANOAODSIM
-          cross_section_pb: 86.65
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 88.29
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        ttjets_sl:
+          references:
+            - null
+        ttw_lnu:
           skip_sample: False
           datasets:
-            - /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v2/NANOAODSIM
-          cross_section_pb: 358.57
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 0.2159
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        ttjets_fh:
-          skip_sample: True
+          references:
+            - null
+        ttz_llnunu_m10:
+          skip_sample: False
           datasets:
-            - /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v2/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 0.2439
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
+          references:
+            - null
         st_tW_top:
           skip_sample: False
           datasets:
             - /ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v2/NANOAODSIM
           cross_section_pb: 32.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tW_antitop:
-          skip_sample: False
-          datasets:
-            - /ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 32.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tchannel_top:
-          skip_sample: False
-          datasets:
-            - /ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 136.02
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        st_tchannel_antitop:
-          skip_sample: False
-          datasets:
-            - /ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 80.95
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-
-        xzz_v15_ttw_lnu:
-          skip_sample: false
-          datasets:
-          - /TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 0.2159
-          cross_section_source: null
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-        xzz_v15_ttz_llnunu_m10:
-          skip_sample: false
+            - null
+        st_schannel_lep:
+          skip_sample: False
           datasets:
-          - /TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 0.2439
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_st_schannel_lep:
-          skip_sample: false
-          datasets:
-          - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: 3.549
-          cross_section_source: null
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-      VV:
-        ww_1l1nu2q:
-          skip_sample: True
-          datasets:
-            - /WWTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        st_schannel_had:
+          skip_sample: False
+          datasets:
+            - /ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 7.104
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
+      WW:
         ww_2l2nu:
           skip_sample: False
           datasets:
             - /WWTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: 11.09
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
-        ww_4q:
-          skip_sample: True
-          datasets:
-            - /WWTo4Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wz_1l1nu2q:
+      WJets:
+        wjets_lnu_ht_70to100:
           skip_sample: False
           datasets:
-            - /WZTo1L1Nu2Q_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 9.12
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 1273
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-        wz_1l3nu:
-          skip_sample: True
-          datasets:
-            - /WZTo1L3Nu_4f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wz_3lnu:
+          references:
+            - null
+        wjets_lnu_ht_100to200:
           skip_sample: False
           datasets:
-            - /WZTo3LNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 5.22
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 1255
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        wjets_lnu_ht_200to400:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 336.1
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_400to600:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 45.24
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_600to800:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 10.98
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_800to1200:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 4.924
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
+        wjets_lnu_ht_1200to2500:
+          skip_sample: False
+          datasets:
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+            - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext2-v1/NANOAODSIM
+          cross_section_pb: 1.157
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
+      WZ:
         wz_2l2q:
           skip_sample: False
           datasets:
             - /WZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 6.45
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 6.419
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
 
-        wz_2q2nu:
-          skip_sample: True
-          datasets:
-            - /WZTo2Q2Nu_4f_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_2l2nu:
-          skip_sample: True
-          datasets:
-            - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_2nu2q:
-          skip_sample: True
-          datasets:
-            - /ZZTo2Nu2Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
+      ZZ:
         zz_2l2q:
           skip_sample: False
           datasets:
             - /ZZTo2Q2L_mllmin4p0_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 3.698
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_4l:
-          skip_sample: False
-          datasets:
-            - /ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 1.325
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        zz_4q:
-          skip_sample: True
-          datasets:
-            - /ZZTo4Q_5f_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-
-        xzz_v15_ggzz_2mu2nu:
-          skip_sample: false
-          datasets:
-          - /GluGluToContinToZZTo2mu2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v2/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
+          cross_section_pb: 3.696
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-        xzz_v15_ggzz_2e2nu:
-          skip_sample: false
+            - null
+        zz_2l2nu:
+          skip_sample: False
+          note: AN name ZZTo2L2Nu_TuneCP5_13TeV-pythia8; only the _powheg_pythia8 dataset exists in UL
           datasets:
-          - /GluGluToContinToZZTo2e2nu_TuneCP5_13TeV-mcfm701-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
+            - /ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+          cross_section_pb: 0.9738
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
           kfactor:
             value: 1.0
             source: null
-          filter_efficiency: 1.0
+          filter_efficiency: null
           references:
-          - null
-      VVV:
-        www:
-          skip_sample: False
-          datasets:
-            - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-            - /WWW_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.2086
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
+            - null
 
-        wwz:
-          skip_sample: False
-          datasets:
-            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.1651
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
-        wzz:
-          skip_sample: False
-          datasets:
-            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.05565
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: null
-          references: [null]
-
+      Triboson:
         zzz:
           skip_sample: False
           datasets:
             - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
             - /ZZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
-          cross_section_pb: 0.01398
-          cross_section_source: AN-19-124 table 2.8
-          kfactor: { value: 1.0, source: null }
+          cross_section_pb: 0.01476
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
-
-      EWK:
-        ewk_zlljj:
+          references:
+            - null
+        wzz:
           skip_sample: False
           datasets:
-            - /EWKZ2Jets_ZToLL_M-50_TuneCP5_withDipoleRecoil_13TeV-madgraph-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 3.998
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
+            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WZZ_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 0.05709
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
           filter_efficiency: null
-          references: [null]
+          references:
+            - null
+        wwz:
+          skip_sample: False
+          datasets:
+            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /WWZ_4F_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1_ext1-v1/NANOAODSIM
+          cross_section_pb: 0.1707
+          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          kfactor:
+            value: 1.0
+            source: null
+          filter_efficiency: null
+          references:
+            - null
 
       Higgs:
-        ggh_powhegPS:
-          skip_sample: False
-          datasets:
-            - /GluGluHToMuMu_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 0.01057
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: 1.0
-          references: [null]
-
-        vbf_powheg_dipole:
-          skip_sample: False
-          datasets:
-            - /VBFHToMuMu_M125_TuneCP5_withDipoleRecoil_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 0.0008228
-          cross_section_source: null
-          kfactor: { value: 1.0, source: null }
-          filter_efficiency: 1.0
-          references: [null]
         xzz_v15_ggh_m1000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3111,11 +2342,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m125:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M125_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M125_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3123,11 +2354,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m2000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3135,11 +2366,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m210:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M210_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M210_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3147,11 +2378,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m2500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3159,11 +2390,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m250:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M250_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M250_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3171,11 +2402,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m300:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M300_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3183,11 +2414,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m400:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M400_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3195,11 +2426,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m450:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M450_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M450_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3207,11 +2438,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m600:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3219,11 +2450,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_ggh_m900:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /GluGluHToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /GluGluHToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3231,11 +2462,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m160:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M160_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M160_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3243,11 +2474,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m2000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M2000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3255,11 +2486,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m230:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M230_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M230_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3267,11 +2498,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m2500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M2500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3279,11 +2510,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m270:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M270_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M270_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3291,11 +2522,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m3000:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M3000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3303,11 +2534,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m350:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M350_TuneCP5_13TeV_powheg2_JHUGenV735_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3315,11 +2546,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m500:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3327,11 +2558,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m600:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M600_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3339,11 +2570,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m800:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M800_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M800_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3351,11 +2582,11 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
+            - null
         xzz_v15_vbf_m900:
-          skip_sample: false
+          skip_sample: False
           datasets:
-          - /VBF_HToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
+            - /VBF_HToZZTo2L2Nu_M900_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
           cross_section_pb: null
           cross_section_source: null
           kfactor:
@@ -3363,102 +2594,4 @@ years:
             source: null
           filter_efficiency: 1.0
           references:
-          - null
-
-      WJets:
-        xzz_v15_wjets_lnu:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_100to200:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_200to400:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_400to600:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_600to800:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_800to1200:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_1200to2500:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
-        xzz_v15_wjets_lnu_ht_2500toinf:
-          skip_sample: false
-          datasets:
-          - /WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: null
-          cross_section_source: null
-          kfactor:
-            value: 1.0
-            source: null
-          filter_efficiency: 1.0
-          references:
-          - null
+            - null
