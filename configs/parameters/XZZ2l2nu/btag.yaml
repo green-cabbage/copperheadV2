@@ -1,0 +1,13 @@
+# Central UParT fixed-WP conventions; map/calibration uncertainties remain separate.
+xzz_btag_sf:
+    '2016preVFP': null
+    '2016postVFP': null
+    '2017': null
+    '2018':
+        convention: nearest
+        efficiency_file: configs/parameters/XZZ2l2nu/btag_efficiency_2018.json
+    '2022preEE': null
+    '2022postEE': null
+    '2023': null
+    '2023BPix': null
+    '2024': null

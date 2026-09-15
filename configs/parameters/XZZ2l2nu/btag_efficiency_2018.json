@@ -1,0 +1,1889 @@
+{
+  "schema_version": 1,
+  "status": "candidate_not_production_approved",
+  "analysis": "XZZ2l2nu",
+  "year": "2018",
+  "nano_version": 15,
+  "working_point": "M",
+  "threshold": 0.161,
+  "source_sha256": "e096e5c66b27f865bb93af72e9e6a46923647b03e99c6f4cb56ab3d98ecdb9c4",
+  "abs_eta_range": [
+    0.0,
+    2.5
+  ],
+  "process_grouping": {
+    "VJETS": [
+      "DY",
+      "WJETS"
+    ],
+    "TOP": [
+      "TOP"
+    ],
+    "VV": [
+      "VV"
+    ],
+    "VVV": [
+      "VVV"
+    ]
+  },
+  "groups": {
+    "VJETS": {
+      "0": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.01945916209423416,
+          "jet_delta_stat": 0.0030555035136240827,
+          "effective_jets": 1931.8587103423379,
+          "eligible": true,
+          "total_n": 96221.0,
+          "tagged_n": 1587.0,
+          "total_sumw": 557946.6760255648,
+          "tagged_sumw": 10857.174808720618,
+          "total_sumw2": 161142474.66514328,
+          "tagged_sumw2": 2960572.905284105
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.014001322577618347,
+          "jet_delta_stat": 0.0014877709290514968,
+          "effective_jets": 5700.664657616883,
+          "eligible": true,
+          "total_n": 237141.0,
+          "tagged_n": 3270.0,
+          "total_sumw": 1630238.5315906939,
+          "tagged_sumw": 22825.495559264164,
+          "total_sumw2": 466204877.76490307,
+          "tagged_sumw2": 5958119.100579866
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.00790939897658206,
+          "jet_delta_stat": 0.0011542668656676137,
+          "effective_jets": 5411.32594271828,
+          "eligible": true,
+          "total_n": 135072.0,
+          "tagged_n": 1377.0,
+          "total_sumw": 1334648.651486788,
+          "tagged_sumw": 10556.268678166227,
+          "total_sumw2": 329177551.26402617,
+          "tagged_sumw2": 2390487.4505977947
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.006750388210958327,
+          "jet_delta_stat": 0.00119264335877373,
+          "effective_jets": 5647.140581326839,
+          "eligible": true,
+          "total_n": 125248.0,
+          "tagged_n": 1088.0,
+          "total_sumw": 1212158.4413555367,
+          "tagged_sumw": 8182.540052340035,
+          "total_sumw2": 260189748.38488156,
+          "tagged_sumw2": 2106553.446540473
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.007351439849084168,
+          "jet_delta_stat": 0.0011375989306128217,
+          "effective_jets": 4674.518173990533,
+          "eligible": true,
+          "total_n": 103714.0,
+          "tagged_n": 772.0,
+          "total_sumw": 717046.0384941524,
+          "tagged_sumw": 5271.320821013852,
+          "total_sumw2": 109991019.86188976,
+          "tagged_sumw2": 669280.1473357498
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.0047993712043112565,
+          "jet_delta_stat": 0.0013383441703262752,
+          "effective_jets": 3500.9424780801687,
+          "eligible": true,
+          "total_n": 91709.0,
+          "tagged_n": 610.0,
+          "total_sumw": 389681.86535312346,
+          "tagged_sumw": 1870.2279234180771,
+          "total_sumw2": 43374593.309045665,
+          "tagged_sumw2": 273619.23882884363
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 300.0,
+          "efficiency": 0.0034327310218266573,
+          "jet_delta_stat": 0.001490601070319462,
+          "effective_jets": 2224.9347166858215,
+          "eligible": true,
+          "total_n": 124623.0,
+          "tagged_n": 894.0,
+          "total_sumw": 176133.65862165493,
+          "tagged_sumw": 604.6194739383811,
+          "total_sumw2": 13943359.985708015,
+          "tagged_sumw2": 69240.95514198983
+        },
+        {
+          "pt_low": 300.0,
+          "pt_high": 600.0,
+          "efficiency": 0.011145575706741259,
+          "jet_delta_stat": 0.0015698263408117962,
+          "effective_jets": 2157.7661217476934,
+          "eligible": true,
+          "total_n": 209189.0,
+          "tagged_n": 2367.0,
+          "total_sumw": 78169.79487586106,
+          "tagged_sumw": 871.2473667693444,
+          "total_sumw2": 2831871.7072010334,
+          "tagged_sumw2": 15041.998557071267
+        },
+        {
+          "pt_low": 600.0,
+          "pt_high": 1000.0,
+          "efficiency": 0.014338503225130354,
+          "jet_delta_stat": 0.0019656326984710242,
+          "effective_jets": 341.9352712226317,
+          "eligible": true,
+          "total_n": 99891.0,
+          "tagged_n": 2290.0,
+          "total_sumw": 5216.529337070335,
+          "tagged_sumw": 74.7972227235701,
+          "total_sumw2": 79582.83515828878,
+          "tagged_sumw2": 91.3994315050026
+        },
+        {
+          "pt_low": 1000.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.03558323311337805,
+          "jet_delta_stat": 0.012684880464775845,
+          "effective_jets": 212.546041290571,
+          "eligible": true,
+          "total_n": 7945.0,
+          "tagged_n": 312.0,
+          "total_sumw": 174.5381465446544,
+          "tagged_sumw": 6.210631555675377,
+          "total_sumw2": 143.3268971478825,
+          "tagged_sumw2": 5.081966038535599
+        }
+      ],
+      "4": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.0972948908686685,
+          "jet_delta_stat": 0.02429518031959208,
+          "effective_jets": 177.57077699520403,
+          "eligible": true,
+          "total_n": 5952.0,
+          "tagged_n": 688.0,
+          "total_sumw": 50612.77737736469,
+          "tagged_sumw": 4924.3646514909115,
+          "total_sumw2": 14426096.890480274,
+          "tagged_sumw2": 1707786.8066728693
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.09507345675603183,
+          "jet_delta_stat": 0.012740686659805364,
+          "effective_jets": 447.40580508181137,
+          "eligible": true,
+          "total_n": 16415.0,
+          "tagged_n": 1680.0,
+          "total_sumw": 143952.4933505483,
+          "tagged_sumw": 13686.061151486314,
+          "total_sumw2": 46316610.34896591,
+          "tagged_sumw2": 3636583.734030954
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.0966268366787406,
+          "jet_delta_stat": 0.012157737848340455,
+          "effective_jets": 560.8212747987096,
+          "eligible": true,
+          "total_n": 10875.0,
+          "tagged_n": 1077.0,
+          "total_sumw": 143275.99606688798,
+          "tagged_sumw": 13844.306271939065,
+          "total_sumw2": 36603481.30752855,
+          "tagged_sumw2": 3337480.3646432897
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.08656654714130538,
+          "jet_delta_stat": 0.01079880060427843,
+          "effective_jets": 626.9716510480511,
+          "eligible": true,
+          "total_n": 10817.0,
+          "tagged_n": 980.0,
+          "total_sumw": 132641.9284230806,
+          "tagged_sumw": 11482.35374975026,
+          "total_sumw2": 28061685.319238212,
+          "tagged_sumw2": 2226968.784696033
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.07365315092714637,
+          "jet_delta_stat": 0.012203929034800253,
+          "effective_jets": 424.79332147986366,
+          "eligible": true,
+          "total_n": 9180.0,
+          "tagged_n": 778.0,
+          "total_sumw": 68949.53846113369,
+          "tagged_sumw": 5078.350762634964,
+          "total_sumw2": 11191416.18668011,
+          "tagged_sumw2": 759165.8471620597
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.09108079156387447,
+          "jet_delta_stat": 0.015218564439504999,
+          "effective_jets": 326.1356147569162,
+          "eligible": true,
+          "total_n": 8417.0,
+          "tagged_n": 754.0,
+          "total_sumw": 37084.38783867519,
+          "tagged_sumw": 3377.675399008256,
+          "total_sumw2": 4216809.692478138,
+          "tagged_sumw2": 346686.27907838154
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 300.0,
+          "efficiency": 0.12284575589399455,
+          "jet_delta_stat": 0.018342584360516133,
+          "effective_jets": 241.10021123694273,
+          "eligible": true,
+          "total_n": 11560.0,
+          "tagged_n": 1099.0,
+          "total_sumw": 17487.375889118568,
+          "tagged_sumw": 2148.2499097011855,
+          "total_sumw2": 1268386.7588435682,
+          "tagged_sumw2": 111026.1994531404
+        },
+        {
+          "pt_low": 300.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.11040766139482615,
+          "jet_delta_stat": 0.02618579160437553,
+          "effective_jets": 165.95568963350433,
+          "eligible": true,
+          "total_n": 27538.0,
+          "tagged_n": 3728.0,
+          "total_sumw": 7724.900689791378,
+          "tagged_sumw": 852.8882196671453,
+          "total_sumw2": 359578.4561464765,
+          "tagged_sumw2": 46888.83047905396
+        }
+      ],
+      "5": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 50.0,
+          "efficiency": 0.7714340417018665,
+          "jet_delta_stat": 0.02190275137266862,
+          "effective_jets": 364.63244963900405,
+          "eligible": true,
+          "total_n": 11271.0,
+          "tagged_n": 8685.0,
+          "total_sumw": 124008.24345092438,
+          "tagged_sumw": 95664.1804496956,
+          "total_sumw2": 42174097.393165104,
+          "tagged_sumw2": 32643160.819764093
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.8645586850210661,
+          "jet_delta_stat": 0.020827799263611044,
+          "effective_jets": 301.8024030062097,
+          "eligible": true,
+          "total_n": 6247.0,
+          "tagged_n": 5231.0,
+          "total_sumw": 86597.4607353607,
+          "tagged_sumw": 74868.58677952686,
+          "total_sumw2": 24847781.63167256,
+          "tagged_sumw2": 21011251.01148208
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.85001730681677,
+          "jet_delta_stat": 0.018438052069177247,
+          "effective_jets": 384.77051719540617,
+          "eligible": true,
+          "total_n": 6442.0,
+          "tagged_n": 5392.0,
+          "total_sumw": 84756.42834161378,
+          "tagged_sumw": 72044.4309543471,
+          "total_sumw2": 18669965.145949278,
+          "tagged_sumw2": 15781265.458028698
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.8946631650913811,
+          "jet_delta_stat": 0.022556684798116115,
+          "effective_jets": 236.180549268603,
+          "eligible": true,
+          "total_n": 5477.0,
+          "tagged_n": 4668.0,
+          "total_sumw": 41945.49205626268,
+          "tagged_sumw": 37527.08668437135,
+          "total_sumw2": 7449488.576813498,
+          "tagged_sumw2": 6420074.322166471
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.8986074224859122,
+          "jet_delta_stat": 0.02413832503100305,
+          "effective_jets": 185.4454934364374,
+          "eligible": true,
+          "total_n": 4713.0,
+          "tagged_n": 4053.0,
+          "total_sumw": 22011.54407277732,
+          "tagged_sumw": 19779.736884173486,
+          "total_sumw2": 2612671.052229622,
+          "tagged_sumw2": 2292251.2610469363
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 600.0,
+          "efficiency": 0.8480885334948199,
+          "jet_delta_stat": 0.02493433677024312,
+          "effective_jets": 148.0578656471583,
+          "eligible": true,
+          "total_n": 15213.0,
+          "tagged_n": 12738.0,
+          "total_sumw": 10690.422923431755,
+          "tagged_sumw": 9066.425099572643,
+          "total_sumw2": 771895.1085935003,
+          "tagged_sumw2": 695419.7448993054
+        },
+        {
+          "pt_low": 600.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.7894307048012784,
+          "jet_delta_stat": 0.039163470842849005,
+          "effective_jets": 104.25092192949172,
+          "eligible": true,
+          "total_n": 3448.0,
+          "tagged_n": 2779.0,
+          "total_sumw": 120.61939083581575,
+          "tagged_sumw": 95.22065072021888,
+          "total_sumw2": 139.55787801515328,
+          "tagged_sumw2": 111.69789500712753
+        }
+      ]
+    },
+    "TOP": {
+      "0": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.02324019763603611,
+          "jet_delta_stat": 0.004883950234301624,
+          "effective_jets": 866.6431957789167,
+          "eligible": true,
+          "total_n": 16267.0,
+          "tagged_n": 501.0,
+          "total_sumw": 19653.139669354252,
+          "tagged_sumw": 456.74285008441416,
+          "total_sumw2": 445680.414667074,
+          "tagged_sumw2": 9409.766443444958
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.015435165626462436,
+          "jet_delta_stat": 0.0033783471302842962,
+          "effective_jets": 1465.4640324115533,
+          "eligible": true,
+          "total_n": 41988.0,
+          "tagged_n": 813.0,
+          "total_sumw": 39831.77838527051,
+          "tagged_sumw": 614.8100965731968,
+          "total_sumw2": 1082640.4021137645,
+          "tagged_sumw2": 18418.54747630171
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.016083930594064107,
+          "jet_delta_stat": 0.004109432273438725,
+          "effective_jets": 738.5788434891992,
+          "eligible": true,
+          "total_n": 23794.0,
+          "tagged_n": 295.0,
+          "total_sumw": 20261.302763337793,
+          "tagged_sumw": 325.8813873908444,
+          "total_sumw2": 555824.7346055249,
+          "tagged_sumw2": 7014.489066775502
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.016783038379546488,
+          "jet_delta_stat": 0.004161607470867282,
+          "effective_jets": 730.4259612469867,
+          "eligible": true,
+          "total_n": 20009.0,
+          "tagged_n": 220.0,
+          "total_sumw": 17793.089948004028,
+          "tagged_sumw": 298.62211148807444,
+          "total_sumw2": 433437.5647838025,
+          "tagged_sumw2": 5547.19607351614
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.01065257257315061,
+          "jet_delta_stat": 0.004164080034701865,
+          "effective_jets": 578.4968615747733,
+          "eligible": true,
+          "total_n": 13438.0,
+          "tagged_n": 105.0,
+          "total_sumw": 13009.739847575775,
+          "tagged_sumw": 138.58719788411028,
+          "total_sumw2": 292574.32865039696,
+          "tagged_sumw2": 2964.7424378795185
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.008697710824308652,
+          "jet_delta_stat": 0.004155012261086683,
+          "effective_jets": 476.7869044417105,
+          "eligible": true,
+          "total_n": 9055.0,
+          "tagged_n": 84.0,
+          "total_sumw": 10255.386631696194,
+          "tagged_sumw": 89.19838731397424,
+          "total_sumw2": 220586.9204581539,
+          "tagged_sumw2": 1830.8807435992187
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.0033630706765375895,
+          "jet_delta_stat": 0.004043338634572033,
+          "effective_jets": 596.5036808958856,
+          "eligible": true,
+          "total_n": 9657.0,
+          "tagged_n": 103.0,
+          "total_sumw": 13264.082874765441,
+          "tagged_sumw": 44.60804816728807,
+          "total_sumw2": 294945.19504793116,
+          "tagged_sumw2": 2892.422271829892
+        }
+      ],
+      "4": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 50.0,
+          "efficiency": 0.11211321979990907,
+          "jet_delta_stat": 0.02748872566425799,
+          "effective_jets": 144.6279259546374,
+          "eligible": true,
+          "total_n": 6857.0,
+          "tagged_n": 730.0,
+          "total_sumw": 3846.324027498492,
+          "tagged_sumw": 431.2237711166099,
+          "total_sumw2": 102291.50716821058,
+          "tagged_sumw2": 12752.700849792842
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 100.0,
+          "efficiency": 0.10126811195865273,
+          "jet_delta_stat": 0.02420250157344719,
+          "effective_jets": 156.80940388589474,
+          "eligible": true,
+          "total_n": 7808.0,
+          "tagged_n": 662.0,
+          "total_sumw": 3480.16307942237,
+          "tagged_sumw": 352.42954436131424,
+          "total_sumw2": 77237.3005651356,
+          "tagged_sumw2": 7903.029271811692
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.13405096671350514,
+          "jet_delta_stat": 0.024126771854538282,
+          "effective_jets": 174.3023144896001,
+          "eligible": true,
+          "total_n": 6161.0,
+          "tagged_n": 536.0,
+          "total_sumw": 3576.8675233511244,
+          "tagged_sumw": 479.4825493113591,
+          "total_sumw2": 73401.09806956907,
+          "tagged_sumw2": 8373.294335017956
+        }
+      ],
+      "5": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.7450808749139257,
+          "jet_delta_stat": 0.018304465167467483,
+          "effective_jets": 566.441920692073,
+          "eligible": true,
+          "total_n": 6162.0,
+          "tagged_n": 4598.0,
+          "total_sumw": 11180.625650293607,
+          "tagged_sumw": 8330.47034160584,
+          "total_sumw2": 220687.03845095323,
+          "tagged_sumw2": 164495.89747325936
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.8150657782053135,
+          "jet_delta_stat": 0.008181740251837552,
+          "effective_jets": 2297.9420045843417,
+          "eligible": true,
+          "total_n": 26536.0,
+          "tagged_n": 21512.0,
+          "total_sumw": 46407.54143800675,
+          "tagged_sumw": 37825.198876764305,
+          "total_sumw2": 937212.4701249256,
+          "tagged_sumw2": 759289.9664522533
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.8501640306349459,
+          "jet_delta_stat": 0.007716708804788894,
+          "effective_jets": 2121.4380686036666,
+          "eligible": true,
+          "total_n": 24564.0,
+          "tagged_n": 20841.0,
+          "total_sumw": 42657.39309753795,
+          "tagged_sumw": 36265.78125218218,
+          "total_sumw2": 857745.1365693538,
+          "tagged_sumw2": 730520.6316996079
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.8643183866573545,
+          "jet_delta_stat": 0.00732176563276739,
+          "effective_jets": 2200.045357169039,
+          "eligible": true,
+          "total_n": 26445.0,
+          "tagged_n": 22842.0,
+          "total_sumw": 44357.386436606015,
+          "tagged_sumw": 38338.90468122413,
+          "total_sumw2": 894335.075899629,
+          "tagged_sumw2": 772169.760719139
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.8825177328770512,
+          "jet_delta_stat": 0.00861747430114228,
+          "effective_jets": 1463.928298779173,
+          "eligible": true,
+          "total_n": 19389.0,
+          "tagged_n": 16968.0,
+          "total_sumw": 30167.36844386801,
+          "tagged_sumw": 26623.237605949093,
+          "total_sumw2": 621663.0415485693,
+          "tagged_sumw2": 544539.3650596461
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.8585685790925227,
+          "jet_delta_stat": 0.01206908262471046,
+          "effective_jets": 762.7965492452051,
+          "eligible": true,
+          "total_n": 11621.0,
+          "tagged_n": 10203.0,
+          "total_sumw": 16217.425927537231,
+          "tagged_sumw": 13923.772335143878,
+          "total_sumw2": 344790.3690379864,
+          "tagged_sumw2": 300986.7121447
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.8498932648658476,
+          "jet_delta_stat": 0.01872946827628037,
+          "effective_jets": 327.4339670935025,
+          "eligible": true,
+          "total_n": 6860.0,
+          "tagged_n": 5967.0,
+          "total_sumw": 7300.628236007724,
+          "tagged_sumw": 6204.754767072398,
+          "total_sumw2": 162778.38586359328,
+          "tagged_sumw2": 141301.48215480446
+        }
+      ]
+    },
+    "VV": {
+      "0": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.016613980309415865,
+          "jet_delta_stat": 0.002504587468214417,
+          "effective_jets": 2760.0978977294217,
+          "eligible": true,
+          "total_n": 11769.0,
+          "tagged_n": 194.0,
+          "total_sumw": 5498.959591474238,
+          "tagged_sumw": 91.35960637502649,
+          "total_sumw2": 10955.610166415505,
+          "tagged_sumw2": 193.07673830392855
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.012681512068459876,
+          "jet_delta_stat": 0.0012830134398971011,
+          "effective_jets": 7509.632824737929,
+          "eligible": true,
+          "total_n": 32103.0,
+          "tagged_n": 390.0,
+          "total_sumw": 15186.789380277161,
+          "tagged_sumw": 192.5914528071431,
+          "total_sumw2": 30712.36331570552,
+          "tagged_sumw2": 384.47175088798724
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.009669099848553128,
+          "jet_delta_stat": 0.00135306128939775,
+          "effective_jets": 4796.642467769504,
+          "eligible": true,
+          "total_n": 19351.0,
+          "tagged_n": 156.0,
+          "total_sumw": 9487.195028029175,
+          "tagged_sumw": 91.73263600871088,
+          "total_sumw2": 18764.556688277782,
+          "tagged_sumw2": 166.24282379100453
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.006034722506589258,
+          "jet_delta_stat": 0.0011694319890483507,
+          "effective_jets": 4503.305266880081,
+          "eligible": true,
+          "total_n": 16864.0,
+          "tagged_n": 97.0,
+          "total_sumw": 8632.530856228286,
+          "tagged_sumw": 52.094928246907074,
+          "total_sumw2": 16547.97633458276,
+          "tagged_sumw2": 102.54725590861175
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.010344667795243264,
+          "jet_delta_stat": 0.0016651668557604766,
+          "effective_jets": 3111.2609224631105,
+          "eligible": true,
+          "total_n": 10953.0,
+          "tagged_n": 93.0,
+          "total_sumw": 5852.395394876362,
+          "tagged_sumw": 60.54108616640748,
+          "total_sumw2": 11008.569422989676,
+          "tagged_sumw2": 95.77263370259314
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.006909001008830298,
+          "jet_delta_stat": 0.0018649389390428064,
+          "effective_jets": 2061.0246150668468,
+          "eligible": true,
+          "total_n": 6710.0,
+          "tagged_n": 47.0,
+          "total_sumw": 3857.517513712769,
+          "tagged_sumw": 26.651592393822064,
+          "total_sumw2": 7219.924138614964,
+          "tagged_sumw2": 52.1298261593598
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 300.0,
+          "efficiency": 0.0072762498827176015,
+          "jet_delta_stat": 0.0022333417573712528,
+          "effective_jets": 1286.8834639153,
+          "eligible": true,
+          "total_n": 3720.0,
+          "tagged_n": 23.0,
+          "total_sumw": 2338.9236857562437,
+          "tagged_sumw": 17.018593194169288,
+          "total_sumw2": 4251.017408482011,
+          "tagged_sumw2": 27.460720493844214
+        },
+        {
+          "pt_low": 300.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.01539257865381206,
+          "jet_delta_stat": 0.00383403488566341,
+          "effective_jets": 850.9688727845163,
+          "eligible": true,
+          "total_n": 1932.0,
+          "tagged_n": 25.0,
+          "total_sumw": 1447.2634472126583,
+          "tagged_sumw": 22.277116444008023,
+          "total_sumw2": 2461.3961246127246,
+          "tagged_sumw2": 31.166102297498195
+        }
+      ],
+      "4": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.11071985001028586,
+          "jet_delta_stat": 0.014832798633407385,
+          "effective_jets": 425.30620206619125,
+          "eligible": true,
+          "total_n": 1558.0,
+          "tagged_n": 163.0,
+          "total_sumw": 838.416546863574,
+          "tagged_sumw": 92.82935431487672,
+          "total_sumw2": 1652.791101186997,
+          "tagged_sumw2": 172.61900813217306
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.09105868628365076,
+          "jet_delta_stat": 0.007625885752517367,
+          "effective_jets": 1338.6187886671955,
+          "eligible": true,
+          "total_n": 5245.0,
+          "tagged_n": 447.0,
+          "total_sumw": 2747.869033080854,
+          "tagged_sumw": 250.21734423186822,
+          "total_sumw2": 5640.7278060714325,
+          "tagged_sumw2": 479.6998569136262
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.07306632778259621,
+          "jet_delta_stat": 0.008532709627396575,
+          "effective_jets": 1051.4389279352838,
+          "eligible": true,
+          "total_n": 3725.0,
+          "tagged_n": 296.0,
+          "total_sumw": 2067.713378860255,
+          "tagged_sumw": 151.08022350026295,
+          "total_sumw2": 4066.273849602843,
+          "tagged_sumw2": 339.1321426861197
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.08544273585754325,
+          "jet_delta_stat": 0.00836997039215652,
+          "effective_jets": 1056.3858666779868,
+          "eligible": true,
+          "total_n": 3596.0,
+          "tagged_n": 282.0,
+          "total_sumw": 2043.9464626554648,
+          "tagged_sumw": 174.64037771563076,
+          "total_sumw2": 3954.7264631052294,
+          "tagged_sumw2": 318.1762056889196
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.05981053452893749,
+          "jet_delta_stat": 0.010428475103187665,
+          "effective_jets": 677.2874772361849,
+          "eligible": true,
+          "total_n": 2332.0,
+          "tagged_n": 173.0,
+          "total_sumw": 1317.425282968643,
+          "tagged_sumw": 78.79591037629126,
+          "total_sumw2": 2562.588907279861,
+          "tagged_sumw2": 203.98686537085067
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.045645608037677636,
+          "jet_delta_stat": 0.014353347459304933,
+          "effective_jets": 314.3105332491189,
+          "eligible": true,
+          "total_n": 1342.0,
+          "tagged_n": 92.0,
+          "total_sumw": 697.3181300823366,
+          "tagged_sumw": 31.82951004330464,
+          "total_sumw2": 1547.0451133628674,
+          "tagged_sumw2": 106.69398869658987
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.08900352828353608,
+          "jet_delta_stat": 0.016380842645558592,
+          "effective_jets": 333.7490797937353,
+          "eligible": true,
+          "total_n": 1013.0,
+          "tagged_n": 98.0,
+          "total_sumw": 647.1598529993591,
+          "tagged_sumw": 57.59951028039752,
+          "total_sumw2": 1254.8824871457027,
+          "tagged_sumw2": 124.62514720226628
+        }
+      ],
+      "5": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.7549581097172668,
+          "jet_delta_stat": 0.028734343292683026,
+          "effective_jets": 233.5986527888518,
+          "eligible": true,
+          "total_n": 735.0,
+          "tagged_n": 559.0,
+          "total_sumw": 303.7244465443383,
+          "tagged_sumw": 229.29923403803673,
+          "total_sumw2": 394.9018469385071,
+          "tagged_sumw2": 292.0338338248191
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.8027310671742273,
+          "jet_delta_stat": 0.01502743983996133,
+          "effective_jets": 746.1948949924931,
+          "eligible": true,
+          "total_n": 2711.0,
+          "tagged_n": 2159.0,
+          "total_sumw": 1031.6901350798448,
+          "tagged_sumw": 828.1697231257665,
+          "total_sumw2": 1426.4162646566704,
+          "tagged_sumw2": 1121.1048783169263
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.8376260853004042,
+          "jet_delta_stat": 0.014329384738116163,
+          "effective_jets": 655.3834763520834,
+          "eligible": true,
+          "total_n": 2050.0,
+          "tagged_n": 1744.0,
+          "total_sumw": 833.3045376393495,
+          "tagged_sumw": 697.9976177259116,
+          "total_sumw2": 1059.526944919936,
+          "tagged_sumw2": 889.7436030473882
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.8596138362887384,
+          "jet_delta_stat": 0.014361260626848872,
+          "effective_jets": 610.1421003369461,
+          "eligible": true,
+          "total_n": 1920.0,
+          "tagged_n": 1662.0,
+          "total_sumw": 787.8063722305649,
+          "tagged_sumw": 677.2092578858297,
+          "total_sumw2": 1017.2038280661841,
+          "tagged_sumw2": 867.1027711420251
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.8234321686319586,
+          "jet_delta_stat": 0.02100932035411071,
+          "effective_jets": 311.3597839906277,
+          "eligible": true,
+          "total_n": 1059.0,
+          "tagged_n": 901.0,
+          "total_sumw": 418.4995062636865,
+          "tagged_sumw": 344.6059560141113,
+          "total_sumw2": 562.5062893421758,
+          "tagged_sumw2": 470.1077540645489
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.8521834455607996,
+          "jet_delta_stat": 0.024461269598575065,
+          "effective_jets": 214.15499716465902,
+          "eligible": true,
+          "total_n": 928.0,
+          "tagged_n": 801.0,
+          "total_sumw": 340.4009227120559,
+          "tagged_sumw": 290.08403118883524,
+          "total_sumw2": 541.0697378876806,
+          "tagged_sumw2": 459.4209782087335
+        }
+      ]
+    },
+    "VVV": {
+      "0": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.03707190595318766,
+          "jet_delta_stat": 0.0033651745085592558,
+          "effective_jets": 3218.5418843487496,
+          "eligible": true,
+          "total_n": 7841.0,
+          "tagged_n": 253.0,
+          "total_sumw": 59.963283241588854,
+          "tagged_sumw": 2.222953196976536,
+          "total_sumw2": 1.1171503949026766,
+          "tagged_sumw2": 0.04232042662288502
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.018808599322989415,
+          "jet_delta_stat": 0.0015147155069256898,
+          "effective_jets": 8921.002532461009,
+          "eligible": true,
+          "total_n": 22130.0,
+          "tagged_n": 354.0,
+          "total_sumw": 163.58955441962627,
+          "tagged_sumw": 3.076890382505123,
+          "total_sumw2": 2.9998357491587035,
+          "tagged_sumw2": 0.0626979847285658
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.010874787479107863,
+          "jet_delta_stat": 0.0014476749604296307,
+          "effective_jets": 5818.329152588606,
+          "eligible": true,
+          "total_n": 14255.0,
+          "tagged_n": 137.0,
+          "total_sumw": 108.1773620152314,
+          "tagged_sumw": 1.1764058219661568,
+          "total_sumw2": 2.0112890394604084,
+          "tagged_sumw2": 0.024827461888485843
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.008144122363220341,
+          "jet_delta_stat": 0.0012728691571064785,
+          "effective_jets": 5488.852531678506,
+          "eligible": true,
+          "total_n": 13194.0,
+          "tagged_n": 108.0,
+          "total_sumw": 102.21710492730699,
+          "tagged_sumw": 0.832468610142121,
+          "total_sumw2": 1.903555703021403,
+          "tagged_sumw2": 0.017080303470165335
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.005181792466820447,
+          "jet_delta_stat": 0.0010360950634584717,
+          "effective_jets": 3887.839614067274,
+          "eligible": true,
+          "total_n": 9153.0,
+          "tagged_n": 55.0,
+          "total_sumw": 75.21643552003849,
+          "tagged_sumw": 0.3897559589588213,
+          "total_sumw2": 1.4551814719593037,
+          "tagged_sumw2": 0.006097417671485042
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.005479754973515685,
+          "jet_delta_stat": 0.001265074384283892,
+          "effective_jets": 2796.5236970461283,
+          "eligible": true,
+          "total_n": 6079.0,
+          "tagged_n": 43.0,
+          "total_sumw": 54.95542427724687,
+          "tagged_sumw": 0.30114225950490814,
+          "total_sumw2": 1.0799474578678667,
+          "tagged_sumw2": 0.004854176794874704
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 300.0,
+          "efficiency": 0.008570009024874333,
+          "jet_delta_stat": 0.0021994204978569992,
+          "effective_jets": 1823.3414315280456,
+          "eligible": true,
+          "total_n": 3734.0,
+          "tagged_n": 24.0,
+          "total_sumw": 36.606242061694346,
+          "tagged_sumw": 0.31371582483545496,
+          "total_sumw2": 0.7349237694644843,
+          "tagged_sumw2": 0.006540391652812731
+        },
+        {
+          "pt_low": 300.0,
+          "pt_high": 600.0,
+          "efficiency": 0.014320323254038902,
+          "jet_delta_stat": 0.0031819789930413087,
+          "effective_jets": 1196.9704822408196,
+          "eligible": true,
+          "total_n": 2105.0,
+          "tagged_n": 33.0,
+          "total_sumw": 24.36991233407186,
+          "tagged_sumw": 0.3489850222964987,
+          "total_sumw2": 0.4961631351664877,
+          "tagged_sumw2": 0.00608570667332658
+        },
+        {
+          "pt_low": 600.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.04778362633531976,
+          "jet_delta_stat": 0.015840719839661573,
+          "effective_jets": 202.6429619668957,
+          "eligible": true,
+          "total_n": 350.0,
+          "tagged_n": 12.0,
+          "total_sumw": 4.196083898517019,
+          "tagged_sumw": 0.20050410507838903,
+          "total_sumw2": 0.08688739994962238,
+          "tagged_sumw2": 0.004665619139624807
+        }
+      ],
+      "4": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.09898481483682163,
+          "jet_delta_stat": 0.013513007204469152,
+          "effective_jets": 501.6471566411653,
+          "eligible": true,
+          "total_n": 1174.0,
+          "tagged_n": 108.0,
+          "total_sumw": 8.956978902787757,
+          "tagged_sumw": 0.8866048981897638,
+          "total_sumw2": 0.15992808890248075,
+          "tagged_sumw2": 0.01631193994753077
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.08729565778197952,
+          "jet_delta_stat": 0.006800246210885104,
+          "effective_jets": 1785.8333395126685,
+          "eligible": true,
+          "total_n": 4410.0,
+          "tagged_n": 398.0,
+          "total_sumw": 33.957908911629,
+          "tagged_sumw": 2.9643779953411977,
+          "total_sumw2": 0.6457151135755868,
+          "tagged_sumw2": 0.05864288043463731
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.07732749453399805,
+          "jet_delta_stat": 0.0070654695758063015,
+          "effective_jets": 1365.5441806826693,
+          "eligible": true,
+          "total_n": 3236.0,
+          "tagged_n": 247.0,
+          "total_sumw": 25.71998810371588,
+          "tagged_sumw": 1.9888622395045847,
+          "total_sumw2": 0.4844352877140726,
+          "tagged_sumw2": 0.035638509540729765
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.06934228487822183,
+          "jet_delta_stat": 0.006872951002311214,
+          "effective_jets": 1336.9832604611981,
+          "eligible": true,
+          "total_n": 3139.0,
+          "tagged_n": 228.0,
+          "total_sumw": 24.77307180135323,
+          "tagged_sumw": 1.7178214021580798,
+          "total_sumw2": 0.45902226648918726,
+          "tagged_sumw2": 0.031095142278951972
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.06833315027724503,
+          "jet_delta_stat": 0.008147888331535123,
+          "effective_jets": 958.9358910118669,
+          "eligible": true,
+          "total_n": 2249.0,
+          "tagged_n": 159.0,
+          "total_sumw": 18.45265621005353,
+          "tagged_sumw": 1.2609281298159265,
+          "total_sumw2": 0.35508163204438176,
+          "tagged_sumw2": 0.024263100393492814
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.07948215228240452,
+          "jet_delta_stat": 0.011291164513234812,
+          "effective_jets": 624.0288051436929,
+          "eligible": true,
+          "total_n": 1426.0,
+          "tagged_n": 108.0,
+          "total_sumw": 12.369475899440603,
+          "tagged_sumw": 0.9831525670928707,
+          "total_sumw2": 0.2451872938647604,
+          "tagged_sumw2": 0.021351748758381726
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 300.0,
+          "efficiency": 0.06142819862703304,
+          "jet_delta_stat": 0.011414185718533653,
+          "effective_jets": 408.8089667482064,
+          "eligible": true,
+          "total_n": 877.0,
+          "tagged_n": 67.0,
+          "total_sumw": 8.476457354029364,
+          "tagged_sumw": 0.5206935059968907,
+          "total_sumw2": 0.1757552674203757,
+          "tagged_sumw2": 0.00991596247116352
+        },
+        {
+          "pt_low": 300.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.10723860382325252,
+          "jet_delta_stat": 0.016282766053754297,
+          "effective_jets": 366.7123344202358,
+          "eligible": true,
+          "total_n": 670.0,
+          "tagged_n": 86.0,
+          "total_sumw": 8.163604599877532,
+          "tagged_sumw": 0.8754535594559486,
+          "total_sumw2": 0.1817349290105145,
+          "tagged_sumw2": 0.0198331168084288
+        }
+      ],
+      "5": [
+        {
+          "pt_low": 25.0,
+          "pt_high": 30.0,
+          "efficiency": 0.7979498132716831,
+          "jet_delta_stat": 0.021608938416462657,
+          "effective_jets": 284.66935663699286,
+          "eligible": true,
+          "total_n": 820.0,
+          "tagged_n": 623.0,
+          "total_sumw": 3.023272701384872,
+          "tagged_sumw": 2.4124198875394356,
+          "total_sumw2": 0.03210804961559116,
+          "tagged_sumw2": 0.027145496514635832
+        },
+        {
+          "pt_low": 30.0,
+          "pt_high": 50.0,
+          "efficiency": 0.7939222179622155,
+          "jet_delta_stat": 0.011259482061281717,
+          "effective_jets": 1244.8249729163651,
+          "eligible": true,
+          "total_n": 3088.0,
+          "tagged_n": 2471.0,
+          "total_sumw": 10.707438630195009,
+          "tagged_sumw": 8.500873425978728,
+          "total_sumw2": 0.09210069247790965,
+          "tagged_sumw2": 0.07402885691707513
+        },
+        {
+          "pt_low": 50.0,
+          "pt_high": 70.0,
+          "efficiency": 0.8404407049902998,
+          "jet_delta_stat": 0.012085321357020702,
+          "effective_jets": 941.6475427340633,
+          "eligible": true,
+          "total_n": 2352.0,
+          "tagged_n": 1988.0,
+          "total_sumw": 8.524100082322413,
+          "tagged_sumw": 7.164000682594921,
+          "total_sumw2": 0.0771629287137315,
+          "tagged_sumw2": 0.06446190204598577
+        },
+        {
+          "pt_low": 70.0,
+          "pt_high": 100.0,
+          "efficiency": 0.8433986955500984,
+          "jet_delta_stat": 0.014034395643968613,
+          "effective_jets": 820.45152824407,
+          "eligible": true,
+          "total_n": 2169.0,
+          "tagged_n": 1839.0,
+          "total_sumw": 8.467527960209026,
+          "tagged_sumw": 7.141502036174278,
+          "total_sumw2": 0.08738972052422384,
+          "tagged_sumw2": 0.0699478900599963
+        },
+        {
+          "pt_low": 100.0,
+          "pt_high": 140.0,
+          "efficiency": 0.8389757560939558,
+          "jet_delta_stat": 0.016697262823220087,
+          "effective_jets": 566.4379750859215,
+          "eligible": true,
+          "total_n": 1479.0,
+          "tagged_n": 1261.0,
+          "total_sumw": 5.733118763639481,
+          "tagged_sumw": 4.809947649500878,
+          "total_sumw2": 0.05802691945752636,
+          "tagged_sumw2": 0.046729408636053904
+        },
+        {
+          "pt_low": 140.0,
+          "pt_high": 200.0,
+          "efficiency": 0.8699675786256196,
+          "jet_delta_stat": 0.018413774833942,
+          "effective_jets": 347.9362074023524,
+          "eligible": true,
+          "total_n": 962.0,
+          "tagged_n": 831.0,
+          "total_sumw": 4.157838574024416,
+          "tagged_sumw": 3.61718475656022,
+          "total_sumw2": 0.04968618166161142,
+          "tagged_sumw2": 0.042899710734790424
+        },
+        {
+          "pt_low": 200.0,
+          "pt_high": 300.0,
+          "efficiency": 0.8516594542584095,
+          "jet_delta_stat": 0.028256214024926327,
+          "effective_jets": 176.52568199412568,
+          "eligible": true,
+          "total_n": 455.0,
+          "tagged_n": 400.0,
+          "total_sumw": 2.355119912374996,
+          "tagged_sumw": 2.0057601392864024,
+          "total_sumw2": 0.03142086601228815,
+          "tagged_sumw2": 0.02610740252742528
+        },
+        {
+          "pt_low": 300.0,
+          "pt_high": 10000000.0,
+          "efficiency": 0.926198282114182,
+          "jet_delta_stat": 0.030051487329921335,
+          "effective_jets": 102.72293369628716,
+          "eligible": true,
+          "total_n": 274.0,
+          "tagged_n": 249.0,
+          "total_sumw": 1.553191222904658,
+          "tagged_sumw": 1.4385630424491198,
+          "total_sumw2": 0.0234845607314977,
+          "tagged_sumw2": 0.021078745827808797
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "One eta bin and adaptive adjacent pt merging based only on MC effective statistics.",
+    "DY/WJets pooling is an explicit vector-boson-plus-jets hypothesis; sparse standalone WJets estimates retained for comparison.",
+    "Uncertainty is weighted per-jet delta-method only, omitting event/block correlations.",
+    "No SF extrapolation prescribed; this is an efficiency map, not permission to extend SF coverage.",
+    "Candidate maps are not enabled in Stage1."
+  ],
+  "all_bins_eligible": true,
+  "standalone_wjets": {
+    "0": {
+      "pt_low": 25.0,
+      "pt_high": 10000000.0,
+      "efficiency": 0.015691767191584903,
+      "jet_delta_stat": 0.016023939225100845,
+      "effective_jets": 13.48276703422867,
+      "eligible": false,
+      "total_n": 110.0,
+      "tagged_n": 1.0,
+      "total_sumw": 396.18336991840096,
+      "tagged_sumw": 6.21681720593711,
+      "total_sumw2": 11641.620907742701,
+      "tagged_sumw2": 38.648816172035694
+    },
+    "4": {
+      "pt_low": 25.0,
+      "pt_high": 10000000.0,
+      "efficiency": 0.08632431639138985,
+      "jet_delta_stat": 0.09471620717362794,
+      "effective_jets": 2.6558580721193805,
+      "eligible": false,
+      "total_n": 14.0,
+      "tagged_n": 1.0,
+      "total_sumw": 70.34348064465011,
+      "tagged_sumw": 6.072352879240384,
+      "total_sumw2": 1863.128651771511,
+      "tagged_sumw2": 36.873469490018984
+    },
+    "5": {
+      "pt_low": 25.0,
+      "pt_high": 10000000.0,
+      "efficiency": 0.5986840585501385,
+      "jet_delta_stat": 0.2881191750433778,
+      "effective_jets": 3.1440210266494373,
+      "eligible": false,
+      "total_n": 5.0,
+      "tagged_n": 4.0,
+      "total_sumw": 4.035990898060215,
+      "tagged_sumw": 2.4162834111221074,
+      "total_sumw2": 5.181015772844311,
+      "tagged_sumw2": 2.55756342960095
+    }
+  },
+  "real_payload_checks": [
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9998721987097102
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9993143687569619
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9989941526849204
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9983929232245008
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9986834530637682
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9991457502971316
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 301.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9971145728725793
+    },
+    {
+      "group": "VJETS",
+      "flavor": "0",
+      "pt": 601.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9962759458113725
+    },
+    {
+      "group": "VJETS",
+      "flavor": "4",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0099848762419577
+    },
+    {
+      "group": "VJETS",
+      "flavor": "4",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.007590333781499
+    },
+    {
+      "group": "VJETS",
+      "flavor": "4",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0052589354015569
+    },
+    {
+      "group": "VJETS",
+      "flavor": "4",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0027228288536867
+    },
+    {
+      "group": "VJETS",
+      "flavor": "4",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.00291989349534
+    },
+    {
+      "group": "VJETS",
+      "flavor": "4",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0013618858959479
+    },
+    {
+      "group": "VJETS",
+      "flavor": "5",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3207627878906927
+    },
+    {
+      "group": "VJETS",
+      "flavor": "5",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.4529743528447352
+    },
+    {
+      "group": "VJETS",
+      "flavor": "5",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3144932106211127
+    },
+    {
+      "group": "VJETS",
+      "flavor": "5",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.290858616490304
+    },
+    {
+      "group": "VJETS",
+      "flavor": "5",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.2582434612579216
+    },
+    {
+      "group": "VJETS",
+      "flavor": "5",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.054288415902298
+    },
+    {
+      "group": "TOP",
+      "flavor": "0",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9998589056954014
+    },
+    {
+      "group": "TOP",
+      "flavor": "0",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9985941707081533
+    },
+    {
+      "group": "TOP",
+      "flavor": "0",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.997473711523366
+    },
+    {
+      "group": "TOP",
+      "flavor": "0",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9976635020375139
+    },
+    {
+      "group": "TOP",
+      "flavor": "0",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9976046912420522
+    },
+    {
+      "group": "TOP",
+      "flavor": "0",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9991631440665685
+    },
+    {
+      "group": "TOP",
+      "flavor": "4",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0120004066889723
+    },
+    {
+      "group": "TOP",
+      "flavor": "4",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.007996001349705
+    },
+    {
+      "group": "TOP",
+      "flavor": "4",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0053012741066027
+    },
+    {
+      "group": "TOP",
+      "flavor": "5",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.4188631010551709
+    },
+    {
+      "group": "TOP",
+      "flavor": "5",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.4026400224606286
+    },
+    {
+      "group": "TOP",
+      "flavor": "5",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3534902231658679
+    },
+    {
+      "group": "TOP",
+      "flavor": "5",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.257249040566771
+    },
+    {
+      "group": "TOP",
+      "flavor": "5",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.1768864564804493
+    },
+    {
+      "group": "TOP",
+      "flavor": "5",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0550580394845832
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9998844004138369
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9991603386435297
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9991014384997153
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9977317427204005
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9981007206013077
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9981822637257336
+    },
+    {
+      "group": "VV",
+      "flavor": "0",
+      "pt": 301.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9959978971822208
+    },
+    {
+      "group": "VV",
+      "flavor": "4",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0095209934317826
+    },
+    {
+      "group": "VV",
+      "flavor": "4",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0055936967572119
+    },
+    {
+      "group": "VV",
+      "flavor": "4",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0051842853304638
+    },
+    {
+      "group": "VV",
+      "flavor": "4",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0021785370223955
+    },
+    {
+      "group": "VV",
+      "flavor": "4",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.001393653519907
+    },
+    {
+      "group": "VV",
+      "flavor": "4",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.000950051313398
+    },
+    {
+      "group": "VV",
+      "flavor": "5",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3867302153594552
+    },
+    {
+      "group": "VV",
+      "flavor": "5",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3660700758969353
+    },
+    {
+      "group": "VV",
+      "flavor": "5",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3397846415248928
+    },
+    {
+      "group": "VV",
+      "flavor": "5",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.159705137929422
+    },
+    {
+      "group": "VV",
+      "flavor": "5",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.1679869381776848
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9998274777033409
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.999054486013131
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.998784772932305
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9988696940237068
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9984957841579888
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9978562659416038
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 301.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.9962807361868953
+    },
+    {
+      "group": "VVV",
+      "flavor": "0",
+      "pt": 601.0,
+      "passed": true,
+      "nominal_untagged_weight": 0.987153541274696
+    },
+    {
+      "group": "VVV",
+      "flavor": "4",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.009089903106643
+    },
+    {
+      "group": "VVV",
+      "flavor": "4",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0059472563202045
+    },
+    {
+      "group": "VVV",
+      "flavor": "4",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.004134593519621
+    },
+    {
+      "group": "VVV",
+      "flavor": "4",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0025117328285815
+    },
+    {
+      "group": "VVV",
+      "flavor": "4",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0025159551864118
+    },
+    {
+      "group": "VVV",
+      "flavor": "4",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0006364390402613
+    },
+    {
+      "group": "VVV",
+      "flavor": "5",
+      "pt": 31.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3661369110074855
+    },
+    {
+      "group": "VVV",
+      "flavor": "5",
+      "pt": 51.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.3737793173565804
+    },
+    {
+      "group": "VVV",
+      "flavor": "5",
+      "pt": 71.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.2988561541387373
+    },
+    {
+      "group": "VVV",
+      "flavor": "5",
+      "pt": 101.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.1784270866553266
+    },
+    {
+      "group": "VVV",
+      "flavor": "5",
+      "pt": 141.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.1949471605822668
+    },
+    {
+      "group": "VVV",
+      "flavor": "5",
+      "pt": 201.0,
+      "passed": true,
+      "nominal_untagged_weight": 1.0558293579970115
+    }
+  ],
+  "datasets": {
+    "dy_PtZ_0To50": "VJETS",
+    "dy_PtZ_100To250": "VJETS",
+    "dy_PtZ_250To400": "VJETS",
+    "dy_PtZ_400To650": "VJETS",
+    "dy_PtZ_50To100": "VJETS",
+    "dy_PtZ_650ToInf": "VJETS",
+    "st_schannel_had": "TOP",
+    "st_schannel_lep": "TOP",
+    "st_tW_top": "TOP",
+    "tt_jets_amcatnlo": "TOP",
+    "ttw_lnu": "TOP",
+    "ttz_llnunu_m10": "TOP",
+    "ww_2l2nu": "VV",
+    "wz_2l2q": "VV",
+    "zz_2l2nu": "VV",
+    "zz_2l2q": "VV",
+    "wjets_lnu_ht_100to200": "VJETS",
+    "wjets_lnu_ht_1200to2500": "VJETS",
+    "wjets_lnu_ht_200to400": "VJETS",
+    "wjets_lnu_ht_400to600": "VJETS",
+    "wjets_lnu_ht_600to800": "VJETS",
+    "wjets_lnu_ht_70to100": "VJETS",
+    "wjets_lnu_ht_800to1200": "VJETS",
+    "wwz": "VVV",
+    "wzz": "VVV",
+    "zzz": "VVV"
+  },
+  "provenance": "Frozen candidate map from XZZ control synchronization iteration015; central conventions validated in full iteration017. Calibration/map uncertainties are not included."
+}

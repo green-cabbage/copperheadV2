@@ -56,6 +56,8 @@ from src.corrections.jet import (
     getJecDataTag,
 )
 from src.corrections.muon_sf import add_muon_sfs_correctionlib
+from src.corrections.electron_sf import electron_sfs_2018
+from src.corrections.xzz_btag_sf import central_event_weights
 from src.corrections.rochester import apply_KitMuScaleRe_Run3, apply_roccor
 
 coffea_nanoevent = TypeVar('coffea_nanoevent')
@@ -736,8 +738,23 @@ class EventProcessor(processor.ProcessorABC):
         logger.debug(f"Dataset going to read: {dataset}")
         logger.debug(f"events.metadata: {events.metadata}")
         NanoAODv = events.metadata['NanoAODv']
+        do_xzz_btag_sf = (
+            self.config.get('analysis') == 'XZZ2l2nu'
+            and events.metadata['is_mc']
+            and self.config['switches'].get('do_xzz_btag_sf', False)
+        )
+        if do_xzz_btag_sf:
+            if (str(year), NanoAODv) != ('2018', 15):
+                raise ValueError('XZZ UParT SF supports only 2018 NanoAODv15')
+            if self.config['switches']['do_btag_wgt']:
+                raise ValueError('Legacy b-tag weights and XZZ UParT SF cannot both be enabled')
+            if self.config['xzz_btag_sf']['convention'] not in ('nearest', 'supported'):
+                raise ValueError('Choose an explicit XZZ b-tag convention: nearest or supported')
+            if self.config['btag_medium_wp_UParT'] != 0.161:
+                raise ValueError('XZZ UParT efficiency map requires medium WP 0.161')
         self.config['NanoAODv'] = NanoAODv
         is_mc = events.metadata['is_mc']
+        is_xzz_run2 = self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
         logger.debug(f"NanoAODv: {NanoAODv}")
 
         t1 = time.perf_counter()
@@ -809,6 +826,23 @@ class EventProcessor(processor.ProcessorABC):
                 logger.warning(f"HLT path '{HLT_str}' not in NanoAOD fields, skipping")
                 continue
             HLT_filter = HLT_filter | ak.fill_none(events.HLT[HLT_str], value=False)
+        if is_xzz_run2 and year == "2018":
+            # HZZ update slides 5/7: single-lepton triggers. Assign overlapping
+            # data to SingleMuon first, then electron-trigger-only EGamma events.
+            single_mu = ak.zeros_like(event_filter, dtype="bool")
+            for path in ("IsoMu20", "IsoMu24", "IsoMu27"):
+                if path in hlt_fields:
+                    single_mu = single_mu | ak.fill_none(events.HLT[path], False)
+            single_el = ak.fill_none(events.HLT.Ele32_WPTight_Gsf, False)
+            HLT_filter = single_mu | single_el
+            if not is_mc:
+                filename = events.metadata.get("filename", "")
+                if "/SingleMuon/" in filename:
+                    HLT_filter = single_mu
+                elif "/EGamma/" in filename:
+                    HLT_filter = single_el & ~single_mu
+                else:
+                    raise ValueError(f"Unknown XZZ 2018 primary dataset: {filename}")
         self.selection.add("HLT_filter", HLT_filter)
         event_filter = event_filter & HLT_filter
 
@@ -903,8 +937,15 @@ class EventProcessor(processor.ProcessorABC):
             (events.Muon.pt_raw > self.config["muon_pt_cut"]) # pt_raw is pt b4 rochester #FIXME: Why pt_raw
             & (abs(events.Muon.eta_raw) < self.config["muon_eta_cut"])
             & events.Muon[self.config["muon_id"]]
-            & (events.Muon.isGlobal | events.Muon.isTracker) # Table 3.5  AN-19-124
+            & (events.Muon.isGlobal | events.Muon.isTracker
+               | (events.Muon.isPFcand if is_xzz_run2 else False))
         )
+        if is_xzz_run2:
+            # Slide 3 impact-parameter magnitudes; parameters already exist.
+            muon_selection = muon_selection & (
+                (abs(events.Muon.dxy) < self.config["zz2l2nu_muon_dxy_cut"])
+                & (abs(events.Muon.dz) < self.config["zz2l2nu_muon_dz_cut"])
+            )
 
         # logger.info(f"Debug event muon pt after roccor: {events.Muon.pt[debug_mask_2].compute()}")
         # logger.info(f"Debug event muon pt_raw after roccor: {events.Muon.pt_raw[debug_mask_2].compute()}")
@@ -928,12 +969,13 @@ class EventProcessor(processor.ProcessorABC):
         if do_fsr:
             logger.debug("doing fsr!")
             # applied_fsr = fsr_recovery(events)
-            applied_fsr = fsr_recoveryV1(events)# testing for pt_raw inconsistency
+            applied_fsr = fsr_recoveryV1(events, xzz=is_xzz_run2)
             events["Muon", "pfRelIso04_all"] = events.Muon.iso_fsr
 
         # apply iso portion of base muon selection, now that possible FSR photons are integrated into pfRelIso04_all as specified in line 360 of AN-19-124
-        muon_selection = muon_selection & (events.Muon.pfRelIso04_all < self.config["muon_iso_cut"])
-        self.selection.add("muon_iso", ak.any(events.Muon.pfRelIso04_all < self.config["muon_iso_cut"], axis=1))
+        muon_iso = events.Muon.pfRelIso03_all if is_xzz_run2 else events.Muon.pfRelIso04_all
+        muon_selection = muon_selection & (muon_iso < self.config["muon_iso_cut"])
+        self.selection.add("muon_iso", ak.any(muon_iso < self.config["muon_iso_cut"], axis=1))
         # logger.info(f"muon_selectiont: {ak.to_dataframe(muon_selection.compute())}")
 
         # logger.info(f"Debug event muon pt after roccor: {events.Muon.pt[debug_mask_2].compute()}")
@@ -1101,8 +1143,13 @@ class EventProcessor(processor.ProcessorABC):
             (events.Electron.pt > self.config["electron_pt_cut"])
             & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
             & events.Electron[electron_id]
-            & ~ecal_gap # reject electrons in ecal gap region, as specified in table 3.5 of AN-19-124
+            & (True if is_xzz_run2 else ~ecal_gap)
         )
+        if is_xzz_run2:
+            electron_selection = electron_selection & (
+                (abs(events.Electron.dxy) < self.config["zz2l2nu_electron_dxy_cut"])
+                & (abs(events.Electron.dz) < self.config["zz2l2nu_electron_dz_cut"])
+            )
         # self.selection.add("electron_pT", ak.any(events.Electron.pt > self.config["electron_pt_cut"], axis=1))
         # self.selection.add("electron_eta", ak.any(abs(events.Electron.eta) < self.config["electron_eta_cut"], axis=1))
         # self.selection.add("electron_id", ak.any(events.Electron[electron_id], axis=1))
@@ -1125,7 +1172,10 @@ class EventProcessor(processor.ProcessorABC):
         # logger.debug(f"electron_veto: {electron_veto[debug_mask_2].compute()}")
         self.selection.add("electron_veto", electron_veto)
         if self.config["switches"]["do_HemVeto"]:
-            HemVeto_filter, is_HemRegion = applyHemVeto(events.Jet, events.run, events.event, self.config, is_mc, NanoAODv)
+            HemVeto_filter, is_HemRegion = applyHemVeto(
+                events.Jet, events.run, events.event, self.config, is_mc, NanoAODv,
+                use_puid=not (is_xzz_run2 and NanoAODv == 15),
+            )
             if (not self.config["switches"]["do_HemVetoStudy"]): # when we are calculating HemVeto fraction for MC, we shouldn't filter out hem veto events
                 logger.info("adding HemVeto!")
                 event_filter = event_filter & HemVeto_filter
@@ -1295,6 +1345,9 @@ class EventProcessor(processor.ProcessorABC):
             & events.Electron[electron_id]
             & ~ecal_gap_filt
         )
+        if is_xzz_run2:
+            # Keep pair construction and jet cleaning consistent with channel selection.
+            electron_sel_filt = electron_selection[event_filter == True]
         electrons_sel = events.Electron[electron_sel_filt]
         nelectrons_filt = ak.num(electrons_sel, axis=1)  # 0=mm, 1=em, 2=ee
 
@@ -1705,7 +1758,7 @@ class EventProcessor(processor.ProcessorABC):
             # do mu SF start -------------------------------------
             logger.debug("doing musf!")
             if is_run2(year) or is_run3(year):
-                muID, muIso, muTrig = add_muon_sfs_correctionlib(mu1, mu2, self.config)
+                muID, muIso, muTrig = add_muon_sfs_correctionlib(mu1, mu2, self.config, allow_missing_muons=is_xzz_run2)
             else:
                 raise ValueError(f"Year {year} is not recognized as Run 2 or Run 3 year for muon SFs!")
             # -----------------------------
@@ -1727,6 +1780,10 @@ class EventProcessor(processor.ProcessorABC):
                 weightDown=muTrig["down"]
             )
             # do mu SF end -------------------------------------
+
+            if is_xzz_run2 and year == "2018" and NanoAODv == 15:
+                for name, sf in electron_sfs_2018(electrons_pt_sorted).items():
+                    weights.add(name, weight=sf["nom"], weightUp=sf["up"], weightDown=sf["down"])
 
             # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
             do_lhe = (
@@ -1961,6 +2018,9 @@ class EventProcessor(processor.ProcessorABC):
             "PuppiMET_phi": PuppiMET.phi,
             "PuppiMET_sumEt": PuppiMET.sumEt,
         })
+
+        if self.config.get("analysis") == "HMuMu":
+            _add_block(out_dict, {"channel": ak.where(is_mm, 0, ak.where(is_em, 1, 2))})
 
         # X->ZZ->2l2nu: lepton counts, unified dilepton, and MET-derived variables
         _add_block(out_dict, {
@@ -2524,6 +2584,15 @@ class EventProcessor(processor.ProcessorABC):
         # apply vbf filter phase cut if DY test end ---------------------------------
         logger.debug(f"weight statistics: {weights.weightStatistics.keys()}")
         # logger.debug(f"weight variations: {weights.variations}")
+
+        # Add once after all other nominal weights, matching the full-production
+        # validation. Keep alternate conventions separate from SF uncertainties.
+        if do_xzz_btag_sf:
+            baseline_weight = weights.weight().copy()
+            convention = self.config['xzz_btag_sf']['convention']
+            weights.add('xzz_btag', weight=out_dict['btag_sf_' + convention])
+            out_dict['wgt_nominal_without_btag'] = baseline_weight
+            out_dict['wgt_nominal_supported'] = baseline_weight * out_dict['btag_sf_supported']
 
         # add in weights
         weight_dict = {"wgt_nominal": weights.weight()}
@@ -3321,6 +3390,14 @@ class EventProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # btag SF and apply btag veto
         # ------------------------------------------------------------#
+        if (is_mc and variation == 'nominal'
+                and self.config.get('analysis') == 'XZZ2l2nu'
+                and self.config['switches'].get('do_xzz_btag_sf', False)):
+            factors = central_event_weights(
+                btag_jets, dataset, self.config['xzz_btag_sf']['efficiency_file'])
+            for name, value in factors.items():
+                jet_loop_out_dict['btag_sf_' + name] = value
+
         do_btag_wgt = (
             is_mc
             and (variation == "nominal")

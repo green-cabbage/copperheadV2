@@ -67,7 +67,10 @@ def filterRegion_XZZ2l2nu(events, region="z-window", mass_field="dilepton_mass")
 
     mass_low, mass_high = XZZ2L2NU_Z_WINDOW
     in_window = (mass_low < events[mass_field]) & (events[mass_field] < mass_high)
-    mask = in_window if region == "z-window" else ~in_window
+    # Slide 7 uses strict sidebands; the complement admits boundaries and NaN.
+    mask = in_window if region == "z-window" else (
+        (events[mass_field] < mass_low) | (events[mass_field] > mass_high)
+    )
     return mask, events[mask]
 
 
@@ -164,7 +167,7 @@ XZZ2L2NU_CATEGORIES = {
 # Jet-category splits of the three control regions. Each control region above is
 # jet-inclusive; these add the vbf / njet1 / njet0 breakdown, reusing the exact
 # jet definitions the signal-like categories use (vbf = 2 jets over 30 GeV with
-# dEta(jj) > 4, m(jj) > 500, both leptons inside the gap and no third jet in it;
+# dEta(jj) > 4 and m(jj) > 500, as defined on slide 4;
 # njet1 = a 30 GeV jet that fails vbf; njet0 = no 30 GeV jet).
 #
 # These are generated rather than written out so the control-region cuts cannot
@@ -324,37 +327,10 @@ def applyRegionCatCuts_XZZ2l2nu(
         if jet_category == "njet0":
             category_cut = ~has_jet30
         else:
-            jet1_eta = varcol("jet1_eta")
-            jet2_eta = varcol("jet2_eta")
-            eta_min = np.minimum(jet1_eta, jet2_eta)
-            eta_max = np.maximum(jet1_eta, jet2_eta)
-            lep1_field, lep2_field = XZZ2L2NU_LEPTON_ETA_FIELDS[channel_field]
-            require(lep1_field, lep2_field)
-            lep1_eta = events[lep1_field]
-            lep2_eta = events[lep2_field]
-            leptons_between_jets = (
-                (lep1_eta > eta_min)
-                & (lep1_eta < eta_max)
-                & (lep2_eta > eta_min)
-                & (lep2_eta < eta_max)
-            )
-
-            # Stage-1 stores up to four jets; use jets 3 and 4 for the
-            # paper's veto on additional pT > 30 GeV jets inside the gap.
-            central_extra_jet = has_jet30 & False  # initialize False array
-            for jet_index in (3, 4):
-                jet_pt = varcol(f"jet{jet_index}_pt")
-                jet_eta = varcol(f"jet{jet_index}_eta")
-                central_extra_jet = central_extra_jet | fill_false(
-                    (jet_pt > 30.0) & (jet_eta > eta_min) & (jet_eta < eta_max)
-                )
-
             vbf_cut = fill_false(
-                (varcol("jet2_pt") > 30.0)
+                has_jet30 & (varcol("jet2_pt") > 30.0)
                 & (varcol("jj_dEta") > 4.0)
                 & (varcol("jj_mass") > 500.0)
-                & leptons_between_jets
-                & (~central_extra_jet)
             )
             if jet_category == "vbf":
                 category_cut = vbf_cut

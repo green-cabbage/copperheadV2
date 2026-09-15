@@ -110,20 +110,27 @@ switches:
         "2023BPix": false
         "2024": false
     do_remove_dy_M100to200: # Remove 100 to 200 mll region from inclusive DY.
+        # This cut exists to avoid double counting when inclusive DY_M-50 is
+        # STITCHED with a dedicated DY_M-100to200 sample. XZZ2l2nu uses
+        # dyTo2L_M-50_aMCatNLO ALONE (see configs/samples/samples_xzz2l2nu.yaml),
+        # so there is nothing to stitch: turning this on just punches a hole in
+        # 100 < m(ll) < 200, which is inside the M(ll)-sideband control region.
+        # 2018 set false to match 2017. 2016 left as-is -- those years are not
+        # being run yet, but they carry the same bug.
         '2016preVFP': true
         '2016postVFP': true
         '2017': false
-        '2018': true
+        '2018': false
         '2022preEE': false
         '2022postEE': false
         "2023": false
         "2023BPix": false
         "2024": false
     do_zpt: # we apply Zpt > 55, so unaffected by the re-summation effect
-        '2016preVFP': false
-        '2016postVFP': false
-        '2017': false
-        '2018': false
+        '2016preVFP': true
+        '2016postVFP': true
+        '2017': true
+        '2018': false # PtZ-binned AN DY: no inclusive-DY fitted reweighting
         '2022preEE': false
         '2022postEE': false
         "2023": false
@@ -368,18 +375,28 @@ switches:
         '2016preVFP': true
         '2016postVFP': true
         '2017': true
-        '2018': true
+        '2018': false
         # Run-3: Recommendation does not exists, yet.
         '2022preEE': false
         '2022postEE': false
         "2023": false
         "2023BPix": false
         "2024": false
+    do_xzz_btag_sf:
+        '2016preVFP': false
+        '2016postVFP': false
+        '2017': false
+        '2018': true
+        '2022preEE': false
+        '2022postEE': false
+        '2023': false
+        '2023BPix': false
+        '2024': false
     do_btag_wgt: # NOTE: for nanoAODv15 Run2, it should be false for now
         '2016preVFP': true
         '2016postVFP': true
         '2017': true
-        '2018': true
+        '2018': false
         '2022preEE': false
         '2022postEE': false
         "2023": false

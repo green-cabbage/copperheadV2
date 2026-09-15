@@ -131,6 +131,13 @@ def getSavePath(start_path: str, dataset_dict: dict, file_idx: int):
     return save_path
 
 
+def _worker_cpu_model():
+    for line in Path("/proc/cpuinfo").read_text().splitlines():
+        if line.startswith("model name"):
+            return line.split(":", 1)[1].strip()
+    raise RuntimeError("Cannot identify worker CPU model")
+
+
 def dataset_loop(processor, dataset_dict, file_idx=0, test=False, save_path=None,  isCutflow=False, dataset_yaml_file="configs/datasets/dataset.yaml", client=None):
     if save_path is None:
         username = os.environ.get("USER") or os.environ.get("USERNAME")
@@ -184,7 +191,19 @@ def dataset_loop(processor, dataset_dict, file_idx=0, test=False, save_path=None
         }
     }
 
-    result = runner(fileset, processor_instance=adapter)
+    annotations = {}
+    cpu_prefix = os.environ.get("STAGE1_WORKER_CPU_PREFIX", "")
+    if cpu_prefix:
+        if client is None:
+            raise RuntimeError("CPU-restricted Stage-1 requires a Dask client")
+        models = client.run(_worker_cpu_model)
+        workers = [worker for worker, model in models.items() if model.startswith(cpu_prefix)]
+        if not workers:
+            raise RuntimeError(f"No workers match CPU prefix {cpu_prefix!r}")
+        logger.info("Restricting Stage-1 to %d workers with CPU prefix %r", len(workers), cpu_prefix)
+        annotations = {"workers": workers, "allow_other_workers": False}
+    with dask.annotate(**annotations):
+        result = runner(fileset, processor_instance=adapter)
     total_processed = int(result["__n_processed__"])
 
     return total_processed
@@ -274,6 +293,15 @@ if __name__ == "__main__":
         help="If true, skips samples listed in configs/skip_stage1_run.py",
     )
     parser.add_argument(
+        "--samples-to-run",
+        nargs="+",
+        default=None,
+        help=(
+            "Process only these exact sample names. This command-line allow-list "
+            "takes precedence over configs/skip_stage1_run.py."
+        ),
+    )
+    parser.add_argument(
         "--sync",
         dest="sync",
         default=False,
@@ -338,13 +366,19 @@ if __name__ == "__main__":
 
     coffea_processor = EventProcessor(config, test_mode=test_mode, isCutflow=args.isCutflow)
 
-    client = get_dask_client(args.use_gateway, cluster_index=args.cluster_index)
+    client = get_dask_client(args.use_gateway, cluster_index=args.cluster_index, n_workers=64)
+    # client = get_dask_client(False, cluster_index=args.cluster_index, n_workers=64)
 
     if not test_mode: # full scale implementation
         t2 = time.perf_counter()
         logger.info(f"[Timing] Time taken to create Dask Client: {round(t2 - t1, 3)} seconds")
         # -------------------------------------------------------------------------------------
-        sample_path = "./prestage_output/processor_samples_"+args.year+"_NanoAODv"+str(args.NanoAODv)+".json" # INFO: Hardcoded filename        logger.debug(f"Sample path: {sample_path}")
+        prestage_suffix = os.environ.get("PRESTAGE_SUFFIX", "")
+        prestage_suffix = f"_{prestage_suffix}" if prestage_suffix else ""
+        sample_path = (
+            f"./prestage_output/processor_samples_{args.year}_NanoAODv"
+            f"{args.NanoAODv}{prestage_suffix}.json"
+        )
         if args.sync:
             sample_path = sample_path.replace(".json", "_sync.json") # INFO: Hardcoded sample_path
         logger.debug(f"Sample path: {sample_path}")
@@ -377,7 +411,13 @@ if __name__ == "__main__":
         # if True:
         with optional_performance_report():
             for dataset, sample in tqdm.tqdm(samples.items(), desc="Processing datasets"):
-                if not should_process_dataset(dataset, args, samples_to_skip, samples_to_run):
+                selected_samples_to_run = args.samples_to_run or samples_to_run
+                if not should_process_dataset(
+                    dataset,
+                    args,
+                    samples_to_skip,
+                    selected_samples_to_run,
+                ):
                     logger.warning(f"Skipping Year: {args.year:10}, dataset: {dataset}")
                     continue
 
@@ -551,7 +591,12 @@ if __name__ == "__main__":
 
     else:
         # FIXME: update this for /store usage
-        sample_path = "./prestage_output/fraction_processor_samples_"+args.year+"_NanoAODv"+str(args.NanoAODv)+".json" # INFO: Hardcoded filename
+        prestage_suffix = os.environ.get("PRESTAGE_SUFFIX", "")
+        prestage_suffix = f"_{prestage_suffix}" if prestage_suffix else ""
+        sample_path = (
+            f"./prestage_output/fraction_processor_samples_{args.year}_NanoAODv"
+            f"{args.NanoAODv}{prestage_suffix}.json"
+        )
         with open(sample_path) as file:
             samples = json.loads(file.read())
         logger.debug(f'samples: {samples}')

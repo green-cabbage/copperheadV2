@@ -6,7 +6,7 @@ from modules.correctionlib_file_cache import get_corrset, get_corr_input_names
 from modules.utils import logger
 
 
-def add_muon_sfs_correctionlib(mu1, mu2, config):
+def add_muon_sfs_correctionlib(mu1, mu2, config, *, allow_missing_muons=False):
     """
     Add muon SFs using correctionlib (supports both Run 2 and Run 3, depending on configuration).
 
@@ -60,10 +60,16 @@ def add_muon_sfs_correctionlib(mu1, mu2, config):
     mu2_id_up = muID_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systup")
     mu2_id_down = muID_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systdown")
 
+    # XZZ em/ee events have fewer than two muons; absent factors are unity.
+    def event_product(first, second):
+        if allow_missing_muons:
+            return ak.fill_none(first, 1.0) * ak.fill_none(second, 1.0)
+        return first * second
+
     muID = {
-        "nom": mu1_id_nom * mu2_id_nom,
-        "up": mu1_id_up * mu2_id_up,
-        "down": mu1_id_down * mu2_id_down,
+        "nom": event_product(mu1_id_nom, mu2_id_nom),
+        "up": event_product(mu1_id_up, mu2_id_up),
+        "down": event_product(mu1_id_down, mu2_id_down),
     }
 
     # -----------------------------
@@ -78,9 +84,9 @@ def add_muon_sfs_correctionlib(mu1, mu2, config):
     mu2_iso_down = muIso_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systdown")
 
     muIso = {
-        "nom": mu1_iso_nom * mu2_iso_nom,
-        "up": mu1_iso_up * mu2_iso_up,
-        "down": mu1_iso_down * mu2_iso_down,
+        "nom": event_product(mu1_iso_nom, mu2_iso_nom),
+        "up": event_product(mu1_iso_up, mu2_iso_up),
+        "down": event_product(mu1_iso_down, mu2_iso_down),
     }
 
     # -----------------------------

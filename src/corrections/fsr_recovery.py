@@ -58,7 +58,7 @@ def fsr_recovery(events: coffea_nanoevent) -> ak_array:
     return fsrPhotonsToRecover # return boolean filter for geofit
 
 
-def fsr_recoveryV1(df):
+def fsr_recoveryV1(df, xzz=False):
     mask = (
         (df.Muon.fsrPhotonIdx >= 0)
         & (df.Muon.matched_fsrPhoton.relIso03 < 1.8)
@@ -66,6 +66,14 @@ def fsr_recoveryV1(df):
         & (df.Muon.matched_fsrPhoton.pt / df.Muon.pt < 0.4)
         & (abs(df.Muon.matched_fsrPhoton.eta) < 2.4)
     )
+    if xzz:
+        # HZZ update slide 3. Keep the HMuMu recovery mask unchanged by default.
+        mask = (
+            (df.Muon.fsrPhotonIdx >= 0)
+            & (df.Muon.matched_fsrPhoton.pt > 2.0)
+            & (abs(df.Muon.matched_fsrPhoton.eta) < 2.4)
+            & (df.Muon.matched_fsrPhoton.relIso03 < 0.8)
+        )
     mask = ak.fill_none(mask, False)
 
     # px = ak.zeros_like(df.Muon.pt, dtype=np.float64)

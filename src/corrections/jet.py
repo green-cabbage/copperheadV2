@@ -616,7 +616,7 @@ def getHemVetoRunFilter(run, event_num, config, is_mc: bool, NanoAODv: int):
     else: #For data, just a simple run >= 319077 cut. Source: https://cms-talk.web.cern.ch/t/question-about-hem15-16-issue-in-2018-ultra-legacy/38654/8
         return (run >= 319077)
 
-def applyHemVeto(jets, run, event_num, config, is_mc: bool, NanoAODv: int):
+def applyHemVeto(jets, run, event_num, config, is_mc: bool, NanoAODv: int, *, use_puid=True):
     """
     Apply HEM veto for 2018 UL as recommended on https://cms-talk.web.cern.ch/t/question-about-hem15-16-issue-in-2018-ultra-legacy/38654/5
     """
@@ -631,15 +631,16 @@ def applyHemVeto(jets, run, event_num, config, is_mc: bool, NanoAODv: int):
         jetId_bits = ak.where(tight, jetId_bits | 2, jetId_bits)
         jetId_bits = ak.where(tightLepVeto, jetId_bits | 4, jetId_bits)
 
-    puId = get_puId(jets)
-    # jet puid selection
-    jet_puid_wps = {
+    # NanoAODv15 Puppi's continuous puIdDisc is not the legacy bit-coded PUID.
+    pass_jet_puid = ak.ones_like(jets.pt, dtype="bool")
+    if use_puid:
+        puId = get_puId(jets)
+        jet_puid_wps = {
             "loose": (puId >= 4) | (jets.pt >= 50),
             "medium": (puId >= 6) | (jets.pt >= 50),
             "tight": (puId >= 7) | (jets.pt >= 50),
-    }
-    jet_puid2use = config["jet_puid"]
-    pass_jet_puid = jet_puid_wps[jet_puid2use]# the recommendation doesn't specify, so use PU Id that we apply
+        }
+        pass_jet_puid = jet_puid_wps[config["jet_puid"]]
 
 
 
