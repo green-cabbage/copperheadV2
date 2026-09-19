@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "task_id": "hello-world-task",
+  "iteration": 1,
+  "decision": "changes_requested",
+  "confidence": "high",
+  "summary": "One blocker: the implementation does not handle tabs or newlines, and does not fully collapse 3+ consecutive spaces. The test written for this iteration does not cover those cases and therefore passed anyway.",
+  "findings": [
+    {
+      "finding_id": "REV-001",
+      "severity": "blocker",
+      "category": "correctness",
+      "status": "open",
+      "affected_files": [
+        "src/text_utils.py",
+        "tests/test_text_utils.py"
+      ],
+      "evidence": "normalize_whitespace('  a\\t\\tb\\n\\nc   d  ') returned 'a\\t\\tb\\n\\nc  d', expected 'a b c d'. str.replace(\"  \", \" \") only matches a literal two-space substring once per occurrence — it does not touch \\t or \\n, and doesn't fully collapse runs of 3+ spaces.",
+      "description": "normalize_whitespace does not meet two of the three acceptance criteria: it doesn't collapse tabs/newlines, and doesn't fully collapse long space runs.",
+      "required_action": "Replace the str.replace-based approach with something that treats any run of whitespace characters uniformly (e.g. a regex substitution), and add test cases that actually cover tabs, newlines, and 3+ consecutive spaces — not just a single double-space case.",
+      "required_validation": [
+        "normalize_whitespace('  a\\t\\tb\\n\\nc   d  ') == 'a b c d'",
+        "A test asserting the above (or equivalent) exists and passes."
+      ]
+    }
+  ],
+  "required_actions": [
+    "Fix REV-001 before the next review pass."
+  ],
+  "optional_improvements": [],
+  "unanswered_questions": [],
+  "human_approval_required": false
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "task_id": "hello-world-task",
+  "iteration": 1,
+  "decision": "changes_requested",
+  "confidence": "high",
+  "acceptance_criteria_checklist": [
+    {
+      "criterion": "normalize_whitespace collapses runs of spaces, tabs, and newlines into a single space.",
+      "met": false,
+      "evidence": "normalize_whitespace('  a\\t\\tb\\n\\nc   d  ') returned 'a\\t\\tb\\n\\nc  d' — tabs/newlines untouched, triple-space only partially collapsed."
+    },
+    {
+      "criterion": "Leading and trailing whitespace is stripped.",
+      "met": true,
+      "evidence": "str.strip() is called first and does handle this part correctly."
+    },
+    {
+      "criterion": "A unit test exercises tabs/newlines/multi-space input, not just a single simple case, and passes.",
+      "met": false,
+      "evidence": "The only test in tests/test_text_utils.py checks a single double-space case; no tab/newline/multi-space coverage exists."
+    }
+  ],
+  "summary": "Only 1 of 3 acceptance criteria met. The str.replace-based implementation doesn't handle tabs, newlines, or 3+ consecutive spaces; the accompanying test is too narrow to have caught this.",
+  "narrative_file": "review-report.md"
+}

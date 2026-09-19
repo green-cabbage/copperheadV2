@@ -1,0 +1,54 @@
+# Illustrative only — NOT read by any script. The canonical, machine-read
+# format is task.json (see task.json in this directory and POLICY.md
+# § "Why JSON is canonical"). This file exists purely so the schema is
+# easy to read as YAML.
+
+schema_version: "1.0"
+task_id: fix-histogram-binning
+title: Fix off-by-one in histogram binning
+request: >
+  The dimuon-mass histogram drops the last bin edge; fix the binning so
+  150 GeV is included.
+mode: implementation
+status: implementing
+current_iteration: 1
+max_iterations: 3
+
+scope:
+  include:
+    - example/fit_dimuon_mass.py
+  exclude:
+    - example/output/**
+
+constraints:
+  - Use the repository's Pixi environment for all execution.
+
+acceptance_criteria:
+  - Histogram includes events with dimuon_mass == 150.0 GeV in the last bin.
+  - Existing tests under tests/ still pass.
+
+risk:
+  level: low
+  categories: []
+
+approvals:
+  implementation_required: true
+  implementation_granted: true
+  execution_required: false
+  execution_granted: false
+  production_required: true
+  production_granted: false
+
+validation:
+  allowed_commands:
+    - "pixi run -e default python -m pytest tests/"
+  forbidden_commands: []
+  required_checks:
+    - "pixi run -e default python -m pytest tests/"
+
+metadata:
+  created_at: "2026-07-21T00:00:00Z"
+  created_by: human
+  repository: copperheadV2
+  branch: main
+  starting_commit: "abc1234"

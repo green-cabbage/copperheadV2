@@ -1,0 +1,8 @@
+[
+  {
+    "command_id": "run-001",
+    "command": "python3 -m pytest tests/test_text_utils.py -q",
+    "reason": "Run the unit test written for this iteration's implementation.",
+    "category": "unit_test"
+  }
+]

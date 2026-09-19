@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "task_id": "hello-world-task",
+  "iteration": 2,
+  "decision": "approved",
+  "confidence": "high",
+  "acceptance_criteria_checklist": [
+    {
+      "criterion": "normalize_whitespace collapses runs of spaces, tabs, and newlines into a single space.",
+      "met": true,
+      "evidence": "normalize_whitespace('  a\\t\\tb\\n\\nc   d  ') == 'a b c d', verified directly."
+    },
+    {
+      "criterion": "Leading and trailing whitespace is stripped.",
+      "met": true,
+      "evidence": "Covered by test_leading_and_trailing_whitespace_stripped and the general regex+strip() implementation."
+    },
+    {
+      "criterion": "A unit test exercises tabs/newlines/multi-space input, not just a single simple case, and passes.",
+      "met": true,
+      "evidence": "test_tabs_and_newlines_collapse added; run-report.json iteration 2 shows 4 passed, 0 failed."
+    }
+  ],
+  "summary": "All 3 acceptance criteria met. REV-001 verified fixed by independent re-execution, not just by reading the generator's claim.",
+  "narrative_file": "review-report.md"
+}

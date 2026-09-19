@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "task_id": "example-task",
+  "iteration": 1,
+  "status": "completed",
+  "environment": {
+    "operating_system": null,
+    "python_version": null,
+    "working_directory": null,
+    "git_commit": null,
+    "dirty_worktree": null
+  },
+  "commands": [
+    {
+      "command_id": "run-001",
+      "command": "python -m pytest tests/test_example.py",
+      "started_at": null,
+      "finished_at": null,
+      "duration_seconds": null,
+      "exit_code": null,
+      "timed_out": false,
+      "stdout_summary": null,
+      "stderr_summary": null,
+      "generated_artifacts": [],
+      "classification": null
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0,
+    "incomplete": 0
+  },
+  "limitations": []
+}

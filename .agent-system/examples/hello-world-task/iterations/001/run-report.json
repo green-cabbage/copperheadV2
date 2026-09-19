@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "task_id": "hello-world-task",
+  "iteration": 1,
+  "status": "completed",
+  "environment": {
+    "operating_system": "linux",
+    "python_version": "3.10.20",
+    "working_directory": "/tmp/.../scratchpad/hello-world-iter1",
+    "git_commit": null,
+    "dirty_worktree": null
+  },
+  "commands": [
+    {
+      "command_id": "run-001",
+      "command": "python3 -m pytest tests/test_text_utils.py -q",
+      "started_at": "2026-07-21T00:24:10Z",
+      "finished_at": "2026-07-21T00:24:11Z",
+      "duration_seconds": 0.6,
+      "exit_code": 0,
+      "timed_out": false,
+      "stdout_summary": ".                                                                        [100%]\n1 passed in 0.01s",
+      "stderr_summary": "",
+      "generated_artifacts": [],
+      "classification": "success"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "blocked": 0,
+    "incomplete": 0
+  },
+  "limitations": [
+    "Executed against an isolated scratch copy of iteration 1's code (not written into the permanent example directory), to avoid leaving a known-buggy intermediate state in the repository. This is the only iteration in this demo where that applies; iteration 2's code is exactly what's committed under src/ and tests/.",
+    "The command's own reported success does not by itself demonstrate the acceptance criteria are met — see review-report.md for why this was not sufficient."
+  ]
+}

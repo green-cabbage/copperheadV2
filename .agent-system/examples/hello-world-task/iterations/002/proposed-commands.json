@@ -1,0 +1,8 @@
+[
+  {
+    "command_id": "run-001",
+    "command": "python3 -m pytest .agent-system/examples/hello-world-task/tests/test_text_utils.py -q",
+    "reason": "Run the expanded test suite, including the tab/newline/multi-space cases that caught REV-001.",
+    "category": "unit_test"
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "task_id": "hello-world-task",
+  "title": "Add a normalize_whitespace text helper",
+  "request": "Add a normalize_whitespace(text) helper under .agent-system/examples/hello-world-task/src/text_utils.py that collapses any run of whitespace (spaces, tabs, newlines) into a single space and strips leading/trailing whitespace. Include a unit test.",
+  "mode": "implementation",
+  "status": "closed",
+  "current_iteration": 2,
+  "max_iterations": 3,
+  "scope": {
+    "include": [
+      ".agent-system/examples/hello-world-task/src/text_utils.py",
+      ".agent-system/examples/hello-world-task/tests/test_text_utils.py"
+    ],
+    "exclude": []
+  },
+  "constraints": [
+    "Standard library only — no new dependency for a one-function helper.",
+    "Do not touch anything outside .agent-system/examples/hello-world-task/."
+  ],
+  "acceptance_criteria": [
+    "normalize_whitespace collapses runs of spaces, tabs, and newlines into a single space.",
+    "Leading and trailing whitespace is stripped.",
+    "A unit test exercises tabs/newlines/multi-space input, not just a single simple case, and passes."
+  ],
+  "risk": {
+    "level": "low",
+    "categories": []
+  },
+  "approvals": {
+    "implementation_required": true,
+    "implementation_granted": true,
+    "execution_required": false,
+    "execution_granted": false,
+    "production_required": true,
+    "production_granted": false
+  },
+  "validation": {
+    "allowed_commands": [
+      "python3 -m pytest .agent-system/examples/hello-world-task/tests/test_text_utils.py -q"
+    ],
+    "forbidden_commands": [],
+    "required_checks": [
+      "python3 -m pytest .agent-system/examples/hello-world-task/tests/test_text_utils.py -q"
+    ]
+  },
+  "metadata": {
+    "created_at": "2026-07-21T00:20:00Z",
+    "created_by": "human",
+    "repository": "copperheadV2",
+    "branch": "Run2_vbf_DNN_fix_Jul02_2026",
+    "starting_commit": "2d3e52d3a88b9d7bab95b99b5783bd66e1c08d81"
+  }
+}

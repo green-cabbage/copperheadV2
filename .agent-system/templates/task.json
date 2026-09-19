@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "task_id": "example-task",
+  "title": "Example task",
+  "request": "User request goes here.",
+  "mode": "implementation",
+  "status": "created",
+  "current_iteration": 0,
+  "max_iterations": 3,
+  "scope": {
+    "include": [],
+    "exclude": []
+  },
+  "constraints": [],
+  "acceptance_criteria": [],
+  "risk": {
+    "level": "low",
+    "categories": []
+  },
+  "approvals": {
+    "implementation_required": true,
+    "implementation_granted": false,
+    "execution_required": false,
+    "execution_granted": false,
+    "production_required": true,
+    "production_granted": false
+  },
+  "validation": {
+    "allowed_commands": [],
+    "forbidden_commands": [],
+    "required_checks": []
+  },
+  "metadata": {
+    "created_at": null,
+    "created_by": null,
+    "repository": null,
+    "branch": null,
+    "starting_commit": null
+  }
+}

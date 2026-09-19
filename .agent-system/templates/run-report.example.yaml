@@ -1,0 +1,35 @@
+# Illustrative only — NOT read by any script. Canonical format is
+# run-report.json (see POLICY.md § "Why JSON is canonical").
+
+schema_version: "1.0"
+task_id: fix-histogram-binning
+iteration: 1
+status: completed
+
+environment:
+  operating_system: "Linux 4.18.0-553.22.1.el8_10.x86_64"
+  python_version: "3.11.9"
+  working_directory: /work/users/yun79/sideHustle2/copperheadV2
+  git_commit: "abc1234"
+  dirty_worktree: true
+
+commands:
+  - command_id: run-001
+    command: "pixi run -e default python -m pytest tests/test_example.py -q"
+    started_at: "2026-07-21T00:05:00Z"
+    finished_at: "2026-07-21T00:05:04Z"
+    duration_seconds: 4.1
+    exit_code: 0
+    timed_out: false
+    stdout_summary: "3 passed in 3.87s"
+    stderr_summary: ""
+    generated_artifacts: []
+    classification: success
+
+summary:
+  passed: 1
+  failed: 0
+  blocked: 0
+  incomplete: 0
+
+limitations: []

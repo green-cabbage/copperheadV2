@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "task_id": "hello-world-task",
+  "iteration": 2,
+  "decision": "approved",
+  "confidence": "high",
+  "summary": "REV-001 verified fixed. All acceptance criteria met. No new findings.",
+  "findings": [
+    {
+      "finding_id": "REV-001",
+      "severity": "blocker",
+      "category": "correctness",
+      "status": "fixed",
+      "affected_files": [
+        "src/text_utils.py",
+        "tests/test_text_utils.py"
+      ],
+      "evidence": "normalize_whitespace('  a\\t\\tb\\n\\nc   d  ') now returns 'a b c d'; run-report.json iteration 2 shows the new tab/newline test passing.",
+      "description": "normalize_whitespace does not meet two of the three acceptance criteria: it doesn't collapse tabs/newlines, and doesn't fully collapse long space runs.",
+      "required_action": "Replace the str.replace-based approach with something that treats any run of whitespace characters uniformly (e.g. a regex substitution), and add test cases that actually cover tabs, newlines, and 3+ consecutive spaces — not just a single double-space case.",
+      "required_validation": [
+        "normalize_whitespace('  a\\t\\tb\\n\\nc   d  ') == 'a b c d'",
+        "A test asserting the above (or equivalent) exists and passes."
+      ]
+    }
+  ],
+  "required_actions": [],
+  "optional_improvements": [],
+  "unanswered_questions": [],
+  "human_approval_required": false
+}

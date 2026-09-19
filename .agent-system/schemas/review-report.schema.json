@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "review-report.schema.json",
+  "title": "Review report (structured half)",
+  "description": "Canonical shape of tasks/<task-id>/iterations/<NNN>/review-report.json — the Reviewer's per-criterion checklist and decision. Pairs with review-report.md (narrative reasoning) and feedback.json (the findings/required-actions loop artifact the Code Generator consumes). Validated structurally by scripts/validate_artifacts.py.",
+  "type": "object",
+  "required": ["schema_version", "task_id", "iteration", "decision", "confidence", "acceptance_criteria_checklist", "summary", "narrative_file"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "task_id": { "type": "string" },
+    "iteration": { "type": "integer", "minimum": 1 },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "changes_requested", "human_review_required", "blocked", "inconclusive"]
+    },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+    "acceptance_criteria_checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["criterion", "met", "evidence"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "met": { "type": ["boolean", "null"], "description": "null means not yet determinable this iteration" },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "summary": { "type": "string" },
+    "narrative_file": { "type": "string", "description": "Relative path to this iteration's review-report.md" }
+  }
+}

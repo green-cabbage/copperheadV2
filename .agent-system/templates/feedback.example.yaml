@@ -1,0 +1,36 @@
+# Illustrative only — NOT read by any script. Canonical format is
+# feedback.json (see POLICY.md § "Why JSON is canonical").
+
+schema_version: "1.0"
+task_id: fix-histogram-binning
+iteration: 1
+decision: changes_requested
+confidence: high
+
+summary: >
+  Histogram upper edge excludes the 150.0 GeV boundary event; one blocker.
+
+findings:
+  - finding_id: REV-001
+    severity: blocker
+    category: correctness
+    status: open
+    affected_files:
+      - example/fit_dimuon_mass.py
+    evidence: >
+      Synthetic event at exactly 150.0 GeV falls outside the histogram
+      range; TH1 axis upper edge is exclusive.
+    description: >
+      The histogram is booked with an upper edge of 150.0, so an event at
+      exactly 150.0 GeV is silently dropped by TH1::Fill.
+    required_action: >
+      Book the histogram with a small margin above 150.0 (or use an
+      inclusive-edge convention) so boundary events are counted.
+    required_validation:
+      - "Add a unit test with an event at exactly 150.0 GeV and assert it lands in the last bin."
+
+required_actions:
+  - "Fix REV-001 before the next review pass."
+optional_improvements: []
+unanswered_questions: []
+human_approval_required: false

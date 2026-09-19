@@ -1,0 +1,8 @@
+[
+  {
+    "command_id": "run-001",
+    "command": "pixi run -e default python -m pytest tests/test_example.py -q",
+    "reason": "Smallest check that exercises the acceptance criteria.",
+    "category": "unit_test"
+  }
+]

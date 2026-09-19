@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "run-report.schema.json",
+  "title": "Run report",
+  "description": "Canonical shape of tasks/<task-id>/iterations/<NNN>/run-report.json, written by the Code Runner role. Validated structurally (required-key presence + type) by scripts/validate_artifacts.py.",
+  "type": "object",
+  "required": ["schema_version", "task_id", "iteration", "status", "environment", "commands", "summary", "limitations"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "task_id": { "type": "string" },
+    "iteration": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["completed", "partial", "aborted"] },
+    "environment": {
+      "type": "object",
+      "required": ["operating_system", "python_version", "working_directory", "git_commit", "dirty_worktree"],
+      "properties": {
+        "operating_system": { "type": ["string", "null"] },
+        "python_version": { "type": ["string", "null"] },
+        "working_directory": { "type": ["string", "null"] },
+        "git_commit": { "type": ["string", "null"] },
+        "dirty_worktree": { "type": ["boolean", "null"] }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "command_id", "command", "started_at", "finished_at",
+          "duration_seconds", "exit_code", "timed_out",
+          "stdout_summary", "stderr_summary", "generated_artifacts",
+          "classification"
+        ],
+        "properties": {
+          "command_id": { "type": "string" },
+          "command": { "type": "string" },
+          "started_at": { "type": ["string", "null"] },
+          "finished_at": { "type": ["string", "null"] },
+          "duration_seconds": { "type": ["number", "null"] },
+          "exit_code": { "type": ["integer", "null"] },
+          "timed_out": { "type": "boolean" },
+          "stdout_summary": { "type": ["string", "null"], "description": "Captured evidence inline (truncated if long) rather than a separate log file, per POLICY.md." },
+          "stderr_summary": { "type": ["string", "null"] },
+          "generated_artifacts": { "type": "array", "items": { "type": "string" } },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "success", "code_failure", "test_failure",
+              "missing_dependency", "unavailable_environment",
+              "permission_failure", "timeout", "malformed_command",
+              "infrastructure_failure", "blocked"
+            ]
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["passed", "failed", "blocked", "incomplete"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "blocked": { "type": "integer", "minimum": 0 },
+        "incomplete": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  }
+}

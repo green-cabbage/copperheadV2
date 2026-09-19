@@ -1,0 +1,22 @@
+{
+  "task_id": "hello-world-task",
+  "current_iteration": 2,
+  "status": "closed",
+  "updated_at": "2026-07-21T00:45:00Z",
+  "transitions_log": [
+    { "from": "created", "to": "planning", "iteration": 1, "at": "2026-07-21T00:20:30Z", "note": "" },
+    { "from": "planning", "to": "implementing", "iteration": 1, "at": "2026-07-21T00:21:00Z", "note": "implementation pre-approved, skipped the approval gate" },
+    { "from": "implementing", "to": "ready_to_run", "iteration": 1, "at": "2026-07-21T00:24:00Z", "note": "" },
+    { "from": "ready_to_run", "to": "running", "iteration": 1, "at": "2026-07-21T00:24:10Z", "note": "" },
+    { "from": "running", "to": "ready_for_review", "iteration": 1, "at": "2026-07-21T00:24:20Z", "note": "" },
+    { "from": "ready_for_review", "to": "reviewing", "iteration": 1, "at": "2026-07-21T00:24:30Z", "note": "" },
+    { "from": "reviewing", "to": "changes_requested", "iteration": 1, "at": "2026-07-21T00:26:00Z", "note": "REV-001 blocker: bug found in acceptance criteria case" },
+    { "from": "changes_requested", "to": "implementing", "iteration": 2, "at": "2026-07-21T00:30:00Z", "note": "" },
+    { "from": "implementing", "to": "ready_to_run", "iteration": 2, "at": "2026-07-21T00:33:00Z", "note": "" },
+    { "from": "ready_to_run", "to": "running", "iteration": 2, "at": "2026-07-21T00:33:10Z", "note": "" },
+    { "from": "running", "to": "ready_for_review", "iteration": 2, "at": "2026-07-21T00:33:20Z", "note": "" },
+    { "from": "ready_for_review", "to": "reviewing", "iteration": 2, "at": "2026-07-21T00:33:30Z", "note": "" },
+    { "from": "reviewing", "to": "approved", "iteration": 2, "at": "2026-07-21T00:40:00Z", "note": "REV-001 fixed and verified" },
+    { "from": "approved", "to": "closed", "iteration": 2, "at": "2026-07-21T00:45:00Z", "note": "" }
+  ]
+}

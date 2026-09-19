@@ -1,0 +1,25 @@
+# Illustrative only — NOT read by any script. Canonical format is
+# review-report.json (see POLICY.md § "Why JSON is canonical").
+
+schema_version: "1.0"
+task_id: fix-histogram-binning
+iteration: 1
+decision: changes_requested
+confidence: high
+
+acceptance_criteria_checklist:
+  - criterion: "Histogram includes events with dimuon_mass == 150.0 GeV in the last bin."
+    met: false
+    evidence: >
+      Re-ran the fit script on a synthetic file with an event exactly at
+      150.0 GeV; it landed outside the histogram range (TH1::Fill silently
+      drops it because the axis upper edge is exclusive at 150.0).
+  - criterion: "Existing tests under tests/ still pass."
+    met: true
+    evidence: "pytest run in run-report.json, run-001: 3 passed."
+
+summary: >
+  Fit logic is otherwise sound, but the histogram upper edge still
+  excludes 150.0 GeV — see feedback.json REV-001 for the required fix.
+
+narrative_file: review-report.md

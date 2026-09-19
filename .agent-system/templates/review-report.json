@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "task_id": "example-task",
+  "iteration": 1,
+  "decision": null,
+  "confidence": null,
+  "acceptance_criteria_checklist": [
+    {
+      "criterion": "",
+      "met": null,
+      "evidence": ""
+    }
+  ],
+  "summary": "",
+  "narrative_file": "review-report.md"
+}
