@@ -5,79 +5,228 @@
   "description": "Canonical shape of tasks/<task-id>/task.json. Validated structurally (required-key presence + type) by scripts/validate_artifacts.py, which is stdlib-only and does not implement full JSON Schema draft compliance.",
   "type": "object",
   "required": [
-    "schema_version", "task_id", "title", "request", "mode", "status",
-    "current_iteration", "max_iterations", "scope", "constraints",
-    "acceptance_criteria", "risk", "approvals", "validation", "metadata"
+    "schema_version",
+    "task_id",
+    "title",
+    "request",
+    "mode",
+    "status",
+    "current_iteration",
+    "max_iterations",
+    "scope",
+    "constraints",
+    "acceptance_criteria",
+    "risk",
+    "approvals",
+    "validation",
+    "metadata"
   ],
   "properties": {
-    "schema_version": { "type": "string" },
-    "task_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$" },
-    "title": { "type": "string" },
-    "request": { "type": "string" },
-    "mode": { "type": "string", "enum": ["implementation", "review", "investigation"] },
+    "schema_version": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "request": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "implementation",
+        "review",
+        "investigation"
+      ]
+    },
     "status": {
       "type": "string",
       "enum": [
-        "created", "planning", "awaiting_implementation_approval",
-        "implementing", "ready_to_run", "running", "ready_for_review",
-        "reviewing", "changes_requested", "awaiting_human_input",
-        "blocked", "approved", "closed"
+        "created",
+        "planning",
+        "documenting",
+        "ready_for_implementation",
+        "awaiting_implementation_approval",
+        "implementing",
+        "ready_to_run",
+        "running",
+        "ready_for_review",
+        "reviewing",
+        "changes_requested",
+        "awaiting_human_input",
+        "blocked",
+        "approved",
+        "closed"
       ]
     },
-    "current_iteration": { "type": "integer", "minimum": 0 },
-    "max_iterations": { "type": "integer", "minimum": 1 },
+    "current_iteration": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_iterations": {
+      "type": "integer",
+      "minimum": 1
+    },
     "scope": {
       "type": "object",
-      "required": ["include", "exclude"],
+      "required": [
+        "include",
+        "exclude"
+      ],
       "properties": {
-        "include": { "type": "array", "items": { "type": "string" } },
-        "exclude": { "type": "array", "items": { "type": "string" } }
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-    "constraints": { "type": "array", "items": { "type": "string" } },
-    "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "risk": {
       "type": "object",
-      "required": ["level", "categories"],
+      "required": [
+        "level",
+        "categories"
+      ],
       "properties": {
-        "level": { "type": "string", "enum": ["low", "medium", "high"] },
-        "categories": { "type": "array", "items": { "type": "string" } }
+        "level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "approvals": {
       "type": "object",
       "required": [
-        "implementation_required", "implementation_granted",
-        "execution_required", "execution_granted",
-        "production_required", "production_granted"
+        "implementation_required",
+        "implementation_granted",
+        "execution_required",
+        "execution_granted",
+        "production_required",
+        "production_granted"
       ],
       "properties": {
-        "implementation_required": { "type": "boolean" },
-        "implementation_granted": { "type": "boolean" },
-        "execution_required": { "type": "boolean" },
-        "execution_granted": { "type": "boolean" },
-        "production_required": { "type": "boolean" },
-        "production_granted": { "type": "boolean" }
+        "implementation_required": {
+          "type": "boolean"
+        },
+        "implementation_granted": {
+          "type": "boolean"
+        },
+        "execution_required": {
+          "type": "boolean"
+        },
+        "execution_granted": {
+          "type": "boolean"
+        },
+        "production_required": {
+          "type": "boolean"
+        },
+        "production_granted": {
+          "type": "boolean"
+        }
       }
     },
     "validation": {
       "type": "object",
-      "required": ["allowed_commands", "forbidden_commands", "required_checks"],
+      "required": [
+        "allowed_commands",
+        "forbidden_commands",
+        "required_checks"
+      ],
       "properties": {
-        "allowed_commands": { "type": "array", "items": { "type": "string" } },
-        "forbidden_commands": { "type": "array", "items": { "type": "string" } },
-        "required_checks": { "type": "array", "items": { "type": "string" } }
+        "allowed_commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "metadata": {
       "type": "object",
-      "required": ["created_at", "created_by", "repository", "branch", "starting_commit"],
+      "required": [
+        "created_at",
+        "created_by",
+        "repository",
+        "branch",
+        "starting_commit"
+      ],
       "properties": {
-        "created_at": { "type": ["string", "null"] },
-        "created_by": { "type": ["string", "null"], "description": "e.g. human, coding-agent, automation — not a required model vendor name" },
-        "repository": { "type": ["string", "null"] },
-        "branch": { "type": ["string", "null"] },
-        "starting_commit": { "type": ["string", "null"] }
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. human, coding-agent, automation — not a required model vendor name"
+        },
+        "repository": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "starting_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     }
   }

@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "task_id": "example-task",
+  "iteration": 1,
+  "document": "selection-doc.md",
+  "summary": "One-paragraph statement of what the selection document covers and what it deliberately leaves out.",
+  "sources": [
+    {
+      "source_id": "C1",
+      "kind": "repo_code",
+      "location": "src/example_processor.py:900-1130",
+      "description": "Muon object selection block.",
+      "verified_at": "2026-01-01"
+    },
+    {
+      "source_id": "C2",
+      "kind": "repo_config",
+      "location": "configs/parameters/muon.yaml",
+      "description": "Per-era muon thresholds and working points.",
+      "verified_at": "2026-01-01"
+    },
+    {
+      "source_id": "S1",
+      "kind": "external_reference",
+      "location": "AN-19-124 v7, sections 3.2-3.3",
+      "description": "Analysis note baseline muon selection.",
+      "verified_at": null
+    }
+  ],
+  "requirements": [
+    {
+      "requirement_id": "SEL-001",
+      "section": "muons",
+      "title": "Muon transverse momentum above threshold",
+      "classification": "analysis_specific",
+      "enforcement": "applied",
+      "source_ids": ["C1", "C2"],
+      "era_scope": [],
+      "note": "Applied to the pre-correction momentum; see the ordering constraint in the corrections section."
+    },
+    {
+      "requirement_id": "SEL-002",
+      "section": "muons",
+      "title": "Muon transverse impact parameter",
+      "classification": "verify",
+      "enforcement": "stored_only",
+      "source_ids": ["S1"],
+      "era_scope": [],
+      "note": "Present in the analysis note baseline; the framework writes the quantity out but never cuts on it."
+    }
+  ],
+  "open_questions": [
+    "Is the impact-parameter cut deliberately dropped, or is its absence a regression?"
+  ],
+  "responses": [],
+  "misrouted_findings": []
+}

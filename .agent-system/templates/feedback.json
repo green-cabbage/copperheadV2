@@ -8,14 +8,41 @@
   "findings": [
     {
       "finding_id": "REV-001",
+      "target_role": "documentation-generator",
       "severity": "blocker",
+      "category": "missing_requirement",
+      "status": "open",
+      "affected_files": [
+        "iterations/001/selection-doc.md"
+      ],
+      "affected_requirements": [
+        "SEL-007"
+      ],
+      "evidence": "What you observed that supports it — quote the document where it is silent or wrong.",
+      "description": "Explain the issue, and why it is the document's defect rather than the implementation's.",
+      "required_action": "Explain what must change in the document.",
+      "required_validation": [
+        "How the next iteration should prove it is fixed."
+      ]
+    },
+    {
+      "finding_id": "REV-002",
+      "target_role": "code-generator",
+      "severity": "major",
       "category": "correctness",
       "status": "open",
-      "affected_files": ["src/example.py"],
-      "evidence": "Explain the evidence.",
-      "description": "Explain the issue.",
-      "required_action": "Explain what must change.",
-      "required_validation": ["Run the targeted unit test."]
+      "affected_files": [
+        "iterations/001/generated_doc/muons.py"
+      ],
+      "affected_requirements": [
+        "SEL-003"
+      ],
+      "evidence": "SEL-003 states the threshold correctly; the generated code applies a different one.",
+      "description": "A defect in implementing a requirement the document stated correctly.",
+      "required_action": "Correct the implementation to match SEL-003.",
+      "required_validation": [
+        "Re-run the targeted check for SEL-003."
+      ]
     }
   ],
   "required_actions": [],

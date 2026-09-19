@@ -3,6 +3,11 @@
 a handful of workflow-specific checks (iteration numbering, immutability of
 prior iterations, finding-ID continuity).
 
+Selection documents get three checks of their own: the pseudocode budget
+(agents/documentation-generator.md), the requirement-ID cross-reference
+between selection-doc.md and doc-report.json, and requirement-ID continuity
+across iterations.
+
 This is a lightweight, hand-rolled structural checker (required keys,
 types, enums, simple patterns/minimums) — not a full JSON Schema draft-07
 implementation — so it has no dependency beyond the standard library.
@@ -59,6 +64,12 @@ JSON_TYPE_MAP = {
 }
 
 FINDING_ID_RE = re.compile(r"^REV-(\d{3,})$")
+REQUIREMENT_ID_RE = re.compile(r"^SEL-(\d{3,})$")
+REQUIREMENT_ID_IN_TEXT_RE = re.compile(r"\bSEL-\d{3,}\b")
+FENCE_RE = re.compile(r"^\s*(```+|~~~+)")
+
+# agents/documentation-generator.md § "Pseudocode budget".
+MAX_PSEUDOCODE_LINES = 20
 
 
 def check_type(value, expected, path: str, errors: list[str]) -> bool:
@@ -152,6 +163,157 @@ def check_finding_continuity(tdir: Path, iterations: list[int], errors: list[str
             )
 
 
+def selection_doc_paths(idir: Path) -> list[Path]:
+    """The selection document for an iteration: the entry point plus any
+    per-object reference files the Documentation Generator split out."""
+    paths = []
+    entry = idir / "selection-doc.md"
+    if entry.exists():
+        paths.append(entry)
+    refs = idir / "selection-doc-references"
+    if refs.is_dir():
+        paths.extend(sorted(p for p in refs.iterdir() if p.suffix == ".md"))
+    return paths
+
+
+def check_pseudocode_budget(path: Path, errors: list[str]) -> None:
+    """Enforce the per-block pseudocode limit in a selection document.
+
+    Text is the preferred form; a fenced block is an illustration, not the
+    specification. See agents/documentation-generator.md § "Pseudocode budget".
+    """
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        errors.append(f"{path}: could not read ({exc})")
+        return
+
+    fence: str | None = None
+    start_line = 0
+    body = 0
+    for lineno, line in enumerate(lines, start=1):
+        m = FENCE_RE.match(line)
+        if fence is None:
+            if m:
+                fence = m.group(1)[0]  # ` or ~
+                start_line = lineno
+                body = 0
+            continue
+        # Inside a block: a fence of the same character closes it.
+        if m and m.group(1)[0] == fence:
+            if body > MAX_PSEUDOCODE_LINES:
+                errors.append(
+                    f"{path}: code block opened at line {start_line} is {body} lines; "
+                    f"the limit is {MAX_PSEUDOCODE_LINES}. State the requirement in text and "
+                    "keep the block as a short illustration — splitting one long procedure "
+                    "across several blocks does not satisfy the budget."
+                )
+            fence = None
+        else:
+            body += 1
+    if fence is not None:
+        errors.append(f"{path}: unterminated code block opened at line {start_line}")
+
+
+def check_doc_report(idir: Path, errors: list[str]) -> dict | None:
+    """Validate doc-report.json and cross-check it against the document body."""
+    dr_path = idir / "doc-report.json"
+    docs = selection_doc_paths(idir)
+
+    if not dr_path.exists():
+        if docs:
+            errors.append(
+                f"{idir.name}: selection-doc.md exists but doc-report.json does not — "
+                "the document's provenance and requirement index are required "
+                "(see agents/documentation-generator.md § 'Provenance without leakage')."
+            )
+        return None
+
+    report = validate_file(dr_path, "doc-report", errors)
+    if report is None:
+        return None
+
+    if not docs:
+        errors.append(f"{idir.name}: doc-report.json exists but no selection-doc.md accompanies it.")
+        return report
+
+    for path in docs:
+        check_pseudocode_budget(path, errors)
+
+    indexed = {
+        r.get("requirement_id", "")
+        for r in report.get("requirements", [])
+        if isinstance(r, dict)
+    }
+    cited: set[str] = set()
+    for path in docs:
+        try:
+            cited |= set(REQUIREMENT_ID_IN_TEXT_RE.findall(path.read_text(encoding="utf-8")))
+        except OSError as exc:
+            errors.append(f"{path}: could not read ({exc})")
+
+    for rid in sorted(cited - indexed):
+        errors.append(
+            f"{idir.name}: {rid} appears in the selection document but has no entry in "
+            "doc-report.json requirements[]."
+        )
+    for rid in sorted(indexed - cited):
+        errors.append(
+            f"{idir.name}: doc-report.json indexes {rid} but it appears nowhere in the "
+            "selection document."
+        )
+
+    # Sources cited by requirements must exist in the source table.
+    known_sources = {
+        s.get("source_id", "")
+        for s in report.get("sources", [])
+        if isinstance(s, dict)
+    }
+    for r in report.get("requirements", []):
+        if not isinstance(r, dict):
+            continue
+        for sid in r.get("source_ids", []):
+            if sid not in known_sources:
+                errors.append(
+                    f"{idir.name}: requirement {r.get('requirement_id', '?')} cites source "
+                    f"{sid!r}, which is not in doc-report.json sources[]."
+                )
+    return report
+
+
+def check_requirement_continuity(tdir: Path, iterations: list[int], errors: list[str]) -> None:
+    """Requirement ids are stable across iterations: introduced in increasing
+    order, never reused for a different requirement, never renumbered."""
+    max_number_seen = 0
+    seen: set[str] = set()
+    for n in iterations:
+        dr_path = tdir / "iterations" / f"{n:03d}" / "doc-report.json"
+        if not dr_path.exists():
+            continue
+        try:
+            report = load_json(dr_path)
+        except TaskError as exc:
+            errors.append(str(exc))
+            continue
+        for r in report.get("requirements", []):
+            if not isinstance(r, dict):
+                continue
+            rid = r.get("requirement_id", "")
+            m = REQUIREMENT_ID_RE.match(rid)
+            if not m:
+                errors.append(f"iteration {n:03d}: malformed requirement_id {rid!r}")
+                continue
+            num = int(m.group(1))
+            if rid not in seen and num <= max_number_seen:
+                errors.append(
+                    f"iteration {n:03d}: requirement_id {rid!r} reuses/precedes an already-used "
+                    f"number (max seen so far: SEL-{max_number_seen:03d}) — ids must be "
+                    "introduced in increasing order and never reused."
+                )
+            max_number_seen = max(max_number_seen, num)
+            seen.add(rid)
+
+
 def validate_task(task_id: str, tdir: Path | None = None) -> list[str]:
     """Validate the task directory for task_id. If tdir is given explicitly
     (via --task-dir), it is used as-is instead of resolving task_id under
@@ -187,6 +349,7 @@ def validate_task(task_id: str, tdir: Path | None = None) -> list[str]:
         run_report = idir / "run-report.json"
         review_report = idir / "review-report.json"
         feedback = idir / "feedback.json"
+        check_doc_report(idir, errors)
         if run_report.exists():
             validate_file(run_report, "run-report", errors)
         if review_report.exists():
@@ -195,6 +358,7 @@ def validate_task(task_id: str, tdir: Path | None = None) -> list[str]:
             validate_file(feedback, "feedback", errors)
 
     check_finding_continuity(tdir, iterations, errors)
+    check_requirement_continuity(tdir, iterations, errors)
 
     return errors
 

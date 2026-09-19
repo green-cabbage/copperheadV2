@@ -28,24 +28,33 @@ from _common import (  # noqa: E402
 )
 
 ALL_STATES = {
-    "created", "planning", "awaiting_implementation_approval", "implementing",
+    "created", "planning", "documenting", "ready_for_implementation",
+    "awaiting_implementation_approval", "implementing",
     "ready_to_run", "running", "ready_for_review", "reviewing",
     "changes_requested", "awaiting_human_input", "blocked", "approved", "closed",
 }
 
 TRANSITIONS: dict[str, set[str]] = {
     "created": {"planning"},
-    "planning": {"awaiting_implementation_approval", "implementing"},
+    "planning": {"documenting"},
+    "documenting": {"ready_for_implementation"},
+    "ready_for_implementation": {"awaiting_implementation_approval", "implementing"},
     "awaiting_implementation_approval": {"implementing"},
     "implementing": {"ready_to_run"},
     "ready_to_run": {"running"},
     "running": {"ready_for_review"},
     "ready_for_review": {"reviewing"},
     "reviewing": {"approved", "changes_requested", "awaiting_human_input", "blocked"},
-    "changes_requested": {"implementing", "awaiting_human_input"},
+    # Two loop-back edges: to 'documenting' when the document is at fault (the
+    # common case), to 'implementing' when the document was right and only the
+    # implementation was wrong. See agents/reviewer.md § "Routing".
+    "changes_requested": {"documenting", "implementing", "awaiting_human_input"},
     "approved": {"closed"},
     "closed": set(),
 }
+
+# The loop-back edges that open a new iteration.
+NEW_ITERATION_TARGETS = {"documenting", "implementing"}
 
 # From these two states, a human has already made the resumption decision;
 # allow moving to any valid state rather than modeling every possible
@@ -70,12 +79,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def check_approval_guard(task: dict, target: str, from_state: str) -> str | None:
     approvals = task.get("approvals", {})
-    if target == "implementing" and from_state in {"planning", "awaiting_implementation_approval"}:
+    if target == "implementing" and from_state in {"ready_for_implementation", "awaiting_implementation_approval"}:
         if approvals.get("implementation_required") and not approvals.get("implementation_granted"):
             return (
                 "task.json approvals.implementation_required is true but "
-                "implementation_granted is false — get human approval and set it "
-                "before implementing."
+                "implementation_granted is false — get human approval of the selection "
+                "document and set it before implementing."
             )
     if target == "running":
         if approvals.get("execution_required") and not approvals.get("execution_granted"):
@@ -129,7 +138,7 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
-    is_new_iteration = current_status == "changes_requested" and target == "implementing"
+    is_new_iteration = current_status == "changes_requested" and target in NEW_ITERATION_TARGETS
     is_first_iteration_start = current_status == "created" and target == "planning"
 
     max_iterations = task.get("max_iterations", 3)

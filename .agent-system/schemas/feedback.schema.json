@@ -2,55 +2,160 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "feedback.schema.json",
   "title": "Feedback",
-  "description": "Canonical shape of tasks/<task-id>/iterations/<NNN>/feedback.json — the machine-readable artifact the Code Generator reads on the next iteration. Validated structurally by scripts/validate_artifacts.py.",
+  "description": "Canonical shape of tasks/<task-id>/iterations/<NNN>/feedback.json — the machine-readable artifact the next iteration reads. Each finding carries a target_role naming which role must act on it (see agents/reviewer.md section 'Routing'). Validated structurally by scripts/validate_artifacts.py.",
   "type": "object",
   "required": [
-    "schema_version", "task_id", "iteration", "decision", "confidence",
-    "summary", "findings", "required_actions", "optional_improvements",
-    "unanswered_questions", "human_approval_required"
+    "schema_version",
+    "task_id",
+    "iteration",
+    "decision",
+    "confidence",
+    "summary",
+    "findings",
+    "required_actions",
+    "optional_improvements",
+    "unanswered_questions",
+    "human_approval_required"
   ],
   "properties": {
-    "schema_version": { "type": "string" },
-    "task_id": { "type": "string" },
-    "iteration": { "type": "integer", "minimum": 1 },
+    "schema_version": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 1
+    },
     "decision": {
       "type": "string",
-      "enum": ["approved", "changes_requested", "human_review_required", "blocked", "inconclusive"]
+      "enum": [
+        "approved",
+        "changes_requested",
+        "human_review_required",
+        "blocked",
+        "inconclusive"
+      ]
     },
-    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
-    "summary": { "type": "string" },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
     "findings": {
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "finding_id", "severity", "category", "status",
-          "affected_files", "evidence", "description",
-          "required_action", "required_validation"
+          "finding_id",
+          "target_role",
+          "severity",
+          "category",
+          "status",
+          "affected_files",
+          "evidence",
+          "description",
+          "required_action",
+          "required_validation"
         ],
         "properties": {
-          "finding_id": { "type": "string", "pattern": "^REV-[0-9]{3,}$" },
-          "severity": { "type": "string", "enum": ["blocker", "major", "minor", "suggestion", "question", "accepted"] },
-          "category": { "type": "string" },
+          "finding_id": {
+            "type": "string",
+            "pattern": "^REV-[0-9]{3,}$"
+          },
+          "target_role": {
+            "type": "string",
+            "enum": [
+              "documentation-generator",
+              "code-generator"
+            ],
+            "description": "Which role must act on this finding. Default and common case is documentation-generator; code-generator only when the document stated the requirement correctly and the implementation still got it wrong. See agents/reviewer.md section 'Routing'."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "blocker",
+              "major",
+              "minor",
+              "suggestion",
+              "question",
+              "accepted"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
           "status": {
             "type": "string",
             "enum": [
-              "open", "fixed", "partially_fixed",
-              "rejected_with_justification", "unable_to_reproduce",
-              "needs_human_clarification", "deferred_with_approval"
+              "open",
+              "fixed",
+              "partially_fixed",
+              "rejected_with_justification",
+              "unable_to_reproduce",
+              "needs_human_clarification",
+              "deferred_with_approval"
             ]
           },
-          "affected_files": { "type": "array", "items": { "type": "string" } },
-          "evidence": { "type": "string" },
-          "description": { "type": "string" },
-          "required_action": { "type": "string" },
-          "required_validation": { "type": "array", "items": { "type": "string" } }
+          "affected_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affected_requirements": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^SEL-[0-9]{3,}$"
+            },
+            "description": "The selection-doc.md requirement ids this finding concerns, where it concerns any."
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "required_action": {
+            "type": "string"
+          },
+          "required_validation": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
-    "required_actions": { "type": "array", "items": { "type": "string" } },
-    "optional_improvements": { "type": "array", "items": { "type": "string" } },
-    "unanswered_questions": { "type": "array", "items": { "type": "string" } },
-    "human_approval_required": { "type": "boolean" }
+    "required_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "optional_improvements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unanswered_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_approval_required": {
+      "type": "boolean"
+    }
   }
 }

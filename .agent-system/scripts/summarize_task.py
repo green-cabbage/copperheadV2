@@ -49,6 +49,55 @@ def build_summary(label: str, tdir: Path) -> str:
     lines.append(f"**Final state:** {state['status']}")
     lines.append(f"**Iterations used:** {state['current_iteration']} / {task['max_iterations']}")
     lines.append("")
+    lines.append("## Selection document")
+    lines.append("")
+    lines.append("| Iteration | Requirements | Verify-tagged | Not enforced | Open questions |")
+    lines.append("|---|---|---|---|---|")
+    any_doc = False
+    latest_report: dict | None = None
+    for n in iterations:
+        dr_path = tdir / "iterations" / f"{n:03d}" / "doc-report.json"
+        if not dr_path.exists():
+            continue
+        try:
+            dr = load_json(dr_path)
+        except TaskError:
+            lines.append(f"| {n:03d} | (unreadable doc-report.json) | | | |")
+            continue
+        any_doc = True
+        latest_report = dr
+        reqs = [r for r in dr.get("requirements", []) if isinstance(r, dict)]
+        verify = sum(1 for r in reqs if r.get("classification") == "verify")
+        unenforced = sum(1 for r in reqs if r.get("enforcement") in {"stored_only", "absent"})
+        lines.append(
+            f"| {n:03d} | {len(reqs)} | {verify} | {unenforced} | {len(dr.get('open_questions', []))} |"
+        )
+    if not any_doc:
+        lines.append("| — | (no doc-report.json recorded in any iteration) | | | |")
+    lines.append("")
+
+    if latest_report is not None:
+        questions = latest_report.get("open_questions", [])
+        if questions:
+            lines.append(
+                "Open questions from the latest selection document — these are physics "
+                "questions the document could not settle, and they outlive the task:"
+            )
+            lines.append("")
+            for q in questions:
+                lines.append(f"- {q}")
+            lines.append("")
+        misrouted = latest_report.get("misrouted_findings", [])
+        if misrouted:
+            lines.append(
+                "Findings the Documentation Generator returned as not its defect "
+                "(see `agents/reviewer.md` § \"Routing\"):"
+            )
+            lines.append("")
+            for m in misrouted:
+                lines.append(f"- {m.get('finding_id', '?')}: {m.get('reason', '')}")
+            lines.append("")
+
     lines.append("## Changes made")
     lines.append("")
     lines.append(

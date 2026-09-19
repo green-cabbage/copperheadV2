@@ -8,6 +8,7 @@
   "findings": [
     {
       "finding_id": "REV-001",
+      "target_role": "code-generator",
       "severity": "blocker",
       "category": "correctness",
       "status": "open",

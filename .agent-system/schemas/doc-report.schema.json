@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "doc-report.schema.json",
+  "title": "DocReport",
+  "description": "Canonical shape of tasks/<task-id>/iterations/<NNN>/doc-report.json — the machine-readable companion to selection-doc.md. It carries the provenance the document body deliberately omits (see agents/documentation-generator.md § 'Provenance without leakage'), the requirement index the Reviewer cites, and this iteration's responses to routed findings. Validated structurally by scripts/validate_artifacts.py.",
+  "type": "object",
+  "required": [
+    "schema_version", "task_id", "iteration", "document", "summary",
+    "sources", "requirements", "open_questions", "responses",
+    "misrouted_findings"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "task_id": { "type": "string" },
+    "iteration": { "type": "integer", "minimum": 1 },
+    "document": {
+      "type": "string",
+      "description": "Path to the selection document this report accompanies, relative to the iteration directory (normally 'selection-doc.md')."
+    },
+    "summary": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "description": "The numbered source table. Ids are cited from selection-doc.md by id alone; this is the only place the underlying paths appear.",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "kind", "location", "description"],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "pattern": "^[SCP][0-9]+$",
+            "description": "S* = external/reference source, C* = in-repository code or config, P* = POG/official entry point."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["repo_code", "repo_config", "repo_doc", "external_reference", "official_pog", "human_statement"]
+          },
+          "location": {
+            "type": "string",
+            "description": "File path with optional line range, config key, URL, or document citation."
+          },
+          "description": { "type": "string" },
+          "verified_at": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "description": "Index of every requirement stated in selection-doc.md. Ids are stable across iterations and never reused.",
+      "items": {
+        "type": "object",
+        "required": ["requirement_id", "section", "title", "classification", "enforcement", "source_ids"],
+        "properties": {
+          "requirement_id": { "type": "string", "pattern": "^SEL-[0-9]{3,}$" },
+          "section": {
+            "type": "string",
+            "description": "The selection-doc.md section it lives in, e.g. 'muons', 'trigger', 'event-selection'."
+          },
+          "title": { "type": "string" },
+          "classification": {
+            "type": "string",
+            "enum": ["official", "analysis_specific", "verify"]
+          },
+          "enforcement": {
+            "type": "string",
+            "enum": ["applied", "computed_not_applied", "stored_only", "absent"],
+            "description": "Whether the framework actually applies this requirement, merely computes/flags it, only stores the input, or does not implement it at all. See agents/documentation-generator.md § 'Rules'."
+          },
+          "source_ids": { "type": "array", "items": { "type": "string" } },
+          "era_scope": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Eras the requirement applies to; omit or leave empty when it applies to all."
+          },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "What could not be established from the source, phrased so a physicist could answer it."
+    },
+    "responses": {
+      "type": "array",
+      "description": "How this iteration answered each finding routed to the Documentation Generator.",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "action", "note"],
+        "properties": {
+          "finding_id": { "type": "string", "pattern": "^REV-[0-9]{3,}$" },
+          "action": {
+            "type": "string",
+            "enum": ["corrected", "added_requirement", "clarified", "rejected_with_justification", "deferred_with_approval", "needs_human_clarification"]
+          },
+          "affected_requirements": { "type": "array", "items": { "type": "string" } },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "misrouted_findings": {
+      "type": "array",
+      "description": "Findings routed here that are not documentation defects — the document was correct and the defect lies downstream. The Reviewer re-routes these to the Code Generator; they are never absorbed by editing the document to compensate.",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "reason"],
+        "properties": {
+          "finding_id": { "type": "string", "pattern": "^REV-[0-9]{3,}$" },
+          "reason": { "type": "string" },
+          "correct_requirements": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The requirement ids that were already stated correctly, evidencing that the document is not at fault."
+          }
+        }
+      }
+    }
+  }
+}

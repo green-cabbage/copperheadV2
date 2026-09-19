@@ -12,26 +12,49 @@ criteria. `POLICY.md` and `WORKFLOW.md` are the two documents it delegates
 to for safety rules and the detailed state machine, respectively. This
 README is orientation; those three files are the source of truth.
 
-## The three roles
+## The four roles
 
-1. **Code Generator** (`agents/code-generator.md`) — understands the
-   request, inspects the repo, proposes and implements a minimal change.
-2. **Code Runner** (`agents/code-runner.md`) — executes approved validation
+1. **Documentation Generator** (`agents/documentation-generator.md`) — reads
+   the code framework and writes down its selection as *physics*: thresholds,
+   working points, ordering, and whether each requirement is actually enforced
+   — stated independently of any code package (numpy, awkward, coffea,
+   HiggsDNA) or language (C++, Python).
+2. **Code Generator** (`agents/code-generator.md`) — implements that document.
+   **Blinded to this repository**: the document and public external sources
+   are all it gets.
+3. **Code Runner** (`agents/code-runner.md`) — executes approved validation
    commands, records exact evidence, never edits source or judges
    correctness.
-3. **Reviewer** (`agents/reviewer.md`) — independently evaluates the change
-   against the request and the run evidence, files structured findings.
+4. **Reviewer** (`agents/reviewer.md`) — independently evaluates the result
+   against the request, the document, and the run evidence, files structured
+   findings, and routes each to the role that can fix it.
 
 ## The feedback loop
 
 ```
-User request → Code Generator → Code Runner → Reviewer → feedback.json → Code Generator (repeat)
+User request → Documentation Generator → Code Generator → Code Runner → Reviewer
+                        ↑                      ↑                            │
+                        └── document defect ───┴──── code defect ───────────┘
 ```
+
+Feedback returns to the **Documentation Generator** by default: the document is
+the specification the Code Generator worked from, so a defect in the result is
+usually a defect in the document. It goes back to the Code Generator only when
+the document stated the requirement correctly and the implementation still got
+it wrong (`agents/reviewer.md` § "Routing").
 
 The loop stops when the Reviewer approves, `max_iterations` is reached,
 execution is blocked, human input is required, or the request turns out to
 be unsafe/too ambiguous to proceed. See `WORKFLOW.md` for the full state
 machine.
+
+## Why blind the Code Generator?
+
+Because then the document is the only thing carrying the analysis into the
+implementation. Anything the document fails to say shows up as a defect in the
+generated code, instead of being quietly repaired by a generator that could go
+read the original. The loop measures the documentation, which is the reason to
+run it.
 
 ## Creating a task
 
@@ -52,19 +75,27 @@ assistant, not an autonomous script. A typical iteration:
 
 1. Assistant reads `SYSTEM.md`, `POLICY.md`, the task's `task.json`, and
    (if present) the latest `feedback.json`.
-2. Acting as **Code Generator** (see `agents/code-generator.md` +
-   `skills/generate-change.md`): writes `generator-report.md` and
-   `proposed-commands.json` for the current iteration.
-3. `python .agent-system/scripts/advance_task.py --task-id <id> --to ready_to_run`
-4. Acting as **Code Runner** (see `agents/code-runner.md` +
+2. Acting as **Documentation Generator** (see
+   `agents/documentation-generator.md` + `skills/generate-documentation.md`):
+   reads the framework, writes `selection-doc.md` and `doc-report.json`.
+3. `python .agent-system/scripts/advance_task.py --task-id <id> --to ready_for_implementation`
+4. Human approves the document, if `approvals.implementation_required`; then
+   `advance_task.py --task-id <id> --to implementing`.
+5. Acting as **Code Generator** (see `agents/code-generator.md` +
+   `skills/generate-change.md`), reading *only* the document: writes
+   `generated_doc/`, `generator-report.md`, and `proposed-commands.json`.
+6. `python .agent-system/scripts/advance_task.py --task-id <id> --to ready_to_run`
+7. Acting as **Code Runner** (see `agents/code-runner.md` +
    `skills/run-validation.md`): executes the approved commands, writes
    `run-report.json`.
-5. `python .agent-system/scripts/advance_task.py --task-id <id> --to ready_for_review`
-6. Acting as **Reviewer** (see `agents/reviewer.md` + `skills/review-result.md`):
-   writes `review-report.md` and `feedback.json` with a `decision`.
-7. `python .agent-system/scripts/advance_task.py --task-id <id> --to <approved|changes_requested|awaiting_human_input|blocked>`
-8. If `changes_requested`, go back to step 2 for the next iteration. If
-   `approved`, run `summarize_task.py` and advance to `closed`.
+8. `python .agent-system/scripts/advance_task.py --task-id <id> --to ready_for_review`
+9. Acting as **Reviewer** (see `agents/reviewer.md` + `skills/review-result.md`):
+   writes `review-report.md` and `feedback.json`, each finding carrying a
+   `target_role`.
+10. `python .agent-system/scripts/advance_task.py --task-id <id> --to <approved|changes_requested|awaiting_human_input|blocked>`
+11. If `changes_requested`, advance to `documenting` (step 2) or, when every
+    open finding is routed to the Code Generator, straight to `implementing`
+    (step 5). If `approved`, run `summarize_task.py` and advance to `closed`.
 
 Validate artifacts at any point with:
 
@@ -123,9 +154,27 @@ integration. This is a filesystem-based system by design; add
 infrastructure only when a real task proves the filesystem approach
 insufficient.
 
+## Documentation structure reference
+
+`templates/doc-structure-reference/` is a verbatim copy of an upstream
+`.claude/skills/` tree, kept as the structural model for what the
+Documentation Generator produces: a `SKILL.md` entry point plus one
+`references/<object>.md` per physics object, each with a numbered source table,
+classification tags, per-cut tables, a review checklist, and an evidence
+summary. Its `PROVENANCE.md` records where it came from and — importantly —
+which parts to imitate and which not to: those files cite file paths and line
+numbers, and the Documentation Generator's output must not.
+
 ## Worked example
 
-`examples/hello-world-task/` walks through a full two-iteration loop
+`examples/hello-world-task/` predates the Documentation Generator and shows the
+earlier three-role loop (Generator → Runner → Reviewer). Its mechanics —
+iteration immutability, stable finding IDs, feedback carried forward — are
+unchanged and still worth reading; just note that its findings all route to
+`code-generator`, and that a four-role task begins with a `documenting` phase
+it does not show.
+
+It walks through a full two-iteration loop
 (request → generator → runner → reviewer finds a bug → generator fixes it
 → runner reruns → reviewer approves → final summary) on a trivial
 text-processing function, with stable finding IDs preserved across
