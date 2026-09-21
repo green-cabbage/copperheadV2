@@ -1,11 +1,26 @@
-# XZZ2017 FSR recovery
+# XZZ FSR recovery
 
-`fsr.yaml` configures electron and muon photon cuts independently. Both initially use the supplied HZZ slide's photon pT>2GeV, |eta|<2.4 and relIso03<0.8. The user explicitly authorizes recovery for both flavors; equality of the current cuts is not an assumption that future prescriptions must be identical. The linked NanoAOD `fsrPhotonIdx` supplies association; no additional association-quality threshold is inferred from the reference.
+`fsr.yaml` configures electron and muon cuts independently. Both use:
+- photon pT > 2 GeV
+- |eta| < 2.4
+- relIso03 < 0.8
+This is consistent for both muons and electrons. Both flavors use NanoAOD `fsrPhotonIdx` for recovery.
 
-Electron Boolean WP90, original pT/eta acceptance and impact-parameter cuts are evaluated before dressing. Electron isolation ID is not recomputed. Saved electron p4 includes the accepted photon; raw coordinates and recovery flags are retained. Jet cross-cleaning uses the original lepton directions, consistently with existing muon cleaning. Muon isolation recovery retains its existing separate procedure.
+Electron WP90 ID, pT/eta acceptance and impact-parameter cuts are evaluated before FSR recovery; isolation ID is not recomputed. Saved electron four momenta include accepted photons; original coordinates and whether recovery occurred are also saved. Jet cleaning uses original lepton four momenta.
 
-Recovered muon mass accompanies recovered pT/eta/phi. Electron recovery uses double-precision four-vector addition and preserves the signed mass-squared convention of the serialized NanoAOD electron. Selected-lepton pair arithmetic uses double precision to avoid loss from float32 subtraction. These new changes are confined to XZZ2017; other analyses/years retain their baseline behavior.
+For XZZ Run 2:
+- **Muon selection:** does **not** use FSR-updated isolation; it uses unchanged `pfRelIso03_all < 0.25`.
+- **Electron selection:** also does **not** use FSR-updated isolation. It uses the original Boolean WP90 ID, which is not recomputed after recovery.
 
-Evidence: task iterations025 (muon four-vector conservation and precision candidate),026 (electron integration validation). Full reference agreement is not assumed; additional reference photon cuts or selection differences need concrete event evidence.
 
-Muon and photon coordinates are also converted to float64 **before** trigonometric and energy arithmetic when the XZZ flavor configuration is active. This prevents float32 cancellation from producing non-finite recovered muon masses. The iteration 027 candidate was checked on both failing boosted-DY events with an independent stable invariant formula, three paired XZZ samples and four paired HMuMu samples; iteration 028 integrates the identical candidate. Photon association and selection cuts are unchanged.
+- **Muons:** adding the photon changes the combined muon–photon mass as well as pT, eta and phi. We save that recovered mass instead of keeping the original muon mass, which should be fine because this is due to natural combining of muon four momenta and photon four momenta.
+- **Electrons:** NanoAOD can encode a slightly negative mass-squared as a negative mass value. The recovery code preserves that sign when calculating the electron’s energy. This is a numerical storage convention, not a physically negative electron mass.
+
+Four-vector addition and selected-pair arithmetic use float64; muon/photon coordinates are converted before trigonometric and energy calculations when the XZZ flavor configuration is active, preventing non-finite masses from float32 cancellation.
+
+Evidence from task xzz-2l2nu-007:
+
+- Iterations025–026 validated muon conservation/precision and electron integration in XZZ2017; those changes initially left other analyses/years at baseline.
+- Iteration027 checked the early float64 conversion on two failing boosted-DY events using an independent stable invariant formula, plus three paired XZZ and four paired HMuMu samples; iteration028 integrated it without changing association or cuts.
+
+Full reference agreement is not established; proposed reference photon cuts or selection differences require concrete event evidence.

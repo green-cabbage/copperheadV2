@@ -1,35 +1,15 @@
 # XZZ PuppiMET XY correction
 
-The processor applies `met.yaml` to XZZ2l2nu, NanoAODv15, for every Run 2 year that has a payload
-configured; the correction is gated on the payload being present, not on a year literal. Each year
-points at its own official JME POG `met.json.gz`. The published routine
-(`XYMETCorrection_withUL17andUL18andUL16.h`) covers UL16, UL17 and UL18.
+For XZZ2l2nu NanoAODv15, `met.yaml` enables the MET correction for each Run 2 year with a configured official JME POG correction file (`met.json.gz`), once it is turned on in the switches.yaml.
 
-The 2017 reference skim applies the same correction and we reproduce it to 1e-5. The 2018 reference
-MC files created before 2026-05-10 do not apply it, while 2018 reference data does; that is stale
-reference output, not a reason to drop the correction for 2018. See task iteration 034,
-`reference-met-xy-survey.json`.
+The [published UL16–18 routine](https://lathomas.web.cern.ch/METStuff/XYCorrections/XYMETCorrection_withUL17andUL18andUL16.h) translates MET x/y by vertex count and era, caps vertices at 100 and imposes no upper MET-pT limit. After schema checks, `src/corrections/xzz_met_xy.py` extends the pinned JSON's `[0, 6500)` bin to infinity in memory. File/checksum, formula, coefficients, run selection and phi bounds stay unchanged. Nonfinite inputs/outputs are rejected; MET is neither clamped nor an added event veto.
 
-The validation below was performed on 2017.
-The input payload is verified against its configured SHA-256 before loading.
-Raw PuppiMET is retained alongside the corrected values.
+- **NPV > 100:** the MET XY correction uses NPV = 100. The original vertex count is unchanged, and this cap does not reject the event.
+- **Prescription checked:** the published UL16–18 correction routine linked above explicitly uses `if(npv>100) npv=100;`. We verified the cap against that prescription, rather than inferring it solely from reference output.
 
-The published UL XY routine translates the MET x/y components using vertex
-count and era. It caps the vertex count at 100 and has no upper MET-pT limit.
-The pinned JSON places the same formula inside a `[0, 6500)` input bin.
-`src/corrections/xzz_met_xy.py` extends only that bin's upper edge to infinity
-in memory, after checking the expected schema. It retains the original file,
-checksum, formula, coefficients, run selection and phi bounds. It rejects
-nonfinite inputs and outputs. MET is neither clamped nor used to introduce an
-additional event veto.
 
-Task iterations 028–029 validate the domain extension against the published
-C++ implementation for MC and all five 2017 data eras, including values at and
-above 6500 GeV. In-range outputs are bitwise unchanged. The triggering boosted
-DY event is run 1, luminosity block 612, event 2096105: raw corrected-input
-PuppiMET is 19001.66015625 GeV. The reference includes this same input outlier.
-Its corrected float32 MET differs from our float64 result by about 0.000824
-GeV; this remains a mismatch under the required absolute 1e-4 comparison.
+Evidence from task xzz-2l2nu-007:
 
-Published routine:
-https://lathomas.web.cern.ch/METStuff/XYCorrections/XYMETCorrection_withUL17andUL18andUL16.h
+- Iterations028–029 validated against published C++ for 2017 MC and all five data eras, including MET ≥ 6500 GeV; in-range results are bitwise unchanged.
+- Boosted-DY event `run=1, luminosityBlock=612, event=2096105` has input PuppiMET 19001.66015625 GeV in both implementations. Reference float32 and our float64 corrected MET differ by ~0.000824 GeV, exceeding the absolute 1e-4 comparison tolerance.
+- Iteration034 `reference-met-xy-survey.json`: the 2017 reference correction agrees to 1e-5; 2018 reference data applies it, but reference MC produced before 2026-05-10 omits it. Keep the correction for 2018 despite stale reference MC.
