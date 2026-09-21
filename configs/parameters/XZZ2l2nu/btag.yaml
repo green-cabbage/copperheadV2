@@ -6,6 +6,7 @@ xzz_btag_sf:
     '2018':
         convention: nearest
         efficiency_file: configs/parameters/XZZ2l2nu/btag_efficiency_2018.json
+        payload: /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv15/2026-06-18/btagging.json.gz
     '2022preEE': null
     '2022postEE': null
     '2023': null

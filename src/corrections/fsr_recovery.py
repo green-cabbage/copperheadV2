@@ -58,7 +58,7 @@ def fsr_recovery(events: coffea_nanoevent) -> ak_array:
     return fsrPhotonsToRecover # return boolean filter for geofit
 
 
-def fsr_recoveryV1(df, xzz=False):
+def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
     mask = (
         (df.Muon.fsrPhotonIdx >= 0)
         & (df.Muon.matched_fsrPhoton.relIso03 < 1.8)
@@ -68,11 +68,16 @@ def fsr_recoveryV1(df, xzz=False):
     )
     if xzz:
         # HZZ update slide 3. Keep the HMuMu recovery mask unchanged by default.
+        cuts = xzz_cuts if xzz_cuts is not None else {
+            "photon_pt_min": 2.0,
+            "photon_abs_eta_max": 2.4,
+            "photon_rel_iso_max": 0.8,
+        }
         mask = (
             (df.Muon.fsrPhotonIdx >= 0)
-            & (df.Muon.matched_fsrPhoton.pt > 2.0)
-            & (abs(df.Muon.matched_fsrPhoton.eta) < 2.4)
-            & (df.Muon.matched_fsrPhoton.relIso03 < 0.8)
+            & (df.Muon.matched_fsrPhoton.pt > cuts["photon_pt_min"])
+            & (abs(df.Muon.matched_fsrPhoton.eta) < cuts["photon_abs_eta_max"])
+            & (df.Muon.matched_fsrPhoton.relIso03 < cuts["photon_rel_iso_max"])
         )
     mask = ak.fill_none(mask, False)
 
@@ -95,6 +100,12 @@ def fsr_recoveryV1(df, xzz=False):
     }
 
     for obj in [df.Muon, fsr]:
+        if xzz and xzz_cuts is not None:
+            obj = {
+                name: (float(obj[name]) if isinstance(obj[name], (int, float))
+                       else ak.values_astype(obj[name], np.float64))
+                for name in ("pt", "eta", "phi", "mass")
+            }
         px_ = obj["pt"] * np.cos(obj["phi"])
         py_ = obj["pt"] * np.sin(obj["phi"])
         pz_ = obj["pt"] * np.sinh(obj["eta"])

@@ -1,0 +1,19 @@
+# Validated against the 2017 reference skim; same recipe for all Run 2 years.
+xzz_met_xy:
+    '2016preVFP':
+        file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2016preVFP_UL/met.json.gz
+        sha256: ad908621f77b7096372ee65293eef7fe9c8b05260658d0247fc9d32a487fe6e7
+    '2016postVFP':
+        file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2016postVFP_UL/met.json.gz
+        sha256: ed240d81f517353b19bae58b5d74435199631f1bee51460749ce29d774413cea
+    '2017':
+        file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2017_UL/met.json.gz
+        sha256: dac8aa01b1ea98118fef930d1c13d0ddb8e142eaac5fd6393419e59ae8395d79
+    '2018':
+        file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2018_UL/met.json.gz
+        sha256: 9a92863b5b02582fa83ebc2b59dd8f58dbd3f5a5b0026dabc415db66cbdf60a2
+    '2022preEE': null
+    '2022postEE': null
+    '2023': null
+    '2023BPix': null
+    '2024': null

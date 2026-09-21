@@ -50,6 +50,18 @@ btag_jet_eta_cut:
     "2023": 2.5
     "2023BPix": 2.5
     "2024": 2.5
+jet_id_recipe:
+    # Audited CMSSW RUN2ULPUPPI prescription for 2017 synchronization.
+    # 2016 stays null: only the 2017/2018 RUN2ULPUPPI table is implemented.
+    "2016preVFP": null
+    "2016postVFP": null
+    "2017": RUN2ULPUPPI
+    "2018": RUN2ULPUPPI
+    "2022preEE": null
+    "2022postEE": null
+    "2023": null
+    "2023BPix": null
+    "2024": null
 jet_id:
     # INFO: For 2016UL, we don't have loose ID, so make it just tight https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookNanoAOD#Jets
     # INFO: Use tight, tightPassLepVeto, or tightFailLepVeto

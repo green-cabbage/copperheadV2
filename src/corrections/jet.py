@@ -176,7 +176,7 @@ def get_jec_factories(jec_parameters: dict, year):
     return jec_factories, jec_factories_data
 
 
-def custom_jet_id(jets, year, jet_type="AK4PUPPI"):
+def custom_jet_id(jets, year, jet_type="AK4PUPPI", *, recipe=None):
     """
     https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVUL#Preliminary_Recommendations_for
 
@@ -187,6 +187,10 @@ def custom_jet_id(jets, year, jet_type="AK4PUPPI"):
         raise ValueError(f"Unsupported jet type: {jet_type}")
     if not is_run2(year):
         raise ValueError(f"Custom jet ID is only defined for Run 2 years. Unsupported year: {year}")
+    if recipe not in (None, "RUN2ULPUPPI"):
+        raise ValueError(f"Unsupported custom jet-ID recipe: {recipe}")
+    if recipe == "RUN2ULPUPPI" and year not in ("2017", "2018"):
+        raise ValueError("RUN2ULPUPPI is the 2017/2018 UL prescription")
 
     eta = jets.eta
     aeta = abs(eta)
@@ -245,6 +249,14 @@ def custom_jet_id(jets, year, jet_type="AK4PUPPI"):
         )
         endcap_tight = (aeta > 2.7) & (aeta <= 3.0) & (neHEF < 0.9999)
         forward_tight = (aeta > 3.0) & (aeta <= 5.0) & (neEmEF < 0.9) & (neMult > 2)
+        if recipe == "RUN2ULPUPPI":
+            # CMSSW PFJetIDSelectionFunctor: RUN2ULPUPPI, TIGHT.
+            # Explicitly configured so other analyses retain their baseline.
+            endcap_tight = (aeta > 2.7) & (aeta <= 3.0) & (neHEF < 0.99)
+            forward_tight = (
+                (aeta > 3.0) & (neHEF > -1.0) & (neEmEF < 0.4)
+                & (neMult > 2) & (ak.values_astype(neMult, np.int64) < 999999)
+            )
 
         pass_tight = barrel_tight | transition_tight | endcap_tight | forward_tight
 
@@ -316,7 +328,8 @@ def jet_id(jets, config, year=None, jet_id_key="jet_id"):
         """For Run 2, use the custom jet ID based on the official tight WP definition."""
         logger.info("Using custom jet ID for Run 2!")
         pass_jetid_tight, pass_jetid_tight_lepveto = custom_jet_id(
-            jets, year, jet_type="AK4PUPPI"
+            jets, year, jet_type="AK4PUPPI",
+            recipe=config.get("jet_id_recipe") if config.get("analysis") == "XZZ2l2nu" else None,
         )
         jet_id_wps = {
             "tight": pass_jetid_tight,

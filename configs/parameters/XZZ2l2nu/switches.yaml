@@ -130,7 +130,7 @@ switches:
         '2016preVFP': true
         '2016postVFP': true
         '2017': true
-        '2018': false # PtZ-binned AN DY: no inclusive-DY fitted reweighting
+        '2018': true
         '2022preEE': false
         '2022postEE': false
         "2023": false
@@ -263,8 +263,8 @@ switches:
     do_jec:
         '2016preVFP': true
         '2016postVFP': true
-        '2017': true
-        '2018': true
+        '2017': false # User-requested stored NanoAOD jets for reference synchronization
+        '2018': false # Same as 2017
         '2022preEE': true
         '2022postEE': true
         "2023": true
@@ -374,7 +374,7 @@ switches:
     do_qgl_wgt: # NOTE: for nanoAODv15 Run2, it should be false for now
         '2016preVFP': true
         '2016postVFP': true
-        '2017': true
+        '2017': false # No legacy tagger transfer for NanoAODv15
         '2018': false
         # Run-3: Recommendation does not exists, yet.
         '2022preEE': false
@@ -386,7 +386,17 @@ switches:
         '2016preVFP': false
         '2016postVFP': false
         '2017': false
-        '2018': true
+        '2018': false
+        '2022preEE': false
+        '2022postEE': false
+        '2023': false
+        '2023BPix': false
+        '2024': false
+    do_xzz_electron_sf: # official UL electron reco and WP90 ID SFs, file set in electron.yaml
+        '2016preVFP': false
+        '2016postVFP': false
+        '2017': false
+        '2018': false
         '2022preEE': false
         '2022postEE': false
         '2023': false
@@ -395,7 +405,7 @@ switches:
     do_btag_wgt: # NOTE: for nanoAODv15 Run2, it should be false for now
         '2016preVFP': true
         '2016postVFP': true
-        '2017': true
+        '2017': false # No legacy tagger transfer for NanoAODv15
         '2018': false
         '2022preEE': false
         '2022postEE': false

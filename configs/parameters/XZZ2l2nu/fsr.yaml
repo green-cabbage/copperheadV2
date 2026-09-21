@@ -1,0 +1,43 @@
+# Keep flavor prescriptions independent; their conditions need not stay equal.
+xzz_fsr:
+    "2017":
+        muon:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+        electron:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+    "2016preVFP":
+        muon:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+        electron:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+    "2016postVFP":
+        muon:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+        electron:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+    "2018":
+        muon:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+        electron:
+            photon_pt_min: 2.0
+            photon_abs_eta_max: 2.4
+            photon_rel_iso_max: 0.8
+    "2022preEE": null
+    "2022postEE": null
+    "2023": null
+    "2023BPix": null
+    "2024": null

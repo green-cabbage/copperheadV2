@@ -56,8 +56,8 @@ from src.corrections.jet import (
     getJecDataTag,
 )
 from src.corrections.muon_sf import add_muon_sfs_correctionlib
-from src.corrections.electron_sf import electron_sfs_2018
-from src.corrections.xzz_btag_sf import central_event_weights
+from src.corrections.electron_sf import electron_sfs
+from src.corrections.xzz_btag_sf import central_event_weights, efficiency_map
 from src.corrections.rochester import apply_KitMuScaleRe_Run3, apply_roccor
 
 coffea_nanoevent = TypeVar('coffea_nanoevent')
@@ -744,14 +744,15 @@ class EventProcessor(processor.ProcessorABC):
             and self.config['switches'].get('do_xzz_btag_sf', False)
         )
         if do_xzz_btag_sf:
-            if (str(year), NanoAODv) != ('2018', 15):
-                raise ValueError('XZZ UParT SF supports only 2018 NanoAODv15')
+            if NanoAODv != 15:
+                raise ValueError('XZZ UParT SF supports only NanoAODv15')
             if self.config['switches']['do_btag_wgt']:
                 raise ValueError('Legacy b-tag weights and XZZ UParT SF cannot both be enabled')
             if self.config['xzz_btag_sf']['convention'] not in ('nearest', 'supported'):
                 raise ValueError('Choose an explicit XZZ b-tag convention: nearest or supported')
-            if self.config['btag_medium_wp_UParT'] != 0.161:
-                raise ValueError('XZZ UParT efficiency map requires medium WP 0.161')
+            maps = efficiency_map(self.config['xzz_btag_sf']['efficiency_file'])
+            if (str(maps['year']), maps['threshold']) != (str(year), self.config['btag_medium_wp_UParT']):
+                raise ValueError('XZZ UParT efficiency map must match the configured year and medium WP')
         self.config['NanoAODv'] = NanoAODv
         is_mc = events.metadata['is_mc']
         is_xzz_run2 = self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
@@ -826,23 +827,20 @@ class EventProcessor(processor.ProcessorABC):
                 logger.warning(f"HLT path '{HLT_str}' not in NanoAOD fields, skipping")
                 continue
             HLT_filter = HLT_filter | ak.fill_none(events.HLT[HLT_str], value=False)
-        if is_xzz_run2 and year == "2018":
-            # HZZ update slides 5/7: single-lepton triggers. Assign overlapping
-            # data to SingleMuon first, then electron-trigger-only EGamma events.
+        if is_xzz_run2 and not is_mc:
+            # SingleMuon-first priority for the SingleMuon + electron primary
+            # dataset pair (SingleElectron, or EGamma in 2018) listed together in
+            # the dataset yaml. MC and SingleMuon keep the full configured HLT OR;
+            # the electron dataset only adds events no configured single-muon path fired.
             single_mu = ak.zeros_like(event_filter, dtype="bool")
-            for path in ("IsoMu20", "IsoMu24", "IsoMu27"):
-                if path in hlt_fields:
+            for path in self.config["hlt"]:
+                if path.startswith(("IsoMu", "IsoTkMu")) and path in hlt_fields:
                     single_mu = single_mu | ak.fill_none(events.HLT[path], False)
-            single_el = ak.fill_none(events.HLT.Ele32_WPTight_Gsf, False)
-            HLT_filter = single_mu | single_el
-            if not is_mc:
-                filename = events.metadata.get("filename", "")
-                if "/SingleMuon/" in filename:
-                    HLT_filter = single_mu
-                elif "/EGamma/" in filename:
-                    HLT_filter = single_el & ~single_mu
-                else:
-                    raise ValueError(f"Unknown XZZ 2018 primary dataset: {filename}")
+            filename = events.metadata.get("filename", "")
+            if "/SingleElectron/" in filename or "/EGamma/" in filename:
+                HLT_filter = HLT_filter & ~single_mu # FIXME: is this due to double counting for single muon trigger events?
+            elif "/SingleMuon/" not in filename:
+                raise ValueError(f"Unknown XZZ Run 2 primary dataset: {filename}")
         self.selection.add("HLT_filter", HLT_filter)
         event_filter = event_filter & HLT_filter
 
@@ -969,7 +967,11 @@ class EventProcessor(processor.ProcessorABC):
         if do_fsr:
             logger.debug("doing fsr!")
             # applied_fsr = fsr_recovery(events)
-            applied_fsr = fsr_recoveryV1(events, xzz=is_xzz_run2)
+            fsr_config = self.config.get("xzz_fsr") if is_xzz_run2 else None
+            applied_fsr = fsr_recoveryV1(
+                events, xzz=is_xzz_run2,
+                xzz_cuts=fsr_config["muon"] if fsr_config is not None else None,
+            ) # FIXME: where's the fsr_config for electrons? is it not needed?
             events["Muon", "pfRelIso04_all"] = events.Muon.iso_fsr
 
         # apply iso portion of base muon selection, now that possible FSR photons are integrated into pfRelIso04_all as specified in line 360 of AN-19-124
@@ -1085,6 +1087,9 @@ class EventProcessor(processor.ProcessorABC):
             events["Muon", "pt"] = events.Muon.pt_fsr
             events["Muon", "eta"] = events.Muon.eta_fsr
             events["Muon", "phi"] = events.Muon.phi_fsr
+            if is_xzz_run2: # FIXME: why not do this for electrons as well?
+                # Recover the full muon+photon four-vector, including its mass.
+                events["Muon", "mass"] = events.Muon.mass_fsr
         else:
             # if no fsr, just copy 'pt' to 'pt_fsr'
             applied_fsr = ak.zeros_like(events.Muon.pt, dtype="bool") # boolean array of Falses
@@ -1150,6 +1155,22 @@ class EventProcessor(processor.ProcessorABC):
                 (abs(events.Electron.dxy) < self.config["zz2l2nu_electron_dxy_cut"])
                 & (abs(events.Electron.dz) < self.config["zz2l2nu_electron_dz_cut"])
             )
+        apply_electron_fsr = (
+            is_xzz_run2 and do_fsr
+            and self.config.get("xzz_fsr") is not None
+        )
+        if apply_electron_fsr: # FIXME: integrate this with muon fsr. Ask agent why it put this code at this place, and not with muon code
+            from src.corrections.xzz_fsr import recover_electron_fsr
+
+            # ID and acceptance above use the original electron. Dressing does
+            # not change its Boolean WP90, impact parameters, or isolation ID.
+            recovered, electron_fsr_mask = recover_electron_fsr(
+                events.Electron, events.FsrPhoton, self.config["xzz_fsr"]["electron"]
+            )
+            for coordinate in ("pt", "eta", "phi", "mass"):
+                events["Electron", coordinate + "_raw"] = events.Electron[coordinate]
+                events["Electron", coordinate] = recovered[coordinate]
+            events["Electron", "fsr_recovered"] = electron_fsr_mask
         # self.selection.add("electron_pT", ak.any(events.Electron.pt > self.config["electron_pt_cut"], axis=1))
         # self.selection.add("electron_eta", ak.any(abs(events.Electron.eta) < self.config["electron_eta_cut"], axis=1))
         # self.selection.add("electron_id", ak.any(events.Electron[electron_id], axis=1))
@@ -1329,6 +1350,9 @@ class EventProcessor(processor.ProcessorABC):
 
         events = events[event_filter == True]
         muons = muons[event_filter == True]
+        if is_xzz_run2:
+            for coordinate in ("pt", "eta", "phi", "mass"):
+                muons = ak.with_field(muons, ak.values_astype(muons[coordinate], np.float64), coordinate) # FIXME: you can do this for hmumu as well
         nmuons = ak.to_packed(nmuons[event_filter == True])
 
         # Propagate channel flags through event filter
@@ -1349,6 +1373,11 @@ class EventProcessor(processor.ProcessorABC):
             # Keep pair construction and jet cleaning consistent with channel selection.
             electron_sel_filt = electron_selection[event_filter == True]
         electrons_sel = events.Electron[electron_sel_filt]
+        if is_xzz_run2:
+            for coordinate in ("pt", "eta", "phi", "mass"):
+                electrons_sel = ak.with_field(
+                    electrons_sel, ak.values_astype(electrons_sel[coordinate], np.float64), coordinate
+                ) # FIXME: do this with HMuMu as well, but add do_float64_op operation switch
         nelectrons_filt = ak.num(electrons_sel, axis=1)  # 0=mm, 1=em, 2=ee
 
         # em: leading selected electron (None for mm/ee)
@@ -1507,6 +1536,21 @@ class EventProcessor(processor.ProcessorABC):
         jets = ensure_event_axis(jets, len(events), "jet")
 
         PuppiMET = events.PuppiMET
+        raw_puppimet_pt, raw_puppimet_phi = PuppiMET.pt, PuppiMET.phi
+        apply_xzz_met_xy = ( # FIXME: turn this into switch inside switches.yaml
+            is_xzz_run2
+            and NanoAODv == 15
+            and self.config.get("xzz_met_xy") is not None
+        )
+        if apply_xzz_met_xy:
+            from src.corrections.xzz_met_xy import puppimet_xy
+
+            corrected_pt, corrected_phi = puppimet_xy(
+                raw_puppimet_pt, raw_puppimet_phi, events.PV.npvs, events.run,
+                is_mc=is_mc, config=self.config["xzz_met_xy"],
+            )
+            PuppiMET = ak.with_field(PuppiMET, corrected_pt, "pt")
+            PuppiMET = ak.with_field(PuppiMET, corrected_phi, "phi")
         if self.config["switches"].get("do_jet_veto_maps_filterJets", False):
             logger.info("Applying jet veto maps!")
             jets, PuppiMET = self.compute_jet_veto_jetfilter(events, jets, PuppiMET)
@@ -1781,8 +1825,10 @@ class EventProcessor(processor.ProcessorABC):
             )
             # do mu SF end -------------------------------------
 
-            if is_xzz_run2 and year == "2018" and NanoAODv == 15:
-                for name, sf in electron_sfs_2018(electrons_pt_sorted).items():
+            if (is_xzz_run2 and NanoAODv == 15 # FIXME: make electron SF unform within is_xzz_run2 with a switch: do_elec_SF or somethin llike that
+                    and self.config["switches"].get("do_xzz_electron_sf", False)):
+                for name, sf in electron_sfs(
+                        electrons_pt_sorted, self.config["xzz_electron_sf"]["file"], year).items():
                     weights.add(name, weight=sf["nom"], weightUp=sf["up"], weightDown=sf["down"])
 
             # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
@@ -2018,6 +2064,11 @@ class EventProcessor(processor.ProcessorABC):
             "PuppiMET_phi": PuppiMET.phi,
             "PuppiMET_sumEt": PuppiMET.sumEt,
         })
+        if apply_xzz_met_xy:
+            _add_block(out_dict, {
+                "PuppiMET_pt_raw": raw_puppimet_pt,
+                "PuppiMET_phi_raw": raw_puppimet_phi,
+            })
 
         if self.config.get("analysis") == "HMuMu":
             _add_block(out_dict, {"channel": ak.where(is_mm, 0, ak.where(is_em, 1, 2))})
@@ -2049,6 +2100,18 @@ class EventProcessor(processor.ProcessorABC):
             "el2_phi":    ak.fill_none(el2_ee.phi,    -999.0),
             "el2_charge": ak.fill_none(el2_ee.charge, 0),
         })
+        if apply_electron_fsr:
+            for coordinate in ("pt", "eta", "phi", "mass"):
+                out_dict["el1_" + coordinate + "_raw"] = ak.where(
+                    is_ee, ak.fill_none(el1_ee[coordinate + "_raw"], -999.0),
+                    ak.fill_none(el1[coordinate + "_raw"], -999.0),
+                )
+                out_dict["el2_" + coordinate + "_raw"] = ak.fill_none(el2_ee[coordinate + "_raw"], -999.0)
+            out_dict["el1_fsr_recovered"] = ak.where(
+                is_ee, ak.fill_none(el1_ee.fsr_recovered, False),
+                ak.fill_none(el1.fsr_recovered, False),
+            )
+            out_dict["el2_fsr_recovered"] = ak.fill_none(el2_ee.fsr_recovered, False)
 
         # FatJet block
         if do_getFatJet_vars:
@@ -2399,6 +2462,11 @@ class EventProcessor(processor.ProcessorABC):
                 dnn_year=dnn_year,
                 do_jet_horn_puid = self.config["switches"]["do_jet_horn_puid"],
                 electrons = electrons_sel,
+                analysis_met_phi = (
+                    PuppiMET.phi
+                    if self.config.get("analysis") == "XZZ2l2nu"
+                    and is_run2(year) and NanoAODv == 15 else None
+                ), # FIXME: find out why analysis_met_phi is necesary.
             )
 
             _add_block(out_dict, jet_loop_dict)
@@ -2813,6 +2881,7 @@ class EventProcessor(processor.ProcessorABC):
         dnn_year = None,
         do_jet_horn_puid = False,
         electrons = None,
+        analysis_met_phi = None,
     ):
         logger.debug(f'variation: {variation}')
         is_mc = events.metadata["is_mc"]
@@ -2854,13 +2923,17 @@ class EventProcessor(processor.ProcessorABC):
         # carries ~2 spurious jets and every jet-multiplicity category is meaningless.
         # Gated so analyses that veto electrons keep byte-identical Stage-1 output.
         if self.config["switches"].get("do_jet_electron_cleaning", False) and electrons is not None:
-            electrons_padded = ak.pad_none(electrons, 2)
+            electrons_padded = ak.pad_none(electrons, 2) # FIXME: ask agent for the motivation for this change
+            use_raw_electron_direction = (
+                self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
+                and "eta_raw" in electrons.fields and "phi_raw" in electrons.fields
+            )
             for i in range(2):
                 el_i = electrons_padded[:, i]
                 _, _, el_jet_dR = delta_r_V1(
-                    el_i[:, np.newaxis].eta,
+                    el_i[:, np.newaxis].eta_raw if use_raw_electron_direction else el_i[:, np.newaxis].eta,
                     jets.eta,
-                    el_i[:, np.newaxis].phi,
+                    el_i[:, np.newaxis].phi_raw if use_raw_electron_direction else el_i[:, np.newaxis].phi,
                     jets.phi,
                 )
                 matched_el_jet = ak.fill_none(el_jet_dR <= 0.4, value=False)
@@ -3102,6 +3175,13 @@ class EventProcessor(processor.ProcessorABC):
         jet1, jet2 = pair_dict["lead"]
 
         jet_loop_out_dict = {}
+        if variation == "nominal" and analysis_met_phi is not None: # FIXME: unify the input structure such that HMumu also calculates this (but hmumu stage2 won't use this)
+            # Use the same selected, cleaned jets as the saved jet multiplicity.
+            delta_phi = jets.phi - analysis_met_phi
+            separation = np.abs(np.arctan2(np.sin(delta_phi), np.cos(delta_phi)))
+            jet_loop_out_dict["min_delta_phi_jet_MET"] = ak.fill_none(
+                ak.min(separation, axis=1), np.pi
+            )
 
         save_four_jets_kinematics = self.config["switches"]["save_four_jets_kinematics"]
         if save_four_jets_kinematics:
@@ -3394,7 +3474,8 @@ class EventProcessor(processor.ProcessorABC):
                 and self.config.get('analysis') == 'XZZ2l2nu'
                 and self.config['switches'].get('do_xzz_btag_sf', False)):
             factors = central_event_weights(
-                btag_jets, dataset, self.config['xzz_btag_sf']['efficiency_file'])
+                btag_jets, dataset, self.config['xzz_btag_sf']['efficiency_file'],
+                self.config['xzz_btag_sf']['payload']) # FIXME: no idea what payload means here. maybe rename it
             for name, value in factors.items():
                 jet_loop_out_dict['btag_sf_' + name] = value
 

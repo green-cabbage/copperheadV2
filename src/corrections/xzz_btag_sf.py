@@ -1,4 +1,4 @@
-"""Fixed-WP UParT event weights for XZZ UL2018 NanoAODv15.
+"""Fixed-WP UParT event weights for XZZ UL NanoAODv15.
 
 Efficiencies must be derived from analysis MC before any b-tag selection,
 separately by process group and jet hadron flavor. The strict systematic
@@ -15,14 +15,11 @@ import correctionlib
 import numpy as np
 
 
-PAYLOAD = "/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv15/2026-06-18/btagging.json.gz"
-
-
-@lru_cache(maxsize=1)
-def _payload():
-    with gzip.open(PAYLOAD, "rt") as handle:
+@lru_cache(maxsize=4)
+def _payload(filename):
+    with gzip.open(filename, "rt") as handle:
         raw = json.load(handle)
-    return correctionlib.CorrectionSet.from_file(PAYLOAD), {
+    return correctionlib.CorrectionSet.from_file(filename), {
         item["name"]: item for item in raw["corrections"]
     }
 
@@ -54,7 +51,7 @@ def fixedwp_product(tagged, efficiency, scale_factor):
     return ak.prod(factors, axis=1)
 
 
-def u_part_event_weights(jets, efficiencies, *, analysis, year, nano_version):
+def u_part_event_weights(jets, efficiencies, *, analysis, nano_version, payload):
     """Return nominal and independent bc/light correlated/uncorrelated weights.
 
     ``jets`` are exactly the candidates queried by the medium b-tag veto,
@@ -63,8 +60,8 @@ def u_part_event_weights(jets, efficiencies, *, analysis, year, nano_version):
     validated extrapolation prescription. Production central conventions use
     ``central_event_weights`` below and remain explicitly distinguished.
     """
-    if (analysis, str(year), nano_version) != ("XZZ2l2nu", "2018", 15):
-        raise ValueError("UParT fixed-WP implementation is restricted to XZZ2l2nu 2018 v15")
+    if (analysis, nano_version) != ("XZZ2l2nu", 15):
+        raise ValueError("UParT fixed-WP implementation is restricted to XZZ2l2nu v15")
     counts = ak.to_numpy(ak.num(jets))
     if not np.array_equal(counts, ak.to_numpy(ak.num(efficiencies))):
         raise ValueError("Efficiency map lookup does not match candidate jet layout")
@@ -76,7 +73,7 @@ def u_part_event_weights(jets, efficiencies, *, analysis, year, nano_version):
         raise ValueError("Nonfinite b-tag candidate coordinates or discriminator")
     if not np.isin(flavor, [0, 4, 5]).all():
         raise ValueError("Expected NanoAOD hadron flavors 0, 4 or 5")
-    corrections, raw = _payload()
+    corrections, raw = _payload(payload)
     for flav in [0, 4, 5]:
         name = "UParTAK4_light" if flav == 0 else "UParTAK4_comb"
         elo, ehi, plo, phi = _domain(raw, name, flav)
@@ -107,22 +104,26 @@ def u_part_event_weights(jets, efficiencies, *, analysis, year, nano_version):
 def _efficiency_map(path):
     with open(path) as handle:
         result = json.load(handle)
-    if (result['analysis'], str(result['year']), result['nano_version']) != ('XZZ2l2nu', '2018', 15):
-        raise ValueError('Efficiency map must describe XZZ2l2nu 2018 NanoAODv15')
+    if (result['analysis'], result['nano_version']) != ('XZZ2l2nu', 15):
+        raise ValueError('Efficiency map must describe XZZ2l2nu NanoAODv15')
     return result
 
 
-def central_event_weights(jets, dataset, efficiency_file):
+def efficiency_map(efficiency_file):
+    path = Path(efficiency_file)
+    if not path.is_absolute():
+        path = Path(__file__).resolve().parents[2] / path
+    return _efficiency_map(str(path))
+
+
+def central_event_weights(jets, dataset, efficiency_file, payload):
     """Central supported/nearest conventions used by the full 2018 validation.
 
     Uses every veto candidate, including untagged jets. The original jet pT
     selects efficiency bins; only the SF coordinates are clipped for nearest.
     Unknown samples fail rather than silently borrowing another process map.
     """
-    path = Path(efficiency_file)
-    if not path.is_absolute():
-        path = Path(__file__).resolve().parents[2] / path
-    maps = _efficiency_map(str(path))
+    maps = efficiency_map(efficiency_file)
     if dataset not in maps['datasets']:
         raise ValueError(f'No XZZ b-tag efficiency group configured for dataset {dataset!r}')
     group = maps['datasets'][dataset]
@@ -137,7 +138,7 @@ def central_event_weights(jets, dataset, efficiency_file):
     efficiency = np.full(len(pt), np.nan)
     sf = {name: np.ones(len(pt)) for name in ['supported', 'nearest']}
     outside = np.zeros(len(pt), dtype=bool)
-    corrections, raw = _payload()
+    corrections, raw = _payload(payload)
     if maps['threshold'] != corrections['UParTAK4_wp_values'].evaluate('M'):
         raise ValueError('Efficiency map and calibration working points differ')
     for flav in [0, 4, 5]:

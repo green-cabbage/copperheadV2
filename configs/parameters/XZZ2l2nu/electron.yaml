@@ -50,3 +50,17 @@ electron_id_v12: # The keys are same for v12 and v15
   "2023": mvaIso_WP90
   "2023BPix": mvaIso_WP90
   "2024": mvaIso_WP90
+xzz_electron_sf: # used when switches.do_xzz_electron_sf is true
+  2016preVFP:
+    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2016preVFP_UL/electron.json.gz
+  2016postVFP:
+    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2016postVFP_UL/electron.json.gz
+  '2017':
+    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2017_UL/electron.json.gz
+  '2018':
+    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2018_UL/electron.json.gz
+  2022preEE: null
+  2022postEE: null
+  "2023": null
+  "2023BPix": null
+  "2024": null
