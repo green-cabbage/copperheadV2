@@ -136,6 +136,10 @@ def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
     df["Muon", "mass_fsr"] = ak.where(mask, mass, df.Muon.mass)
     # df["Muon", "mass_fsr"] = df.Muon.mass
     df["Muon", "iso_fsr"] = ak.where(mask, iso, df.Muon.pfRelIso04_all)
+    if xzz:
+        # Apply the same subtraction/normalization to XZZ's selection cone.
+        iso03 = (df.Muon.pfRelIso03_all * df.Muon.pt - df.Muon.matched_fsrPhoton.pt) / pt
+        df["Muon", "iso03_fsr"] = ak.where(mask, iso03, df.Muon.pfRelIso03_all)
     fsr_event_mask = ak.sum(mask, axis=1) > 0
     # print(f"fsr_event_mask cases being true : {ak.sum(fsr_event_mask).compute()}")
     # print(f"df.Muon.phi_fsr : {df.Muon.phi_fsr.compute()}")

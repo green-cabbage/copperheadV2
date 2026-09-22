@@ -973,8 +973,11 @@ class EventProcessor(processor.ProcessorABC):
                 xzz_cuts=fsr_config["muon"] if fsr_config is not None else None,
             ) # FIXME: where's the fsr_config for electrons? is it not needed?
             events["Muon", "pfRelIso04_all"] = events.Muon.iso_fsr
+            if is_xzz_run2:
+                events["Muon", "pfRelIso03_all_raw"] = events.Muon.pfRelIso03_all
+                events["Muon", "pfRelIso03_all"] = events.Muon.iso03_fsr
 
-        # apply iso portion of base muon selection, now that possible FSR photons are integrated into pfRelIso04_all as specified in line 360 of AN-19-124
+        # Apply isolation selection after FSR subtraction in the selected cone.
         muon_iso = events.Muon.pfRelIso03_all if is_xzz_run2 else events.Muon.pfRelIso04_all
         muon_selection = muon_selection & (muon_iso < self.config["muon_iso_cut"])
         self.selection.add("muon_iso", ak.any(muon_iso < self.config["muon_iso_cut"], axis=1))
@@ -1144,10 +1147,21 @@ class EventProcessor(processor.ProcessorABC):
         logger.debug(f"electron_id: {electron_id}")
         # Veto events with good quality electrons; VBF and ggH categories need zero electrons
         ecal_gap = (1.44 < abs(events.Electron.eta)) & (1.57 > abs(events.Electron.eta)) # Source: line 460 of https://cms.cern.ch/iCMS/analysisadmin/cadilines?id=1973&ancode=EGM-17-001&tp=an&line=EGM-17-001
+        # DIAGNOSTIC ONLY. The reference skim applies no electron identification: its
+        # SetElectrons declaration (H4LTools.h:126) and call site (H4LCppModule.py:655)
+        # transpose mvaIso_WP90 and pdgId, so passTight_BDT_Id() reads pdgId and is true for
+        # every electron. Setting do_electron_id false reproduces that defect so the two can
+        # be compared like for like. It must never be false for physics output.
+        apply_electron_id = self.config["switches"].get("do_electron_id", True)
+        if not apply_electron_id:
+            logger.warning(
+                "do_electron_id is FALSE: electron identification is disabled. This reproduces a "
+                "known defect in the reference skim and is valid only for synchronization studies."
+            )
         electron_selection = (
             (events.Electron.pt > self.config["electron_pt_cut"])
             & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
-            & events.Electron[electron_id]
+            & (events.Electron[electron_id] if apply_electron_id else True)
             & (True if is_xzz_run2 else ~ecal_gap)
         )
         if is_xzz_run2:
@@ -1189,6 +1203,37 @@ class EventProcessor(processor.ProcessorABC):
 
         nelectrons = ak.sum(electron_selection, axis=1)
         electron_veto = (nelectrons == 0)
+
+        # Jet-cleaning lepton set. The reference cleans jets against `tighteleforjetidx` /
+        # `tightmuforjetidx` (H4LTools.cc:482-487): loose leptons passing tight ID only, with
+        # no isolation and no impact-parameter cut, and not capped at two. Ours cleans against
+        # the two selected, isolated leptons. Switchable so the two can be measured against
+        # each other; `selected` is the established behaviour.
+        clean_electrons = clean_muons = None
+        _clean_set = self.config["switches"].get("jet_cleaning_lepton_set", "selected")
+        if is_xzz_run2 and _clean_set in ("loose_id", "loose_no_id"):
+            # 'loose_no_id' is the reference's EFFECTIVE cleaning list. Its tighteleforjetidx is
+            # looseEle intersected with passTight_BDT_Id(), but that predicate reads Electron_pdgId
+            # (see do_electron_id / iteration 035 BUG-1) and is true for every electron, so the
+            # reference cleans against every loose electron regardless of identification. Choosing
+            # this reproduces that jet-side behaviour WITHOUT disabling our electron ID in the
+            # event selection, which 'do_electron_id: false' would.
+            loose_ele = (
+                (events.Electron.pt > self.config["electron_pt_cut"])
+                & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
+                & ~ecal_gap
+            )
+            if _clean_set == "loose_id":
+                loose_ele = loose_ele & (events.Electron[electron_id] if apply_electron_id else True)
+            loose_mu = (
+                (events.Muon.pt > self.config["muon_pt_cut"])
+                & (abs(events.Muon.eta) < self.config["muon_eta_cut"])
+                & events.Muon.mediumId
+                & (events.Muon.isGlobal | events.Muon.isTracker | events.Muon.isPFcand)
+                & events.Muon.isPFcand
+            )
+            clean_electrons = events.Electron[loose_ele]
+            clean_muons = events.Muon[loose_mu]
         # logger.debug(f"nelectrons: {nelectrons[debug_mask_2].compute()}")
         # logger.debug(f"electron_veto: {electron_veto[debug_mask_2].compute()}")
         self.selection.add("electron_veto", electron_veto)
@@ -1379,6 +1424,9 @@ class EventProcessor(processor.ProcessorABC):
                     electrons_sel, ak.values_astype(electrons_sel[coordinate], np.float64), coordinate
                 ) # FIXME: do this with HMuMu as well, but add do_float64_op operation switch
         nelectrons_filt = ak.num(electrons_sel, axis=1)  # 0=mm, 1=em, 2=ee
+        if clean_electrons is not None:
+            clean_electrons = clean_electrons[event_filter == True]
+            clean_muons = clean_muons[event_filter == True]
 
         # em: leading selected electron (None for mm/ee)
         el1 = ak.firsts(electrons_sel)
@@ -2462,6 +2510,8 @@ class EventProcessor(processor.ProcessorABC):
                 dnn_year=dnn_year,
                 do_jet_horn_puid = self.config["switches"]["do_jet_horn_puid"],
                 electrons = electrons_sel,
+                clean_electrons = clean_electrons,
+                clean_muons = clean_muons,
                 analysis_met_phi = (
                     PuppiMET.phi
                     if self.config.get("analysis") == "XZZ2l2nu"
@@ -2881,6 +2931,8 @@ class EventProcessor(processor.ProcessorABC):
         dnn_year = None,
         do_jet_horn_puid = False,
         electrons = None,
+        clean_electrons = None,
+        clean_muons = None,
         analysis_met_phi = None,
     ):
         logger.debug(f'variation: {variation}')
@@ -2896,25 +2948,42 @@ class EventProcessor(processor.ProcessorABC):
 
         # apply clean jet selection
         # AN-19-124 line 465: "Jets are also cleaned w.r.t. the selected muon candidates by requiring a geometrical separation of ∆R ( j, µ ) > 0.4"
-        _, _, mu1_jet_dR = delta_r_V1(
-            mu1[:, np.newaxis].eta_raw,
-            jets.eta,
-            mu1[:, np.newaxis].phi_raw,
-            jets.phi,
-        )
-        matched_mu1_jet = mu1_jet_dR <= 0.4
-        matched_mu1_jet = ak.fill_none(matched_mu1_jet, value=False)
+        # The cone comes from min_dr_mu_jet so it can be varied per year without a literal here;
+        # the reference skim uses 0.5 (H4LTools.cc:243-258).
+        clean_dr = self.config["min_dr_mu_jet"]
 
-        _, _, mu2_jet_dR = delta_r_V1(
-            mu2[:, np.newaxis].eta_raw,
-            jets.eta,
-            mu2[:, np.newaxis].phi_raw,
-            jets.phi,
-        )
-        matched_mu2_jet = mu2_jet_dR <= 0.4
-        matched_mu2_jet = ak.fill_none(matched_mu2_jet, value=False)
+        # `clean_muons` / `clean_electrons`, when supplied, are the reference-style cleaning
+        # collections: loose leptons passing tight ID, uncapped. They replace the two selected
+        # leptons entirely rather than adding to them.
+        if clean_muons is not None:
+            # Reduce over the INNERMOST axis (leptons), so an event with no cleaning lepton
+            # still yields one entry per jet. Reducing over axis=1 instead collapses the jet
+            # axis to length zero for those events and the masks no longer broadcast.
+            _, _, cm_dR = delta_r_V1(
+                clean_muons.eta[:, np.newaxis, :], jets.eta[:, :, np.newaxis],
+                clean_muons.phi[:, np.newaxis, :], jets.phi[:, :, np.newaxis],
+            )
+            matched_lepton_pass = ak.fill_none(ak.any(cm_dR <= clean_dr, axis=2), value=False)
+        else:
+            _, _, mu1_jet_dR = delta_r_V1(
+                mu1[:, np.newaxis].eta_raw,
+                jets.eta,
+                mu1[:, np.newaxis].phi_raw,
+                jets.phi,
+            )
+            matched_mu1_jet = mu1_jet_dR <= clean_dr
+            matched_mu1_jet = ak.fill_none(matched_mu1_jet, value=False)
 
-        matched_lepton_pass = matched_mu1_jet | matched_mu2_jet
+            _, _, mu2_jet_dR = delta_r_V1(
+                mu2[:, np.newaxis].eta_raw,
+                jets.eta,
+                mu2[:, np.newaxis].phi_raw,
+                jets.phi,
+            )
+            matched_mu2_jet = mu2_jet_dR <= clean_dr
+            matched_mu2_jet = ak.fill_none(matched_mu2_jet, value=False)
+
+            matched_lepton_pass = matched_mu1_jet | matched_mu2_jet
 
         # Same cross-cleaning against the selected electrons. The NanoAOD Jet collection is
         # not lepton-cleaned: AK4 clustering runs over PF candidates, so a selected electron
@@ -2922,7 +2991,15 @@ class EventProcessor(processor.ProcessorABC):
         # have Jet_nElectrons >= 1 and a median chEmEF of 0.91). Without this an ee event
         # carries ~2 spurious jets and every jet-multiplicity category is meaningless.
         # Gated so analyses that veto electrons keep byte-identical Stage-1 output.
-        if self.config["switches"].get("do_jet_electron_cleaning", False) and electrons is not None:
+        if clean_electrons is not None:
+            _, _, ce_dR = delta_r_V1(
+                clean_electrons.eta[:, np.newaxis, :], jets.eta[:, :, np.newaxis],
+                clean_electrons.phi[:, np.newaxis, :], jets.phi[:, :, np.newaxis],
+            )
+            matched_lepton_pass = matched_lepton_pass | ak.fill_none(
+                ak.any(ce_dR <= clean_dr, axis=2), value=False
+            )
+        elif self.config["switches"].get("do_jet_electron_cleaning", False) and electrons is not None:
             electrons_padded = ak.pad_none(electrons, 2) # FIXME: ask agent for the motivation for this change
             use_raw_electron_direction = (
                 self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
@@ -2936,7 +3013,7 @@ class EventProcessor(processor.ProcessorABC):
                     el_i[:, np.newaxis].phi_raw if use_raw_electron_direction else el_i[:, np.newaxis].phi,
                     jets.phi,
                 )
-                matched_el_jet = ak.fill_none(el_jet_dR <= 0.4, value=False)
+                matched_el_jet = ak.fill_none(el_jet_dR <= clean_dr, value=False)
                 matched_lepton_pass = matched_lepton_pass | matched_el_jet
 
         clean = ~matched_lepton_pass

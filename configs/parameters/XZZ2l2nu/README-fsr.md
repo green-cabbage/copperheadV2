@@ -9,8 +9,8 @@ This is consistent for both muons and electrons. Both flavors use NanoAOD `fsrPh
 Electron WP90 ID, pT/eta acceptance and impact-parameter cuts are evaluated before FSR recovery; isolation ID is not recomputed. Saved electron four momenta include accepted photons; original coordinates and whether recovery occurred are also saved. Jet cleaning uses original lepton four momenta.
 
 For XZZ Run 2:
-- **Muon selection:** does **not** use FSR-updated isolation; it uses unchanged `pfRelIso03_all < 0.25`.
-- **Electron selection:** also does **not** use FSR-updated isolation. It uses the original Boolean WP90 ID, which is not recomputed after recovery.
+- **Muon selection:** with FSR enabled, uses corrected `pfRelIso03_all < 0.25`. As in HMuMu, isolation is `(original isolation × muon pT before recovery − photon pT) / recovered muon pT`, applied to XZZ's cone 0.3. Muons without an accepted photon keep their original isolation.
+- **Electron selection:** does **not** use FSR-updated isolation. It uses the original Boolean WP90 ID, which is not recomputed after recovery.
 
 
 - **Muons:** adding the photon changes the combined muon–photon mass as well as pT, eta and phi. We save that recovered mass instead of keeping the original muon mass, which should be fine because this is due to natural combining of muon four momenta and photon four momenta.
