@@ -631,15 +631,18 @@ def applyHemVeto(jets, run, event_num, config, is_mc: bool, NanoAODv: int):
         jetId_bits = ak.where(tight, jetId_bits | 2, jetId_bits)
         jetId_bits = ak.where(tightLepVeto, jetId_bits | 4, jetId_bits)
 
-    puId = get_puId(jets)
-    # jet puid selection
-    jet_puid_wps = {
-            "loose": (puId >= 4) | (jets.pt >= 50),
-            "medium": (puId >= 6) | (jets.pt >= 50),
-            "tight": (puId >= 7) | (jets.pt >= 50),
-    }
-    jet_puid2use = config["jet_puid"]
-    pass_jet_puid = jet_puid_wps[jet_puid2use]# the recommendation doesn't specify, so use PU Id that we apply
+    # Share the jet_loop PUID switch; disable it for Run2 nanoAODv15 PUPPI jets, which have no PU Id.
+    if config["switches"]["do_jet_PUID_cut"]:
+        puId = get_puId(jets)
+        jet_puid_wps = {
+                "loose": (puId >= 4) | (jets.pt >= 50),
+                "medium": (puId >= 6) | (jets.pt >= 50),
+                "tight": (puId >= 7) | (jets.pt >= 50),
+        }
+        jet_puid2use = config["jet_puid"]
+        pass_jet_puid = jet_puid_wps[jet_puid2use]# the recommendation doesn't specify, so use PU Id that we apply
+    else:
+        pass_jet_puid = ak.ones_like(jets.pt, dtype="bool")
 
 
 
