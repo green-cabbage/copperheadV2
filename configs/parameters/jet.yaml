@@ -241,7 +241,7 @@ HemVeto_ratio: # ratio of HemVeto applicable run / total nevents for 2018UL
     "2017": 0.0
     "2018": 
         nanoAODv12: 0.20323368588796498
-        nanoAODv15: 0.03875116238048959
+        nanoAODv15: 0.19871508300981577
     2016_RERECO: 0.0
     "2017_RERECO": 0.0
     "2018_RERECO": 0.0
