@@ -21,6 +21,19 @@ btag_sf_json:
     "2023": data/POG/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2023_Summer23/btagging.json.gz
     2023BPix: data/POG/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2023_Summer23BPix/btagging.json.gz
     "2024": data/POG/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-08-19/btagging.json.gz
+btag_sf_json_UParT:
+    2016preVFP: /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2016preVFP-UL-NanoAODv15/2026-06-18/btagging.json.gz
+    2016postVFP: /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2016postVFP-UL-NanoAODv15/2026-06-18/btagging.json.gz
+    "2017": /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2017-UL-NanoAODv15/2026-06-18/btagging.json.gz
+    "2018": /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv15/2026-06-18/btagging.json.gz
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    "2022preEE": null
+    "2022postEE": null
+    "2023": null
+    "2023BPix": null
+    "2024": data/POG/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-08-19/btagging.json.gz
 btag_sf_csv:
     2016preVFP: data/btag/DeepCSV_2016LegacySF_V1.csv
     2016postVFP: data/btag/DeepCSV_2016LegacySF_V1.csv

@@ -3228,6 +3228,9 @@ class EventProcessor(processor.ProcessorABC):
                     BTagScaleFactor.RESHAPE,
                     "iterativefit,iterativefit,iterativefit",
                 )
+            elif NanoAODv == 15 and hasattr(btag_jets, "btagUParTAK4B"):
+                btag_json = get_corrset(self.config["btag_sf_json_UParT"])
+                logger.info("Using UParTAK4 fixed-WP Loose/Medium SFs with b/c and light uncertainties")
             else:
                 btag_file = get_corrset(self.config["btag_sf_json"])
                 available_keys = list(btag_file.keys())
@@ -3252,7 +3255,7 @@ class EventProcessor(processor.ProcessorABC):
             # --- Btag weights variations --- #
             for name, bs in btag_syst.items():
                 logger.info(f"{name} value: {bs}")
-                weights.add(f"btag_{name}",
+                weights.add(name if name.startswith("btagSF") else f"btag_{name}",
                     weight=ak.ones_like(btag_wgt),
                     weightUp=bs["up"],
                     weightDown=bs["down"]

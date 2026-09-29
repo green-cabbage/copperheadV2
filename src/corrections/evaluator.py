@@ -9,6 +9,7 @@ from omegaconf import OmegaConf
 from modules.classify_year import is_run2
 from modules.correctionlib_file_cache import get_corrset
 from modules.utils import logger
+from src.corrections.btag_UparT import btag_weights_LM
 
 
 def get_corr_inputs(input_dict, corr_obj):
@@ -1356,6 +1357,14 @@ def btag_weights_jsonKeepDim(processor, systs, jets, btag_eta_val, weights, bjet
     """
     btag_jet_selection = abs(jets.eta) < btag_eta_val
     jets = ak.to_packed(jets[btag_jet_selection])
+    if processor.config.get("NanoAODv") == 15 and hasattr(jets, "btagUParTAK4B"):
+        return btag_weights_LM(
+            btag_json, jets,
+            processor.config["btag_loose_wp_UParT"],
+            processor.config["btag_medium_wp_UParT"],
+            processor.config["year"],
+        )
+
     jets["pt"] = ak.where((jets.pt > 1000), 1000, jets.pt) # clip max pt
 
     if hasattr(jets, "btagDeepB"):
