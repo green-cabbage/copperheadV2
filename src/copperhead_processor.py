@@ -3255,7 +3255,7 @@ class EventProcessor(processor.ProcessorABC):
             # --- Btag weights variations --- #
             for name, bs in btag_syst.items():
                 logger.info(f"{name} value: {bs}")
-                weights.add(name if name.startswith("btagSF") else f"btag_{name}",
+                weights.add(f"btag_{name}",
                     weight=ak.ones_like(btag_wgt),
                     weightUp=bs["up"],
                     weightDown=bs["down"]

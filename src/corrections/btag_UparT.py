@@ -110,7 +110,7 @@ def btag_weights_LM(btvjson, jets, WP_L, WP_M, era):
     # Share correlated sources across eras; keep pre/postVFP statistical sources separate.
     for flavour in ("bc", "light"):
         for correlation in ("correlated", "uncorrelated"):
-            name = f"btagSF{flavour}_{'correlated' if correlation == 'correlated' else era}"
+            name = f"{flavour}_{'correlated' if correlation == 'correlated' else era}"
             btag_syst[name] = {}
             for direction in ("up", "down"):
                 label = f"{direction}_{correlation}"
