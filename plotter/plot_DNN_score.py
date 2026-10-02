@@ -11,6 +11,7 @@ from collections import OrderedDict
 from modules.selection import filterRegion
 import glob
 import pickle
+from pathlib import Path
 
 import logging
 from modules.utils import logger
@@ -24,7 +25,144 @@ sys.path.insert(0, parent_dir)
 from src.lib.histogram.plotting import plotDataMC_compare
 
 
-def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_path, region_name, category, do_logscale=True, binning=None, lumi="", status="Private"):
+def load_systematics_config(path):
+    """Read explicit nuisance labels; no inference or silent missing variations."""
+    class UniqueKeyLoader(yaml.SafeLoader):
+        pass
+
+    def unique_mapping(loader, node):
+        mapping = {}
+        for key_node, value_node in node.value:
+            key = loader.construct_object(key_node)
+            if not isinstance(key, str) or key in mapping:
+                raise ValueError(f"Non-string or duplicate YAML key: {key!r}")
+            mapping[key] = loader.construct_object(value_node)
+        return mapping
+
+    UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
+    with open(path) as stream:
+        config = yaml.load(stream, Loader=UniqueKeyLoader)
+    return validate_systematics_config(config)
+
+
+def validate_systematics_config(config):
+    """Return the legacy list or an ordered mapping of named uncertainty groups."""
+    if not isinstance(config, dict) or not config:
+        raise ValueError("Systematics YAML must be a nonempty mapping of group names to lists")
+    if "systematics" in config and set(config) != {"systematics"}:
+        raise ValueError("Do not mix the legacy 'systematics' list with named groups")
+    for name, entries in config.items():
+        if not isinstance(name, str) or not name.strip() or not isinstance(entries, list):
+            raise ValueError("Each systematic group needs a nonempty name and a list")
+    entries = [entry for group in config.values() for entry in group]
+    names, labels = set(), set()
+    for entry in entries:
+        if not isinstance(entry, dict) or not {"name", "up", "down"} <= entry.keys():
+            raise ValueError("Each systematic needs name, up, and down")
+        if set(entry) - {"name", "up", "down", "groups"}:
+            raise ValueError(f"Unknown systematic configuration keys: {entry}")
+        if any(not isinstance(entry[key], str) or not entry[key].strip()
+               for key in ("name", "up", "down")):
+            raise ValueError("Systematic names and variation labels must be nonempty strings")
+        if entry["name"] in names:
+            raise ValueError(f"Duplicate systematic: {entry['name']}")
+        pair = {entry["up"], entry["down"]}
+        if len(pair) != 2 or "nominal" in pair or pair & labels:
+            raise ValueError(f"Duplicate or nominal variation labels: {entry['name']}")
+        names.add(entry["name"])
+        labels.update(pair)
+        if "groups" in entry:
+            groups = entry["groups"]
+            if (not isinstance(groups, list) or not groups
+                    or any(not isinstance(group, str) or not group for group in groups)
+                    or len(set(groups)) != len(groups)):
+                raise ValueError(f"groups must be a nonempty list of unique group names: {entry['name']}")
+    return config["systematics"] if "systematics" in config else config
+
+
+def build_prediction_uncertainty(hist_groups, systematics, region, category,
+                                 background_groups, scope="background", bands="stat+syst"):
+    """Sum each nuisance coherently across samples, then combine envelopes."""
+    if scope not in {"background", "background+signal"}:
+        raise ValueError(f"Unknown uncertainty scope: {scope}")
+    if bands not in {"stat+syst", "syst-only", "both"}:
+        raise ValueError(f"Unknown uncertainty bands: {bands}")
+    named_groups = systematics if isinstance(systematics, dict) else None
+    # Validate programmatic calls as well as YAML input, including cross-group reuse.
+    validate_systematics_config(named_groups if named_groups is not None else {"systematics": systematics})
+    if named_groups is not None:
+        systematics = [entry for entries in named_groups.values() for entry in entries]
+    group_for_nuisance = {entry["name"]: name for name, entries in (named_groups or {}).items()
+                          for entry in entries}
+    known_groups = set(hist_groups) - {"data"}
+    for nuisance in systematics:
+        unknown = set(nuisance.get("groups", [])) - known_groups
+        if unknown:
+            raise ValueError(f"{nuisance['name']}: unknown MC groups {sorted(unknown)}")
+    selected = list(background_groups)
+    if scope == "background+signal":
+        selected += [group for group in ("ggH", "VBF") if group in hist_groups]
+    edges = None
+
+    def project(histogram, variation, value, context):
+        nonlocal edges
+        if variation not in histogram.axes["variation"]:
+            raise ValueError(f"{context}: missing variation {variation!r}")
+        projected = histogram[{"region": region, "channel": category,
+                               "variation": variation, "val_sumw2": value}]
+        if projected.ndim != 1:
+            raise ValueError(f"{context}: expected one score axis")
+        sample_edges = np.asarray(projected.axes[0].edges)
+        if edges is None:
+            edges = sample_edges.copy()
+        elif not np.array_equal(edges, sample_edges):
+            raise ValueError(f"{context}: incompatible score binning")
+        values = np.asarray(projected.values(), dtype=float)
+        if not np.all(np.isfinite(values)) or (value == "sumw2" and np.any(values < 0)):
+            raise ValueError(f"{context}: invalid {value} values")
+        return values
+
+    samples = []
+    for group in selected:
+        for index, histogram in enumerate(hist_groups[group]):
+            context = f"{group} sample {index}"
+            nominal = project(histogram, "nominal", "value", context)
+            variance = project(histogram, "nominal", "sumw2", context)
+            samples.append((group, histogram, nominal, variance, context))
+    if not samples:
+        raise ValueError("No MC histograms for the selected uncertainty scope")
+    prediction = np.sum([sample[2] for sample in samples], axis=0)
+    stat_variance = np.sum([sample[3] for sample in samples], axis=0)
+    up_squared = np.zeros_like(prediction)
+    down_squared = np.zeros_like(prediction)
+    group_squared = {name: {"up": np.zeros_like(prediction), "down": np.zeros_like(prediction)}
+                     for name in (named_groups or {})}
+    for nuisance in systematics:
+        shifts = []
+        for direction in ("up", "down"):
+            shift = np.zeros_like(prediction)
+            for group, histogram, nominal, _, context in samples:
+                if "groups" not in nuisance or group in nuisance["groups"]:
+                    shifted = project(histogram, nuisance[direction], "value",
+                                      f"{nuisance['name']}, {context}")
+                    shift += shifted - nominal
+            shifts.append(shift)
+        up = np.maximum.reduce([shifts[0], shifts[1], np.zeros_like(prediction)]) ** 2
+        down = np.maximum.reduce([-shifts[0], -shifts[1], np.zeros_like(prediction)]) ** 2
+        up_squared += up
+        down_squared += down
+        if named_groups is not None:
+            group_squared[group_for_nuisance[nuisance["name"]]]["up"] += up
+            group_squared[group_for_nuisance[nuisance["name"]]]["down"] += down
+    return {"nominal": prediction, "sumw2": stat_variance,
+            "syst_up": np.sqrt(up_squared), "syst_down": np.sqrt(down_squared),
+            "binning": edges, "scope": scope, "bands": bands,
+            "systematic_groups": {name: {"syst_up": np.sqrt(values["up"]),
+                                         "syst_down": np.sqrt(values["down"])}
+                                  for name, values in group_squared.items()}}
+
+
+def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_path, region_name, category, do_logscale=True, binning=None, lumi="", status="Private", systematics=None, uncertainty_scope="background", uncertainty_bands="stat+syst", systematics_config=None):
     """
     hist_dict_bySampleGroup : dictionary with sample group (data, DY, VV) as keys and list of relecant hep histograms as values
     """
@@ -82,7 +220,7 @@ def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_p
         logger.info(f"to_project_setting: {to_project_setting}")
         logger.info(f"hist_val {group_name}: {hist_val}")
         logger.info(f"hist_w2 {group_name}: {hist_w2}")
-        if np.sum(hist_val)==0:
+        if np.sum(hist_val)==0 and systematics is None:
             logger.info(f"Empty hist from {group_name}. Skipping!")
             continue
         hist_dict = {
@@ -123,6 +261,30 @@ def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_p
     if binning is None:
         binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
 
+    uncertainty_kwargs = {}
+    if systematics is not None:
+        # Snapshot the configuration before rendering; preserve source comments too.
+        config_document = systematics if isinstance(systematics, dict) else {"systematics": systematics}
+        config_bytes = (Path(systematics_config).read_bytes() if systematics_config
+                        else yaml.safe_dump(config_document, sort_keys=False).encode())
+        if yaml.safe_load(config_bytes) != config_document:
+            raise ValueError("Systematics YAML changed since loading; refusing to save a mismatched copy")
+        uncertainty = build_prediction_uncertainty(
+            hist_dict_bySampleGroup, systematics, region_name, category,
+            list(bkg_MC_dict), uncertainty_scope, uncertainty_bands,
+        )
+        if not np.array_equal(np.asarray(binning), uncertainty["binning"]):
+            raise ValueError("Plot binning does not match stage2 histogram binning")
+        suffix = f"_unc_{uncertainty_scope}_{uncertainty_bands}"
+        full_save_fname = full_save_fname.replace(".pdf", f"{suffix}.pdf")
+        uncertainty_kwargs = {
+            "prediction_uncertainty": uncertainty,
+            "extra_header_lines": [
+                f"Uncertainty scope: {uncertainty_scope}; bands: {uncertainty_bands}",
+                "Systematics: " + json.dumps(systematics),
+            ],
+        }
+
     plotDataMC_compare(
         binning,
         data_dict,
@@ -136,7 +298,10 @@ def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_p
         status = status,
         log_scale = do_logscale,
         plot_ratio_range = "default", # options: "default" or "auto" or list with format [0.8, 1.2]
+        **uncertainty_kwargs,
     )
+    if systematics is not None:
+        Path(full_save_fname.replace(".pdf", "_log.yaml")).write_bytes(config_bytes)
     plotDataMC_compare(
         binning,
         data_dict,
@@ -150,7 +315,10 @@ def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_p
         status = status,
         log_scale = False,
         plot_ratio_range = "default", # options: "default" or "auto" or list with format [0.8, 1.2]
+        **uncertainty_kwargs,
     )
+    if systematics is not None:
+        Path(full_save_fname).with_suffix(".yaml").write_bytes(config_bytes)
 
 
 def getPickledHist_byFname(pickled_filelist, load_path):
@@ -314,7 +482,13 @@ if __name__ == "__main__":
         type=lambda x: getattr(logging, x),
         help="Configure the logging level.",
     )    
+    parser.add_argument("--systematics-config", help="YAML list of nuisance up/down labels")
+    parser.add_argument("--uncertainty-scope", choices=["background", "background+signal"], default="background")
+    parser.add_argument("--uncertainty-bands", choices=["stat+syst", "syst-only", "both"], default="stat+syst")
     args = parser.parse_args()
+    if not args.systematics_config and (args.uncertainty_scope != "background" or args.uncertainty_bands != "stat+syst"):
+        parser.error("Nondefault uncertainty options require --systematics-config")
+    systematics = load_systematics_config(args.systematics_config) if args.systematics_config else None
 
     logger.setLevel(args.log_level)
     
@@ -381,4 +555,8 @@ if __name__ == "__main__":
         binning=binning,
         lumi=lumi_val,
         status="Private",
+        systematics=systematics,
+        uncertainty_scope=args.uncertainty_scope,
+        uncertainty_bands=args.uncertainty_bands,
+        systematics_config=args.systematics_config,
     )

@@ -47,6 +47,38 @@ def plotDataMC_compare_hda(
     ):
     raise ValueError
 
+def draw_prediction_uncertainty(ax, binning, uncertainty, ratio=False, log_scale=False):
+    """Draw binwise total errors and/or unfilled systematic-only boundaries."""
+    nominal = uncertainty["nominal"]
+    valid = nominal > 0 if ratio else np.ones_like(nominal, dtype=bool)
+
+    def bounds(down, up):
+        low, high = nominal - down, nominal + up
+        if ratio:
+            low = np.divide(low, nominal, out=np.full_like(low, np.nan), where=valid)
+            high = np.divide(high, nominal, out=np.full_like(high, np.nan), where=valid)
+        elif log_scale:
+            floor = ax.get_ylim()[0]
+            low, high = np.maximum(low, floor), np.maximum(high, floor)
+        return np.r_[low, low[-1]], np.r_[high, high[-1]]
+
+    if uncertainty["bands"] in {"stat+syst", "both"}:
+        low, high = bounds(np.sqrt(uncertainty["sumw2"] + uncertainty["syst_down"] ** 2),
+                           np.sqrt(uncertainty["sumw2"] + uncertainty["syst_up"] ** 2))
+        ax.fill_between(binning, low, high, step="post", color="grey", alpha=0.35,
+                        linewidth=0, label="total MC unc (stat+syst)")
+    if uncertainty["bands"] in {"syst-only", "both"}:
+        groups = uncertainty.get("systematic_groups")
+        components = groups or {"MC syst. unc.": uncertainty}
+        colors = plt.get_cmap("tab10")
+        for index, (name, component) in enumerate(components.items()):
+            low, high = bounds(component["syst_down"], component["syst_up"])
+            color = colors(index % 10) if groups else "black"
+            ax.step(binning, low, where="post", color=color, linestyle="--",
+                    linewidth=1.5, label=name)
+            ax.step(binning, high, where="post", color=color, linestyle="--", linewidth=1.5)
+
+
 def plotDataMC_compare(
     binning: np.array,
     data: Dict[str, np.array],
@@ -62,6 +94,8 @@ def plotDataMC_compare(
     lumi = "",
     status = "Private Work",
     CenterOfMass = 13,
+    extra_header_lines = None,
+    prediction_uncertainty = None,
     ):
     """
     Takes in
@@ -72,6 +106,12 @@ def plotDataMC_compare(
         the keys are ordered such that bkg_MC sample with the least yield iterate first
     save_full_path: full path INCLUDING the filename to save the plot at
     sig_MC_dict: dictionary with same structure as bkg_MC_dict. if an empty dictionary, plot only Data and MC
+    extra_header_lines: optional list of strings written at the top of the .txt companion
+        file, before the binning line. Records what produced the plot when that is not
+        recoverable from the numbers -- e.g. the MVA score cutoff a category was split
+        at, which otherwise survives only in the directory name.
+    prediction_uncertainty: optional nominal/sumw2/syst_up/syst_down arrays plus
+        scope and bands. Its nominal prediction also defines the ratio denominator.
     """
     plt.style.use(hep.style.CMS)
     petroff10 = ListedColormap(["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"])
@@ -122,7 +162,7 @@ def plotDataMC_compare(
         stack=True,
         histtype='fill',
         label=bkg_mc_sample_names,
-        sort='label_r',
+        # sort='label_r',
         ax=ax_main,
         color=colors[:color_idx],
     )
@@ -157,6 +197,9 @@ def plotDataMC_compare(
     # -----------------------------------------
     # Data/MC ratio
     # -----------------------------------------
+    if prediction_uncertainty is not None:
+        draw_prediction_uncertainty(ax_main, binning, prediction_uncertainty, log_scale=log_scale)
+
     if plot_ratio:
         # compute Data/MC ratio
         # get bkg_MC errors
@@ -165,6 +208,10 @@ def plotDataMC_compare(
         # initialize ratio histogram and fill in values
         data_hist = ak.to_numpy(data_hist)
         bkg_mc_sum = np.sum(np.asarray(bkg_MC_hist_l), axis=0)
+        if prediction_uncertainty is not None:
+            bkg_mc_sum = prediction_uncertainty["nominal"]
+            bkg_mc_w2_sum = prediction_uncertainty["sumw2"]
+            bkg_mc_err = np.sqrt(bkg_mc_w2_sum)
         # instead of zero like we should fill it with NaNs to avoid misleading points at zero. NaNs will not be plotted
         ratio_hist = np.full_like(data_hist, np.nan, dtype=float)
 
@@ -182,6 +229,17 @@ def plotDataMC_compare(
 
         ratio_err = np.zeros_like(rel_unc_ratio)
         ratio_err[both_pos] = rel_unc_ratio[both_pos] * ratio_hist[both_pos]
+        if prediction_uncertainty is not None:
+            # First-order propagation for Data / prediction. A prediction-up
+            # fluctuation lowers the ratio, so asymmetric directions reverse.
+            syst_ratio_down = np.zeros_like(ratio_err)
+            syst_ratio_up = np.zeros_like(ratio_err)
+            syst_ratio_down[both_pos] = (ratio_hist[both_pos]
+                * prediction_uncertainty["syst_up"][both_pos] / bkg_mc_sum[both_pos])
+            syst_ratio_up[both_pos] = (ratio_hist[both_pos]
+                * prediction_uncertainty["syst_down"][both_pos] / bkg_mc_sum[both_pos])
+            ratio_err = np.stack([np.hypot(ratio_err, syst_ratio_down),
+                                  np.hypot(ratio_err, syst_ratio_up)])
         # logger.debug(f"plotDataMC compare ratio_err: {ratio_err}")
 
         hep.histplot(ratio_hist,
@@ -194,7 +252,9 @@ def plotDataMC_compare(
         den = bkg_mc_sum
         den_sumw2 = bkg_mc_w2_sum
 
-        if np.sum(den) > 0:
+        if prediction_uncertainty is not None:
+            draw_prediction_uncertainty(ax_ratio, binning, prediction_uncertainty, ratio=True)
+        elif np.sum(den) > 0:
             unity = np.ones_like(den, dtype=float)
             w2 = np.zeros_like(den, dtype=float)
 
@@ -229,6 +289,8 @@ def plotDataMC_compare(
         ax_ratio.axhline(0.6, color='gray', linestyle='--')
         ax_ratio.set_xlabel(x_title)
         ax_ratio.set_ylabel('Data / MC')
+        if prediction_uncertainty is not None:
+            ax_ratio.set_ylabel('Data / (B+S)' if prediction_uncertainty["scope"] == "background+signal" else 'Data / B')
         ax_ratio.set_xlim(binning[0], binning[-1])
 
         finite = np.isfinite(ratio_hist)
@@ -312,7 +374,7 @@ def plotDataMC_compare(
             # Text placement
             if log_scale:
                 y_pos = 0.93 - idx * 0.07
-                x_pos = 0.35
+                x_pos = 0.02
             else:
                 y_pos = 0.45 - idx * 0.07
                 x_pos = 0.95
@@ -327,8 +389,9 @@ def plotDataMC_compare(
                 x_pos,
                 y_pos,
                 text_val,
-                ha="right",
+                ha="left" if log_scale else "right",
                 va="center",
+                fontsize=15,
                 transform=ax_main.transAxes,
             )
     logger.debug("Finished computing separation power for signal samples.")
@@ -336,7 +399,8 @@ def plotDataMC_compare(
     # -----------------------------------------
     # Legend, title, etc +  save figure
     # -----------------------------------------
-    ax_main.legend(loc="best", ncol=2)
+    ax_main.legend(loc="upper right", ncol=2, fontsize=18,
+                   labelspacing=0.3, columnspacing=1.0, handlelength=1.5)
     if title != "":
         ax_main.set_title(title)
     # save figure, we assume that the directory exists
@@ -353,6 +417,16 @@ def plotDataMC_compare(
     with open(save_full_path.replace(".pdf", ".txt"), "w") as f:
         # record the exact bin edges used, so the yields below can be traced back
         # to (and the binning re-used from) the histogram that produced them
+        #
+        # SCOPE: the per-sample numbers written here are SUMS over all bins, and the bin
+        # edges above are what ties them to a binning -- this file deliberately stays a
+        # human-readable summary, not a data format. Anything needing PER-BIN contents
+        # (channel-closure checks, refitting, rebinning) should read the pickled
+        # hist.Hist objects that plotter/validation_plotter_unified.dump_sub_pass_hists
+        # writes to <save_path>/_hists/ during the same pass; those are the same
+        # histograms these sums come from.
+        for line in (extra_header_lines or []):
+            f.write(f"{line}\n")
         f.write(f"Binning ({len(bin_edges) - 1} bins): ")
         f.write("[" + ", ".join(f"{edge:.6g}" for edge in bin_edges) + "]\n")
         f.write(f"Data: {np.sum(data_hist)}\n")

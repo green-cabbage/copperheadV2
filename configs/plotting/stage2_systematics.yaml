@@ -1,0 +1,9 @@
+# Example selection, not a complete physics uncertainty model.
+# Labels must exist on every applicable input histogram's variation axis.
+# Use systematics: [] for a statistics-only grey band (zero syst-only width).
+systematics:
+  - name: pileup
+    up: wgt_pu_up
+    down: wgt_pu_down
+    # Optional plotting groups; omit to apply to all MC in the selected scope.
+    # groups: [DY, DYVBF, Top, Ewk, VV, VVV, ggH, VBF]
