@@ -27,6 +27,32 @@ bash run_analysis_pipeline.sh -m 2p -y 2018 -l YOUR_LABEL -o YOUR_POSTFIX
 - Choose a fresh output directory to retain earlier plots.
 - Without a configuration, the plotter uses its original filenames and statistical bands.
 
+## Choose the observable
+
+The bands are not specific to the DNN score. One reserved key picks the observable:
+
+```yaml
+variable: dimuon_mass   # omit this key to plot the DNN score
+pdf:
+  - name: pdf_unc
+    type: pdf_hessian
+```
+
+| Step | DNN score (default) | Kinematic variable |
+|---|---|---|
+| Fill | `run_analysis_pipeline.sh -m 2` | same, with `STAGE2_HIST_VARIABLE=dimuon_mass` |
+| Histogram dir | `stage2_histograms/score_<label>_<postfix>/` | `stage2_histograms/dimuon_mass_<label>_<postfix>/` |
+| Binning | `configs/MVA/VBF/dnn_binning.yaml` | `binning_linspace` in [plot_settings_vbfCat_MVA_input.json](../src/lib/histogram/plot_settings_vbfCat_MVA_input.json) |
+
+- Stage2 and the plotter read the edges from that one json entry, so the plotter's binning check cannot disagree.
+- The variable must be a column in the compacted stage-1 parquets and have a `binning_linspace` entry.
+- `-m 2p` needs no new option: the plotter swaps the `score_` directory prefix for the variable itself.
+- Kinematic mode evaluates no DNN, so no trained model, scaler or feature list has to be present.
+- It also **skips the h-sidebands 125 GeV mass pin**, which exists only so sideband events are
+  scored at the signal mass hypothesis and would otherwise pile every sideband event into one bin.
+- Blinding is unchanged: `Reg_h-peak` (115-135 GeV) has its data zeroed, so a 110-150 GeV mass plot
+  shows data only in the 110-115 and 135-150 GeV sidebands.
+
 ## Select systematic groups
 
 Use named groups to draw separate colored dashed boundaries:
@@ -51,6 +77,39 @@ muon_roch:
 - The legacy `systematics: [...]` format remains supported and draws one black systematic boundary pair.
 - Do not mix `systematics:` with named groups. `systematics: []` selects zero systematic error.
 - The supplied [example YAML](../configs/plotting/stage2_systematics.yaml) contains pileup only.
+
+## PDF and alpha_s
+
+These three estimators read the per-member weight columns stage1 writes
+(`wgt_pdfMemberHessEig0NN_up`, `wgt_pdfAlphaS101_up`, `wgt_pdfAlphaS102_up`)
+instead of an explicit `up`/`down` pair, so the entry carries `type` and no labels:
+
+```yaml
+pdf:
+  - name: pdf_unc
+    type: pdf_hessian
+alpha_s:
+  - name: alpha_s_unc
+    type: alpha_s
+```
+
+| `type` | Estimator per bin | Reference |
+|---|---|---|
+| `pdf_hessian` | `sqrt( sum_k (F_k - F_0)^2 )` over the 100 eigenvector members | arXiv:2203.05506 Eq. (6.5) |
+| `alpha_s` | `(F(0.120) - F(0.116)) / 2` | PDF4LHC15 Eqs. (27)-(28) |
+| `pdf_alpha_s` | `sqrt(pdf^2 + alpha_s^2)` | PDF4LHC15 Eq. (28) |
+
+- Ready-made files: [split](../configs/plotting/stage2_systematics_pdf_alphas.yaml),
+  [comparison](../configs/plotting/stage2_systematics_pdf_alphas_compare.yaml).
+- `pdf_hessian` plus `alpha_s` equals one `pdf_alpha_s`, exactly as `split_pdf_alpha_s` does in stage3.
+- All three are symmetric: the up and down errors are equal by construction.
+- They are **not** normalized to the nominal yield, because `wgt_pdf_unc_*` is not in the stage3 `shape_only` list.
+- Unlike stage3 the downward band is not floored at zero; the log panel clips at the axis floor instead.
+- `groups:` works as for any nuisance, so per-process decorrelation (DY, ggH, VBF) is one entry each.
+- Repeating one estimator over the same MC groups is rejected; a combined entry beside its own components only warns, since that is the comparison plot.
+- Every selected sample must carry all 100 members and both alpha_s members, or the plot fails rather than quietly shrinking the band.
+- The grey total double counts when `pdf_alpha_s` sits beside `pdf_hessian`/`alpha_s`; read the dashed boundaries there.
+- Constants live beside the code in `plotter/plot_DNN_score.py` and mirror `stage3/make_templates.py`.
 
 ## Plot options
 

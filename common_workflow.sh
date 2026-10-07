@@ -335,6 +335,9 @@ build_stage2_cmd() {
     if [[ "${with_variations}" != "1" ]]; then
         cmd+=(--no_variations)
     fi
+    if [[ -n "${STAGE2_HIST_VARIABLE:-}" ]]; then
+        cmd+=(--hist_variable "${STAGE2_HIST_VARIABLE}")
+    fi
     if [[ "${do_vbf_filter_study}" == "1" ]]; then
         cmd+=(--vbf_filter_study)
     fi
@@ -363,6 +366,18 @@ build_stage2_plot_cmd() {
         --mva_name "${mva_name}"
         --log-level DEBUG
     )
+    if [[ -n "${STAGE2_PLOT_SAVE_PATH:-}" ]]; then
+        cmd+=(--save_path "${STAGE2_PLOT_SAVE_PATH}")
+    fi
+    if [[ -n "${STAGE2_SYSTEMATICS_CONFIG:-}" ]]; then
+        cmd+=(--systematics-config "${STAGE2_SYSTEMATICS_CONFIG}")
+    fi
+    if [[ -n "${STAGE2_UNCERTAINTY_SCOPE:-}" ]]; then
+        cmd+=(--uncertainty-scope "${STAGE2_UNCERTAINTY_SCOPE}")
+    fi
+    if [[ -n "${STAGE2_UNCERTAINTY_BANDS:-}" ]]; then
+        cmd+=(--uncertainty-bands "${STAGE2_UNCERTAINTY_BANDS}")
+    fi
     if [[ "${do_vbf_filter_study}" == "1" ]]; then
         cmd+=(--vbf_filter_study)
     fi
@@ -436,11 +451,17 @@ run_mode_from_nul_timed() {
 
 run_zpt_fit() {
     local year="$1"
-    local dy_sample="IncDY_aMCatNLO_PySR07MayV2"
+    # Output-directory tag for this derivation run (NOT the physical DY sample,
+    # which is resolved from configs/samples/samples.yaml per year). Override
+    # with ZPT_DY_SAMPLE for a non-Run3-aMCatNLO derivation, e.g. Run2 MiNNLO.
+    local dy_sample="${ZPT_DY_SAMPLE:-IncDY_aMCatNLO_PySR07MayV2}"
     # local dy_sample="IncDY_aMCatNLO_PySR07MayV2_ShapeNormOnly"
+    # A full derivation needs all three jet bins; the global -n default is "0"
+    # because it is shared with the DNN workflow, so do not inherit it here.
+    local -a zpt_njets=(${ZPT_NJET:-0 1 2})
     local -a cmd0=(python src/copperhead/zpt_rewgt/derive/save_SF_rootFiles.py -l "${label}" -y "${year}" --input_path "${save_path}" -dy_sample "${dy_sample}")
-    local -a cmd1=(python src/copperhead/zpt_rewgt/derive/do_f_test.py -l "${label}" -y "${year}" --dy_sample "${dy_sample}" --nbins "${nbin}" --njet "${njet}" --save_postfix "${save_postfix}" --debug)
-    local -a cmd2=(python src/copperhead/zpt_rewgt/derive/get_polyFit.py -l "${label}" -y "${year}" --dy_sample "${dy_sample}" --njet "${njet}" --save_postfix "${save_postfix}")
+    local -a cmd1=(python src/copperhead/zpt_rewgt/derive/do_f_test.py -l "${label}" -y "${year}" --dy_sample "${dy_sample}" --nbins "${nbin}" --njet "${zpt_njets[@]}" --save_postfix "${save_postfix}" --debug)
+    local -a cmd2=(python src/copperhead/zpt_rewgt/derive/get_polyFit.py -l "${label}" -y "${year}" --dy_sample "${dy_sample}" --njet "${zpt_njets[@]}" --save_postfix "${save_postfix}" --input_path "${save_path}")
 
     if [[ "${dask_gateway}" == "1" ]]; then
         cmd0+=(--use_gateway)

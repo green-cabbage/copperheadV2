@@ -63,3 +63,9 @@ quick_tests/
 # imported at module load by modules/selection.py, so it must be tracked
 # despite the blanket *.yaml ignore above.
 !configs/MVA/VBF/dnn_binning.yaml
+# Local staging dir for files to hand off (plots, reports); not part of the repo
+to_copy/
+!configs/plotting/stage2_systematics.yaml
+!configs/plotting/stage2_systematics_pdf_alphas.yaml
+!configs/plotting/stage2_systematics_pdf_alphas_compare.yaml
+!tests/test_stage2_systematic_bands.py

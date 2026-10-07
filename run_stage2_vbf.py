@@ -1,6 +1,7 @@
 import argparse
 import glob
 import itertools
+import json
 import logging
 import os
 import pickle
@@ -357,6 +358,8 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         model_paths,
         nfolds,
         score_name,
+        hist_variable=None,
+        hist_binning=None,
         no_variations=False,
         do_vbf_filter_study=False,
         divide_dy_by_year=None,
@@ -372,6 +375,10 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         self.model_paths = model_paths
         self.nfolds = nfolds
         self.score_name = score_name
+        # Kinematic mode: fill `hist_variable` straight from the event column over
+        # `hist_binning` and run no DNN at all. None means the DNN score.
+        self.hist_variable = hist_variable
+        self.hist_binning = selection.binning if hist_binning is None else hist_binning
         self.no_variations = no_variations
         self.do_vbf_filter_study = do_vbf_filter_study
         # Per-era `divide_dy_into_matched_jets`; one stage2 run can span several eras,
@@ -518,6 +525,37 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         return np.arctanh(clip_ak(dnn_score, 0.0, 0.999999))
 
 
+    def fill_hists(self, score_hists, region, variation, values, weights,
+                   divide_dy_sample, region_events):
+        """Fill value and sumw2 for one region/variation, split by DY jet category."""
+        fill_common = {
+            "region": region,
+            "channel": "vbf",
+            "variation": variation,
+            self.score_name: values,
+        }
+        if divide_dy_sample:
+            category_filters = dy_matched_jet_filters(region_events.gjj_mass)
+        else:
+            category_filters = {"hist": np.ones(len(values), dtype=bool)}
+
+        for histogram_category, category_filter in category_filters.items():
+            category_fill = {
+                **fill_common,
+                self.score_name: values[category_filter],
+            }
+            category_weights = weights[category_filter]
+            score_hists[histogram_category].fill(
+                **category_fill,
+                val_sumw2="value",
+                weight=category_weights,
+            )
+            score_hists[histogram_category].fill(
+                **category_fill,
+                val_sumw2="sumw2",
+                weight=category_weights * category_weights,
+            )
+
     def process(self, events):
         dataset_key = events.metadata["dataset"]
         sample_type = events.metadata.get("sample", dataset_key)
@@ -571,7 +609,7 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
                 .StrCat(["vbf"], name="channel")
                 .StrCat(["value", "sumw2"], name="val_sumw2")
                 .StrCat(variations, name="variation", growth=True)
-                .Var(selection.binning, name=self.score_name)
+                .Var(self.hist_binning, name=self.score_name)
                 .Double()
             )
 
@@ -600,6 +638,8 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
             category= "vbf"
             sel_cols = columns_for_selection(category, variation, events.fields)
             needed_cols = set(sel_cols + [weight_variation])
+            if self.hist_variable is not None:
+                needed_cols.add(self.hist_variable)
             if self.use_transformer_vbf_channel:
                 needed_cols.add(TRANSFORMER_SCORE_FIELD)
 
@@ -668,9 +708,11 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
                     region_events[TRANSFORMER_SCORE_FIELD] >= transformer_threshold()
                 ]
             region_events = fillEventNans(region_events, category=category)
-            if region == "h-sidebands":
+            if region == "h-sidebands" and self.hist_variable is None:
                 # Pin nominal and shifted dimuon masses to 125 GeV so sideband DNN
                 # scoring uses the signal-region mass hypothesis for every variation.
+                # Skipped in kinematic mode: nothing is scored there, and pinning
+                # would pile every sideband event onto one mass bin.
                 dimuon_mass_fields = [
                     f for f in region_events.fields if f.startswith("dimuon_mass")
                 ]
@@ -682,6 +724,13 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
                     )
             if variation == "nominal":
                 selected_events += len(region_events)
+
+            if self.hist_variable is not None:
+                scores = ak.to_numpy(ak.materialize(region_events[self.hist_variable]))
+                weights = ak.to_numpy(ak.materialize(region_events[weight_variation]))
+                self.fill_hists(score_hists, region, variation, scores, weights,
+                                divide_dy_sample, region_events)
+                continue
 
             # Score caching method.
             selection_key = "nominal" if variation.startswith("wgt") else variation
@@ -701,33 +750,8 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
                 scores = self.evaluate_scores(region_events, feature_variation, year)
                 score_cache[score_cache_key] = scores
             weights = ak.to_numpy(ak.materialize(region_events[weight_variation]))
-            fill_common = {
-                "region": region,
-                "channel": "vbf",
-                "variation": variation,
-                self.score_name: scores,
-            }
-            if divide_dy_sample:
-                category_filters = dy_matched_jet_filters(region_events.gjj_mass)
-            else:
-                category_filters = {"hist": np.ones(len(scores), dtype=bool)}
-
-            for histogram_category, category_filter in category_filters.items():
-                category_fill = {
-                    **fill_common,
-                    self.score_name: scores[category_filter],
-                }
-                category_weights = weights[category_filter]
-                score_hists[histogram_category].fill(
-                    **category_fill,
-                    val_sumw2="value",
-                    weight=category_weights,
-                )
-                score_hists[histogram_category].fill(
-                    **category_fill,
-                    val_sumw2="sumw2",
-                    weight=category_weights * category_weights,
-                )
+            self.fill_hists(score_hists, region, variation, scores, weights,
+                            divide_dy_sample, region_events)
 
         return {
             dataset_key: {
@@ -739,6 +763,10 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
 
     def postprocess(self, accumulator):
         return accumulator
+
+
+# Binning source for kinematic histograms, shared with plotter/plot_DNN_score.py.
+VBF_PLOT_SETTINGS = "src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
 
 
 def save_dnn_binning_config(dest_dir):
@@ -940,6 +968,18 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
+        "--hist_variable",
+        dest="hist_variable",
+        default=None,
+        help=(
+            "Fill this kinematic column (e.g. dimuon_mass) instead of the DNN score, "
+            "with the binning the vbf plot settings give it. The histograms land in "
+            "stage2_histograms/<variable>_<label>[_<postfix>]/ and plotter/plot_DNN_score.py "
+            "reads them when its systematics YAML names the same variable. No DNN runs, "
+            "and the h-sidebands 125 GeV mass pin is skipped, since both only serve scoring."
+        ),
+    )
+    parser.add_argument(
         "-nw",
         "--n_workers",
         dest="n_workers",
@@ -994,7 +1034,23 @@ if __name__ == "__main__":
     data_samples = args.data_samples
     logger.info(f"data_samples: {data_samples}")
 
-    histDirName = f"score_{args.label}" if args.save_postfix == "" else f"score_{args.label}_{args.save_postfix}"
+    # Kinematic histograms take their edges from the same vbf plot settings that
+    # plotter/plot_DNN_score.py reads, so the plot binning check cannot disagree.
+    hist_binning = None
+    if args.hist_variable:
+        with open(VBF_PLOT_SETTINGS, "r") as file:
+            variable_settings = json.load(file).get(args.hist_variable)
+        if not variable_settings or "binning_linspace" not in variable_settings:
+            raise ValueError(
+                f"{args.hist_variable} has no binning_linspace in {VBF_PLOT_SETTINGS}"
+            )
+        hist_binning = np.linspace(*variable_settings["binning_linspace"])
+        logger.info(
+            f"Filling {args.hist_variable} over {len(hist_binning) - 1} bins "
+            f"from {VBF_PLOT_SETTINGS}; no DNN will be evaluated."
+        )
+    hist_prefix = args.hist_variable or "score"
+    histDirName = f"{hist_prefix}_{args.label}" if args.save_postfix == "" else f"{hist_prefix}_{args.label}_{args.save_postfix}"
     if args.do_vbf_filter_study:
         histDirName = f"{histDirName}_vbf_filter_study"
     if args.no_variations:
@@ -1020,8 +1076,11 @@ if __name__ == "__main__":
         hist_save_path = base_path / "stage2_histograms" / histDirName / year
         os.makedirs(hist_save_path, exist_ok=True)
         logger.info(f"{year} histograms will be saved to: {hist_save_path}")
-        # keep the binning that produced these histograms alongside them
-        save_dnn_binning_config(hist_save_path)
+        # keep the binning that produced these histograms alongside them. The DNN
+        # binning config describes the score axis, so it is not written in
+        # kinematic mode, where the edges come from the vbf plot settings instead.
+        if args.hist_variable is None:
+            save_dnn_binning_config(hist_save_path)
 
         full_sample_dict = getStage1Samples(stage1_path, year, args.sample_config, data_samples=data_samples, sig_samples=sig_samples, bkg_samples=bkg_samples, do_vbf_filter_study=args.do_vbf_filter_study)
 
@@ -1036,24 +1095,31 @@ if __name__ == "__main__":
     feature_dir = model_trained_path
     nfolds = args.nfolds
 
+    # Kinematic mode evaluates no network, so no model, scaler or feature list is
+    # read: a dimuon-mass histogram must not depend on a trained DNN being present.
+    scoring = args.hist_variable is None
+
     missing = []
-    for fold in range(nfolds):
-        model_path = training_dir / f"fold{fold}" / "best_torchscript.pt"
-        scaler_path = model_trained_path / f"scalers_{fold}.npz"
-        if not model_path.is_file():
-            missing.append(f"missing model: {model_path}")
-        if not scaler_path.is_file():
-            missing.append(f"missing scaler: {scaler_path}")
+    if scoring:
+        for fold in range(nfolds):
+            model_path = training_dir / f"fold{fold}" / "best_torchscript.pt"
+            scaler_path = model_trained_path / f"scalers_{fold}.npz"
+            if not model_path.is_file():
+                missing.append(f"missing model: {model_path}")
+            if not scaler_path.is_file():
+                missing.append(f"missing scaler: {scaler_path}")
     if missing:
         raise FileNotFoundError("\n".join(missing))
 
-    with open(feature_dir / "training_features.pkl", "rb") as feature_file:
-        training_features = pickle.load(feature_file)
+    training_features = []
+    if scoring:
+        with open(feature_dir / "training_features.pkl", "rb") as feature_file:
+            training_features = pickle.load(feature_file)
     logger.info(f"len training_features: {len(training_features)}")
 
     scalers = []
     model_paths = []
-    for fold in range(nfolds):
+    for fold in range(nfolds if scoring else 0):
         scaler_path = model_trained_path / f"scalers_{fold}.npz"
         with np.load(scaler_path, allow_pickle=True) as scaler_file:
             features = [str(feature) for feature in scaler_file["features"]]
@@ -1120,7 +1186,9 @@ if __name__ == "__main__":
                 scalers=scalers,
                 model_paths=model_paths,
                 nfolds=nfolds,
-                score_name=f"score_{args.label}",
+                score_name=args.hist_variable or f"score_{args.label}",
+                hist_variable=args.hist_variable,
+                hist_binning=hist_binning,
                 no_variations=args.no_variations,
                 do_vbf_filter_study=args.do_vbf_filter_study,
                 divide_dy_by_year=stage2_switches["divide_dy_into_matched_jets"],

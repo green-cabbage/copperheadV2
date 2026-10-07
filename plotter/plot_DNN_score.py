@@ -24,6 +24,25 @@ sys.path.insert(0, parent_dir)
 # Now you can import your module
 from src.lib.histogram.plotting import plotDataMC_compare
 
+# PDF and alpha_s member weights written by stage1 (one histogram per member in
+# stage2). Kept in step with stage3/make_templates.py, which defines the same
+# constants but cannot be imported here because it pulls in ROOT.
+PDF_MEMBER_PREFIX = "wgt_pdfMemberHessEig"
+PDF_N_EIGENVECTOR_MEMBERS = 100
+PDF_UNC_COMBINATION = "hessian"  # "hessian" (divisor 1) or "rms" (divisor N-1)
+# LHEPdfWeight[101] (alpha_s = 0.116) and [102] (alpha_s = 0.120), in that order.
+PDF_ALPHA_S_MEMBERS = ("wgt_pdfAlphaS101_up", "wgt_pdfAlphaS102_up")
+ALPHA_S_UNC_SCALE = 1.0
+# Estimators built from those members instead of an explicit up/down label pair.
+MEMBER_ESTIMATORS = ("pdf_hessian", "alpha_s", "pdf_alpha_s")
+# Reserved scalar keys in the systematics YAML: settings, not nuisance groups.
+RESERVED_CONFIG_KEYS = ("variable",)
+# Plotted observable when the YAML names none. The stage-2 score histograms are
+# the only ones whose edges come from the DNN binning config rather than the
+# vbf plot settings, so this name also selects that path.
+DEFAULT_PLOT_VARIABLE = "DNN_score"
+VBF_PLOT_SETTINGS = "src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
+
 
 def load_systematics_config(path):
     """Read explicit nuisance labels; no inference or silent missing variations."""
@@ -42,7 +61,21 @@ def load_systematics_config(path):
     UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
     with open(path) as stream:
         config = yaml.load(stream, Loader=UniqueKeyLoader)
-    return validate_systematics_config(config)
+    return split_config_options(config)
+
+
+def split_config_options(config):
+    """Separate the reserved settings from the nuisance groups: (groups, options)."""
+    if not isinstance(config, dict) or not config:
+        raise ValueError("Systematics YAML must be a nonempty mapping")
+    options = {key: config[key] for key in RESERVED_CONFIG_KEYS if key in config}
+    groups = {key: value for key, value in config.items()
+              if key not in RESERVED_CONFIG_KEYS}
+    variable = options.get("variable", DEFAULT_PLOT_VARIABLE)
+    if not isinstance(variable, str) or not variable.strip():
+        raise ValueError(f"'variable' must be a nonempty string, not {variable!r}")
+    options["variable"] = variable
+    return validate_systematics_config(groups), options
 
 
 def validate_systematics_config(config):
@@ -55,22 +88,40 @@ def validate_systematics_config(config):
         if not isinstance(name, str) or not name.strip() or not isinstance(entries, list):
             raise ValueError("Each systematic group needs a nonempty name and a list")
     entries = [entry for group in config.values() for entry in group]
-    names, labels = set(), set()
+    names, labels, estimators = set(), set(), set()
     for entry in entries:
-        if not isinstance(entry, dict) or not {"name", "up", "down"} <= entry.keys():
-            raise ValueError("Each systematic needs name, up, and down")
-        if set(entry) - {"name", "up", "down", "groups"}:
+        if not isinstance(entry, dict) or "name" not in entry:
+            raise ValueError("Each systematic needs a name")
+        if set(entry) - {"name", "up", "down", "groups", "type"}:
             raise ValueError(f"Unknown systematic configuration keys: {entry}")
+        kind = entry.get("type", "updown")
+        if kind not in ("updown",) + MEMBER_ESTIMATORS:
+            raise ValueError(f"{entry['name']}: unknown systematic type {kind!r}")
+        # A member estimator reads fixed weight columns, so an up/down pair here
+        # would be silently ignored rather than applied.
+        if kind == "updown":
+            if not {"up", "down"} <= entry.keys():
+                raise ValueError("Each systematic needs name, up, and down")
+        elif entry.keys() & {"up", "down"}:
+            raise ValueError(f"{entry['name']}: '{kind}' reads member weights; drop up and down")
+        string_keys = ("name", "up", "down") if kind == "updown" else ("name",)
         if any(not isinstance(entry[key], str) or not entry[key].strip()
-               for key in ("name", "up", "down")):
+               for key in string_keys):
             raise ValueError("Systematic names and variation labels must be nonempty strings")
         if entry["name"] in names:
             raise ValueError(f"Duplicate systematic: {entry['name']}")
-        pair = {entry["up"], entry["down"]}
-        if len(pair) != 2 or "nominal" in pair or pair & labels:
-            raise ValueError(f"Duplicate or nominal variation labels: {entry['name']}")
         names.add(entry["name"])
-        labels.update(pair)
+        if kind == "updown":
+            pair = {entry["up"], entry["down"]}
+            if len(pair) != 2 or "nominal" in pair or pair & labels:
+                raise ValueError(f"Duplicate or nominal variation labels: {entry['name']}")
+            labels.update(pair)
+        else:
+            # Repeating one estimator over the same MC groups would count it twice.
+            estimator = (kind, tuple(entry.get("groups", ())))
+            if estimator in estimators:
+                raise ValueError(f"Duplicate {kind} over the same MC groups: {entry['name']}")
+            estimators.add(estimator)
         if "groups" in entry:
             groups = entry["groups"]
             if (not isinstance(groups, list) or not groups
@@ -99,6 +150,17 @@ def build_prediction_uncertainty(hist_groups, systematics, region, category,
         unknown = set(nuisance.get("groups", [])) - known_groups
         if unknown:
             raise ValueError(f"{nuisance['name']}: unknown MC groups {sorted(unknown)}")
+    # A combined pdf_alpha_s beside its own components is a legitimate comparison
+    # plot, but its contribution to the grey total is then counted twice.
+    combined = {tuple(n.get("groups", ())) for n in systematics
+                if n.get("type") == "pdf_alpha_s"}
+    split = {tuple(n.get("groups", ())) for n in systematics
+             if n.get("type") in ("pdf_hessian", "alpha_s")}
+    if combined & split:
+        logger.warning(
+            "pdf_alpha_s overlaps pdf_hessian/alpha_s over the same MC groups: the grey "
+            "stat+syst total double counts them. Read the dashed boundaries, not the total."
+        )
     selected = list(background_groups)
     if scope == "background+signal":
         selected += [group for group in ("ggH", "VBF") if group in hist_groups]
@@ -137,18 +199,48 @@ def build_prediction_uncertainty(hist_groups, systematics, region, category,
     down_squared = np.zeros_like(prediction)
     group_squared = {name: {"up": np.zeros_like(prediction), "down": np.zeros_like(prediction)}
                      for name in (named_groups or {})}
+
+    def coherent_shift(nuisance, variation):
+        """One variation's deviation from nominal, summed over the affected samples."""
+        shift = np.zeros_like(prediction)
+        for group, histogram, nominal, _, context in samples:
+            if "groups" not in nuisance or group in nuisance["groups"]:
+                shifted = project(histogram, variation, "value",
+                                  f"{nuisance['name']}, {context}")
+                shift += shifted - nominal
+        return shift
+
+    def pdf_member_squared(nuisance):
+        """arXiv:2203.05506 Eq. (6.5): quadrature over the eigenvector members."""
+        if PDF_UNC_COMBINATION not in ("hessian", "rms"):
+            raise ValueError(f"PDF_UNC_COMBINATION is {PDF_UNC_COMBINATION!r}; "
+                             f"expected 'hessian' or 'rms'")
+        members = [f"{PDF_MEMBER_PREFIX}{member:03d}_up"
+                   for member in range(PDF_N_EIGENVECTOR_MEMBERS)]
+        divisor = 1.0 if PDF_UNC_COMBINATION == "hessian" else float(len(members) - 1)
+        return np.sum([coherent_shift(nuisance, member) ** 2 for member in members],
+                      axis=0) / divisor
+
+    def alpha_s_squared(nuisance):
+        """PDF4LHC15 Eqs. (27)-(28): half-difference of the 0.120 and 0.116 members."""
+        low, high = (coherent_shift(nuisance, member) for member in PDF_ALPHA_S_MEMBERS)
+        return (ALPHA_S_UNC_SCALE * (high - low) / 2.0) ** 2
+
     for nuisance in systematics:
-        shifts = []
-        for direction in ("up", "down"):
-            shift = np.zeros_like(prediction)
-            for group, histogram, nominal, _, context in samples:
-                if "groups" not in nuisance or group in nuisance["groups"]:
-                    shifted = project(histogram, nuisance[direction], "value",
-                                      f"{nuisance['name']}, {context}")
-                    shift += shifted - nominal
-            shifts.append(shift)
-        up = np.maximum.reduce([shifts[0], shifts[1], np.zeros_like(prediction)]) ** 2
-        down = np.maximum.reduce([-shifts[0], -shifts[1], np.zeros_like(prediction)]) ** 2
+        kind = nuisance.get("type", "updown")
+        if kind == "updown":
+            shifts = [coherent_shift(nuisance, nuisance[direction])
+                      for direction in ("up", "down")]
+            up = np.maximum.reduce([shifts[0], shifts[1], np.zeros_like(prediction)]) ** 2
+            down = np.maximum.reduce([-shifts[0], -shifts[1], np.zeros_like(prediction)]) ** 2
+        else:
+            # Member estimators are symmetric by construction, so up equals down.
+            squared = np.zeros_like(prediction)
+            if kind in ("pdf_hessian", "pdf_alpha_s"):
+                squared = squared + pdf_member_squared(nuisance)
+            if kind in ("alpha_s", "pdf_alpha_s"):
+                squared = squared + alpha_s_squared(nuisance)
+            up = down = squared
         up_squared += up
         down_squared += down
         if named_groups is not None:
@@ -267,7 +359,11 @@ def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_p
         config_document = systematics if isinstance(systematics, dict) else {"systematics": systematics}
         config_bytes = (Path(systematics_config).read_bytes() if systematics_config
                         else yaml.safe_dump(config_document, sort_keys=False).encode())
-        if yaml.safe_load(config_bytes) != config_document:
+        on_disk = yaml.safe_load(config_bytes)
+        if isinstance(on_disk, dict):
+            on_disk = {key: value for key, value in on_disk.items()
+                       if key not in RESERVED_CONFIG_KEYS}
+        if on_disk != config_document:
             raise ValueError("Systematics YAML changed since loading; refusing to save a mismatched copy")
         uncertainty = build_prediction_uncertainty(
             hist_dict_bySampleGroup, systematics, region_name, category,
@@ -488,7 +584,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if not args.systematics_config and (args.uncertainty_scope != "background" or args.uncertainty_bands != "stat+syst"):
         parser.error("Nondefault uncertainty options require --systematics-config")
-    systematics = load_systematics_config(args.systematics_config) if args.systematics_config else None
+    if args.systematics_config:
+        systematics, plot_options = load_systematics_config(args.systematics_config)
+    else:
+        systematics, plot_options = None, {"variable": DEFAULT_PLOT_VARIABLE}
+    plot_variable = plot_options["variable"]
 
     logger.setLevel(args.log_level)
     
@@ -500,10 +600,15 @@ if __name__ == "__main__":
     else:
         year_param = year
 
-    load_path = (
-        f"{args.load_path}"
-        f"/{year_param}"
-    )
+    load_root = Path(args.load_path)
+    if plot_variable != DEFAULT_PLOT_VARIABLE:
+        # run_stage2_vbf.py names the directory after the variable it filled, so
+        # `score_<label>_<postfix>` becomes `<variable>_<label>_<postfix>`.
+        if not load_root.name.startswith("score_"):
+            raise ValueError(f"Cannot derive the {plot_variable} histogram directory "
+                             f"from {load_root.name!r}; expected a 'score_' prefix")
+        load_root = load_root.with_name(plot_variable + load_root.name[len("score"):])
+    load_path = f"{load_root}/{year_param}"
 
     logger.info(f"Looking for pickled histograms in: {load_path}")
 
@@ -532,12 +637,19 @@ if __name__ == "__main__":
 
     lumi_val = lumi
 
-    plot_setting_fname = "src/lib/histogram/plot_settings_vbfCat_MVA_input.json"
-    with open(plot_setting_fname, "r") as file:
+    with open(VBF_PLOT_SETTINGS, "r") as file:
         plot_settings = json.load(file)
     # logger.info(f"plot_settings: {plot_settings}")
-    binning = selection.binning
-    var = "DNN_score"
+    var = plot_variable
+    if var == DEFAULT_PLOT_VARIABLE:
+        binning = selection.binning
+    else:
+        # Kinematic variables take their edges from the same vbf plot settings that
+        # stage2 filled them with, so `binning is None` lets plotStage2DNN_score
+        # build the linspace from that one source.
+        if var not in plot_settings:
+            raise ValueError(f"{var} is not configured in {VBF_PLOT_SETTINGS}")
+        binning = None
     region_name = args.region
     category = args.category
     output_tag = args.mva_name
