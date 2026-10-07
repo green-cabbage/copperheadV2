@@ -12,7 +12,9 @@ import ROOT
 # from modules.fit_functions import getBWZ_gamma, getBWZxBern, getLandxBern, getFEWZxBern
 import argparse
 import os
+import glob
 import copy
+import pyarrow.parquet as pq
 import pandas as pd
 # from modules.utils import getGOF_KS
 from src.corrections.jet import applyUpDown, getJecJerUncertainties
@@ -119,6 +121,58 @@ def combine_dfByYear(df_JecByYear, jec_unc_fields : list, years : list, nSubCats
     return out_df
     
 
+def loadEventsUnioned(load_path, fields2load, jec_unc_fields):
+    """
+    Load stage2 signal-MC parquets across one or more eras into a single array.
+
+    dak.from_parquet() over a multi-era glob unifies the ~1500-column schema of the first
+    file and leaves PlaceholderArrays for columns a later era lacks, which blows up on
+    compute() with "PlaceholderArray ... should never have been encountered". The eras
+    genuinely differ: each carries only its own era-decorrelated weights
+    (wgt_btag_bc_<era>_{up,down}, wgt_btag_light_<era>_{up,down}) and its own
+    era-correlated JES columns.
+
+    Dropping to the common columns would silently delete those b-tag nuisances from a
+    pooled card, so instead each era is read eagerly with just the columns this step uses
+    and any weight column it lacks is filled with that era's own wgt_nominal -- i.e. the
+    nuisance shifts only the era that defines it and leaves the others unshifted. That is
+    the same convention combine_dfByYear() already applies to JES via its NaN -> nominal
+    fallback.
+
+    Returns a single-partition dask-awkward array so the caller's .compute() is unchanged.
+    """
+    files = sorted(glob.glob(load_path))
+    if len(files) == 0:
+        raise ValueError(f"loadEventsUnioned: no files matched {load_path}")
+
+    bdt_fields = ["BDT_score", "subCategory_idx"]
+    wanted_base = list(fields2load) + bdt_fields
+    for jec_unc_field in jec_unc_fields:
+        for bdt_field in bdt_fields:
+            wanted_base.append(f"{bdt_field}_{jec_unc_field}")
+
+    schemas = {f: set(pq.ParquetFile(f).schema.names) for f in files}
+    wgt_union = sorted({c for cols in schemas.values() for c in cols if "wgt" in c})
+
+    arrays = []
+    for f in files:
+        cols = schemas[f]
+        take = [c for c in wanted_base if c in cols] + [c for c in wgt_union if c in cols]
+        arr = ak.from_parquet(f, columns=take)
+        arr = ak.Array({c: arr[c] for c in arr.fields})  # materialise, drop laziness
+        nominal = arr["wgt_nominal"]
+        for c in wgt_union:
+            if c not in arr.fields:
+                arr[c] = nominal  # era does not define this nuisance -> no shift here
+        arrays.append(arr)
+
+    out = arrays[0] if len(arrays) == 1 else ak.concatenate(arrays)
+    logger_msg = (f"loadEventsUnioned: {len(files)} file(s), "
+                  f"{len(out.fields)} fields, {len(out)} events")
+    print(f"[INFO] {logger_msg}")
+    return dak.from_awkward(out, npartitions=1)
+
+
 def getProcessedEvents(events, fields2load, jec_unc_fields):
     bdt_fields = [
         "BDT_score",
@@ -202,6 +256,12 @@ def extract_nuisances(df):
             for idx in df.index}
     nuis = sorted(nuis)
     nuis.remove("wgt_nominal")
+    # The ggH channel takes its QCD-scale uncertainty from the dedicated QCDscale_ggH /
+    # QCDscale_qqH lnN rows, so the LHE renormalisation/factorisation weights would double
+    # count. Dropped here rather than by post-editing the text cards.
+    for dropped in ("wgt_LHERen", "wgt_LHEFac"):
+        if dropped in nuis:
+            nuis.remove(dropped)
     return nuis
 
 def buildDataCard(df, samples, subCat_ix, year):
@@ -223,7 +283,27 @@ pdf_Higgs_qq     lnN     -            1.021        -
 ------------
 """)# QCD and pdf Source table 2.1 from AN-19-124. Lumi source: https://twiki.cern.ch/twiki/bin/viewauth/CMS/LumiRecommendationsRun2
         
-    if year == "2016":
+    # Run2 integrated luminosity and its per-year uncertainty (LUM POG):
+    #   2016 36.33/fb +-1.2%,  2017 41.48/fb +-2.3%,  2018 59.83/fb +-2.5%
+    # The luminosity nuisance is applied YEAR BY YEAR and stays decorrelated between
+    # years, including in the pooled card. Because the pooled card carries a single rate
+    # per category summed over all four eras, each year's nuisance is scaled by that
+    # year's share of the Run2 luminosity -- 1 + f_y * delta_y -- so it moves only its own
+    # year's contribution instead of the whole Run2 rate.
+    _RUN2_LUMI_FB = {"2016": 36.33, "2017": 41.48, "2018": 59.83}
+    _RUN2_LUMI_UNC = {"2016": 0.012, "2017": 0.023, "2018": 0.025}
+
+    def _run2_lumi_lines():
+        total = sum(_RUN2_LUMI_FB.values())
+        out = []
+        for y in ("2016", "2017", "2018"):
+            v = 1.0 + (_RUN2_LUMI_FB[y] / total) * _RUN2_LUMI_UNC[y]
+            out.append(f"lumi_13TeV_{y}       lnN     {v:.4f}      {v:.4f}      -")
+        return out
+
+    if year == "2016" or year in ("2016preVFP", "2016postVFP"):
+        # preVFP and postVFP share the single 2016 data-taking-year nuisance, the same way
+        # they share the *_2016 era-correlated JES sources.
         lines.append("lumi_13TeV_2016       lnN     1.012       1.012       -")
     elif year == "2017":
         lines.append("lumi_13TeV_2017       lnN     1.023       1.023       -")
@@ -239,9 +319,9 @@ pdf_Higgs_qq     lnN     -            1.021        -
         lines.append("lumi_13p6TeV_23_24    lnN     1.0068      1.0068      -")
         lines.append("lumi_13p6TeV_uncorr   lnN     1.0144      1.0144      -")
     elif year == "all":
-        lines.append("lumi_13p6TeV_Corr     lnN     1.0020      1.0020      -")
-        lines.append("lumi_13p6TeV_23_24    lnN     1.0068      1.0068      -")
-        lines.append("lumi_13p6TeV_uncorr   lnN     1.0144      1.0144      -")
+        # Pooled Run2: one decorrelated nuisance per data-taking year (NOT the 13.6 TeV
+        # Run3 terms that used to be emitted here).
+        lines.extend(_run2_lumi_lines())
     
     for u in nuisances:
         # for sample i
@@ -329,7 +409,7 @@ if __name__ == "__main__":
             load_path = f"{args.load_path}/{year}/{fname}"
         print(f"load_path: {load_path}")
         # processed_events = ak.from_parquet(load_path)
-        events = dak.from_parquet(load_path)
+        events = loadEventsUnioned(load_path, ["dimuon_mass"], applyUpDown(["Absolute", "FlavorQCD"]))
         # print(f"events.fields: {events.fields}")
         fields2load  = [
             "dimuon_mass",
@@ -378,8 +458,8 @@ if __name__ == "__main__":
         # --------------------------------------------------------------
 
         if args.year == "all":
-            # years = ["2018", "2017", "2016postVFP", "2016preVFP"]
-            years = ["2022preEE", "2022postEE", "2023", "2023BPix", "2024"]
+            years = ["2018", "2017", "2016postVFP", "2016preVFP"]
+            # years = ["2022preEE", "2022postEE", "2023", "2023BPix", "2024"]
         else:
             years = [args.year]
         row_labels = []
@@ -391,8 +471,8 @@ if __name__ == "__main__":
         jec_yml_path = "configs/parameters/jec.yaml"
 
         if args.year == "all":
-            # years_for_jec = ["2018", "2017", "2016postVFP", "2016preVFP"]
-            years_for_jec = ["2022preEE", "2022postEE", "2023", "2023BPix", "2024"]
+            years_for_jec = ["2018", "2017", "2016postVFP", "2016preVFP"]
+            # years_for_jec = ["2022preEE", "2022postEE", "2023", "2023BPix", "2024"]
             jec_unc_base = []
             for y in years_for_jec:
                 jec_unc_base.extend(getJecJerUncertainties(jec_yml_path, year=y))
