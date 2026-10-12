@@ -37,6 +37,7 @@ nav:
           - Failed Jobs Check: FailedJobsCheck.md
           - Merge NanoAOD ROOT Files: MergeNanoAODRootFiles.md
           - Plotting Codes: PlottingCodes.md
+          - DNN Control Plot Systematics: DNN_ControlPlotSystematics.md
     - Corrections:
           - Z-pT Reweighting: ZpT_reweight.md
           - EBE Mass Resolution: eventbyeventMassResolution.md

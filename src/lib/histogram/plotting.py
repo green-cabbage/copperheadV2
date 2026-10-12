@@ -47,8 +47,12 @@ def plotDataMC_compare_hda(
     ):
     raise ValueError
 
-def draw_prediction_uncertainty(ax, binning, uncertainty, ratio=False, log_scale=False):
-    """Draw binwise total errors and/or unfilled systematic-only boundaries."""
+def draw_prediction_uncertainty(ax, binning, uncertainty, ratio=False, log_scale=False, colors=None):
+    """Draw binwise total errors and/or unfilled systematic-only boundaries.
+
+    colors: optional {group name: color}, to keep a group's color fixed across plots;
+    unlisted groups take the tab10 color of their position.
+    """
     nominal = uncertainty["nominal"]
     valid = nominal > 0 if ratio else np.ones_like(nominal, dtype=bool)
 
@@ -70,13 +74,44 @@ def draw_prediction_uncertainty(ax, binning, uncertainty, ratio=False, log_scale
     if uncertainty["bands"] in {"syst-only", "both"}:
         groups = uncertainty.get("systematic_groups")
         components = groups or {"MC syst. unc.": uncertainty}
-        colors = plt.get_cmap("tab10")
+        palette = plt.get_cmap("tab10")
         for index, (name, component) in enumerate(components.items()):
             low, high = bounds(component["syst_down"], component["syst_up"])
-            color = colors(index % 10) if groups else "black"
+            color = (colors or {}).get(name, palette(index % 10)) if groups else "black"
             ax.step(binning, low, where="post", color=color, linestyle="--",
                     linewidth=1.5, label=name)
             ax.step(binning, high, where="post", color=color, linestyle="--", linewidth=1.5)
+
+
+def plotRelativeUncertainty(binning, uncertainty, save_full_path, x_title="",
+                            lumi="", status="Private Work", CenterOfMass=13, prediction=None,
+                            colors=None):
+    """MC-only companion plot: the uncertainty bands of `uncertainty` relative to its nominal prediction."""
+    plt.style.use(hep.style.CMS)
+    fig, ax = plt.subplots()
+    if prediction is None:
+        prediction = "B+S" if uncertainty["scope"] == "background+signal" else "B"
+    ax.axhline(1, color="black", linewidth=1.5, label=f"nominal MC ({prediction})")
+    # Systematic boundaries only: the grey stat+syst total is left to the Data/MC plots.
+    draw_prediction_uncertainty(ax, binning, {**uncertainty, "bands": "syst-only"}, ratio=True,
+                                colors=colors)
+
+    # Frame the widest band symmetrically around unity.
+    nominal = uncertainty["nominal"]
+    valid = nominal > 0
+    widths = [uncertainty[key] for key in ("syst_up", "syst_down")]
+    widths += [group[key] for group in uncertainty.get("systematic_groups", {}).values()
+               for key in ("syst_up", "syst_down")]
+    extent = max([np.max(width[valid] / nominal[valid]) for width in widths if np.any(valid)] + [0.01])
+    ax.set_ylim(1 - 1.6 * extent, 1 + 1.6 * extent)
+    ax.set_xlim(binning[0], binning[-1])
+    ax.set_xlabel(x_title)
+    ax.set_ylabel(f"Relative to nominal {prediction}")
+    ax.legend(loc="upper right", ncol=2, fontsize=18,
+              labelspacing=0.3, columnspacing=1.0, handlelength=1.5)
+    hep.cms.label(data=False, loc=0, text=status, com=CenterOfMass, lumi=lumi, ax=ax)
+    plt.savefig(save_full_path)
+    plt.close(fig)
 
 
 def plotDataMC_compare(

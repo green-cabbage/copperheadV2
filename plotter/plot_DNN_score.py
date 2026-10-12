@@ -22,7 +22,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 # Add it to sys.path
 sys.path.insert(0, parent_dir)
 # Now you can import your module
-from src.lib.histogram.plotting import plotDataMC_compare
+from src.lib.histogram.plotting import plotDataMC_compare, plotRelativeUncertainty
 
 # PDF and alpha_s member weights written by stage1 (one histogram per member in
 # stage2). Kept in step with stage3/make_templates.py, which defines the same
@@ -415,6 +415,11 @@ def plotStage2DNN_score(hist_dict_bySampleGroup, var, plot_settings, full_save_p
     )
     if systematics is not None:
         Path(full_save_fname).with_suffix(".yaml").write_bytes(config_bytes)
+        relative_fname = full_save_fname.replace(".pdf", "_relunc.pdf")
+        plotRelativeUncertainty(binning, uncertainty, relative_fname,
+                                x_title=plot_settings[plot_var].get("xlabel"),
+                                lumi=lumi, status=status)
+        Path(relative_fname).with_suffix(".yaml").write_bytes(config_bytes)
 
 
 def getPickledHist_byFname(pickled_filelist, load_path):

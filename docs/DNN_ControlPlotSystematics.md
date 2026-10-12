@@ -7,7 +7,7 @@ title: DNN Control Plot Systematics
 - Available code: [plot_DNN_score.py](../plotter/plot_DNN_score.py).
 - Workflow: `run_analysis_pipeline.sh -m 2p` makes sideband and blinded-peak plots.
 - Inputs: existing stage-2 histograms containing the selected variations.
-- Outputs: linear/log PDFs, yield summaries, and copies of the selected YAML.
+- Outputs: linear/log PDFs, an MC-only relative-uncertainty PDF, yield summaries, and copies of the selected YAML.
 
 ## Run the plotter
 
@@ -141,6 +141,9 @@ alpha_s:
 ## Saved configuration and filenames
 
 - Band-enabled filenames contain `_unc_<scope>_<bands>`; log plots also contain `_log`.
+- Band-enabled runs also write `<stem>_relunc.pdf`: no data, only the systematic boundaries
+  divided by the nominal prediction (B or B+S) so they straddle 1; no grey stat+syst fill.
+  Linear only, and it has no `.txt`.
 - Each configured PDF has a same-stem `.yaml` copy, preserving source comments.
 - Matching `.txt` files record yields, binning, scope, and selected systematics.
 - No configuration selected: **no YAML copy**, even if the default YAML is nonempty.
