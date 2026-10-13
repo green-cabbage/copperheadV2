@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 from typing import TypeVar
 
@@ -756,6 +757,24 @@ class EventProcessor(processor.ProcessorABC):
         self.config['NanoAODv'] = NanoAODv
         is_mc = events.metadata['is_mc']
         is_xzz_run2 = self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
+        reference_observable_config = self.config.get("reference_observables", {})
+        reference_observables = is_xzz_run2 and reference_observable_config.get("enabled", False)
+        if reference_observables:
+            for key in ("mc_met", "data_met"):
+                if reference_observable_config.get(key) not in ("raw", "configured"):
+                    raise ValueError(f"Choose raw or configured for reference_observables.{key}")
+            for key in ("deepjet_loose", "deepjet_medium"):
+                value = reference_observable_config.get(key)
+                if value is None or not 0 < value < 1:
+                    raise ValueError(f"Configure a verified reference threshold for {key}")
+        reference_bugs = (
+            self.config.get("analysis") == "XZZ2l2nu"
+            and self.config.get("reference_bug_compatibility", False)
+        )
+        if reference_bugs:
+            if not is_xzz_run2:
+                raise ValueError("Reference bug compatibility is a Run 2 diagnostic")
+            logger.warning("XZZ reference bug compatibility is enabled: diagnostic output only")
         logger.debug(f"NanoAODv: {NanoAODv}")
 
         t1 = time.perf_counter()
@@ -828,17 +847,16 @@ class EventProcessor(processor.ProcessorABC):
                 continue
             HLT_filter = HLT_filter | ak.fill_none(events.HLT[HLT_str], value=False)
         if is_xzz_run2 and not is_mc:
-            # SingleMuon-first priority for the SingleMuon + electron primary
-            # dataset pair (SingleElectron, or EGamma in 2018) listed together in
-            # the dataset yaml. MC and SingleMuon keep the full configured HLT OR;
-            # the electron dataset only adds events no configured single-muon path fired.
-            single_mu = ak.zeros_like(event_filter, dtype="bool")
+            # Avoid data-stream overlap: veto any configured muon trigger
+            # in SingleElectron/EGamma; SingleMuon keeps the full trigger OR.
+            muon_trigger = ak.zeros_like(event_filter, dtype="bool")
             for path in self.config["hlt"]:
-                if path.startswith(("IsoMu", "IsoTkMu")) and path in hlt_fields:
-                    single_mu = single_mu | ak.fill_none(events.HLT[path], False)
+                # Match muon legs (Mu50, DiMu9, TripleMu_10, etc.), not "Multi".
+                if re.search(r"Mu(?=\d|_)", path) and path in hlt_fields:
+                    muon_trigger = muon_trigger | ak.fill_none(events.HLT[path], False)
             filename = events.metadata.get("filename", "")
             if "/SingleElectron/" in filename or "/EGamma/" in filename:
-                HLT_filter = HLT_filter & ~single_mu # FIXME: is this due to double counting for single muon trigger events?
+                HLT_filter = HLT_filter & ~muon_trigger
             elif "/SingleMuon/" not in filename:
                 raise ValueError(f"Unknown XZZ Run 2 primary dataset: {filename}")
         self.selection.add("HLT_filter", HLT_filter)
@@ -1064,8 +1082,11 @@ class EventProcessor(processor.ProcessorABC):
 
             self.selection.add("trigger_match", trigger_match)
         else:
-            do_seperate_mu1_leading_pt_cut = True
-            logger.warning("NO trigger match! Doing leading mu pass instead!")
+            do_seperate_mu1_leading_pt_cut = (
+                self.config.get("analysis", "HMuMu") == "HMuMu"
+            )
+            if do_seperate_mu1_leading_pt_cut:
+                logger.warning("NO trigger match! Doing leading mu pass instead!")
 
         t6 = time.perf_counter()
         logger.info(f"[timing] Trigger match time: {t6 - t5:.2f} seconds")
@@ -1084,6 +1105,9 @@ class EventProcessor(processor.ProcessorABC):
         # logger.info(f"After Trigger match event muon isTracker after roccor: {events.Muon.isTracker[debug_mask_2].compute()}")
         # logger.info(f"After Trigger match event muon pfRelIso04_all after roccor: {events.Muon.pfRelIso04_all[debug_mask_2].compute()}")
         # logger.info(f"After Trigger match event muon_selection: {muon_selection[debug_mask_2].compute()}")
+
+        # Keep the pre-FSR collection for XZZ jet cleaning, including Rochester pT.
+        jet_cleaning_muons = events.Muon if is_xzz_run2 else None
 
         # apply FSR correction, since trigger match is calculated
         if do_fsr:
@@ -1153,6 +1177,8 @@ class EventProcessor(processor.ProcessorABC):
         # every electron. Setting do_electron_id false reproduces that defect so the two can
         # be compared like for like. It must never be false for physics output.
         apply_electron_id = self.config["switches"].get("do_electron_id", True)
+        if reference_bugs:
+            apply_electron_id = False
         if not apply_electron_id:
             logger.warning(
                 "do_electron_id is FALSE: electron identification is disabled. This reproduces a "
@@ -1162,13 +1188,16 @@ class EventProcessor(processor.ProcessorABC):
             (events.Electron.pt > self.config["electron_pt_cut"])
             & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
             & (events.Electron[electron_id] if apply_electron_id else True)
-            & (True if is_xzz_run2 else ~ecal_gap)
+            # The PDF excludes gap electrons. Only the explicit reference-bug
+            # diagnostic retains the historical bypass; other analyses are unchanged.
+            & (True if reference_bugs else ~ecal_gap)
         )
         if is_xzz_run2:
             electron_selection = electron_selection & (
                 (abs(events.Electron.dxy) < self.config["zz2l2nu_electron_dxy_cut"])
                 & (abs(events.Electron.dz) < self.config["zz2l2nu_electron_dz_cut"])
             )
+        jet_cleaning_electrons = events.Electron if is_xzz_run2 else None
         apply_electron_fsr = (
             is_xzz_run2 and do_fsr
             and self.config.get("xzz_fsr") is not None
@@ -1211,7 +1240,17 @@ class EventProcessor(processor.ProcessorABC):
         # each other; `selected` is the established behaviour.
         clean_electrons = clean_muons = None
         _clean_set = self.config["switches"].get("jet_cleaning_lepton_set", "selected")
+        if reference_bugs:
+            _clean_set = "loose_no_id"
         if is_xzz_run2 and _clean_set in ("loose_id", "loose_no_id"):
+            cleaning_gap = self.config.get("jet_cleaning_electron_gap")
+            outside_cleaning_gap = ~ecal_gap
+            if cleaning_gap is not None:
+                abs_cleaning_eta = abs(jet_cleaning_electrons.eta)
+                outside_cleaning_gap = (
+                    (abs_cleaning_eta < cleaning_gap[0])
+                    | (abs_cleaning_eta > cleaning_gap[1])
+                )
             # 'loose_no_id' is the reference's EFFECTIVE cleaning list. Its tighteleforjetidx is
             # looseEle intersected with passTight_BDT_Id(), but that predicate reads Electron_pdgId
             # (see do_electron_id / iteration 035 BUG-1) and is true for every electron, so the
@@ -1219,21 +1258,21 @@ class EventProcessor(processor.ProcessorABC):
             # this reproduces that jet-side behaviour WITHOUT disabling our electron ID in the
             # event selection, which 'do_electron_id: false' would.
             loose_ele = (
-                (events.Electron.pt > self.config["electron_pt_cut"])
-                & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
-                & ~ecal_gap
+                (jet_cleaning_electrons.pt > self.config["electron_pt_cut"])
+                & (abs(jet_cleaning_electrons.eta) < self.config["electron_eta_cut"])
+                & outside_cleaning_gap
             )
             if _clean_set == "loose_id":
-                loose_ele = loose_ele & (events.Electron[electron_id] if apply_electron_id else True)
+                loose_ele = loose_ele & (jet_cleaning_electrons[electron_id] if apply_electron_id else True)
             loose_mu = (
-                (events.Muon.pt > self.config["muon_pt_cut"])
-                & (abs(events.Muon.eta) < self.config["muon_eta_cut"])
-                & events.Muon.mediumId
-                & (events.Muon.isGlobal | events.Muon.isTracker | events.Muon.isPFcand)
-                & events.Muon.isPFcand
+                (jet_cleaning_muons.pt > self.config["muon_pt_cut"])
+                & (abs(jet_cleaning_muons.eta) < self.config["muon_eta_cut"])
+                & jet_cleaning_muons.mediumId
+                & (jet_cleaning_muons.isGlobal | jet_cleaning_muons.isTracker | jet_cleaning_muons.isPFcand)
+                & jet_cleaning_muons.isPFcand
             )
-            clean_electrons = events.Electron[loose_ele]
-            clean_muons = events.Muon[loose_mu]
+            clean_electrons = jet_cleaning_electrons[loose_ele]
+            clean_muons = jet_cleaning_muons[loose_mu]
         # logger.debug(f"nelectrons: {nelectrons[debug_mask_2].compute()}")
         # logger.debug(f"electron_veto: {electron_veto[debug_mask_2].compute()}")
         self.selection.add("electron_veto", electron_veto)
@@ -1261,21 +1300,22 @@ class EventProcessor(processor.ProcessorABC):
         self.selection.add("PV_npvsGood", pv_good)
 
         # mm channel: exactly 2 OS muons with electron veto
-        is_mm = (nmuons == 2) & (mm_charge == -1) & electron_veto
+        mm_os = ak.ones_like(mm_charge, dtype=bool) if reference_bugs else (mm_charge == -1)
+        is_mm = (nmuons == 2) & mm_os & electron_veto
         self.selection.add("is_mm", is_mm)
         self.selection.add("nmuons", nmuons==2)
-        self.selection.add("mm_charge", mm_charge==-1)
+        self.selection.add("mm_charge", mm_os)
 
-        # em channel: exactly 1 muon + 1 OS selected electron (used for E-Mu CR)
-        muon_lead_ch = ak.fill_none(ak.firsts(muons.charge), 0)
-        elec_lead_ch = ak.fill_none(ak.firsts(events.Electron[electron_selection].charge), 0)
-        em_os = (muon_lead_ch * elec_lead_ch == -1)
-        is_em = (nmuons == 1) & (nelectrons == 1) & em_os
+        # em channel: exactly 1 muon + 1 selected electron (used for E-Mu CR). No charge
+        # requirement: AN-16-325 v6 p.16 l.262 does not require opposite-charge pairs.
+        is_em = (nmuons == 1) & (nelectrons == 1)
         self.selection.add("is_em", is_em)
 
         # ee channel: exactly 2 OS electrons, muon veto
         ee_charge_sum = ak.fill_none(ak.sum(events.Electron[electron_selection].charge, axis=1), 0)
         ee_os = (ee_charge_sum == 0)  # OS pair: +1 + (-1) = 0
+        if reference_bugs:
+            ee_os = ak.ones_like(ee_os, dtype=bool)
         is_ee = (nelectrons == 2) & ee_os & (nmuons == 0)
         self.selection.add("is_ee", is_ee)
 
@@ -1590,7 +1630,10 @@ class EventProcessor(processor.ProcessorABC):
             and NanoAODv == 15
             and self.config.get("xzz_met_xy") is not None
         )
-        if apply_xzz_met_xy:
+        use_raw_reference_met = reference_observables and (
+            reference_observable_config["mc_met" if is_mc else "data_met"] == "raw"
+        )
+        if apply_xzz_met_xy and not use_raw_reference_met:
             from src.corrections.xzz_met_xy import puppimet_xy
 
             corrected_pt, corrected_phi = puppimet_xy(
@@ -1620,6 +1663,13 @@ class EventProcessor(processor.ProcessorABC):
 
         # Transverse mass: M_T = sqrt(2 * pT_Z * MET * (1 - cos(Δφ(Z,MET))))
         MT_ZZ = np.sqrt(2.0 * dilepton_pt * PuppiMET.pt * (1.0 - np.cos(dphi_z_met)))
+        if reference_observables:
+            # ROOT (Z + massless MET).Mt(): sqrt(E_total^2 - pz_total^2).
+            z_energy = np.sqrt(dilepton_mass**2 + (dilepton_pt * np.cosh(dilepton_eta))**2)
+            MT_ZZ = np.sqrt(np.maximum(
+                0.0, dilepton_mass**2 + dilepton_pt**2 + PuppiMET.pt**2
+                + 2.0 * z_energy * PuppiMET.pt
+            ))
 
         logger.info(f"jets type before pad_none: {jets.type}")
         logger.info(f"jets ndim: {jets.ndim}")
@@ -2493,6 +2543,13 @@ class EventProcessor(processor.ProcessorABC):
         # Loop over JEC variations and fill jet variables
         # ------------------------------------------------------------#
         logger.debug(f"pt_variations: {pt_variations}")
+        if reference_bugs:
+            # The reference's pdgId slot contains WP90: true -> -1, false -> +1.
+            # Emulate the saved ee charges without corrupting input records or e-mu CRs.
+            for slot, electron in ((1, el1_ee), (2, el2_ee)):
+                key = f"el{slot}_charge"
+                wrong_charge = ak.fill_none(ak.where(electron[electron_id], -1, 1), 0)
+                out_dict[key] = ak.where(is_ee, wrong_charge, out_dict[key])
         for variation in pt_variations:
             jet_loop_dict = self.jet_loop(
                 events,
@@ -2519,6 +2576,16 @@ class EventProcessor(processor.ProcessorABC):
                 ), # FIXME: find out why analysis_met_phi is necesary.
             )
 
+            if reference_bugs:
+                # FindZ2l2nu returns early for close pairs, leaving b-tag counters
+                # at zero. Later code still counts jets and fills their momenta.
+                close_pair = (
+                    ak.fill_none(is_ee & (el1_ee.delta_r(el2_ee) < 0.3), False)
+                    | ak.fill_none(is_mm & (mu1.delta_r(mu2) < 0.3), False)
+                )
+                for wp in ("Loose", "Medium"):
+                    key = f"nBtag{wp}_{variation}"
+                    jet_loop_dict[key] = ak.where(close_pair, 0, jet_loop_dict[key])
             _add_block(out_dict, jet_loop_dict)
 
         logger.debug(f"out_dict.keys() after jet loop: {out_dict.keys()}")
@@ -3244,6 +3311,13 @@ class EventProcessor(processor.ProcessorABC):
         # 4. Pick thw two jets wich highest di-jet invariant mass that passes the critera dEta(j, j) > 2.5
         # ------------------------------------------------------------#
         pair_dict = pick_vbf_pairs(jets)
+        reference_bugs = (
+            self.config.get("analysis") == "XZZ2l2nu"
+            and is_run2(year) and self.config.get("reference_bug_compatibility", False)
+        )
+        if reference_bugs:
+            from src.corrections.xzz_reference_bugs import leading_pair
+            pair_dict["lead"] = leading_pair(jets)
 
         # ------------------------------------------------------------#
         # Fill jet-related variables
@@ -3254,10 +3328,10 @@ class EventProcessor(processor.ProcessorABC):
         jet_loop_out_dict = {}
         if variation == "nominal" and analysis_met_phi is not None: # FIXME: unify the input structure such that HMumu also calculates this (but hmumu stage2 won't use this)
             # Use the same selected, cleaned jets as the saved jet multiplicity.
-            delta_phi = jets.phi - analysis_met_phi
+            delta_phi = jets.phi - (-999.0 if reference_bugs else analysis_met_phi)
             separation = np.abs(np.arctan2(np.sin(delta_phi), np.cos(delta_phi)))
             jet_loop_out_dict["min_delta_phi_jet_MET"] = ak.fill_none(
-                ak.min(separation, axis=1), np.pi
+                ak.min(separation, axis=1), 999.0 if reference_bugs else np.pi
             )
 
         save_four_jets_kinematics = self.config["switches"]["save_four_jets_kinematics"]
@@ -3662,6 +3736,13 @@ class EventProcessor(processor.ProcessorABC):
 
         nBtagLoose = ak.sum(btagLoose_filter, axis=1)
         nBtagMedium = ak.sum(btagMedium_filter, axis=1)
+        reference_observable_config = self.config.get("reference_observables", {})
+        if (self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
+                and reference_observable_config.get("enabled", False)):
+            # Reference counts DeepJet tags on SelectedJets, not on our separate
+            # UParT b-tag collection. This changes counts only, not SF weights.
+            nBtagLoose = ak.sum(jets.btagDeepFlavB > reference_observable_config["deepjet_loose"], axis=1)
+            nBtagMedium = ak.sum(jets.btagDeepFlavB > reference_observable_config["deepjet_medium"], axis=1)
 
         # #quick sanity check
         # logger.info(f"nBtagLoose : {nBtagLoose[:20].compute()}")
