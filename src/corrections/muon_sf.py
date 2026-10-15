@@ -49,16 +49,21 @@ def add_muon_sfs_correctionlib(mu1, mu2, config, *, allow_missing_muons=False):
     logger.debug(f"get_corr_input_names muIso_corr: {get_corr_input_names(muIso_corr)}")
     logger.debug(f"get_corr_input_names muTrig_corr: {get_corr_input_names(muTrig_corr)}")
 
+    # Rochester smearing of unmatched MC muons can push a muon with pt_raw below the ID/iso SF
+    # table floor (15 GeV) over the pt_roch cut; clamp to 15 GeV instead of raising an error.
+    mu1_pt = ak.where(mu1.pt_raw < 15.0, 15.0, mu1.pt_raw)
+    mu2_pt = ak.where(mu2.pt_raw < 15.0, 15.0, mu2.pt_raw)
+
     # -----------------------------
     # ID (event = mu1*mu2)
     # -----------------------------
-    mu1_id_nom = muID_corr.evaluate(mu1.eta_raw, mu1.pt_raw, "nominal")
-    mu1_id_up = muID_corr.evaluate(mu1.eta_raw, mu1.pt_raw, "systup")
-    mu1_id_down = muID_corr.evaluate(mu1.eta_raw, mu1.pt_raw, "systdown")
+    mu1_id_nom = muID_corr.evaluate(mu1.eta_raw, mu1_pt, "nominal")
+    mu1_id_up = muID_corr.evaluate(mu1.eta_raw, mu1_pt, "systup")
+    mu1_id_down = muID_corr.evaluate(mu1.eta_raw, mu1_pt, "systdown")
 
-    mu2_id_nom = muID_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "nominal")
-    mu2_id_up = muID_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systup")
-    mu2_id_down = muID_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systdown")
+    mu2_id_nom = muID_corr.evaluate(mu2.eta_raw, mu2_pt, "nominal")
+    mu2_id_up = muID_corr.evaluate(mu2.eta_raw, mu2_pt, "systup")
+    mu2_id_down = muID_corr.evaluate(mu2.eta_raw, mu2_pt, "systdown")
 
     # XZZ em/ee events have fewer than two muons; absent factors are unity.
     def event_product(first, second):
@@ -75,13 +80,13 @@ def add_muon_sfs_correctionlib(mu1, mu2, config, *, allow_missing_muons=False):
     # -----------------------------
     # ISO (event = mu1*mu2)
     # -----------------------------
-    mu1_iso_nom = muIso_corr.evaluate(mu1.eta_raw, mu1.pt_raw, "nominal")
-    mu1_iso_up = muIso_corr.evaluate(mu1.eta_raw, mu1.pt_raw, "systup")
-    mu1_iso_down = muIso_corr.evaluate(mu1.eta_raw, mu1.pt_raw, "systdown")
+    mu1_iso_nom = muIso_corr.evaluate(mu1.eta_raw, mu1_pt, "nominal")
+    mu1_iso_up = muIso_corr.evaluate(mu1.eta_raw, mu1_pt, "systup")
+    mu1_iso_down = muIso_corr.evaluate(mu1.eta_raw, mu1_pt, "systdown")
 
-    mu2_iso_nom = muIso_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "nominal")
-    mu2_iso_up = muIso_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systup")
-    mu2_iso_down = muIso_corr.evaluate(mu2.eta_raw, mu2.pt_raw, "systdown")
+    mu2_iso_nom = muIso_corr.evaluate(mu2.eta_raw, mu2_pt, "nominal")
+    mu2_iso_up = muIso_corr.evaluate(mu2.eta_raw, mu2_pt, "systup")
+    mu2_iso_down = muIso_corr.evaluate(mu2.eta_raw, mu2_pt, "systdown")
 
     muIso = {
         "nom": event_product(mu1_iso_nom, mu2_iso_nom),
