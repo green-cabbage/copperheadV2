@@ -157,10 +157,16 @@ switches:
         "2023BPix": false
         "2024": false
     do_HemVeto:
+        # 2018 is ON (physics). For the reference sync, switches.temporary_cutflow_option turns it
+        # off: the reference framework (ram1123/nanoAOD_skim @ 4ae18ca) implements NO HEM veto
+        # anywhere -- verified in task007 iteration 036: no `hem` in any .py/.cc/.h/.yml, no
+        # HEM-region numerics, no run-319077 threshold, no jet veto maps, and no run-dependent jet
+        # logic in SelectedJets (H4LTools.cc:229-240). HemVeto_ratio in jet.yaml (0.2032) is the
+        # affected fraction.
         '2016preVFP': false
         '2016postVFP': false
         '2017': false
-        '2018': true
+        '2018': false
         '2022preEE': false
         '2022postEE': false
         "2023": false
@@ -442,3 +448,53 @@ switches:
         "2023": true
         "2023BPix": true
         "2024": true
+    do_electron_id: # DIAGNOSTIC SWITCH. Leave true for every physics run.
+        # The reference skim applies no electron identification: H4LTools.h:126 declares
+        # SetElectrons(..., mvaIso_WP90, pdgId, ...) while H4LCppModule.py:655 calls it with
+        # (..., pdgId, mvaIso_WP90, ...), so passTight_BDT_Id() reads pdgId (+-11) and is true
+        # for every electron. Setting this false reproduces that defect so our ee channel can be
+        # compared like for like against the reference. See iteration 035.
+        '2016preVFP': true
+        '2016postVFP': true
+        '2017': true
+        '2018': true
+        '2022preEE': true
+        '2022postEE': true
+        "2023": true
+        "2023BPix": true
+        "2024": true
+    jet_cleaning_lepton_set: # 'selected' (established): clean jets against the two selected, isolated leptons.
+        # 'loose_id': clean against loose leptons passing tight ID only -- no isolation, no
+        # impact-parameter cut, not capped at two -- a literal reading of the reference's
+        # tighteleforjetidx / tightmuforjetidx (H4LTools.cc:482-487).
+        # 'loose_no_id': the same, but WITHOUT the electron ID, which is the reference's
+        # EFFECTIVE behaviour: its passTight_BDT_Id() reads Electron_pdgId and is true for every
+        # electron (iteration 035 BUG-1). This matches the reference's jet cleaning without
+        # disabling our electron ID in the event selection. Measurement switch.
+        '2016preVFP': selected
+        '2016postVFP': selected
+        '2017': loose_no_id
+        '2018': loose_no_id
+        '2022preEE': selected
+        '2022postEE': selected
+        "2023": selected
+        "2023BPix": selected
+        "2024": selected
+    temporary_cutflow_option: # TEMPORARY, XZZ Run 2 only: reproduce Vijay's 2018A cutflow (task008).
+        # When on: adds temporary_cutflow_hlt_extra (trigger.yaml) to the HLT OR,
+        # adds temporary_cutflow_event_flags_extra (met.yaml) to the MET filters,
+        # disables the HEM veto, applies temporary_cutflow_{electron_iso03,muon_iso}_cut (xzz2l2nu.yaml),
+        # and uses the reference dilepton dR(l1, l2) >= temporary_cutflow_dilepton_min_dr, the
+        # reference e-mu cutflow pT(ll) threshold temporary_cutflow_z_pt_cut; for the same-flavour
+        # cutflow, the reference cut2l definition and pT(ll) >= temporary_cutflow_sameFlav_z_pt_cut
+        # (xzz2l2nu.yaml).
+        # NOT a physics configuration: turn off before production.
+        '2016preVFP': false
+        '2016postVFP': false
+        '2017': false
+        '2018': true
+        '2022preEE': false
+        '2022postEE': false
+        '2023': false
+        '2023BPix': false
+        '2024': false

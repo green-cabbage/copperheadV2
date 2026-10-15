@@ -1,8 +1,8 @@
-electron_pt_cut: # AN2016_325_v6 sec 4.4: both leptons pT > 25 GeV
+electron_pt_cut: # Object threshold; pair thresholds are in xzz2l2nu.yaml
   2016preVFP: 25.0
   2016postVFP: 25.0
   '2017': 25.0
-  '2018': 25.0
+  '2018': 25.0 # AN2016_325_v6 sec 4.4: both leptons pT > 25 GeV (same as 2017)
   2016_RERECO: 25.0
   '2017_RERECO': 25.0
   '2018_RERECO': 25.0

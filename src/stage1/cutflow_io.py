@@ -4,8 +4,8 @@ import os
 from modules.utils import logger
 
 
-def write_cutflow_outputs(cutflow, save_path, dataset_name, file_idx):
-    base_name = f"cutflow_{dataset_name}_{file_idx}"
+def write_cutflow_outputs(cutflow, save_path, dataset_name, file_idx, prefix="cutflow"):
+    base_name = f"{prefix}_{dataset_name}_{file_idx}"
     npz_path = os.path.join(save_path, f"{base_name}.npz")
     json_path = os.path.join(save_path, f"{base_name}.json")
 

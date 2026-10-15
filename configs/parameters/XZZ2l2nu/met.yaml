@@ -17,3 +17,18 @@ xzz_met_xy:
     '2023': null
     '2023BPix': null
     '2024': null
+
+# TEMPORARY cutflow study (task008): applied only when switches.temporary_cutflow_option is on.
+# The reference applied Flag_BadChargedCandidateFilter until nanoAOD_skim commit 3e9a83b (2026-09-02);
+# JME marks it "not recommended", so it is not part of event_flags.
+# Emptied for 2018 in iteration023: Vijay's updated (v2) cutflow no longer applies it.
+temporary_cutflow_event_flags_extra:
+    '2016preVFP': []
+    '2016postVFP': []
+    '2017': []
+    '2018': []
+    '2022preEE': []
+    '2022postEE': []
+    '2023': []
+    '2023BPix': []
+    '2024': []

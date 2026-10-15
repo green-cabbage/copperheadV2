@@ -59,12 +59,13 @@ def fsr_recovery(events: coffea_nanoevent) -> ak_array:
 
 
 def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
+    photon = df.Muon.matched_fsrPhoton
     mask = (
         (df.Muon.fsrPhotonIdx >= 0)
-        & (df.Muon.matched_fsrPhoton.relIso03 < 1.8)
-        & (df.Muon.matched_fsrPhoton.dROverEt2 < 0.012)
-        & (df.Muon.matched_fsrPhoton.pt / df.Muon.pt < 0.4)
-        & (abs(df.Muon.matched_fsrPhoton.eta) < 2.4)
+        & (photon.relIso03 < 1.8)
+        & (photon.dROverEt2 < 0.012)
+        & (photon.pt / df.Muon.pt < 0.4)
+        & (abs(photon.eta) < 2.4)
     )
     if xzz:
         # HZZ update slide 3. Keep the HMuMu recovery mask unchanged by default.
@@ -73,12 +74,17 @@ def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
             "photon_abs_eta_max": 2.4,
             "photon_rel_iso_max": 0.8,
         }
+        from src.corrections.xzz_fsr import associated_photon, photon_quality_mask
+        if cuts.get("association", "nanoAOD") != "nanoAOD":
+            photon = associated_photon(df.Muon, df.FsrPhoton, cuts)
         mask = (
-            (df.Muon.fsrPhotonIdx >= 0)
-            & (df.Muon.matched_fsrPhoton.pt > cuts["photon_pt_min"])
-            & (abs(df.Muon.matched_fsrPhoton.eta) < cuts["photon_abs_eta_max"])
-            & (df.Muon.matched_fsrPhoton.relIso03 < cuts["photon_rel_iso_max"])
+            (photon.pt > cuts["photon_pt_min"])
+            & (abs(photon.eta) < cuts["photon_abs_eta_max"])
+            & (photon.relIso03 < cuts["photon_rel_iso_max"])
         )
+        if cuts.get("association", "nanoAOD") == "nanoAOD":
+            mask = mask & (df.Muon.fsrPhotonIdx >= 0)
+        mask = mask & photon_quality_mask(df.Muon, photon, cuts)
     mask = ak.fill_none(mask, False)
 
     # px = ak.zeros_like(df.Muon.pt, dtype=np.float64)
@@ -93,9 +99,9 @@ def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
     # print(f"fsr recovery py: {py.compute()}")
     # print(f"fsr recovery px: {px.compute()}")
     fsr = {
-        "pt": df.Muon.matched_fsrPhoton.pt,
-        "eta": df.Muon.matched_fsrPhoton.eta,
-        "phi": df.Muon.matched_fsrPhoton.phi,
+        "pt": photon.pt,
+        "eta": photon.eta,
+        "phi": photon.phi,
         "mass": 0.0,
     }
 
@@ -128,7 +134,7 @@ def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
     # print(f"type(eta): {(eta.type)}")
     # print(f"type(phi): {(phi.type)}")
     # print(f"type(mass): {(mass.type)}")
-    iso = (df.Muon.pfRelIso04_all * df.Muon.pt - df.Muon.matched_fsrPhoton.pt) / pt
+    iso = (df.Muon.pfRelIso04_all * df.Muon.pt - photon.pt) / pt
 
     df["Muon", "pt_fsr"] = ak.where(mask, pt, df.Muon.pt)
     df["Muon", "eta_fsr"] = ak.where(mask, eta, df.Muon.eta)
@@ -138,7 +144,7 @@ def fsr_recoveryV1(df, xzz=False, xzz_cuts=None):
     df["Muon", "iso_fsr"] = ak.where(mask, iso, df.Muon.pfRelIso04_all)
     if xzz:
         # Apply the same subtraction/normalization to XZZ's selection cone.
-        iso03 = (df.Muon.pfRelIso03_all * df.Muon.pt - df.Muon.matched_fsrPhoton.pt) / pt
+        iso03 = (df.Muon.pfRelIso03_all * df.Muon.pt - photon.pt) / pt
         df["Muon", "iso03_fsr"] = ak.where(mask, iso03, df.Muon.pfRelIso03_all)
     fsr_event_mask = ak.sum(mask, axis=1) > 0
     # print(f"fsr_event_mask cases being true : {ak.sum(fsr_event_mask).compute()}")

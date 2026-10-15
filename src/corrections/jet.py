@@ -187,10 +187,20 @@ def custom_jet_id(jets, year, jet_type="AK4PUPPI", *, recipe=None):
         raise ValueError(f"Unsupported jet type: {jet_type}")
     if not is_run2(year):
         raise ValueError(f"Custom jet ID is only defined for Run 2 years. Unsupported year: {year}")
-    if recipe not in (None, "RUN2ULPUPPI"):
+    # RUN2ULPUPPI          : the 2017/2018 prescription as audited in iteration 024 (baseline).
+    # RUN2ULPUPPI_OFFICIAL : the official Run 2 UL PUPPI tight recipe. Differs from the
+    #                        baseline only at 2.7 < |eta| <= 3.0, where the official value is
+    #                        neHEF < 0.9999 and the baseline carries 0.99.
+    # RUN2ULPUPPI_REFSYNC  : the reference skim's PassJetIDv15(isPUPPI=true), nanoAOD_skim
+    #                        @ 4ae18ca, src/H4LTools.cc:145. Same as OFFICIAL except that the
+    #                        |eta| > 3.0 neutral-multiplicity cut and the |eta| <= 2.6 charged
+    #                        -multiplicity cut are absent, and the barrel counts constituents
+    #                        with nConstituents rather than chMultiplicity + neMultiplicity.
+    _RECIPES = (None, "RUN2ULPUPPI", "RUN2ULPUPPI_OFFICIAL", "RUN2ULPUPPI_REFSYNC")
+    if recipe not in _RECIPES:
         raise ValueError(f"Unsupported custom jet-ID recipe: {recipe}")
-    if recipe == "RUN2ULPUPPI" and year not in ("2017", "2018"):
-        raise ValueError("RUN2ULPUPPI is the 2017/2018 UL prescription")
+    if recipe is not None and year not in ("2017", "2018"):
+        raise ValueError(f"{recipe} is the 2017/2018 UL prescription")
 
     eta = jets.eta
     aeta = abs(eta)
@@ -257,6 +267,28 @@ def custom_jet_id(jets, year, jet_type="AK4PUPPI", *, recipe=None):
                 (aeta > 3.0) & (neHEF > -1.0) & (neEmEF < 0.4)
                 & (neMult > 2) & (ak.values_astype(neMult, np.int64) < 999999)
             )
+        elif recipe == "RUN2ULPUPPI_OFFICIAL":
+            endcap_tight = (aeta > 2.7) & (aeta <= 3.0) & (neHEF < 0.9999)
+            forward_tight = (aeta > 3.0) & (neEmEF < 0.90) & (neMult > 2)
+        elif recipe == "RUN2ULPUPPI_REFSYNC":
+            # The reference folds the lepton-veto fractions into the ID itself rather than
+            # exposing a separate tightLepVeto WP, and `jet_id` for XZZ2l2nu selects "tight",
+            # so muEF/chEmEF have to sit inside the regions here to reproduce it.
+            barrel_tight = (
+                (aeta <= 2.6)
+                & (chEmEF < 0.8)
+                & (chHEF > 0.0)
+                & (jets.nConstituents > 1)
+                & (neEmEF < 0.90)
+                & (muEF < 0.8)
+                & (neHEF < 0.90)
+            )
+            transition_tight = (
+                (aeta > 2.6) & (aeta <= 2.7)
+                & (chEmEF < 0.8) & (neEmEF < 0.99) & (muEF < 0.8) & (neHEF < 0.90)
+            )
+            endcap_tight = (aeta > 2.7) & (aeta <= 3.0) & (neHEF < 0.9999)
+            forward_tight = (aeta > 3.0) & (neEmEF < 0.90)
 
         pass_tight = barrel_tight | transition_tight | endcap_tight | forward_tight
 
@@ -280,6 +312,24 @@ def jet_id(jets, config, year=None, jet_id_key="jet_id"):
     """
     if year is None:
         raise ValueError("Year must be specified for jet ID determination.")
+
+    reference_input_swap = (
+        config.get("analysis") == "XZZ2l2nu"
+        and (config.get("jet_id_reference_input_swap", False)
+             or config.get("reference_bug_compatibility", False))
+    )
+    if reference_input_swap:
+        if not is_run2(year) or hasattr(jets, "jetId"):
+            raise ValueError("Reference input swap requires reconstructed Run 2 jet ID")
+        logger.warning("XZZ diagnostic: reproducing nanoAOD_skim SetJets input swaps")
+        # Swap only the ID view. Preserve the original jet fields for corrections,
+        # output, and all other consumers. Read both sides from the original array.
+        id_jets = ak.with_field(jets, jets.neEmEF, "chHEF")
+        id_jets = ak.with_field(id_jets, jets.chHEF, "neEmEF")
+        id_jets = ak.with_field(id_jets, jets.neMultiplicity, "chMultiplicity")
+        id_jets = ak.with_field(id_jets, jets.chMultiplicity, "neMultiplicity")
+    else:
+        id_jets = jets
 
     pass_jet_id = ak.ones_like(jets.pt, dtype=bool)
     jet_id2use = config.get(jet_id_key, config["jet_id"])
@@ -328,7 +378,7 @@ def jet_id(jets, config, year=None, jet_id_key="jet_id"):
         """For Run 2, use the custom jet ID based on the official tight WP definition."""
         logger.info("Using custom jet ID for Run 2!")
         pass_jetid_tight, pass_jetid_tight_lepveto = custom_jet_id(
-            jets, year, jet_type="AK4PUPPI",
+            id_jets, year, jet_type="AK4PUPPI",
             recipe=config.get("jet_id_recipe") if config.get("analysis") == "XZZ2l2nu" else None,
         )
         jet_id_wps = {

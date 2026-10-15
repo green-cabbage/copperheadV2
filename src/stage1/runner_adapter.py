@@ -85,6 +85,15 @@ class CopperheadRunnerAdapter(ProcessorABC):
                 events.metadata["dataset"],
                 shard_id,
             )
+        if self._isCutflow:
+            for prefix, extra in getattr(processor, "extra_cutflows", {}).items():
+                write_cutflow_outputs(
+                    extra,
+                    self._save_path,
+                    events.metadata["dataset"],
+                    shard_id,
+                    prefix=prefix,
+                )
 
         result = {
             "__n_processed__": int(n_processed),

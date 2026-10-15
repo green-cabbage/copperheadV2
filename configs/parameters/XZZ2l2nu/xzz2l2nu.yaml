@@ -5,20 +5,6 @@
 # ----------------------------------------------------------------
 # 2l2nu lepton selection (tighter than H->mumu, applied in both ee and mumu channels)
 # ----------------------------------------------------------------
-zz2l2nu_lep_pt_cut:
-    2016preVFP: 25.0
-    2016postVFP: 25.0
-    "2017": 25.0
-    "2018": 25.0
-    2016_RERECO: 25.0
-    "2017_RERECO": 25.0
-    "2018_RERECO": 25.0
-    2022preEE: 25.0
-    2022postEE: 25.0
-    "2023": 25.0
-    "2023BPix": 25.0
-    "2024": 25.0
-
 zz2l2nu_muon_eta_cut:
     2016preVFP: 2.4
     2016postVFP: 2.4
@@ -166,6 +152,106 @@ zz2l2nu_z_pt_cut:
     "2023": 55.0
     "2023BPix": 55.0
     "2024": 55.0
+
+
+# Minimum dR between the two selected leptons (mm, ee and e-mu alike); null disables it.
+# Not in the AN or slides; the reference applies 0.3 (H4LTools.cc:1186, 1274). Set a value here
+# to make the requirement permanent.
+zz2l2nu_dilepton_min_dr:
+    2016preVFP: null
+    2016postVFP: null
+    "2017": null
+    "2018": null
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    2022preEE: null
+    2022postEE: null
+    "2023": null
+    "2023BPix": null
+    "2024": null
+
+# ----------------------------------------------------------------
+# TEMPORARY cutflow study (task008): used only when switches.temporary_cutflow_option is on.
+# ----------------------------------------------------------------
+# Reference's separate electron iso03 cut, on top of WP90 (H4LTools.cc:544). Not in the AN,
+# slides or TWiki; restored in iteration030 to measure its effect.
+temporary_cutflow_electron_iso03_cut:
+    2016preVFP: null
+    2016postVFP: null
+    "2017": null
+    "2018": 0.15
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    2022preEE: null
+    2022postEE: null
+    "2023": null
+    "2023BPix": null
+    "2024": null
+
+# Reference muon iso03 threshold (H4LTools.cc muon block, after L552); ours is muon_iso_cut (0.25).
+# Not in the AN, slides or TWiki; restored in iteration031 to measure its effect.
+temporary_cutflow_muon_iso_cut:
+    2016preVFP: null
+    2016postVFP: null
+    "2017": null
+    "2018": 0.2
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    2022preEE: null
+    2022postEE: null
+    "2023": null
+    "2023BPix": null
+    "2024": null
+
+# Reference dilepton pT threshold for the e-mu cutflow counter emu_cutZ1Pt (temporary_cutflow_option
+# only; H4LTools.cc:1308). Otherwise the counter uses zz2l2nu_z_pt_cut (55, AN/slides).
+temporary_cutflow_z_pt_cut:
+    2016preVFP: null
+    2016postVFP: null
+    "2017": null
+    "2018": 25.0
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    2022preEE: null
+    2022postEE: null
+    "2023": null
+    "2023BPix": null
+    "2024": null
+
+# Reference dilepton pT threshold for the same-flavour cutflow counter sf_cutZ1Pt
+# (temporary_cutflow_option only; Pt_ll in the reference Input_2018.yml). Otherwise zz2l2nu_z_pt_cut.
+temporary_cutflow_sameFlav_z_pt_cut:
+    2016preVFP: null
+    2016postVFP: null
+    "2017": null
+    "2018": 10.0
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    2022preEE: null
+    2022postEE: null
+    "2023": null
+    "2023BPix": null
+    "2024": null
+
+# Reference dR(l1, l2) >= 0.3, any flavour (temporary_cutflow_option only).
+temporary_cutflow_dilepton_min_dr:
+    2016preVFP: null
+    2016postVFP: null
+    "2017": null
+    "2018": 0.3
+    2016_RERECO: null
+    "2017_RERECO": null
+    "2018_RERECO": null
+    2022preEE: null
+    2022postEE: null
+    "2023": null
+    "2023BPix": null
+    "2024": null
 
 # ----------------------------------------------------------------
 # MET requirements

@@ -1,3 +1,47 @@
+# Master diagnostic for documented reference bugs; false preserves normal physics.
+reference_bug_compatibility:
+    "2016preVFP": false
+    "2016postVFP": false
+    "2017": false
+    "2018": false
+    "2016_RERECO": false
+    "2017_RERECO": false
+    "2018_RERECO": false
+    "2022preEE": false
+    "2022postEE": false
+    "2023": false
+    "2023BPix": false
+    "2024": false
+# Diagnostic only: reproduce nanoAOD_skim SetJets argument swaps in jet ID.
+# false restores correct input assignment; original jet fields are never changed.
+jet_id_reference_input_swap:
+    "2016preVFP": false
+    "2016postVFP": false
+    "2017": false
+    "2018": false
+    "2016_RERECO": false
+    "2017_RERECO": false
+    "2018_RERECO": false
+    "2022preEE": false
+    "2022postEE": false
+    "2023": false
+    "2023BPix": false
+    "2024": false
+# Exact reference boundaries for the pre-FSR electrons used only in jet cleaning.
+# Electron event-selection cuts are configured separately.
+jet_cleaning_electron_gap:
+    2016preVFP: [1.4442, 1.566]
+    2016postVFP: [1.4442, 1.566]
+    "2017": [1.4442, 1.566]
+    "2018": [1.44, 1.57] # CodiMD cutflow settings
+    2016_RERECO: [1.4442, 1.566]
+    "2017_RERECO": [1.4442, 1.566]
+    "2018_RERECO": [1.4442, 1.566]
+    "2022preEE": null
+    "2022postEE": null
+    "2023": null
+    "2023BPix": null
+    "2024": null
 jet_pt_cut:
     2016preVFP: 30.0
     2016postVFP: 30.0
@@ -51,12 +95,16 @@ btag_jet_eta_cut:
     "2023BPix": 2.5
     "2024": 2.5
 jet_id_recipe:
-    # Audited CMSSW RUN2ULPUPPI prescription for 2017 synchronization.
-    # 2016 stays null: only the 2017/2018 RUN2ULPUPPI table is implemented.
+    # Match the intended PassJetIDv15(isPUPPI=true) thresholds in nanoAOD_skim.
+    # Do not emulate its caller's chHEF/neEmEF swap; iteration041 supplies that repair.
+    # REFSYNC omits the official charged/neutral multiplicity requirements. This
+    # previously adopted difference is retained; OFFICIAL keeps the official cuts.
+    # Earlier variant comparisons used the original skims with the input-wiring bug.
+    # 2016 stays null: this configurable table covers2017/2018.
     "2016preVFP": null
     "2016postVFP": null
-    "2017": RUN2ULPUPPI
-    "2018": RUN2ULPUPPI
+    "2017": RUN2ULPUPPI_REFSYNC
+    "2018": RUN2ULPUPPI_REFSYNC
     "2022preEE": null
     "2022postEE": null
     "2023": null
@@ -118,10 +166,14 @@ jet_puid:
     "2023BPix": loose
     "2024": loose
 min_dr_mu_jet:
+    # Jet-lepton cleaning cone. The reference uses 0.5 (H4LTools.cc:243-258). Iteration 036
+    # measured it on the 1M-event 2017 DY pilot: on top of RUN2ULPUPPI_REFSYNC it takes
+    # jet1_pt 0.1157 -> 0.1086, jet2_pt 0.2073 -> 0.1934, njets 0.0919 -> 0.0858.
+    # 2018 uses CodiMD cone 0.4 for the cutflow study; 2016 remains at 0.4.
     2016preVFP: 0.4
     2016postVFP: 0.4
-    "2017": 0.4
-    "2018": 0.4
+    "2017": 0.5
+    "2018": 0.4 # CodiMD cutflow settings
     2016_RERECO: 0.4
     "2017_RERECO": 0.4
     "2018_RERECO": 0.4

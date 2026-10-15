@@ -10,6 +10,7 @@ import numpy as np
 from coffea.analysis_tools import PackedSelection, Weights
 from coffea.btag_tools import BTagScaleFactor
 from coffea.lumi_tools import LumiMask
+from coffea.nanoevents.methods import vector
 from omegaconf import OmegaConf
 
 from modules.awkward_utils import ensure_event_axis
@@ -569,6 +570,7 @@ class EventProcessor(processor.ProcessorABC):
         # Reference: https://nbviewer.org/github/scikit-hep/coffea/blob/master/binder/packedselection.ipynb
         self.selection = {}
         self.cutflow = {}
+        self.extra_cutflows = {}  # XZZ Run 2 e-mu / same-flavour cutflows, set in process() with --isCutflow
 
         self.pysr_configs = {}
         self.pysr_all_features = set()
@@ -706,6 +708,7 @@ class EventProcessor(processor.ProcessorABC):
 
         # ReInitialize PackedSelection, otherwise processor would merge selection from previous run
         self.selection = PackedSelection()
+        self.extra_cutflows = {}
 
         event_filter = ak.ones_like(events.event, dtype="bool") # 1D boolean array to be used to filter out bad events
         self.processed_event_count = ak.num(events, axis=0) # For METADATA of event count
@@ -757,6 +760,28 @@ class EventProcessor(processor.ProcessorABC):
         self.config['NanoAODv'] = NanoAODv
         is_mc = events.metadata['is_mc']
         is_xzz_run2 = self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
+        # TEMPORARY reference-sync study (task008): extra HLT paths, extra MET flags, no HEM veto,
+        # no electron ID (reproduces the reference's pdgId/mvaIso_WP90 argument swap).
+        temporary_cutflow = is_xzz_run2 and self.config["switches"].get("temporary_cutflow_option", False)
+        if temporary_cutflow:
+            logger.warning(
+                "temporary_cutflow_option is ON: reference-sync configuration (extra HLT paths, extra "
+                "MET flags, no HEM veto). Not a physics configuration."
+            )
+        hlt_paths = list(self.config["hlt"])
+        event_flags = list(self.config["event_flags"])
+        if temporary_cutflow:
+            hlt_paths += list(self.config.get("temporary_cutflow_hlt_extra") or [])
+            event_flags += list(self.config.get("temporary_cutflow_event_flags_extra") or [])
+        do_hem_veto = self.config["switches"]["do_HemVeto"] and not temporary_cutflow
+        # Minimum dR between the two selected leptons of any flavour; None disables it.
+        dilepton_min_dr = self.config.get("zz2l2nu_dilepton_min_dr") if is_xzz_run2 else None
+        if temporary_cutflow:
+            dilepton_min_dr = self.config["temporary_cutflow_dilepton_min_dr"]
+        # Reference's separate electron iso03 cut (temporary_cutflow_option only); None disables it.
+        electron_iso03_cut = self.config["temporary_cutflow_electron_iso03_cut"] if temporary_cutflow else None
+        # Reference muon iso03 threshold (temporary_cutflow_option only).
+        muon_iso_cut = self.config["temporary_cutflow_muon_iso_cut" if temporary_cutflow else "muon_iso_cut"]
         reference_observable_config = self.config.get("reference_observables", {})
         reference_observables = is_xzz_run2 and reference_observable_config.get("enabled", False)
         if reference_observables:
@@ -840,7 +865,7 @@ class EventProcessor(processor.ProcessorABC):
         # NOTE: this would probably be superfluous if you already do trigger matching
         HLT_filter = ak.zeros_like(event_filter, dtype="bool")  # start with 1D of Falses
         hlt_fields = set(ak.fields(events.HLT))
-        for HLT_str in self.config["hlt"]:
+        for HLT_str in hlt_paths:
             logger.debug(f"HLT_str: {HLT_str}")
             if HLT_str not in hlt_fields:
                 logger.warning(f"HLT path '{HLT_str}' not in NanoAOD fields, skipping")
@@ -850,7 +875,7 @@ class EventProcessor(processor.ProcessorABC):
             # Avoid data-stream overlap: veto any configured muon trigger
             # in SingleElectron/EGamma; SingleMuon keeps the full trigger OR.
             muon_trigger = ak.zeros_like(event_filter, dtype="bool")
-            for path in self.config["hlt"]:
+            for path in hlt_paths:
                 # Match muon legs (Mu50, DiMu9, TripleMu_10, etc.), not "Multi".
                 if re.search(r"Mu(?=\d|_)", path) and path in hlt_fields:
                     muon_trigger = muon_trigger | ak.fill_none(events.HLT[path], False)
@@ -902,7 +927,7 @@ class EventProcessor(processor.ProcessorABC):
         # --------------------------------------------------------#
         evnt_qual_flg_selection = ak.ones_like(event_filter, dtype="bool")
         logger.debug("Applying event quality (MET-filter) flags")
-        for evt_qual_flg in self.config["event_flags"]:
+        for evt_qual_flg in event_flags:
             logger.debug(f"evt_qual_flg: {evt_qual_flg}")
             evnt_qual_flg_selection = evnt_qual_flg_selection & events.Flag[evt_qual_flg]
 
@@ -950,7 +975,9 @@ class EventProcessor(processor.ProcessorABC):
             events["Muon", "pt_roch"] = events.Muon.pt
 
         muon_selection = (
-            (events.Muon.pt_raw > self.config["muon_pt_cut"]) # pt_raw is pt b4 rochester #FIXME: Why pt_raw
+            # pt_raw is pt b4 rochester #FIXME: Why pt_raw
+            # XZZ cuts on Rochester-corrected pt (= pt_raw if do_roccor is off).
+            ((events.Muon.pt_roch if is_xzz_run2 else events.Muon.pt_raw) > self.config["muon_pt_cut"])
             & (abs(events.Muon.eta_raw) < self.config["muon_eta_cut"])
             & events.Muon[self.config["muon_id"]]
             & (events.Muon.isGlobal | events.Muon.isTracker
@@ -997,8 +1024,8 @@ class EventProcessor(processor.ProcessorABC):
 
         # Apply isolation selection after FSR subtraction in the selected cone.
         muon_iso = events.Muon.pfRelIso03_all if is_xzz_run2 else events.Muon.pfRelIso04_all
-        muon_selection = muon_selection & (muon_iso < self.config["muon_iso_cut"])
-        self.selection.add("muon_iso", ak.any(muon_iso < self.config["muon_iso_cut"], axis=1))
+        muon_selection = muon_selection & (muon_iso < muon_iso_cut)
+        self.selection.add("muon_iso", ak.any(muon_iso < muon_iso_cut, axis=1))
         # logger.info(f"muon_selectiont: {ak.to_dataframe(muon_selection.compute())}")
 
         # logger.info(f"Debug event muon pt after roccor: {events.Muon.pt[debug_mask_2].compute()}")
@@ -1188,6 +1215,7 @@ class EventProcessor(processor.ProcessorABC):
             (events.Electron.pt > self.config["electron_pt_cut"])
             & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
             & (events.Electron[electron_id] if apply_electron_id else True)
+            & (events.Electron.pfRelIso03_all < electron_iso03_cut if electron_iso03_cut is not None else True)
             # The PDF excludes gap electrons. Only the explicit reference-bug
             # diagnostic retains the historical bypass; other analyses are unchanged.
             & (True if reference_bugs else ~ecal_gap)
@@ -1276,7 +1304,7 @@ class EventProcessor(processor.ProcessorABC):
         # logger.debug(f"nelectrons: {nelectrons[debug_mask_2].compute()}")
         # logger.debug(f"electron_veto: {electron_veto[debug_mask_2].compute()}")
         self.selection.add("electron_veto", electron_veto)
-        if self.config["switches"]["do_HemVeto"]:
+        if do_hem_veto:
             HemVeto_filter, is_HemRegion = applyHemVeto(
                 events.Jet, events.run, events.event, self.config, is_mc, NanoAODv,
                 use_puid=not (is_xzz_run2 and NanoAODv == 15),
@@ -1299,16 +1327,30 @@ class EventProcessor(processor.ProcessorABC):
         pv_good = (events.PV.npvsGood > 0)
         self.selection.add("PV_npvsGood", pv_good)
 
+        # Dilepton separation, shared by the mm, ee and e-mu channels (reference: dR(l1, l2) >= 0.3,
+        # H4LTools.cc:1186 and 1274). Applies only to events with exactly two selected leptons.
+        pass_dilepton_dr = ak.ones_like(nmuons, dtype=bool)
+        if dilepton_min_dr is not None:
+            # Muons and electrons as one four-vector collection, so delta_r works across flavours.
+            leptons = ak.pad_none(ak.concatenate([
+                ak.zip({f: lep[f] for f in ("pt", "eta", "phi", "mass")}, with_name="PtEtaPhiMLorentzVector", behavior=vector.behavior)
+                for lep in (muons, events.Electron[electron_selection])
+            ], axis=1), 2)
+            dilepton_dr = leptons[:, 0].delta_r(leptons[:, 1])
+            pass_dilepton_dr = ak.fill_none(((nmuons + nelectrons) != 2) | (dilepton_dr >= dilepton_min_dr), True)
+
         # mm channel: exactly 2 OS muons with electron veto
         mm_os = ak.ones_like(mm_charge, dtype=bool) if reference_bugs else (mm_charge == -1)
-        is_mm = (nmuons == 2) & mm_os & electron_veto
+        is_mm_before_dr = (nmuons == 2) & mm_os & electron_veto
+        is_mm = is_mm_before_dr & pass_dilepton_dr
         self.selection.add("is_mm", is_mm)
         self.selection.add("nmuons", nmuons==2)
         self.selection.add("mm_charge", mm_os)
 
         # em channel: exactly 1 muon + 1 selected electron (used for E-Mu CR). No charge
         # requirement: AN-16-325 v6 p.16 l.262 does not require opposite-charge pairs.
-        is_em = (nmuons == 1) & (nelectrons == 1)
+        is_em_before_dr = (nmuons == 1) & (nelectrons == 1)
+        is_em = is_em_before_dr & pass_dilepton_dr
         self.selection.add("is_em", is_em)
 
         # ee channel: exactly 2 OS electrons, muon veto
@@ -1316,7 +1358,8 @@ class EventProcessor(processor.ProcessorABC):
         ee_os = (ee_charge_sum == 0)  # OS pair: +1 + (-1) = 0
         if reference_bugs:
             ee_os = ak.ones_like(ee_os, dtype=bool)
-        is_ee = (nelectrons == 2) & ee_os & (nmuons == 0)
+        is_ee_before_dr = (nelectrons == 2) & ee_os & (nmuons == 0)
+        is_ee = is_ee_before_dr & pass_dilepton_dr
         self.selection.add("is_ee", is_ee)
 
         # Apply the leading lepton pT cut built above, now that we know the flavour content.
@@ -1432,6 +1475,120 @@ class EventProcessor(processor.ProcessorABC):
         self.selection.add("h_sidebands_110_115_135_150", h_sidebands1)
         self.selection.add("h_sidebands_106_115_135_150", h_sidebands2)
         # ------------------- Cutflow dimuon mass window: END -----------------------
+
+        # ------------------- XZZ e-mu cutflow counters: START -----------------------
+        # Counters only; the e-mu CR selection itself lives in modules/selection.py. Steps
+        # mirror the reference HZZemuCR_* counters. The mass window is the reference skim's
+        # |m - 91.1876| <= 160 (H4LTools.cc:1298; AN uses +-15), cutflow only. Each step requires
+        # is_em so the independent counts stay e-mu only.
+        xzz_emu_cutflow_masks = None
+        if self.isCutflow and is_xzz_run2:
+            emu_mu = ak.firsts(muons)
+            emu_el = ak.firsts(events.Electron[electron_selection])
+            emu_pair = emu_mu + emu_el
+            emu_eta = (
+                (abs(emu_mu.eta) < self.config["zz2l2nu_muon_eta_cut"])
+                & (abs(emu_el.eta) < self.config["zz2l2nu_electron_eta_cut"])
+            )
+            emu_mass = (
+                abs(emu_pair.mass - 91.1876) <= 160.0
+            )
+            emu_zpt_cut = self.config["temporary_cutflow_z_pt_cut" if temporary_cutflow else "zz2l2nu_z_pt_cut"]
+            emu_zpt = emu_pair.pt > emu_zpt_cut
+            xzz_emu_cutflow_masks = {
+                # As in the reference, the dR requirement enters at the pT step, not at cut2l. The
+                # 25 GeV lepton pT requirement is already in the object selection (muon/electron_pt_cut).
+                "emu_cut2l": is_em_before_dr,
+                "emu_cutpTl1l2": is_em,
+                "emu_cutETAl1l2": is_em & ak.fill_none(emu_eta, False),
+                "emu_cutmZ1Window": is_em & ak.fill_none(emu_mass, False),
+                "emu_cutZ1Pt": is_em & ak.fill_none(emu_zpt, False),
+            }
+        # ------------------- XZZ e-mu cutflow counters: END -----------------------
+
+        # ------------------- XZZ same-flavour cutflow counters: START -----------------------
+        # Counters only; mirror the reference HZZ2l2qNu_* chain (H4LTools.cc:1087-1190). The mass
+        # window is the reference's |m - 91.1876| <= 80, cutflow only. With temporary_cutflow_option,
+        # cut2l follows the reference: exactly two tight muons or electrons (other flavour not vetoed,
+        # no charge requirement) with a same-flavour pair at 12 < m < 120, ee pairs first.
+        # Otherwise cut2l is our is_mm | is_ee before the dR requirement.
+        xzz_sameFlav_cutflow_masks = xzz_sameFlav_os_cutflow_masks = None
+        if self.isCutflow and is_xzz_run2:
+            def first_sameFlav_pair(leptons, mass_range=None):
+                pairs = ak.combinations(leptons, 2, fields=["l1", "l2"])
+                z = pairs.l1 + pairs.l2
+                if mass_range is not None:
+                    keep = (z.mass > mass_range[0]) & (z.mass < mass_range[1])
+                    pairs, z = pairs[keep], z[keep]
+                dphi = (pairs.l1.phi - pairs.l2.phi + np.pi) % (2 * np.pi) - np.pi
+                return ak.firsts(ak.zip({
+                    "pt1": pairs.l1.pt, "pt2": pairs.l2.pt,
+                    "eta1": pairs.l1.eta, "eta2": pairs.l2.eta,
+                    "dr": np.hypot(pairs.l1.eta - pairs.l2.eta, dphi),
+                    "mass": z.mass, "pt": z.pt,
+                }))
+            sameFlav_electrons = events.Electron[electron_selection]
+            if temporary_cutflow:
+                ee_pair = first_sameFlav_pair(sameFlav_electrons, (12.0, 120.0))
+                mm_pair = first_sameFlav_pair(muons, (12.0, 120.0))
+                use_ee = ~ak.is_none(ee_pair)
+                sameFlav_cut2l = ((nmuons == 2) | (nelectrons == 2)) & (use_ee | ~ak.is_none(mm_pair))
+                sameFlav_zpt_cut = self.config["temporary_cutflow_sameFlav_z_pt_cut"]
+            else:
+                ee_pair = first_sameFlav_pair(sameFlav_electrons)
+                mm_pair = first_sameFlav_pair(muons)
+                use_ee = is_ee_before_dr
+                sameFlav_cut2l = is_mm_before_dr | is_ee_before_dr
+                sameFlav_zpt_cut = self.config["zz2l2nu_z_pt_cut"]
+            sameFlav_pair = {f: ak.where(use_ee, ee_pair[f], mm_pair[f]) for f in ee_pair.fields}
+            sameFlav_eta_cut = ak.where(use_ee, self.config["zz2l2nu_electron_eta_cut"], self.config["zz2l2nu_muon_eta_cut"])
+            sameFlav_steps = {
+                # Pass-through: the 25 GeV lepton pT requirement is already in the object selection.
+                "sameFlav_cutpTl1l2": ak.ones_like(sameFlav_pair["pt"], dtype=bool),
+                "sameFlav_cutETAl1l2": (abs(sameFlav_pair["eta1"]) < sameFlav_eta_cut) & (abs(sameFlav_pair["eta2"]) < sameFlav_eta_cut),
+                "sameFlav_cutmZ1Window": abs(sameFlav_pair["mass"] - 91.1876) <= 80.0,
+                "sameFlav_cutZ1Pt": sameFlav_pair["pt"] >= sameFlav_zpt_cut,
+                "sameFlav_cutDeltaR": (sameFlav_pair["dr"] >= dilepton_min_dr) if dilepton_min_dr is not None else ak.ones_like(sameFlav_pair["dr"], dtype=bool),
+            }
+            # Lepton object selection, one requirement at a time (reference rows 35-39, as event
+            # counts): at least two muons or two electrons passing everything so far. The last step
+            # is the full selection; impact parameters are part of the ID step.
+            electron_pt = events.Electron.pt_raw if apply_electron_fsr else events.Electron.pt
+            electron_eta = events.Electron.eta_raw if apply_electron_fsr else events.Electron.eta
+            muon_steps = [events.Muon.pt_roch > self.config["muon_pt_cut"]]
+            muon_steps.append(muon_steps[-1] & (abs(events.Muon.eta_raw) < self.config["muon_eta_cut"]))
+            muon_steps.append(
+                muon_steps[-1] & events.Muon[self.config["muon_id"]]
+                & (events.Muon.isGlobal | events.Muon.isTracker | events.Muon.isPFcand)
+                & (abs(events.Muon.dxy) < self.config["zz2l2nu_muon_dxy_cut"])
+                & (abs(events.Muon.dz) < self.config["zz2l2nu_muon_dz_cut"])
+            )
+            muon_steps.append(muon_selection)
+            electron_steps = [electron_pt > self.config["electron_pt_cut"]]
+            electron_steps.append(electron_steps[-1] & (abs(electron_eta) < self.config["electron_eta_cut"]) & ~ecal_gap)
+            electron_steps.append(
+                electron_steps[-1] & (events.Electron[electron_id] if apply_electron_id else True)
+                & (abs(events.Electron.dxy) < self.config["zz2l2nu_electron_dxy_cut"])
+                & (abs(events.Electron.dz) < self.config["zz2l2nu_electron_dz_cut"])
+            )
+            electron_steps.append(electron_selection)
+            xzz_sameFlav_cutflow_masks = {
+                name: (ak.sum(mu, axis=1) >= 2) | (ak.sum(el, axis=1) >= 2)
+                for name, mu, el in zip(
+                    ("sameFlav_cut2lepPt", "sameFlav_cut2lepEta", "sameFlav_cut2lepID", "sameFlav_cut2lepIso"),
+                    muon_steps, electron_steps,
+                )
+            }
+            xzz_sameFlav_cutflow_masks["sameFlav_cut2l"] = sameFlav_cut2l
+            xzz_sameFlav_cutflow_masks.update({name: sameFlav_cut2l & ak.fill_none(mask, False) for name, mask in sameFlav_steps.items()})
+            # The reference counts opposite-charge pairs without cutting on them
+            # (HZZ2l2qNu_cutOppositeCharge), so this counter gets its own short chain.
+            sameFlav_os = (
+                ((nelectrons == 2) & (ak.sum(sameFlav_electrons.charge, axis=1) == 0))
+                | ((nmuons == 2) & (ak.sum(muons.charge, axis=1) == 0))
+            )
+            xzz_sameFlav_os_cutflow_masks = {"sameFlav_cut2l": sameFlav_cut2l, "sameFlav_cutOppositeCharge": sameFlav_cut2l & sameFlav_os}
+        # ------------------- XZZ same-flavour cutflow counters: END -----------------------
 
         events = events[event_filter == True]
         muons = muons[event_filter == True]
@@ -2530,7 +2687,7 @@ class EventProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         # HEMVeto study
         # ------------------------------------------------------------#
-        if (self.config["switches"]["do_HemVeto"] and self.config["switches"]["do_HemVetoStudy"]):
+        if (do_hem_veto and self.config["switches"]["do_HemVetoStudy"]):
             logger.info("Adding HemVeto_filter and is_HemRegion for HemVetoStudy!")
             HemVeto_filter = ak.to_packed(HemVeto_filter[event_filter==True])   # used for HemVetoStudy, doesn't compute if do_hemVetoStudy is False
             is_HemRegion = ak.to_packed(is_HemRegion[event_filter==True]) # used for HemVetoStudy, doesn't compute if do_hemVetoStudy is False
@@ -2816,32 +2973,62 @@ class EventProcessor(processor.ProcessorABC):
             # Ensure all selections exist before calling cutflow
             # Add protection for the cutflow if the selection is not in the cutflow
             logger.info(f"selection: {self.selection}")
-            all_required_selections = [
-                "TotalEntries",
-                "lumi_mask",
-                "LHE_cut",
-                "HLT_filter",
-                "event_quality_flags",
-                "PV_npvsGood",
-                "muon_pT_roch",
-                "muon_eta",
-                "muon_id",
-                "muon_isGlobal_or_Tracker",
-                "muon_selection",
-                "muon_iso",
-                "nmuons",
-                "mm_charge",
-                "electron_veto",
-                "HemVeto",
-                "trigger_match",
-                "leading_muon_pt",
-                "leading_lepton_pt",
-                "jet_veto_maps",
-                "dimuon_mass_window_76_106",
-                "h_peak_115_135",
-                "h_sidebands_110_115_135_150",
-                "h_sidebands_106_115_135_150",
-            ]
+            if is_xzz_run2:
+                # XZZ2l2nu: muon-channel-only rows are commented out, not deleted, so they
+                # can be restored (possibly modified) later. The e-mu chain is separate below.
+                all_required_selections = [
+                    "TotalEntries",
+                    "lumi_mask",
+                    "LHE_cut",
+                    "HLT_filter",
+                    "event_quality_flags",
+                    "PV_npvsGood",
+                    # "muon_pT_roch",
+                    # "muon_eta",
+                    # "muon_id",
+                    # "muon_isGlobal_or_Tracker",
+                    # "muon_selection",
+                    # "muon_iso",
+                    # "nmuons",
+                    # "mm_charge",
+                    # "electron_veto",
+                    "HemVeto",
+                    # "trigger_match",
+                    # "leading_muon_pt",
+                    # "leading_lepton_pt",
+                    "jet_veto_maps",
+                    # "dimuon_mass_window_76_106",
+                    # "h_peak_115_135",
+                    # "h_sidebands_110_115_135_150",
+                    # "h_sidebands_106_115_135_150",
+                ]
+            else:
+                all_required_selections = [
+                    "TotalEntries",
+                    "lumi_mask",
+                    "LHE_cut",
+                    "HLT_filter",
+                    "event_quality_flags",
+                    "PV_npvsGood",
+                    "muon_pT_roch",
+                    "muon_eta",
+                    "muon_id",
+                    "muon_isGlobal_or_Tracker",
+                    "muon_selection",
+                    "muon_iso",
+                    "nmuons",
+                    "mm_charge",
+                    "electron_veto",
+                    "HemVeto",
+                    "trigger_match",
+                    "leading_muon_pt",
+                    "leading_lepton_pt",
+                    "jet_veto_maps",
+                    "dimuon_mass_window_76_106",
+                    "h_peak_115_135",
+                    "h_sidebands_110_115_135_150",
+                    "h_sidebands_106_115_135_150",
+                ]
             # Available cuts inside PackedSelection
             try:
                 available_cuts = set(self.selection.names)
@@ -2872,6 +3059,39 @@ class EventProcessor(processor.ProcessorABC):
             self.cutflow = self.selection.cutflow(*required_selections)
             logger.info(f"cutflow: {self.cutflow}")
             logger.info(f"self.cutflow.logger.info(): {self.cutflow.print()}")
+
+            if xzz_sameFlav_cutflow_masks is not None:
+                # Jet-based steps (reference rows 47-48: b-jet veto, dPhi(jet, MET)). They exist only
+                # for events kept by event_filter; any other event counts as failing them.
+                kept = np.flatnonzero(ak.to_numpy(event_filter))
+                def unfiltered(values):
+                    full = np.zeros(len(event_filter), dtype=bool)
+                    full[kept] = ak.to_numpy(values)
+                    return full
+                btag_veto = unfiltered(out_dict["nBtagMedium_nominal"] == 0)
+                dphi_jet_met = unfiltered(out_dict["min_delta_phi_jet_MET"] > self.config["zz2l2nu_dphi_jet_met_cut"])
+                for prefix, masks, channel in (
+                    ("sameFlav", xzz_sameFlav_cutflow_masks, sameFlav_cut2l),
+                    ("emu", xzz_emu_cutflow_masks, is_em_before_dr),
+                ):
+                    masks[f"{prefix}_cutBtagVeto"] = channel & btag_veto
+                    masks[f"{prefix}_cutDPhiJetMET"] = channel & dphi_jet_met
+
+            # Extra chains (own PackedSelection each: the main one is close to its 32-cut capacity).
+            for prefix, masks in (
+                ("emucutflow", xzz_emu_cutflow_masks),
+                ("sameFlavcutflow", xzz_sameFlav_cutflow_masks),
+                ("sameFlavOScutflow", xzz_sameFlav_os_cutflow_masks),
+            ):
+                if masks is None:
+                    continue
+                chain = PackedSelection()
+                for cut in required_selections:
+                    chain.add(cut, self.selection.all(cut))
+                for cut, mask in masks.items():
+                    chain.add(cut, mask)
+                self.extra_cutflows[prefix] = chain.cutflow(*required_selections, *masks)
+                logger.info(f"{prefix}: {self.extra_cutflows[prefix].print()}")
 
             # logger.info(f"wgtcutflow: {wgtcutflow.print()}")
 

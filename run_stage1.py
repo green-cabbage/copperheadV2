@@ -308,6 +308,7 @@ if __name__ == "__main__":
         action=argparse.BooleanOptionalAction,
         help="If true, syncs files before preprocessing",
     )
+    parser.add_argument("--prestage-json", type=Path, help="Frozen prestage inventory")
     args = parser.parse_args()
 
     logger.setLevel(args.log_level)
@@ -366,8 +367,10 @@ if __name__ == "__main__":
 
     coffea_processor = EventProcessor(config, test_mode=test_mode, isCutflow=args.isCutflow)
 
-    client = get_dask_client(args.use_gateway, cluster_index=args.cluster_index, n_workers=64)
-    # client = get_dask_client(False, cluster_index=args.cluster_index, n_workers=64)
+    client = get_dask_client(
+        args.use_gateway, cluster_index=args.cluster_index,
+        n_workers=62, memory_limit="10GB",
+    )
 
     if not test_mode: # full scale implementation
         t2 = time.perf_counter()
@@ -381,6 +384,8 @@ if __name__ == "__main__":
         )
         if args.sync:
             sample_path = sample_path.replace(".json", "_sync.json") # INFO: Hardcoded sample_path
+        if args.prestage_json:
+            sample_path = str(args.prestage_json)
         logger.debug(f"Sample path: {sample_path}")
         with open(sample_path) as file:
             samples = json.loads(file.read())
@@ -487,9 +492,12 @@ if __name__ == "__main__":
                             # clean partial output from previous tries
                             save_dir_path = Path(save_path)
                             if save_dir_path.is_dir():
-                                time.sleep(30) # NOTE: wait 30 seconds if removing directory. If immediately re-running run_stage1.py after crash, it may return `Directory not empty` error because there's still some parquet files being saved.
-                                os.system(f"rm -rf '{save_path}'") 
-                                logger.info(f"rm command executed for: {save_path}")
+                                # Preserve failed output outside the compactor's sample glob.
+                                failed = Path(start_save_path) / "_failed" / dataset
+                                failed.mkdir(parents=True, exist_ok=True)
+                                archived = failed / f"{idx}-{time.time_ns()}"
+                                save_dir_path.rename(archived)
+                                logger.info(f"Preserved previous output at {archived}")
                             eos_mkdirs(save_path)
 
                             # rebuild the events/out collections for this attempt

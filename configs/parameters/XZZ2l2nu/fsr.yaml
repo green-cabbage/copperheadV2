@@ -5,37 +5,53 @@ xzz_fsr:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
         electron:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
     "2016preVFP":
         muon:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
         electron:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
     "2016postVFP":
         muon:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
         electron:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
     "2018":
         muon:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
         electron:
             photon_pt_min: 2.0
             photon_abs_eta_max: 2.4
             photon_rel_iso_max: 0.8
+            photon_dr_max: 0.5
+            photon_droveret2_max: 0.012
     "2022preEE": null
     "2022postEE": null
     "2023": null
