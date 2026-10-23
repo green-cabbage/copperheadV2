@@ -1,0 +1,74 @@
+# Optional reference observable definitions. Normal processing is unchanged when disabled.
+reference_observables:
+    "2016preVFP":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2016postVFP":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2017":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: 0.0494
+        deepjet_medium: 0.2770
+    "2018":
+        enabled: false
+        mc_met: raw
+        data_met: configured
+        deepjet_loose: 0.0494
+        deepjet_medium: 0.2770
+    "2016_RERECO":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2017_RERECO":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2018_RERECO":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2022preEE":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2022postEE":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2023":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2023BPix":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null
+    "2024":
+        enabled: false
+        mc_met: configured
+        data_met: configured
+        deepjet_loose: null
+        deepjet_medium: null

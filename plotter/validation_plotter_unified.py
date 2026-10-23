@@ -22,164 +22,56 @@ from src.lib.histogram.plotting import plotDataMC_compare
 from modules.classify_year import is_run2, is_run3
 from configs.variables.variable_lists import get_all_vars
 from scripts.compact_parquet_data import ensure_compacted
+from modules.sample_config import get_sample_dict
 
 # This order is for the stack plotting in the control plots
 # bkg_MC_order = ["OTHER", "VV", "EWK",  "TOP", "DY", "DYVBF","DY_MINNLO", "DY_AMCATNLO", "DY_combined", "DYJ01", "DYJ2"]
-bkg_MC_order = ["VV", "EWK",  "TOP", "DY", "DYVBF"]
+bkg_MC_order = ["VVV", "VV", "EWK",  "TOP", "DY", "DYVBF"]
+# XZZ2l2nu only: the AN sample scheme adds an HT-binned W+jets group that the
+# HMuMu scheme has no counterpart for. Kept as a separate order so HMuMu keeps
+# bkg_MC_order untouched.
+xzz2l2nu_bkg_MC_order = ["VVV", "VV", "EWK", "WJETS", "TOP", "DY", "DYVBF"]
 
 
-group_dict = {
-    "DATA": {
-        "2016preVFP": ["data_B", "data_C", "data_D", "data_E", "data_F"],
-        "2016postVFP": ["data_F", "data_G", "data_H"],
-        "2016": ["data_B", "data_C", "data_D", "data_E", "data_F", "data_G", "data_H"],
-        "2017": ["data_B", "data_C", "data_D", "data_E", "data_F"],
-        "2018": ["data_A", "data_B", "data_C", "data_D"],
-        "run2": ["data_A", "data_B", "data_C", "data_D", "data_E", "data_F", "data_G", "data_H"],
-
-        "2022preEE": ["data_C", "data_D"],
-        "2022postEE": ["data_E", "data_F", "data_G"],
-        "2023": ["data_C"],
-        "2023BPix": ["data_D"],
-        "2024": ["data_C", "data_D", "data_E", "data_F", "data_G", "data_H", "data_I"],
-        "run3": ["data_C", "data_D", "data_E", "data_F", "data_G", "data_H", "data_I"],
-    },
-    "DY": {
-        "2016preVFP": [
-            # "dyTo2Mu_M-100to200_MiNNLO", 
-            # "dy_M-100To200_MiNNLO",# run2 nanoV12
-            # "dy_M-50_MiNNLO", # run2 nanoV12
-            # "dy_M-50_aMCatNLO", # run2 nanoV12
-            # "dyTo2L_M-50_aMCatNLO", # run2 nanoV15
-            "dyTo2Mu_M-50_MiNNLO", # run2 nanoV15
-            "dyTo2Mu_M-100to200_MiNNLO", # run2 nanoV15
-        ],
-        "2016postVFP": [
-            # "dyTo2Mu_M-100to200_MiNNLO", 
-            # "dy_M-100To200_MiNNLO",# run2 nanoV12
-            # "dy_M-50_MiNNLO", # run2 nanoV12
-            # "dy_M-50_aMCatNLO", # run2 nanoV12
-            # "dyTo2L_M-50_aMCatNLO", # run2 nanoV15
-            "dyTo2Mu_M-50_MiNNLO", # run2 nanoV15
-            "dyTo2Mu_M-100to200_MiNNLO", # run2 nanoV15
-        ],
-        "2017": [
-            # "dyTo2Mu_M-100to200_MiNNLO", 
-            # "dy_M-100To200_MiNNLO",# run2 nanoV12
-            # "dy_M-50_MiNNLO", # run2 nanoV12
-            # "dy_M-50_aMCatNLO", # run2 nanoV12
-            # "dyTo2L_M-50_aMCatNLO", # run2 nanoV15
-            "dyTo2Mu_M-50_MiNNLO", # run2 nanoV15
-            "dyTo2Mu_M-100to200_MiNNLO", # run2 nanoV15
-        ],
-        "2018": [
-            # "dyTo2Mu_M-100to200_MiNNLO", 
-            # "dy_M-100To200_MiNNLO",# run2 nanoV12
-            # "dy_M-50_MiNNLO", # run2 nanoV12
-            # "dy_M-50_aMCatNLO", # run2 nanoV12
-            # "dyTo2L_M-50_aMCatNLO", # run2 nanoV15
-            "dyTo2Mu_M-50_MiNNLO", # run2 nanoV15
-            "dyTo2Mu_M-100to200_MiNNLO", # run2 nanoV15
-        ],
-        "2022preEE": ["dyTo2L_M-50_incl"],
-        "2022postEE": ["dyTo2L_M-50_incl"],
-        "2023": ["dyTo2L_M-50_incl"],
-        "2023BPix": ["dyTo2L_M-50_incl"],
-        "2024": ["dyTo2Mu_M-50_aMCatNLO"],
-
-        # "2022preEE": ["dyTo2L_M-50_incl", "dy_VBF_filter"],
-        # "2022postEE": ["dyTo2L_M-50_incl", "dy_VBF_filter"],
-        # "2023": ["dyTo2L_M-50_incl", "dy_VBF_filter"],
-        # "2023BPix": ["dyTo2L_M-50_incl", "dy_VBF_filter"],
-        # "2024": ["dyTo2Mu_M-50_aMCatNLO", "dy_VBF_filter"],
-
-
-        # "2022preEE": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2022postEE": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2023": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2023BPix": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2024": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-
-        # "2022preEE": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2022postEE": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2023": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2023BPix": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-        # "2024": ["dyTo2Mu_MLL_10To50", "dyTo2Mu_MLL_50To120", "dyTo2Mu_MLL_120To200"],
-    },
-    "DYVBF": {
-        "2016preVFP": ["dy_VBF_filter"],
-        "2016postVFP": ["dy_VBF_filter"],
-        "2017": ["dy_VBF_filter"],
-        "2018": ["dy_VBF_filter"],
-        "2022preEE": ["dy_VBF_filter"],
-        "2022postEE": ["dy_VBF_filter"],
-        "2023": ["dy_VBF_filter"],
-        "2023BPix": ["dy_VBF_filter"],
-        "2024": ["dy_VBF_filter"],
-    },
-    "EWK": {
-        "2016preVFP": ["ewk_zlljj", "ewk_lljj_mll50_mjj120"],
-        "2016postVFP": ["ewk_zlljj", "ewk_lljj_mll50_mjj120"],
-        "2017": ["ewk_zlljj", "ewk_lljj_mll50_mjj120"],
-        "2018": ["ewk_zlljj", "ewk_lljj_mll50_mjj120"],
-        "2022preEE": ["ewk_mmjj_mll_105_160"],
-        "2022postEE": ["ewk_mmjj_mll_105_160"],
-        "2023": ["ewk_mmjj_mll_105_160"],
-        "2023BPix": ["ewk_mmjj_mll_105_160"],
-        "2024": ["ewk_mmjj_mll_105_160"],
-    },
-    "TOP": [
-        # "tt_inclusive",
-        "ttjets_dl",
-        "ttjets_sl",
-        # "ttjets_fh",
-        # "st_tw_top",
-        # "st_tw_antitop",
-        # "st_t_top",
-        # "st_t_antitop",
-    ],
-    "VV": [
-        "ww_2l2nu",
-        "wz_3lnu",
-        "wz_2l2q",
-        "wz_1l1nu2q",
-        "zz_2l2q",
-        "zz_2l2u",
-        "zz_2l2nu",
-        "zz_4l",
-    ],
-    # "OTHER": ["www", "wwz", "wzz", "zzz"],
-    "ggH": ["ggh_powhegPS"],
-    "VBF": {
-        "2016preVFP": ["vbf_powheg_dipole"],
-        "2016postVFP": ["vbf_powheg_dipole"],
-        "2017": ["vbf_powheg_dipole"],
-        "2018": ["vbf_powheg_dipole"],
-        "2022preEE": ["vbf_powheg_dipole"],
-        "2022postEE": ["vbf_powheg_dipole"],
-        "2023": ["vbf_powheg"],
-        "2023BPix": ["vbf_powheg"],
-        "2024": ["vbf_powheg"],
-    },
+# samples.yaml group name -> the group this plotter stacks, labels and colours by.
+# Several config groups may map onto one plot group: TT and ST merge into TOP,
+# matching the "TT+ST" convention modules/sample_config.py already uses.
+YAML_GROUP_TO_PLOT_GROUP = {
+    "TT": "TOP",
+    "ST": "TOP",
+    "GGH": "ggH",
 }
 
-def parseGroupProcesses(group_dict, year: str):
+# Sections of samples.yaml to pull groups from, in stack-building order.
+SAMPLE_CONFIG_SECTIONS = ("data", "background", "signal")
+
+
+def build_group_dict(year: str, sample_config: str):
     """
-    helper function that simplifies group_dict to be
-    specific to one year.
+    Resolve {plot group name: [process, ...]} for one year from samples.yaml.
+
+    This replaces a group_dict that used to be hardcoded in this module, so the
+    sample lists now live in one place shared with stage2, stage3 and get_yields.
+    Per-year overrides are handled by modules.sample_config, which falls back to
+    a group's default `processes` when the year has no explicit entry.
     """
-    year_specific_group_dict = {}
-    for group_name, processes in group_dict.items():
-        logger.debug(f"Group '{group_name}' processes (original): {processes}")
-        if type(processes) is dict:
-            if year not in processes:
-                raise KeyError(
-                    f"Year '{year}' is not configured for process group '{group_name}'."
-                )
-            processes = processes[year]
-        year_specific_group_dict[group_name] = processes
-    logger.debug(f"Group dict specific to year {year}: {year_specific_group_dict}")
-    return year_specific_group_dict
+    group_dict = {}
+    for section in SAMPLE_CONFIG_SECTIONS:
+        resolved = get_sample_dict(sample_config, section, year)
+        for yaml_group, processes in resolved.items():
+            plot_group = YAML_GROUP_TO_PLOT_GROUP.get(yaml_group, yaml_group)
+            merged = group_dict.setdefault(plot_group, [])
+            # merging TT and ST into TOP must not duplicate a shared process
+            merged.extend(p for p in processes if p not in merged)
+
+    if not group_dict.get("DATA"):
+        raise KeyError(
+            f"No DATA processes resolved for year '{year}' from '{sample_config}'. "
+            "The config needs a 'data' section with a DATA group."
+        )
+    logger.debug(f"Group dict for year {year} from {sample_config}: {group_dict}")
+    return group_dict
+
 
 def find_group_name(process_name, group_dict_param):
     # Avoid redefining group_dict from outer scope
@@ -204,6 +96,17 @@ def fillHist(sample_hist, var, to_fill_setting, values, weights):
     return sample_hist
 
 
+def group_selected_partitions(events, factor, variables):
+    """Combine selected rows without retaining unused input-array buffers."""
+    if factor <= 1:
+        return events
+    needed = {v.replace("_range2", "").replace("_zpeak", "") for v in variables}
+    needed.update(("wgt_nominal", "fraction"))
+    events = events[[field for field in events.fields if field in needed]]
+    events = dak.map_partitions(ak.to_packed, events)
+    return events.repartition(n_to_one=factor)
+
+
 def getPlotVar(var_param: str):
     """
     Helper function that removes the variations in variable name if they exist
@@ -213,6 +116,27 @@ def getPlotVar(var_param: str):
     else:
         plot_var = var_param
     return plot_var
+
+
+def isLowMetCategory(category: str) -> bool:
+    """
+    True when an XZZ2l2nu category pins MET to an UPPER bound, i.e. it lives
+    entirely below the 100 GeV lower edge of the default PuppiMET_pt binning.
+
+    Driven by the ('<' | '>', threshold) tuple each category declares in
+    modules.selection.XZZ2L2NU_CATEGORIES rather than by a hardcoded name list,
+    so new low-MET categories are picked up automatically. HMuMu categories are
+    absent from that table and always return False, leaving their binning alone.
+    """
+    try:
+        from modules.selection import XZZ2L2NU_CATEGORIES
+    except ImportError:
+        return False
+    spec = XZZ2L2NU_CATEGORIES.get(category)
+    if not spec:
+        return False
+    met = spec.get("met")
+    return bool(met) and met[0] == "<"
 
 
 if __name__ == "__main__":
@@ -303,7 +227,14 @@ if __name__ == "__main__":
     dest="category",
     default="nocat",
     action="store",
-    help="define production mode category. optionsare ggh, vbf and nocat (no category cut)",
+    help=(
+        "Category/channel selection, including 2l2nu_mumu, 2l2nu_ee, "
+        "2l2nu_emu, the jet-split categories 2l2nu_{vbf,njet1,njet0}_mumu "
+        "and 2l2nu_{vbf,njet1,njet0}_ee, and the control regions "
+        "2l2nu_lowmet_{mumu,ee}, 2l2nu_mllsb_{mumu,ee} and 2l2nu_emu_cr "
+        "(control regions pin their own m(ll) window, so --region is ignored "
+        "for them)"
+    ),
     )
     parser.add_argument(
     "--remove_zpt_weights",
@@ -383,7 +314,7 @@ if __name__ == "__main__":
             "Use either --remove_zpt_weights or --use_dnn_zpt_weights, not both."
         )
 
-    group_dict = parseGroupProcesses(group_dict, args.year)
+    group_dict = build_group_dict(args.year, args.sample_config)
 
     if is_run3(args.year):
         CM_energy = 13.6  # TeV
@@ -481,6 +412,14 @@ if __name__ == "__main__":
     if args.minimum_set: kinematic_vars = ['pt', 'eta']
     variables2plot = get_all_vars(args.minimum_set)  # get the full list of variables from the config file
 
+    # Optional XZZ subset for targeted plot reruns; defaults retain all variables.
+    requested_vars = os.environ.get("XZZ_PLOT_VARIABLES", "")
+    if args.analysis == "XZZ2l2nu" and requested_vars:
+        requested = [v.strip() for v in requested_vars.split(",") if v.strip()]
+        if not requested or set(requested) - set(variables2plot):
+            raise ValueError(f"Unknown or empty XZZ plot variable subset: {requested_vars}")
+        variables2plot = list(dict.fromkeys(requested))
+
     variables2plot_orig = copy.deepcopy(variables2plot)
     if "jj_mass_nominal" in variables2plot:
         variables2plot += ["jj_mass_nominal_range2"] # add another range to plot
@@ -499,11 +438,23 @@ if __name__ == "__main__":
 
     with open(plot_setting_fname, "r") as file:
         plot_settings = json.load(file)
+    if args.analysis == "XZZ2l2nu":
+        for settings in plot_settings.values():
+            if "binning_xzz_linspace" in settings:
+                settings["binning_linspace"] = settings["binning_xzz_linspace"]
+            if "ylabel_xzz" in settings:
+                settings["ylabel"] = settings["ylabel_xzz"]
     status = args.status.replace("_", " ")
 
     # define client for parallelization
     client = get_dask_client(args.use_gateway, cluster_index=args.cluster_index)
     logger.info(f"client: {client}")
+    xzz_partition_group = (
+        int(os.environ.get("XZZ_PLOT_PARTITION_GROUP", "1"))
+        if args.analysis == "XZZ2l2nu" else 1
+    )
+    if xzz_partition_group < 1:
+        raise ValueError("XZZ_PLOT_PARTITION_GROUP must be at least 1")
 
     # record time
     time_step = time.time()
@@ -518,7 +469,12 @@ if __name__ == "__main__":
         # run compact script for each process
         for process in available_processes:
             compacted_path_DNN = os.path.join(compacted_base_path, process, "0")
-            ensure_compacted(args.year, process, args.load_path, compacted_path_DNN)
+            # client is required: ensure_compacted uses it to count rows when it has to
+            # build the compacted copy. Omitting it only worked while every compacted
+            # directory already existed, which short-circuits before the first client use.
+            ensure_compacted(
+                args.year, process, args.load_path, compacted_path_DNN, client=client
+            )
 
         args.load_path = compacted_base_path
 
@@ -555,6 +511,14 @@ if __name__ == "__main__":
             "jj_dEta_nominal",
             "dimuon_pt",
             "jet2_pt_nominal",
+            "jet1_eta_nominal",
+            "jet2_eta_nominal",
+            "jet3_pt_nominal",
+            "jet3_eta_nominal",
+            "jet4_pt_nominal",
+            "jet4_eta_nominal",
+            "mu1_eta",
+            "mu2_eta",
             "jj_pt_nominal",
         ]
 
@@ -607,6 +571,16 @@ if __name__ == "__main__":
 
         loaded_events[process] = events
     logger.info("finished loading parquet files!")
+    if args.analysis == "XZZ2l2nu":
+        # Some NanoAOD outputs omit optional variables (for example jet QGL).
+        # An all-missing variable would otherwise build an empty histogram list
+        # and fail when the integer sum([]) is indexed during plot production.
+        available_fields = {field for events in loaded_events.values() for field in events.fields}
+        absent = [v for v in variables2plot
+                  if v.replace("_range2", "").replace("_zpeak", "") not in available_fields]
+        if absent:
+            logger.warning("Variables absent from every loaded sample; skipping: %s", absent)
+            variables2plot = [v for v in variables2plot if v not in absent]
     # mplhep style starts here --------------------------------------
     logger.info("Using mplhep style for plotting!")
     import matplotlib
@@ -622,7 +596,7 @@ if __name__ == "__main__":
     # FIXME: Is it mandatory to use all regions and channels name below? Or I can just replace it with args.regions and args.category?
     regions = ["z-peak", "signal", "h-peak", "h-sidebands"] # full list of possible regions to loop over
     channels = (
-        ["2l2nu_mumu", "2l2nu_ee", "2l2nu_emu"]
+        [args.category]
         if args.analysis == "XZZ2l2nu"
         else ["nocat", "vbf", "ggh"]
     )
@@ -662,6 +636,12 @@ if __name__ == "__main__":
             logger.warning(f"binning: {binning}")
         else:
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        if plot_var == "PuppiMET_pt" and isLowMetCategory(args.category):
+            # MET < 100 categories fall entirely below the default lower edge, so
+            # the histogram AXIS itself has to change -- not just the drawn range.
+            # Fixing only the draw-time binning leaves every entry out of range and
+            # the plot is dropped upstream as "empty histograms for PuppiMET_pt".
+            binning = np.linspace(*plot_settings[plot_var]["binning_lowmet_linspace"])
         # if region_name == "z-peak" and plot_var == "dimuon_mass": # When z-peak region is selected, use different binning for mass
         # binning = np.linspace(*plot_settings[var]["binning_zpeak_linspace"])
         logger.debug(f"var: {var}")
@@ -671,6 +651,12 @@ if __name__ == "__main__":
     logger.info("{style}Filling histograms for each variable.{style}".format(
         style="\n" + "="*50 + "\n",))
     sample_hist_dictByVar2compute = {}
+    # A variable with no plot-settings entry is skipped when the histograms are built
+    # above; drop it here too rather than raising KeyError further down.
+    skipped = [v for v in variables2plot if v not in sample_hist_dictByVar]
+    if skipped:
+        logger.warning(f"no plot settings for {skipped}; skipping those variables")
+        variables2plot = [v for v in variables2plot if v in sample_hist_dictByVar]
     for var in tqdm.tqdm(variables2plot):
         sample_hist_empty = sample_hist_dictByVar[var]
         sample_hist_l = []
@@ -695,6 +681,12 @@ if __name__ == "__main__":
             logger.warning(f"binning: {binning}")
         else:
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
+        if plot_var == "PuppiMET_pt" and isLowMetCategory(args.category):
+            # MET < 100 categories fall entirely below the default lower edge, so
+            # the histogram AXIS itself has to change -- not just the drawn range.
+            # Fixing only the draw-time binning leaves every entry out of range and
+            # the plot is dropped upstream as "empty histograms for PuppiMET_pt".
+            binning = np.linspace(*plot_settings[plot_var]["binning_lowmet_linspace"])
         # if region_name == "z-peak" and plot_var == "dimuon_mass": # When z-peak region is selected, use different binning for mass
         # binning = np.linspace(*plot_settings[var]["binning_zpeak_linspace"])
         if args.linear_scale:
@@ -739,6 +731,10 @@ if __name__ == "__main__":
                     year=args.year,
                     analysis=args.analysis,
                 )
+                if xzz_partition_group > 1:
+                    # Group after selection to keep memory bounded while reducing
+                    # repeated histogram tasks for small compacted input files.
+                    events = group_selected_partitions(events, xzz_partition_group, variables2plot)
 
                 #  FOR DEBUG PURPOSES
                 # if process == "dy_M-100To200_aMCatNLO":
@@ -862,9 +858,12 @@ if __name__ == "__main__":
                 else: # bkg MC
                     bkg_MC_dict[group_name] = hist_dict
             # order bkg_MC_dict in a specific way for plotting, smallest yielding process first:
-            logger.debug(f"bkg_MC_order: {bkg_MC_order}")
+            stack_order = (
+                xzz2l2nu_bkg_MC_order if args.analysis == "XZZ2l2nu" else bkg_MC_order
+            )
+            logger.debug(f"bkg_MC_order: {stack_order}")
             logger.debug(f"bkg_MC_dict: {bkg_MC_dict}")
-            bkg_MC_dict = {process: bkg_MC_dict[process] for process in bkg_MC_order if process in bkg_MC_dict}
+            bkg_MC_dict = {process: bkg_MC_dict[process] for process in stack_order if process in bkg_MC_dict}
             logger.debug(f"data_dict: {data_dict}")
             logger.debug(f"bkg_MC_dict: {bkg_MC_dict}")
             if len(data_dict) ==0:
@@ -944,6 +943,8 @@ if __name__ == "__main__":
             binning = np.linspace(*plot_settings[plot_var]["binning_linspace"])
             if region_name == "z-peak" and plot_var == "dimuon_mass": # When z-peak region is selected, use different binning for mass
                 binning = np.linspace(*plot_settings[var]["binning_zpeak_linspace"])
+            if plot_var == "PuppiMET_pt" and isLowMetCategory(args.category): # MET < 100 categories fall below the default lower edge
+                binning = np.linspace(*plot_settings[plot_var]["binning_lowmet_linspace"])
             # elif var == "dnn_vbf_score":
             #     # binning = np.array(plot_settings[var]["binning_nonuniform"])
             #     binning = np.linspace(*plot_settings[var]["binning_zpeak_linspace"])
@@ -982,6 +983,9 @@ if __name__ == "__main__":
             )
 
     close_dask_client()
-    logger.info("Plots are saved to %s", full_save_path)
+    if "full_save_path" in locals():
+        logger.info("Plots are saved to %s", full_save_path)
+    else:
+        logger.info("No plots were produced because all selected histograms were empty.")
     time_elapsed = round(time.time() - time_step, 3)
     logger.info(f"Finished in {time_elapsed} s.")

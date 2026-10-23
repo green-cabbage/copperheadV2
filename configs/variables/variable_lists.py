@@ -1,3 +1,4 @@
+import os
 """
 Central definition of variable lists used for:
 - DNN training
@@ -401,6 +402,56 @@ VAR_SETS: Dict[str, List[str]] = {
 }
 
 
+# Extra variables always kept in the minimal ("--minimum_set") plotting set,
+# so that jet-dependent selections (e.g. --njets) can be validated quickly.
+# Variables for XZZ2l2nu control plots, including both lepton flavors.
+# Selected with XZZ_VAR_SET=xzz2l2nu_an. Every entry below exists in Stage-1
+# output; the requested quantities that do NOT exist are listed in
+# XZZ2L2NU_AN_MISSING_VARS so callers can see what was dropped and why.
+XZZ2L2NU_AN_PLOT_VARS: List[str] = [
+    "el1_pt", "el1_eta", "el1_phi",
+    "el2_pt", "el2_eta", "el2_phi",
+    "mu1_pt", "mu1_eta", "mu1_phi",
+    "mu2_pt", "mu2_eta", "mu2_phi",
+    "dilepton_mass", "dilepton_pt", "dilepton_eta",
+    "PuppiMET_pt", "MT_ZZ",
+    "njets_nominal", "nBtagLoose_nominal", "nBtagMedium_nominal",
+    "dimuon_dEta", "dimuon_dPhi", "dimuon_dR",
+    "jet1_pt_nominal", "jet2_pt_nominal",
+    "jet1_eta_nominal", "jet2_eta_nominal",
+    "jj_mass_nominal", "jj_pt_nominal",
+    "jj_dEta_nominal", "jj_dPhi_nominal",
+    "min_delta_phi_jet_MET",
+    "mmj1_dEta_nominal", "mmj2_dEta_nominal",
+    "zeppenfeld_nominal", "pt_centrality_nominal",
+]
+
+# Requested but NOT written by Stage-1. Each would need a new Stage-1 variable.
+XZZ2L2NU_AN_MISSING_VARS: dict = {
+    "pT^ZZ":                "only MT_ZZ is stored; the ZZ-system pT is not",
+    "pT(l1)/pT(l2)":        "ratio not stored (mu1_pt, mu2_pt are)",
+    "eta(l1)*eta(l2)":      "product not stored (mu1_eta, mu2_eta are)",
+    "pT^Z1/pT^miss":        "ratio not stored (dilepton_pt, PuppiMET_pt are)",
+    "dR_jj":                "not stored; jj_dEta_nominal and jj_dPhi_nominal are",
+    "jet pT asymmetry":     "not stored; jet1_pt_nominal and jet2_pt_nominal are",
+    "HT^jets":              "not stored; only htsoft2_nominal / htsoft5_nominal (soft HT) exist",
+}
+
+MINIMAL_EXTRA_VARS: List[str] = [
+    # Channel-aware Z candidate written by Stage-1 (mm -> dimuon, ee -> diele,
+    # em -> e+mu). The dimuon_* variables above are muon-built and are the -999
+    # sentinel outside the mm channel, so this is the only Z-pT plot the ee and
+    # em categories can produce.
+    "dilepton_pt",
+    "dilepton_mass",
+    "jet1_pt_nominal",
+    "jet1_eta_nominal",
+    "jet2_pt_nominal",
+    "jet2_eta_nominal",
+    "PuppiMET_pt",
+]
+
+
 def unique_preserve_order(seq: List[str]) -> List[str]:
     """Return list of unique items, preserving original order."""
     unique_vars = list(dict.fromkeys(seq))
@@ -412,8 +463,20 @@ def get_all_vars(test = False) -> List[str]:
     for var_list in VAR_SETS.values():
         all_vars.extend(var_list)
 
-    if test:  # just fetch the first 5 vars for testing
-        all_vars = all_vars[:5]
+    # Explicit named set wins over the minimal-set flag when requested.
+    var_set = os.environ.get("XZZ_VAR_SET", "")
+    if var_set == "xzz2l2nu_an":
+        return unique_preserve_order(XZZ2L2NU_AN_PLOT_VARS)
+    if var_set == "xzz2l2nu_all":
+        # Everything plottable: the union of every VAR_SETS entry, the AN list and
+        # the minimal-set extras. Without this the AN-only variables (dilepton_*,
+        # MT_ZZ, nBtagLoose, ...) are absent from VAR_SETS and would be dropped.
+        return unique_preserve_order(
+            all_vars + XZZ2L2NU_AN_PLOT_VARS + MINIMAL_EXTRA_VARS
+        )
+
+    if test:  # minimal set: first 5 vars plus the leading-jet kinematics
+        all_vars = all_vars[:5] + MINIMAL_EXTRA_VARS
 
     return unique_preserve_order(all_vars)
 

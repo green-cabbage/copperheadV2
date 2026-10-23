@@ -1,4 +1,5 @@
 import os
+import json
 import pickle
 import math
 from pathlib import Path
@@ -133,7 +134,7 @@ def group_parquet_files(file_infos, target_n_final_files):
     return groups
 
 
-def write_compacted_group(idx, group_files, compacted_path):
+def write_compacted_group(idx, group_files, compacted_path, excluded_rows=None):
     group_rows = sum(rows for _, rows in group_files)
     output_path = os.path.join(compacted_path, f"part{idx}.parquet")
     logger.debug(
@@ -143,10 +144,18 @@ def write_compacted_group(idx, group_files, compacted_path):
         group_rows,
         output_path,
     )
-    arrays = [ak.from_parquet(path) for path, _ in group_files]
+    arrays = []
+    for path, _ in group_files:
+        array = ak.from_parquet(path)
+        excluded = (excluded_rows or {}).get(str(path), [])
+        if excluded:
+            keep = np.ones(len(array), dtype=bool)
+            keep[excluded] = False
+            array = array[keep]
+        arrays.append(array)
     events = arrays[0] if len(arrays) == 1 else ak.concatenate(arrays)
     ak.to_parquet(events, output_path)
-    return idx, len(group_files), group_rows, output_path
+    return idx, len(group_files), len(events), output_path
 
 def _get_num_rows(path):
     return pq.ParquetFile(path).metadata.num_rows
@@ -154,7 +163,7 @@ def _get_num_rows(path):
 def _get_file_info(path):
     return path, pq.ParquetFile(path).metadata.num_rows
 
-def ensure_compacted(year, sample, input_path, compacted_path, client=None):
+def ensure_compacted(year, sample, input_path, compacted_path, client=None, deduplicate_data_files=None):
     logger.info(f"year: {year}")
     logger.info(f"samples: {sample}")
     logger.info(f"input_path: {input_path}")
@@ -208,6 +217,10 @@ def ensure_compacted(year, sample, input_path, compacted_path, client=None):
         parquet_files = sorted(parquet_files)
         futures = client.map(_get_file_info, parquet_files) # TODO: merge _get_num_rows and _get_file_info, since they do the same thing.
         file_infos = client.gather(futures)
+        excluded_rows, dedup_report = {}, None
+        if deduplicate_data_files is not None:
+            from src.lib.data_stream_deduplication import data_duplicate_rows
+            excluded_rows, dedup_report = data_duplicate_rows(file_infos, deduplicate_data_files)
         grouped_files = group_parquet_files(file_infos, target_n_final_files)
         # print(f"Grouped files: {grouped_files}")
         logger.info(
@@ -218,7 +231,7 @@ def ensure_compacted(year, sample, input_path, compacted_path, client=None):
         if client is None:
             logger.warning("No Dask client provided; writing compacted dataset sequentially")
             results = [
-                write_compacted_group(idx, group_files, compacted_path)
+                write_compacted_group(idx, group_files, compacted_path, excluded_rows)
                 for idx, group_files in enumerate(grouped_files)
             ]
         else:
@@ -230,6 +243,8 @@ def ensure_compacted(year, sample, input_path, compacted_path, client=None):
                     idx,
                     group_files,
                     compacted_path,
+                    excluded_rows={str(p): excluded_rows[str(p)] for p, _ in group_files
+                                   if str(p) in excluded_rows},
                     pure=False, # Since it performs I/O, do not optimize it away as a reusable pure computation.
                 )
                 for idx, group_files in enumerate(grouped_files)
@@ -245,7 +260,15 @@ def ensure_compacted(year, sample, input_path, compacted_path, client=None):
                 output_path,
             )
         logger.info("Dataset successfully compacted.")
+        if dedup_report is not None:
+            if sum(result[2] for result in results) != dedup_report["output_rows"]:
+                raise ValueError("Compacted row count differs from unique data-event count")
+            (Path(compacted_path) / "data_deduplication.json").write_text(
+                json.dumps(dedup_report, indent=2) + "\n"
+            )
     else:
+        if deduplicate_data_files is not None and not (Path(compacted_path) / "data_deduplication.json").exists():
+            raise ValueError("Existing compacted data has no deduplication receipt; preserve it and use a fresh output directory")
         logger.warning(f"Compacted dataset already exists at {compacted_path}")
 
 def add_dnn_score(events_partition,
@@ -357,6 +380,7 @@ def compact_and_add_dnn_score(
     fix_dimuon_mass=False,
     model_tag="",
     client=None,
+    deduplicate_data_files=None,
 ):
     compacted_path = os.path.join(compacted_dir, sample, "0") # Added zero to match the original path structure
 
@@ -367,7 +391,8 @@ def compact_and_add_dnn_score(
     logger.info(f"Checking compacted dataset for: {compacted_path}")
 
     # compact the dataset
-    ensure_compacted(year, sample, input_path, compacted_path, client=client)
+    ensure_compacted(year, sample, input_path, compacted_path, client=client,
+                     deduplicate_data_files=deduplicate_data_files)
 
     # Add the DNN score to the compacted dataset
     if not add_dnn_score_flag:
@@ -447,7 +472,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Add DNN score to the compacted dataset"
     )
+    parser.add_argument("--deduplicate-data-inventory", type=Path,
+                        help="XZZ-only: remove repeated data event IDs using this prestage inventory's stream provenance")
     args = parser.parse_args()
+
+    data_inventory = {}
+    if args.deduplicate_data_inventory:
+        if args.analysis != "XZZ2l2nu":
+            parser.error("Data deduplication is only enabled for XZZ2l2nu")
+        inventory = json.loads(args.deduplicate_data_inventory.read_text())
+        data_inventory = {name: item["files"] for name, item in inventory.items()
+                          if item["metadata"]["is_mc"] is False}
 
     logger.setLevel(args.log_level)
 
@@ -457,7 +492,12 @@ if __name__ == "__main__":
         if not args.model_tag:
             raise ValueError("--model_tag is required when --add_dnn_score is used.")
 
-    client = get_dask_client(args.use_gateway, cluster_index=args.cluster_index)
+    client = get_dask_client(
+        args.use_gateway,
+        cluster_index=args.cluster_index,
+        n_workers=32,
+        memory_limit="30 GiB",
+    )
     # client = get_dask_client(False, n_workers=32) # FIXME: no using dask gateway for now, as it is not working on the cluster
 
     # append /stage1_output/2018/f1_0 to load path
@@ -490,6 +530,7 @@ if __name__ == "__main__":
             args.fix_dimuon_mass,
             args.model_tag,
             client=client,
+            deduplicate_data_files=data_inventory.get(sample),
         )
 
     close_dask_client()

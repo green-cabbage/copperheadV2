@@ -50536,17 +50536,6 @@
         ],
         "uuid": "12f6eb2e-abd5-11f0-aff4-2d94d380beef"
       },
-      "root://xcache.cms.rcac.purdue.edu:1094//store/mc/RunIISummer20UL18NanoAODv15/WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/150X_mc2018_realistic_v1-v1/2810000/b62645ba-5c1e-41ba-b49d-8d8d049487cc.root": {
-        "num_entries": 822421,
-        "object_path": "Events",
-        "steps": [
-          [
-            0,
-            822421
-          ]
-        ],
-        "uuid": "8311e9fa-abd4-11f0-9988-138ed380beef"
-      },
       "root://xcache.cms.rcac.purdue.edu:1094//store/mc/RunIISummer20UL18NanoAODv15/WJetsToLNu_HT-70To100_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/150X_mc2018_realistic_v1-v1/2810000/b89ea494-5057-475a-90b5-c34d33b87b29.root": {
         "num_entries": 1029952,
         "object_path": "Events",
@@ -51785,9 +51774,9 @@
       "dataset": "wjets_lnu_ht_70to100",
       "fraction": 1.0,
       "is_mc": true,
-      "nGenEvts": 137713215,
+      "nGenEvts": 136890794,
       "original_fraction": 1.0,
-      "sumGenWgts": 137713215.0
+      "sumGenWgts": 136890794.0
     }
   },
   "wjets_lnu_ht_800to1200": {

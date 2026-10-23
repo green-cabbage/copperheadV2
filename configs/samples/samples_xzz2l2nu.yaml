@@ -1,9 +1,11 @@
 # XZZ2l2nu sample configuration.
 #
-# Copy of configs/samples/samples.yaml differing ONLY in the 2017 DY group,
-# which uses dyTo2L_M-50_aMCatNLO instead of the HMuMu MiNNLO pair. Kept as a
-# separate file so HMuMu's samples.yaml stays byte-identical. If samples.yaml
-# gains groups or years, mirror the change here.
+# Copy of configs/samples/samples.yaml whose 2017 entries follow the reference
+# AN sample scheme (see configs/datasets/dataset_nanoAODv15_run2_xzz2l2nu.yaml:
+# years.2017), i.e. the same samples the XZZ2l2nu prestage produces: PtZ-binned
+# DY, HT-binned W+jets and zz_2l2nu. Kept as a separate file so HMuMu's
+# samples.yaml stays byte-identical. If samples.yaml gains groups or years,
+# mirror the change here.
 #
 data:
     label: -1
@@ -66,13 +68,27 @@ background:
                 2024:
                     - dyTo2Mu_M-50_aMCatNLO
                 2018:
-                    - dyTo2L_M-50_aMCatNLO
+                    # AN scheme, mirroring 2017 (iteration 037). The 2018 prestage
+                    # produces exactly these PtZ bins; dyTo2L_M-50_aMCatNLO, which
+                    # this key used to name, is never produced and silently dropped
+                    # DY from every 2018 control plot.
+                    - dy_PtZ_0To50
+                    - dy_PtZ_50To100
+                    - dy_PtZ_100To250
+                    - dy_PtZ_250To400
+                    - dy_PtZ_400To650
+                    - dy_PtZ_650ToInf
                 2017:
-                    # XZZ2l2nu scheme: inclusive DYJetsToLL aMC@NLO is the only DY
-                    # sample. Unlike the HMuMu MiNNLO pair (DYJetsToMuMu at generator
-                    # level) it populates the ee and em channels, which this analysis
-                    # needs. Intentional and confirmed; do not swap back to MiNNLO.
-                    - dyTo2L_M-50_aMCatNLO
+                    # AN scheme: DY is split in generator Z-pT bins rather than the
+                    # single inclusive sample. Like the inclusive aMC@NLO sample, and
+                    # unlike the HMuMu MiNNLO pair (DYJetsToMuMu at generator level),
+                    # these populate the ee and em channels this analysis needs.
+                    - dy_PtZ_0To50
+                    - dy_PtZ_50To100
+                    - dy_PtZ_100To250
+                    - dy_PtZ_250To400
+                    - dy_PtZ_400To650
+                    - dy_PtZ_650ToInf
                 2016postVFP:
                     - dyTo2L_M-50_aMCatNLO
                 2016preVFP:
@@ -86,7 +102,33 @@ background:
             processes:
                 - ttjets_dl
                 - ttjets_sl
-            processes_per_year: {}
+            processes_per_year:
+                2017:
+                    # ------------------------------------------------------------
+                    # WARNING -- KNOWN DOUBLE COUNTING, DELIBERATE AND TEMPORARY.
+                    # tt_jets_amcatnlo is TTJets inclusive aMC@NLO (831.76 pb) and
+                    # ttjets_dl is TTTo2L2Nu powheg (88.29 pb). The inclusive sample
+                    # CONTAINS the dileptonic final state, so stacking both counts
+                    # dileptonic ttbar TWICE and the TOP yield is overestimated.
+                    # Both are listed on purpose for now, at user request, to see
+                    # the two side by side. Before any yield is quoted, drop one:
+                    # keep ttjets_dl for a dilepton selection, or keep
+                    # tt_jets_amcatnlo and remove ttjets_dl.
+                    # ------------------------------------------------------------
+                    - tt_jets_amcatnlo
+                    - ttjets_dl
+                    - ttw_lnu
+                    - ttz_llnunu_m10
+                2018:
+                    # Mirrors 2017, INCLUDING the deliberate double counting
+                    # described above: tt_jets_amcatnlo and ttjets_dl are both
+                    # stacked, so dileptonic ttbar is counted twice and the TOP
+                    # yield is overestimated. Kept identical to 2017 so the two
+                    # years stay comparable. Drop one before quoting any yield.
+                    - tt_jets_amcatnlo
+                    - ttjets_dl
+                    - ttw_lnu
+                    - ttz_llnunu_m10
 
         ST:
             # NOTE: names below match the prestage sample names exactly. The former
@@ -98,10 +140,18 @@ background:
                 - st_tchannel_antitop
             processes_per_year:
                 2017:
+                    # AN scheme: only these three single-top samples are registered
+                    # for 2017 in the XZZ2l2nu dataset yaml.
                     - st_tW_top
-                    - st_tW_antitop
-                    - st_tchannel_top
-                    - st_tchannel_antitop
+                    - st_schannel_had
+                    - st_schannel_lep
+                2018:
+                    # Mirrors 2017. Corrected in iteration 037: the previous list
+                    # named st_tW_antitop / st_tchannel_* / xzz_v15_st_schannel_lep,
+                    # none of which the 2018 XZZ2l2nu prestage produces, so ST was
+                    # reduced to st_tW_top alone in the control plots. These three
+                    # are what actually exists, and match 2017.
+                    - st_tW_top
                     - st_schannel_had
                     - st_schannel_lep
                 2022preEE: {}
@@ -127,9 +177,13 @@ background:
                 2023BPix:
                     - ewk_mmjj_mll_105_160
                 2018:
-                    - ewk_zlljj
+                    # AN scheme has no EWK Zjj sample for 2018 either; ewk_zlljj is
+                    # not in the XZZ2l2nu prestage. Empty, mirroring 2017.
+                    []
                 2017:
-                    - ewk_zlljj
+                    # AN scheme has no EWK Zjj sample for 2017; empty on purpose so
+                    # the plotter does not look for output that is never produced.
+                    []
                 2016postVFP:
                     - ewk_zlljj
                 2016preVFP:
@@ -146,19 +200,21 @@ background:
                 # - zz
             processes_per_year:
                 2018:
+                    # Mirrors 2017 (iteration 037): adds zz_2l2nu, the 2l2nu final
+                    # state itself, and drops wz_1l1nu2q / wz_3lnu / zz_4l, which
+                    # the XZZ2l2nu prestage does not produce for 2018.
                     - ww_2l2nu
-                    - wz_1l1nu2q
                     - wz_2l2q
-                    - wz_3lnu
                     - zz_2l2q
-                    - zz_4l
+                    - zz_2l2nu
                 2017:
+                    # AN scheme: adds zz_2l2nu, the 2l2nu final state itself, and
+                    # drops the wz_1l1nu2q / wz_3lnu / zz_4l samples the HMuMu
+                    # scheme uses, which the XZZ2l2nu prestage does not produce.
                     - ww_2l2nu
-                    - wz_1l1nu2q
                     - wz_2l2q
-                    - wz_3lnu
                     - zz_2l2q
-                    - zz_4l
+                    - zz_2l2nu
                 2016postVFP:
                     - ww_2l2nu
                     - wz_1l1nu2q
@@ -180,10 +236,46 @@ background:
                 - wzz
                 - zzz
             processes_per_year:
+                2017:
+                    # AN scheme: the Triboson group has no www sample for 2017.
+                    - wwz
+                    - wzz
+                    - zzz
+                2018:
+                    # Mirrors 2017. Without this key 2018 fell through to the
+                    # default list, which names www -- not produced for 2018.
+                    - wwz
+                    - wzz
+                    - zzz
                 2022preEE: {}
                 2022postEE: {}
                 2023: {}
                 2023BPix: {}
+        WJETS:
+            # AN-scheme group with no HMuMu counterpart: HT-binned W+jets, which
+            # enters the 2l2nu selection through a lepton fake. Empty for every
+            # year whose prestage does not produce these samples.
+            processes: []
+            processes_per_year:
+                2017:
+                    - wjets_lnu_ht_70to100
+                    - wjets_lnu_ht_100to200
+                    - wjets_lnu_ht_200to400
+                    - wjets_lnu_ht_400to600
+                    - wjets_lnu_ht_600to800
+                    - wjets_lnu_ht_800to1200
+                    - wjets_lnu_ht_1200to2500
+                2018:
+                    # Mirrors 2017. Added in iteration 037: with no 2018 key this
+                    # group fell back to `processes: []` and W+jets was absent from
+                    # every 2018 control plot despite all seven bins being produced.
+                    - wjets_lnu_ht_70to100
+                    - wjets_lnu_ht_100to200
+                    - wjets_lnu_ht_200to400
+                    - wjets_lnu_ht_400to600
+                    - wjets_lnu_ht_600to800
+                    - wjets_lnu_ht_800to1200
+                    - wjets_lnu_ht_1200to2500
 
 # --------------------------------------------------
 
@@ -197,6 +289,15 @@ signal:
                 # - vbf_powheg_herwig # herwig
                 # - vbf_powhegPS # pythia 8
             processes_per_year:
+                2017:
+                    # AN scheme: 2017 signal is the xzz_v15_vbf_m* resonance scan,
+                    # which carries no cross section in the dataset yaml. Empty so
+                    # the control plots stay background-only.
+                    []
+                2018:
+                    # Same as 2017: xzz_v15_vbf_m* has no cross section, and
+                    # vbf_powheg_dipole is not produced for 2018.
+                    []
                 2023:
                     - vbf_powheg
                 2023BPix:
@@ -206,7 +307,14 @@ signal:
         GGH:
             processes:
                 - ggh_powhegPS
-            processes_per_year: {}
+            processes_per_year:
+                2017:
+                    # AN scheme: see the VBF note above; xzz_v15_ggh_m* has no
+                    # cross section in the dataset yaml.
+                    []
+                2018:
+                    # Same as 2017.
+                    []
 
         # HIGGS:
         #     # Combined signal category (useful for inclusive plots / training)

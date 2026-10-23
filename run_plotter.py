@@ -1,11 +1,11 @@
 import itertools
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
 from shlex import join as shjoin
 
-from modules.trials import get_stage1_path
 from modules.utils import logger
 
 logger.setLevel(logging.INFO)
@@ -17,6 +17,7 @@ ARGS = set(sys.argv[1:])
 DRY_RUN = "--dry-run" in ARGS
 FORCE = "--force" in ARGS
 DEBUG = "--debug" in ARGS
+MINIMUM_SET = "--minimum-set" in ARGS
 
 if DEBUG:
     logger.setLevel(logging.DEBUG)
@@ -24,9 +25,27 @@ if DEBUG:
 # -----------------------------------------------------------------------------
 # User config
 # -----------------------------------------------------------------------------
-BASE_SCRIPT = ["python", "plotter/validation_plotter_unified.py"]
+BASE_SCRIPT = [
+    "python",
+    "plotter/validation_plotter_unified.py",
+    "--analysis",
+    "XZZ2l2nu",
+    "--NanoAODv",
+    "15",
+    # XZZ2l2nu-specific sample grouping: 2017 DY is dyTo2L_M-50_aMCatNLO alone.
+    # HMuMu keeps configs/samples/samples.yaml untouched.
+    "--sample-config",
+    os.environ.get("XZZ_SAMPLE_CONFIG", "configs/samples/samples_xzz2l2nu.yaml"),
+]
 
-stage1_dir = Path(get_stage1_path())  # default = "current"
+stage1_dir = (
+    Path(os.environ.get("XZZ_STAGE1_ROOT", "/work/projects/hmm/yun79/hmm_ntuples/copperheadV1clean"))
+    / os.environ.get(
+        "XZZ_LABEL",
+        "Run2_nanoAODv15_XZZ2l2nu_Full2017_Sep01",
+    )
+    / "stage1_output"
+)
 LOAD_PATH = stage1_dir / "{year}" / "f1_0"
 logger.info(f"Using LOAD_PATH: {LOAD_PATH}")
 
@@ -38,8 +57,11 @@ logger.info(f"Parsed stage1_name: {stage1_name}, parts: {parts}")
 outputDir = "_".join(parts[:2]) if len(parts) >= 2 else stage1_name
 logger.info(f"outputDir: {outputDir}")
 
-SAVE_TAG = "incDY"
+# SAVE_TAG = "XZZ2l2nu_mumu"
 # SAVE_TAG = "incDY_DNNWgts"
+# Override with XZZ_SAVE_TAG to send a run to a fresh figs/ directory instead of
+# overwriting an existing one (a new tag makes --force unnecessary).
+SAVE_TAG = os.environ.get("XZZ_SAVE_TAG", "XZZ2l2nu_Zpt55Cut")
 SAVE_ROOT = Path("./validation/figs") / outputDir / f"{stage1_name}_{SAVE_TAG}"
 logger.info(f"Using SAVE_ROOT: {SAVE_ROOT}")
 
@@ -49,51 +71,117 @@ if SAVE_ROOT.exists() and not FORCE:
 
 # years = ["2022preEE", "2022postEE", "2023", "2023BPix", "2024"]
 # years = ["2022preEE"]
-years = ["2022postEE"]
+years = [os.environ.get("XZZ_YEAR", "2017")]
 # years = ["2023"]
 # years = ["2023BPix"]
 # years = ["2024"]
 
 # categories = ["nocat", "vbf", "ggh"]
-categories = ["nocat", "ggh"]
+# XZZ2l2nu dilepton channels are prefixed with "2l2nu_"
+# ==========================================================================
+# XZZ2l2nu IS BLINDED. The default below is the three control regions ONLY.
+#
+# Plotting any other category -- 2l2nu_vbf_*, 2l2nu_njet0_*, 2l2nu_njet1_*, or
+# the inclusive 2l2nu_mumu / 2l2nu_ee in the Z-peak region -- is UNBLINDING the
+# analysis. Do not change this default. Override per-run with XZZ_CATEGORIES
+# only when the user has explicitly asked for those categories.
+#
+# The njet0 / njet1 / VBF subdivisions OF a control region (2l2nu_mllsb_njet0_mumu,
+# 2l2nu_emu_cr_vbf, ...) are still control regions and ARE PART OF THE DEFAULT:
+# every CR is plotted jet-inclusive plus vbf / njet1 / njet0.
+#
+# Control regions of the reference analysis (slide 7 of
+# ref_materials/HZZ_2l2nu_stage1/HZZ_220526_X_zz_2l2v_update.pdf). Each pins its
+# own m(ll) window, so region_options below is ignored for these categories.
+# The e-mu CR has no mumu/ee split: it is the opposite-flavour channel itself.
+# ==========================================================================
+# Each control region is plotted ONLY in its vbf / njet1 / njet0 jet categories,
+# on top of the existing mumu/ee split. 5 CRs x 3 = 15. The jet-inclusive parents
+# are deliberately not plotted; the three splits already partition each CR.
+# The names are the ones modules.selection generates; the splits are the parent
+# CR plus one jet_category, so no cut can drift between them.
+categories = [
+    # m(ll) sideband first, as requested
+    "2l2nu_mllsb_vbf_mumu",
+    "2l2nu_mllsb_njet1_mumu",
+    "2l2nu_mllsb_njet0_mumu",
+    "2l2nu_mllsb_vbf_ee",
+    "2l2nu_mllsb_njet1_ee",
+    "2l2nu_mllsb_njet0_ee",
+    # low MET
+    "2l2nu_lowmet_vbf_mumu",
+    "2l2nu_lowmet_njet1_mumu",
+    "2l2nu_lowmet_njet0_mumu",
+    "2l2nu_lowmet_vbf_ee",
+    "2l2nu_lowmet_njet1_ee",
+    "2l2nu_lowmet_njet0_ee",
+    # e-mu CR -- opposite-flavour channel, no mumu/ee split
+    "2l2nu_emu_cr_vbf",
+    "2l2nu_emu_cr_njet1",
+    "2l2nu_emu_cr_njet0",
+]
 # categories = ["ggh"]
 # categories = ["vbf"]
 # categories = ["nocat"]
 
+# Override with XZZ_CATEGORIES as a comma-separated list, e.g.
+#   XZZ_CATEGORIES=2l2nu_lowmet_mumu,2l2nu_emu_cr
+# The special value "all" expands to every XZZ2l2nu category known to
+# modules.selection, control regions included.
+_categories_env = os.environ.get("XZZ_CATEGORIES", "").strip()
+if _categories_env:
+    if _categories_env == "all":
+        from modules.selection import XZZ2L2NU_CATEGORIES
 
-JJ_ETA_REGIONS = [
-    "all",
-    "jj_both_central",
-    "jj_non_central",
-    "jj_one_fwd25_one_central",
-    "jj_one_he_one_central",
-    "jj_one_fwd30_one_central",
-    "jj_both_fwd25",
-    "jj_both_he",
-    "jj_both_fwd30",
-    "jj_one_he_one_fwd30",
-]
+        categories = list(XZZ2L2NU_CATEGORIES)
+    else:
+        categories = [c.strip() for c in _categories_env.split(",") if c.strip()]
+    logger.info(f"XZZ_CATEGORIES override -> {categories}")
+
+
+JJ_ETA_REGIONS = ["all"]
 
 # Boolean flags
 vbf_filter_study_options = [False]  # True/False list
-remove_zpt_weights_options = [True]  # True/False list
+# XZZ2l2nu defaults to no Z-pT weights (standing user preference).
+# True divides separate_wgt_zpt out of wgt_nominal; other weights stay in place.
+# Explicit comparisons remain available through XZZ_ZPT_OPTIONS=on|off|both.
+remove_zpt_weights_options = [True]
 add_dnn_zpt_weights_options = [False]  # True/False list
-min_set_of_vars = True  # minimal set of vars
+# min_set_of_vars = MINIMUM_SET  # minimal set of vars
+min_set_of_vars = False  # False -> plot every available variable
 
-region_options = [
-    # ["h-sidebands", "z-peak"],
-    ["h-sidebands"],
-]
+# Override with XZZ_MIN_VARS=1 (or 0) to pick the minimal variable set for a
+# single run without editing the default above.
+_min_vars_env = os.environ.get("XZZ_MIN_VARS", "").strip()
+if _min_vars_env:
+    min_set_of_vars = _min_vars_env not in ("0", "false", "False", "no")
+    logger.info(f"XZZ_MIN_VARS override -> min_set_of_vars={min_set_of_vars}")
 
-# njets_options = ["inclusive"]
+_zpt_env = os.environ.get("XZZ_ZPT_OPTIONS", "").strip().lower()
+if _zpt_env:
+    _zpt_map = {"on": [False], "off": [True], "both": [True, False]}
+    if _zpt_env not in _zpt_map:
+        raise ValueError(
+            f"XZZ_ZPT_OPTIONS={_zpt_env!r} not understood; use on, off or both"
+        )
+    remove_zpt_weights_options = _zpt_map[_zpt_env]
+    logger.info(
+        f"XZZ_ZPT_OPTIONS override -> remove_zpt_weights_options={remove_zpt_weights_options}"
+    )
+
+region_options = [["z-peak"]]
+
+njets_options = ["inclusive"]
 # njets_options = ["inclusive", "0", "1", "2"]
 # njets_options = ["0", "1", "2"]
-njets_options = [ "2"]
+# njets_options = ["inclusive", "0", "1", "2"]
 
 
 # -----------------------------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------------------------
+
 def build_command(
     year: str,
     save_path: Path,
@@ -112,8 +200,19 @@ def build_command(
         + ["--save_path", str(save_path)]
         + ["--load", str(load_path)]
         + ["-cat", cat]
+        # HMuMu MC scheme: full background stack (EWK, VV, TOP=TT+ST, DY) plus the
+        # ggH/VBF signal lines, exactly as the H->mumu control plots are built.
+        # AN sample scheme adds W+jets (HT-binned) and keeps the triboson group.
+        # EWK stays listed for year-generality; it resolves empty for 2017.
+        + ["-bkgorder", "EWK", "VV", "VVV", "WJETS", "TOP", "DY"]
+        # Inclusive stream list. Streams a year does not have are simply absent from the
+        # sample config's DATA group and are ignored, so one list serves every Run 2 year.
+        # Was hard-coded to 2017's B-F, which silently dropped data_A from the 2018 plots.
+        + ["-data", "A", "B", "C", "D", "E", "F", "G", "H"]
         + ["--use-compacted", "compacted"]  # "", "compacted", "compacted_WithDNNScore"
-        + ["--use_gateway", "--cluster_index", "0"]
+        # Gateway is opt-in so the same driver can run against a local cluster.
+        + (["--use_gateway", "--cluster_index", "0"]
+           if os.environ.get("XZZ_USE_GATEWAY", "1") == "1" else [])
         + ["--njets", str(njets)]
         + ["--jj-eta-region", jj_eta_regions]
     )

@@ -3,16 +3,48 @@ import awkward as ak
 import numpy as np
 
 
+def photon_quality_mask(leptons, photon, cuts):
+    """Apply optional reference FSR quality cuts after photon association."""
+    mask = ak.ones_like(photon.pt, dtype=bool)
+    if cuts.get("photon_droveret2_max") is not None:
+        mask = mask & (photon.dROverEt2 < cuts["photon_droveret2_max"])
+    if cuts.get("photon_dr_max") is not None:
+        dphi = np.arctan2(np.sin(leptons.phi - photon.phi),
+                         np.cos(leptons.phi - photon.phi))
+        dr = np.hypot(leptons.eta - photon.eta, dphi)
+        mask = mask & (dr < cuts["photon_dr_max"])
+    return ak.fill_none(mask, False)
+
+
+def associated_photon(leptons, photons, cuts):
+    """Resolve NanoAOD association or the explicit reference-scan diagnostic."""
+    mode = cuts.get("association", "nanoAOD")
+    if mode == "reference_scan":
+        pairs = ak.cartesian({"lepton": leptons, "photon": photons}, axis=1, nested=True)
+        photon = pairs.photon
+        eligible = (
+            (photon.pt > cuts["photon_pt_min"])
+            & (abs(photon.eta) < cuts["photon_abs_eta_max"])
+            & (photon.relIso03 < cuts["photon_rel_iso_max"])
+            & photon_quality_mask(pairs.lepton, photon, cuts)
+        )
+        ranked = ak.argsort(ak.where(eligible, photon.dROverEt2, np.inf), axis=2, stable=True)
+        return ak.firsts(ak.mask(photon, eligible)[ranked], axis=2)
+    if mode != "nanoAOD":
+        raise ValueError(f"Unknown XZZ FSR association: {mode}")
+    index = leptons.fsrPhotonIdx
+    valid = (index >= 0) & (index < ak.num(photons, axis=1))
+    return ak.pad_none(photons, 1)[ak.mask(index, valid)]
+
+
 def recover_electron_fsr(electrons, photons, cuts):
     """Return dressed p4 coordinates and a mask, retaining unmatched electrons."""
-    index = electrons.fsrPhotonIdx
-    valid = (index >= 0) & (index < ak.num(photons, axis=1))
-    photon = ak.pad_none(photons, 1)[ak.mask(index, valid)]
+    photon = associated_photon(electrons, photons, cuts)
     recover = ak.fill_none(
-        valid
-        & (photon.pt > cuts["photon_pt_min"])
+        (photon.pt > cuts["photon_pt_min"])
         & (abs(photon.eta) < cuts["photon_abs_eta_max"])
-        & (photon.relIso03 < cuts["photon_rel_iso_max"]),
+        & (photon.relIso03 < cuts["photon_rel_iso_max"])
+        & photon_quality_mask(electrons, photon, cuts),
         False,
     )
 

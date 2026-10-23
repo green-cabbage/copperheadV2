@@ -27,6 +27,7 @@ common_defaults() {
     analysis_type="HMuMu"
     chunksize="600000"
     max_file_len="900"
+    stage1_samples_to_run="${STAGE1_SAMPLES_TO_RUN:-}"
     save_root="/work/projects/hmm/$USER/hmm_ntuples/copperheadV1clean"
 }
 
@@ -152,8 +153,8 @@ load_year_maps() {
         [run2]="A B C D E F G H"
         [run3]="C D E F G H I"
     )
-    bkg_groups="DY Top VV EWK VVV"
-    sig_groups="Higgs"
+    bkg_groups="${BKG_GROUPS-DY Top VV EWK VVV}"
+    sig_groups="${SIG_GROUPS-Higgs}"
 
     if [[ "${debug_level}" -ge 1 ]]; then
         log "Debug mode ON"
@@ -207,6 +208,13 @@ append_stage1_args() {
     fi
     if [[ "${is_sync}" == "1" ]]; then
         printf '%s\n' "--sync" "--isCutflow"
+    fi
+    if [[ -n "${stage1_samples_to_run}" ]]; then
+        printf '%s\n' "--samples-to-run"
+        local sample
+        for sample in ${stage1_samples_to_run}; do
+            printf '%s\n' "${sample}"
+        done
     fi
     printf '%s\n' "--analysis" "${analysis_type}"
 }
@@ -300,6 +308,10 @@ build_compact_cmd() {
             --fix_dimuon_mass
             --save_postfix "${save_postfix}"
         )
+    fi
+    # XZZ: drop data events duplicated across primary datasets (prestage JSON as inventory).
+    if [[ -n "${COMPACT_DEDUP_INVENTORY:-}" ]]; then
+        cmd+=(--analysis "${analysis_type}" --deduplicate-data-inventory "${COMPACT_DEDUP_INVENTORY}")
     fi
     while IFS= read -r arg; do
         [[ -n "${arg}" ]] && cmd+=("${arg}")
