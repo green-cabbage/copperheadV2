@@ -151,8 +151,8 @@ years:
                 note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
                 datasets:
                     - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL17NanoAODv15-150X_mc2017_realistic_v1-v1/NANOAODSIM
-                cross_section_pb: 1.768
-                cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+                cross_section_pb: 0.5086
+                cross_section_source: Anusreevijay769/PlottingCodes@dev_HZZ_2l2q ControlPlots/HZZ2l2nu_Samples13TeV_ptz_dy_v15.txt L53. GenXSecAnalyzer (10 UL18 MiniAODv2 files, 2026-10-25): final 0.5044 +- 0.0017 pb; the slide value 1.768 (HZZ_220526_X_zz_2l2v_update.pdf) is the before-matching cross section
                 kfactor:
                     value: 1.0
                     source: null
@@ -724,8 +724,8 @@ years:
           note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
           datasets:
             - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL18NanoAODv15-150X_mc2018_realistic_v1-v1/NANOAODSIM
-          cross_section_pb: 1.768
-          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          cross_section_pb: 0.5086
+          cross_section_source: Anusreevijay769/PlottingCodes@dev_HZZ_2l2q ControlPlots/HZZ2l2nu_Samples13TeV_ptz_dy_v15.txt L53. GenXSecAnalyzer (10 UL18 MiniAODv2 files, 2026-10-25): final 0.5044 +- 0.0017 pb; the slide value 1.768 (HZZ_220526_X_zz_2l2v_update.pdf) is the before-matching cross section
           kfactor:
             value: 1.0
             source: null
@@ -1513,8 +1513,8 @@ years:
           note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
           datasets:
             - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODv15-150X_mcRun2_asymptotic_v1-v1/NANOAODSIM
-          cross_section_pb: 1.768
-          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          cross_section_pb: 0.5086
+          cross_section_source: Anusreevijay769/PlottingCodes@dev_HZZ_2l2q ControlPlots/HZZ2l2nu_Samples13TeV_ptz_dy_v15.txt L53. GenXSecAnalyzer (10 UL18 MiniAODv2 files, 2026-10-25): final 0.5044 +- 0.0017 pb; the slide value 1.768 (HZZ_220526_X_zz_2l2v_update.pdf) is the before-matching cross section
           kfactor:
             value: 1.0
             source: null
@@ -2024,8 +2024,8 @@ years:
           note: AN name DYJetsToLL_Pt-400To650; UL dataset is LHEFilterPtZ
           datasets:
             - /DYJetsToLL_LHEFilterPtZ-400To650_MatchEWPDG20_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIISummer20UL16NanoAODAPVv15-150X_mcRun2_asymptotic_preVFP_v1-v1/NANOAODSIM
-          cross_section_pb: 1.768
-          cross_section_source: HZZ_220526_X_zz_2l2v_update.pdf
+          cross_section_pb: 0.5086
+          cross_section_source: Anusreevijay769/PlottingCodes@dev_HZZ_2l2q ControlPlots/HZZ2l2nu_Samples13TeV_ptz_dy_v15.txt L53. GenXSecAnalyzer (10 UL18 MiniAODv2 files, 2026-10-25): final 0.5044 +- 0.0017 pb; the slide value 1.768 (HZZ_220526_X_zz_2l2v_update.pdf) is the before-matching cross section
           kfactor:
             value: 1.0
             source: null

@@ -69,10 +69,11 @@ jet_eta_cut:
     "2023BPix": 4.7
     "2024": 4.7
 btag_jet_pt_cut:
-    2016preVFP: 25.0
-    2016postVFP: 25.0
-    "2017": 25.0
-    "2018": 25.0
+    # Same as jet_pt_cut: b-tag jets differ from analysis jets only in |eta|.
+    2016preVFP: 30.0
+    2016postVFP: 30.0
+    "2017": 30.0
+    "2018": 30.0
     2016_RERECO: 25.0
     "2017_RERECO": 25.0
     "2018_RERECO": 25.0
@@ -95,16 +96,13 @@ btag_jet_eta_cut:
     "2023BPix": 2.5
     "2024": 2.5
 jet_id_recipe:
-    # Match the intended PassJetIDv15(isPUPPI=true) thresholds in nanoAOD_skim.
-    # Do not emulate its caller's chHEF/neEmEF swap; iteration041 supplies that repair.
-    # REFSYNC omits the official charged/neutral multiplicity requirements. This
-    # previously adopted difference is retained; OFFICIAL keeps the official cuts.
-    # Earlier variant comparisons used the original skims with the input-wiring bug.
-    # 2016 stays null: this configurable table covers2017/2018.
+    # Official Run 2 UL PUPPI tight ID (custom_jet_id; no official v15 Run 2 jetid.json exists).
+    # RUN2ULPUPPI_REFSYNC reproduces the reference skim (no multiplicity cuts) for sync studies.
+    # 2016 stays null: custom_jet_id applies the 2016 UL table there.
     "2016preVFP": null
     "2016postVFP": null
-    "2017": RUN2ULPUPPI_REFSYNC
-    "2018": RUN2ULPUPPI_REFSYNC
+    "2017": RUN2ULPUPPI_OFFICIAL
+    "2018": RUN2ULPUPPI_OFFICIAL
     "2022preEE": null
     "2022postEE": null
     "2023": null
@@ -113,10 +111,11 @@ jet_id_recipe:
 jet_id:
     # INFO: For 2016UL, we don't have loose ID, so make it just tight https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookNanoAOD#Jets
     # INFO: Use tight, tightPassLepVeto, or tightFailLepVeto
-    2016preVFP: tight
-    2016postVFP: tight
-    "2017": tight
-    "2018": tight
+    # Run 2 UL: AK4PUPPI TightLeptonVeto (XZZ2l2nu object selection, 2026-10-23).
+    2016preVFP: tightPassLepVeto
+    2016postVFP: tightPassLepVeto
+    "2017": tightPassLepVeto
+    "2018": tightPassLepVeto
     2016_RERECO: loose
     "2017_RERECO": tight
     "2018_RERECO": tight
@@ -126,11 +125,11 @@ jet_id:
     "2023BPix": tightPassLepVeto
     "2024": tightPassLepVeto
 btag_jet_id:
-    # B-tag selection follows the dedicated tight jet ID recommendation.
-    2016preVFP: tight
-    2016postVFP: tight
-    "2017": tight
-    "2018": tight
+    # B-tag jets use the analysis jet ID (only |eta| differs from the jet selection).
+    2016preVFP: tightPassLepVeto
+    2016postVFP: tightPassLepVeto
+    "2017": tightPassLepVeto
+    "2018": tightPassLepVeto
     2016_RERECO: tight
     "2017_RERECO": tight
     "2018_RERECO": tight
@@ -166,14 +165,12 @@ jet_puid:
     "2023BPix": loose
     "2024": loose
 min_dr_mu_jet:
-    # Jet-lepton cleaning cone. The reference uses 0.5 (H4LTools.cc:243-258). Iteration 036
-    # measured it on the 1M-event 2017 DY pilot: on top of RUN2ULPUPPI_REFSYNC it takes
-    # jet1_pt 0.1157 -> 0.1086, jet2_pt 0.2073 -> 0.1934, njets 0.0919 -> 0.0858.
-    # 2018 uses CodiMD cone 0.4 for the cutflow study; 2016 remains at 0.4.
+    # Jet-lepton cleaning cone: jets within dR <= 0.4 of a selected lepton are removed.
+    # (The reference uses 0.5, H4LTools.cc:243-258; task007 iteration 036 measured the effect.)
     2016preVFP: 0.4
     2016postVFP: 0.4
-    "2017": 0.5
-    "2018": 0.4 # CodiMD cutflow settings
+    "2017": 0.4
+    "2018": 0.4
     2016_RERECO: 0.4
     "2017_RERECO": 0.4
     "2018_RERECO": 0.4

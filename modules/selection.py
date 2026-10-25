@@ -40,13 +40,15 @@ def filterRegion(events, region="h-peak", mass_field="dimuon_mass"):
 # narrower than the shared filterRegion() 'z-peak' window and is the same
 # window stage 1 stores as the pass_z_mass_window column.
 XZZ2L2NU_Z_WINDOW = (76.0, 106.0)
+# Outer edges of the m(ll) sideband control region: 40 < m(ll) < 76 || 106 < m(ll) < 180 GeV.
+XZZ2L2NU_SIDEBAND_RANGE = (40.0, 180.0)
 
 
 def filterRegion_XZZ2l2nu(events, region="z-window", mass_field="dilepton_mass"):
     """Mass-region selection for XZZ -> 2l2nu.
 
     Kept separate from filterRegion() for two reasons: the 2l2nu control regions
-    need the 76-106 GeV window above and its complement, neither of which the
+    need the 76-106 GeV window above and its 40-180 GeV sidebands, neither of which the
     shared HMuMu regions provide, and routing 2l2nu through its own function
     leaves filterRegion() untouched for the HMuMu analysis.
 
@@ -67,9 +69,10 @@ def filterRegion_XZZ2l2nu(events, region="z-window", mass_field="dilepton_mass")
 
     mass_low, mass_high = XZZ2L2NU_Z_WINDOW
     in_window = (mass_low < events[mass_field]) & (events[mass_field] < mass_high)
-    # Slide 7 uses strict sidebands; the complement admits boundaries and NaN.
+    sideband_low, sideband_high = XZZ2L2NU_SIDEBAND_RANGE
     mask = in_window if region == "z-window" else (
-        (events[mass_field] < mass_low) | (events[mass_field] > mass_high)
+        ((sideband_low < events[mass_field]) & (events[mass_field] < mass_low))
+        | ((mass_high < events[mass_field]) & (events[mass_field] < sideband_high))
     )
     return mask, events[mask]
 
@@ -136,9 +139,8 @@ XZZ2L2NU_CATEGORIES = {
         "btag_veto": True,
         "lepton_pt_min": 25.0,
     },
-    # M(ll) sideband control region: same-flavour, MET > 100, outside the Z
-    # window. The sideband deliberately spans the full mass range on both sides
-    # of the window, which is why it cannot reuse the 'z-peak' region.
+    # M(ll) sideband control region: same-flavour, MET > 100,
+    # 40 < m(ll) < 76 or 106 < m(ll) < 180 GeV (XZZ2L2NU_SIDEBAND_RANGE).
     "2l2nu_mllsb_mumu": {
         "channel": "is_mm",
         "met": (">", 100.0),

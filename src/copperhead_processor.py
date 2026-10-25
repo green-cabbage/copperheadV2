@@ -760,28 +760,11 @@ class EventProcessor(processor.ProcessorABC):
         self.config['NanoAODv'] = NanoAODv
         is_mc = events.metadata['is_mc']
         is_xzz_run2 = self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
-        # TEMPORARY reference-sync study (task008): extra HLT paths, extra MET flags, no HEM veto,
-        # no electron ID (reproduces the reference's pdgId/mvaIso_WP90 argument swap).
-        temporary_cutflow = is_xzz_run2 and self.config["switches"].get("temporary_cutflow_option", False)
-        if temporary_cutflow:
-            logger.warning(
-                "temporary_cutflow_option is ON: reference-sync configuration (extra HLT paths, extra "
-                "MET flags, no HEM veto). Not a physics configuration."
-            )
         hlt_paths = list(self.config["hlt"])
         event_flags = list(self.config["event_flags"])
-        if temporary_cutflow:
-            hlt_paths += list(self.config.get("temporary_cutflow_hlt_extra") or [])
-            event_flags += list(self.config.get("temporary_cutflow_event_flags_extra") or [])
-        do_hem_veto = self.config["switches"]["do_HemVeto"] and not temporary_cutflow
+        do_hem_veto = self.config["switches"]["do_HemVeto"]
         # Minimum dR between the two selected leptons of any flavour; None disables it.
         dilepton_min_dr = self.config.get("zz2l2nu_dilepton_min_dr") if is_xzz_run2 else None
-        if temporary_cutflow:
-            dilepton_min_dr = self.config["temporary_cutflow_dilepton_min_dr"]
-        # Reference's separate electron iso03 cut (temporary_cutflow_option only); None disables it.
-        electron_iso03_cut = self.config["temporary_cutflow_electron_iso03_cut"] if temporary_cutflow else None
-        # Reference muon iso03 threshold (temporary_cutflow_option only).
-        muon_iso_cut = self.config["temporary_cutflow_muon_iso_cut" if temporary_cutflow else "muon_iso_cut"]
         reference_observable_config = self.config.get("reference_observables", {})
         reference_observables = is_xzz_run2 and reference_observable_config.get("enabled", False)
         if reference_observables:
@@ -1024,8 +1007,8 @@ class EventProcessor(processor.ProcessorABC):
 
         # Apply isolation selection after FSR subtraction in the selected cone.
         muon_iso = events.Muon.pfRelIso03_all if is_xzz_run2 else events.Muon.pfRelIso04_all
-        muon_selection = muon_selection & (muon_iso < muon_iso_cut)
-        self.selection.add("muon_iso", ak.any(muon_iso < muon_iso_cut, axis=1))
+        muon_selection = muon_selection & (muon_iso < self.config["muon_iso_cut"])
+        self.selection.add("muon_iso", ak.any(muon_iso < self.config["muon_iso_cut"], axis=1))
         # logger.info(f"muon_selectiont: {ak.to_dataframe(muon_selection.compute())}")
 
         # logger.info(f"Debug event muon pt after roccor: {events.Muon.pt[debug_mask_2].compute()}")
@@ -1215,7 +1198,6 @@ class EventProcessor(processor.ProcessorABC):
             (events.Electron.pt > self.config["electron_pt_cut"])
             & (abs(events.Electron.eta) < self.config["electron_eta_cut"])
             & (events.Electron[electron_id] if apply_electron_id else True)
-            & (events.Electron.pfRelIso03_all < electron_iso03_cut if electron_iso03_cut is not None else True)
             # The PDF excludes gap electrons. Only the explicit reference-bug
             # diagnostic retains the historical bypass; other analyses are unchanged.
             & (True if reference_bugs else ~ecal_gap)
@@ -1493,8 +1475,7 @@ class EventProcessor(processor.ProcessorABC):
             emu_mass = (
                 abs(emu_pair.mass - 91.1876) <= 160.0
             )
-            emu_zpt_cut = self.config["temporary_cutflow_z_pt_cut" if temporary_cutflow else "zz2l2nu_z_pt_cut"]
-            emu_zpt = emu_pair.pt > emu_zpt_cut
+            emu_zpt = emu_pair.pt > self.config["zz2l2nu_z_pt_cut"]
             xzz_emu_cutflow_masks = {
                 # As in the reference, the dR requirement enters at the pT step, not at cut2l. The
                 # 25 GeV lepton pT requirement is already in the object selection (muon/electron_pt_cut).
@@ -1508,18 +1489,13 @@ class EventProcessor(processor.ProcessorABC):
 
         # ------------------- XZZ same-flavour cutflow counters: START -----------------------
         # Counters only; mirror the reference HZZ2l2qNu_* chain (H4LTools.cc:1087-1190). The mass
-        # window is the reference's |m - 91.1876| <= 80, cutflow only. With temporary_cutflow_option,
-        # cut2l follows the reference: exactly two tight muons or electrons (other flavour not vetoed,
-        # no charge requirement) with a same-flavour pair at 12 < m < 120, ee pairs first.
-        # Otherwise cut2l is our is_mm | is_ee before the dR requirement.
+        # window is the reference's |m - 91.1876| <= 80, cutflow only. cut2l is our is_mm | is_ee
+        # before the dR requirement.
         xzz_sameFlav_cutflow_masks = xzz_sameFlav_os_cutflow_masks = None
         if self.isCutflow and is_xzz_run2:
-            def first_sameFlav_pair(leptons, mass_range=None):
+            def first_sameFlav_pair(leptons):
                 pairs = ak.combinations(leptons, 2, fields=["l1", "l2"])
                 z = pairs.l1 + pairs.l2
-                if mass_range is not None:
-                    keep = (z.mass > mass_range[0]) & (z.mass < mass_range[1])
-                    pairs, z = pairs[keep], z[keep]
                 dphi = (pairs.l1.phi - pairs.l2.phi + np.pi) % (2 * np.pi) - np.pi
                 return ak.firsts(ak.zip({
                     "pt1": pairs.l1.pt, "pt2": pairs.l2.pt,
@@ -1528,18 +1504,10 @@ class EventProcessor(processor.ProcessorABC):
                     "mass": z.mass, "pt": z.pt,
                 }))
             sameFlav_electrons = events.Electron[electron_selection]
-            if temporary_cutflow:
-                ee_pair = first_sameFlav_pair(sameFlav_electrons, (12.0, 120.0))
-                mm_pair = first_sameFlav_pair(muons, (12.0, 120.0))
-                use_ee = ~ak.is_none(ee_pair)
-                sameFlav_cut2l = ((nmuons == 2) | (nelectrons == 2)) & (use_ee | ~ak.is_none(mm_pair))
-                sameFlav_zpt_cut = self.config["temporary_cutflow_sameFlav_z_pt_cut"]
-            else:
-                ee_pair = first_sameFlav_pair(sameFlav_electrons)
-                mm_pair = first_sameFlav_pair(muons)
-                use_ee = is_ee_before_dr
-                sameFlav_cut2l = is_mm_before_dr | is_ee_before_dr
-                sameFlav_zpt_cut = self.config["zz2l2nu_z_pt_cut"]
+            ee_pair = first_sameFlav_pair(sameFlav_electrons)
+            mm_pair = first_sameFlav_pair(muons)
+            use_ee = is_ee_before_dr
+            sameFlav_cut2l = is_mm_before_dr | is_ee_before_dr
             sameFlav_pair = {f: ak.where(use_ee, ee_pair[f], mm_pair[f]) for f in ee_pair.fields}
             sameFlav_eta_cut = ak.where(use_ee, self.config["zz2l2nu_electron_eta_cut"], self.config["zz2l2nu_muon_eta_cut"])
             sameFlav_steps = {
@@ -1547,7 +1515,7 @@ class EventProcessor(processor.ProcessorABC):
                 "sameFlav_cutpTl1l2": ak.ones_like(sameFlav_pair["pt"], dtype=bool),
                 "sameFlav_cutETAl1l2": (abs(sameFlav_pair["eta1"]) < sameFlav_eta_cut) & (abs(sameFlav_pair["eta2"]) < sameFlav_eta_cut),
                 "sameFlav_cutmZ1Window": abs(sameFlav_pair["mass"] - 91.1876) <= 80.0,
-                "sameFlav_cutZ1Pt": sameFlav_pair["pt"] >= sameFlav_zpt_cut,
+                "sameFlav_cutZ1Pt": sameFlav_pair["pt"] >= self.config["zz2l2nu_z_pt_cut"],
                 "sameFlav_cutDeltaR": (sameFlav_pair["dr"] >= dilepton_min_dr) if dilepton_min_dr is not None else ak.ones_like(sameFlav_pair["dr"], dtype=bool),
             }
             # Lepton object selection, one requirement at a time (reference rows 35-39, as event
@@ -3872,6 +3840,9 @@ class EventProcessor(processor.ProcessorABC):
                     BTagScaleFactor.RESHAPE,
                     "iterativefit,iterativefit,iterativefit",
                 )
+            elif NanoAODv == 15 and hasattr(btag_jets, "btagUParTAK4B"):
+                btag_json = get_corrset(self.config["btag_sf_json_UParT"])
+                logger.info("Using UParTAK4 fixed-WP SFs with b/c and light uncertainties")
             else:
                 btag_file = get_corrset(self.config["btag_sf_json"])
                 available_keys = list(btag_file.keys())

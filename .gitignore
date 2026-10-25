@@ -48,3 +48,4 @@ output/
 .pixi/
 .DS_Store
 .vscode/
+.agent-system/
