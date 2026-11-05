@@ -250,24 +250,40 @@ cat multidim_${category}Singles.log | grep "   r :  " >> signal_strengths.txt
 # cat multidim_${category}Singles.log | grep "   r :  " >> signal_strengths.txt
 
 
-# # -------------------------------------------------------
-# # for printing plot1Dscans
-# # -------------------------------------------------------
+# -------------------------------------------------------
+# expected NLL scan
+# -------------------------------------------------------
+# Re-run that study before changing best_idx.
+best_idx="0"   # 0 = sumExp, 1 = BWZRedux, 2 = FEWZxBern
 
-# index="1"
-# cat="cat4"
+npts="100"
+card="datacard_comb_sig_all_ggh"
+idle="BWZ_Redux_a_coeff,BWZ_Redux_b_coeff,BWZ_Redux_c_coeff,FEWZxBern_c2,FEWZxBern_c3,FEWZxBern_c4"
 
-# # observed NLL scan
-# text2workspace.py -m 125 datacard_comb_sig_${cat}_ggh.txt
-# echo "combine -M MultiDimFit datacard_comb_sig_${cat}_ggh.root -m 125 --freezeParameters MH -n .scan --algo grid --points 10 --setParameterRanges r=0,3 --setParameters pdf_index_ggh=${index} --cminDefaultMinimizerStrategy=0 
-# plot1DScan.py higgsCombine.scan.MultiDimFit.mH125.root -o nll_scan_${cat}_index${index}_observed"
-# combine -M MultiDimFit datacard_comb_sig_${cat}_ggh.root -m 125 --freezeParameters MH -n .scan --algo grid --points 10 --setParameterRanges r=0,3 --setParameters pdf_index_ggh=${index} --cminDefaultMinimizerStrategy=0 
-# plot1DScan.py higgsCombine.scan.MultiDimFit.mH125.root -o nll_scan_${cat}_index${index}_observed --main-label "Observed"
+# the POI is called r inside combine; display it as mu
+printf '{"r": "#mu"}\n' > poi_translate.json
 
-# # expected NLL scan
-# text2workspace.py -m 125 datacard_comb_sig_${cat}_ggh.txt
-# combine -M MultiDimFit datacard_comb_sig_${cat}_ggh.root -m 125 --freezeParameters MH -n .scan --algo grid --points 10 --setParameterRanges r=0,3 --setParameters pdf_index_ggh=${index} --cminDefaultMinimizerStrategy=0 -t -1  --expectSignal 1
-# plot1DScan.py higgsCombine.scan.MultiDimFit.mH125.root -o nll_scan_${cat}_index${index}_expected --main-label "Expected"
+text2workspace.py ${card}.txt -m 125
+
+combine -M MultiDimFit -d ${card}.root \
+    --algo grid \
+    --points ${npts} \
+    --setParameterRanges r=0,3 \
+    --setParameters pdf_index_ggh=${best_idx} \
+    --freezeParameters MH,pdf_index_ggh,${idle} \
+    --cminDefaultMinimizerStrategy 0 \
+    --saveNLL \
+    -n fixed_pdf_${best_idx} \
+    -m 125 \
+    -t -1 --expectSignal 1 \
+    --X-rtd REMOVE_CONSTANT_ZERO_POINT=1
+
+# --translate relabels the POI as mu on both the x axis and the
+PLOT1DSCAN="${PLOT1DSCAN:-plot1DScan.py}"
+python3 "${PLOT1DSCAN}" higgsCombinefixed_pdf_${best_idx}.MultiDimFit.mH125.root \
+    --main-label Expected \
+    --translate poi_translate.json \
+    -o nll_scan_idx${best_idx}
 
 # # -------------------------------------------------------
 # # for printing plotGof

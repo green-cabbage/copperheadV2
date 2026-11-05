@@ -1,0 +1,13 @@
+start Thu Nov  5 18:09:52 UTC 2026
+globals to re-centre: 95
+A: nll grid
+B: rungs
+C: nominal strategy 0
+combine done Thu Nov  5 18:15:39 UTC 2026
+guard cnll_postfit_rc: 95 _In set
+guard f2_tol: 95 _In set
+guard q_p1_exp: 95 _In set
+guard q_p2_exp_theo: 95 _In set
+guard q_p3_all: 95 _In set
+guard f0_s0: 95 _In set
+all done Thu Nov  5 18:15:39 UTC 2026

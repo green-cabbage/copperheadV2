@@ -1,0 +1,39 @@
+{
+  "channel": "combined VBF+ggH, post-fit",
+  "rungs": {
+    "s0_nominal": {
+      "r": 1.0000331401824951,
+      "sigma_lo": 0.4744076132774353,
+      "sigma_hi": 0.492520809173584,
+      "sigma_sym": 0.48346421122550964
+    },
+    "s1_exp": {
+      "r": 1.0000897645950317,
+      "sigma_lo": 0.412176251411438,
+      "sigma_hi": 0.42505574226379395,
+      "sigma_sym": 0.41861599683761597
+    },
+    "s2_exp_theo": {
+      "r": 1.0000897645950317,
+      "sigma_lo": 0.40791624784469604,
+      "sigma_hi": 0.41737961769104004,
+      "sigma_sym": 0.41264793276786804
+    },
+    "s3_all": {
+      "r": 1.0000866651535034,
+      "sigma_lo": 0.4001379609107971,
+      "sigma_hi": 0.4098294973373413,
+      "sigma_sym": 0.4049837291240692
+    }
+  },
+  "rows": {
+    "Total uncertainty": 0.48346421122550964,
+    "Statistical uncertainty": 0.4049837291240692,
+    "Systematic uncertainty": 0.2640564763088888,
+    "Experimental": 0.24186419893724104,
+    "Theoretical": 0.07043462494225378,
+    "Size of simulated samples": 0.07916119985420558
+  },
+  "closure_sub_over_syst": 1.0,
+  "closure_total": 1.0
+}
