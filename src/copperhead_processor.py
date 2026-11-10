@@ -58,7 +58,7 @@ from src.corrections.jet import (
     getJecDataTag,
 )
 from src.corrections.muon_sf import add_muon_sfs_correctionlib
-from src.corrections.electron_sf import electron_sfs
+from src.corrections.electron_sf import add_electron_sfs_correctionlib
 from src.corrections.xzz_btag_sf import central_event_weights, efficiency_map
 from src.corrections.rochester import apply_KitMuScaleRe_Run3, apply_roccor
 
@@ -1179,6 +1179,14 @@ class EventProcessor(processor.ProcessorABC):
             logger.error(f"Unsupported NanoAODv: {NanoAODv}")
             raise ValueError(f"Unsupported NanoAODv: {NanoAODv}")
         logger.debug(f"electron_id: {electron_id}")
+        # EGM electron scale (data) / smearing (MC), before selection and FSR
+        if self.config["switches"].get("do_xzz_electron_ss", False):
+            if NanoAODv == 9:
+                raise ValueError("do_xzz_electron_ss is on, but NanoAODv9 electrons are already scale-and-smeared")
+            from src.corrections.electron_ss import apply_electron_ss
+            apply_electron_ss(events, self.config["xzz_electron_ss"]["file"], is_mc)
+        else:
+            events["Electron", "pt_uncorr"] = events.Electron.pt
         # Veto events with good quality electrons; VBF and ggH categories need zero electrons
         ecal_gap = (1.44 < abs(events.Electron.eta)) & (1.57 > abs(events.Electron.eta)) # Source: line 460 of https://cms.cern.ch/iCMS/analysisadmin/cadilines?id=1973&ancode=EGM-17-001&tp=an&line=EGM-17-001
         # DIAGNOSTIC ONLY. The reference skim applies no electron identification: its
@@ -2048,10 +2056,9 @@ class EventProcessor(processor.ProcessorABC):
             )
             # do mu SF end -------------------------------------
 
-            if (is_xzz_run2 and NanoAODv == 15 # FIXME: make electron SF unform within is_xzz_run2 with a switch: do_elec_SF or somethin llike that
-                    and self.config["switches"].get("do_xzz_electron_sf", False)):
-                for name, sf in electron_sfs(
-                        electrons_pt_sorted, self.config["xzz_electron_sf"]["file"], year).items():
+            if is_xzz_run2 and self.config["switches"].get("do_xzz_electron_sf", False):
+                for name, sf in add_electron_sfs_correctionlib(
+                        electrons_pt_sorted, self.config, electron_id if apply_electron_id else None).items():
                     weights.add(name, weight=sf["nom"], weightUp=sf["up"], weightDown=sf["down"])
 
             # --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
@@ -3220,19 +3227,22 @@ class EventProcessor(processor.ProcessorABC):
             )
             matched_lepton_pass = ak.fill_none(ak.any(cm_dR <= clean_dr, axis=2), value=False)
         else:
+            # XZZ cleans against the post-FSR (dressed) selected muons; HMuMu keeps the pre-FSR direction.
+            post_fsr_cleaning = self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
+            mu_eta, mu_phi = ("eta", "phi") if post_fsr_cleaning else ("eta_raw", "phi_raw")
             _, _, mu1_jet_dR = delta_r_V1(
-                mu1[:, np.newaxis].eta_raw,
+                mu1[:, np.newaxis][mu_eta],
                 jets.eta,
-                mu1[:, np.newaxis].phi_raw,
+                mu1[:, np.newaxis][mu_phi],
                 jets.phi,
             )
             matched_mu1_jet = mu1_jet_dR <= clean_dr
             matched_mu1_jet = ak.fill_none(matched_mu1_jet, value=False)
 
             _, _, mu2_jet_dR = delta_r_V1(
-                mu2[:, np.newaxis].eta_raw,
+                mu2[:, np.newaxis][mu_eta],
                 jets.eta,
-                mu2[:, np.newaxis].phi_raw,
+                mu2[:, np.newaxis][mu_phi],
                 jets.phi,
             )
             matched_mu2_jet = mu2_jet_dR <= clean_dr
@@ -3256,16 +3266,13 @@ class EventProcessor(processor.ProcessorABC):
             )
         elif self.config["switches"].get("do_jet_electron_cleaning", False) and electrons is not None:
             electrons_padded = ak.pad_none(electrons, 2) # FIXME: ask agent for the motivation for this change
-            use_raw_electron_direction = (
-                self.config.get("analysis") == "XZZ2l2nu" and is_run2(year)
-                and "eta_raw" in electrons.fields and "phi_raw" in electrons.fields
-            )
+            # Post-FSR (dressed) electron direction; eta_raw/phi_raw hold the pre-FSR values.
             for i in range(2):
                 el_i = electrons_padded[:, i]
                 _, _, el_jet_dR = delta_r_V1(
-                    el_i[:, np.newaxis].eta_raw if use_raw_electron_direction else el_i[:, np.newaxis].eta,
+                    el_i[:, np.newaxis].eta,
                     jets.eta,
-                    el_i[:, np.newaxis].phi_raw if use_raw_electron_direction else el_i[:, np.newaxis].phi,
+                    el_i[:, np.newaxis].phi,
                     jets.phi,
                 )
                 matched_el_jet = ak.fill_none(el_jet_dR <= clean_dr, value=False)

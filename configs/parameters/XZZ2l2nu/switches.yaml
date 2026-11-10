@@ -115,10 +115,9 @@ switches:
         # dyTo2L_M-50_aMCatNLO ALONE (see configs/samples/samples_xzz2l2nu.yaml),
         # so there is nothing to stitch: turning this on just punches a hole in
         # 100 < m(ll) < 200, which is inside the M(ll)-sideband control region.
-        # 2018 set false to match 2017. 2016 left as-is -- those years are not
-        # being run yet, but they carry the same bug.
-        '2016preVFP': true
-        '2016postVFP': true
+        # Off for all Run 2 years (2016 aligned with 2017/2018 on 2026-10-26).
+        '2016preVFP': false
+        '2016postVFP': false
         '2017': false
         '2018': false
         '2022preEE': false
@@ -267,8 +266,8 @@ switches:
         "2023BPix": false
         "2024": false
     do_jec:
-        '2016preVFP': true
-        '2016postVFP': true
+        '2016preVFP': false # Same as 2017 (aligned 2026-10-26)
+        '2016postVFP': false # Same as 2017 (aligned 2026-10-26)
         '2017': false # User-requested stored NanoAOD jets for reference synchronization
         '2018': false # Same as 2017
         '2022preEE': true
@@ -378,8 +377,8 @@ switches:
         "2023BPix": false
         "2024": false
     do_qgl_wgt: # NOTE: for nanoAODv15 Run2, it should be false for now
-        '2016preVFP': true
-        '2016postVFP': true
+        '2016preVFP': false
+        '2016postVFP': false
         '2017': false # No legacy tagger transfer for NanoAODv15
         '2018': false
         # Run-3: Recommendation does not exists, yet.
@@ -398,11 +397,21 @@ switches:
         '2023': false
         '2023BPix': false
         '2024': false
+    do_xzz_electron_ss: # EGM electron scale (data) / smearing (MC) on NanoAODv15, payload set in electron.yaml
+        '2016preVFP': true
+        '2016postVFP': true
+        '2017': true
+        '2018': true
+        '2022preEE': false
+        '2022postEE': false
+        '2023': false
+        '2023BPix': false
+        '2024': false
     do_xzz_electron_sf: # official UL electron reco and WP90 ID SFs, file set in electron.yaml
-        '2016preVFP': false
-        '2016postVFP': false
-        '2017': false
-        '2018': false
+        '2016preVFP': true
+        '2016postVFP': true
+        '2017': true
+        '2018': true
         '2022preEE': false
         '2022postEE': false
         '2023': false

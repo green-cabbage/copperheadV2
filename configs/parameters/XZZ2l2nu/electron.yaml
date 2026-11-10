@@ -52,13 +52,75 @@ electron_id_v12: # The keys are same for v12 and v15
   "2024": mvaIso_WP90
 xzz_electron_sf: # used when switches.do_xzz_electron_sf is true
   2016preVFP:
-    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2016preVFP_UL/electron.json.gz
+    json_file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2016preVFP-UL-NanoAODv15/2025-12-05/electron.json.gz
+    correction: UL-Electron-ID-SF
+    reco_below20: RecoBelow20
+    reco_above20: RecoAbove20
+    id: # SF working point per selection ID (electron_id_v9 / electron_id_v12 value); null = no ID SF
+      mvaIso_WP90: wp90iso
+      mvaFall17V2Iso_WP90: wp90iso
+      mvaIso_WP80: wp80iso
+      mvaFall17V2Iso_WP80: wp80iso
+      mvaNoIso_WP90: wp90noiso
+      mvaFall17V2noIso_WP90: wp90noiso
+      mvaNoIso_WP80: wp80noiso
+      mvaFall17V2noIso_WP80: wp80noiso
   2016postVFP:
-    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2016postVFP_UL/electron.json.gz
+    json_file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2016postVFP-UL-NanoAODv15/2025-12-05/electron.json.gz
+    correction: UL-Electron-ID-SF
+    reco_below20: RecoBelow20
+    reco_above20: RecoAbove20
+    id: # SF working point per selection ID (electron_id_v9 / electron_id_v12 value); null = no ID SF
+      mvaIso_WP90: wp90iso
+      mvaFall17V2Iso_WP90: wp90iso
+      mvaIso_WP80: wp80iso
+      mvaFall17V2Iso_WP80: wp80iso
+      mvaNoIso_WP90: wp90noiso
+      mvaFall17V2noIso_WP90: wp90noiso
+      mvaNoIso_WP80: wp80noiso
+      mvaFall17V2noIso_WP80: wp80noiso
   '2017':
-    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2017_UL/electron.json.gz
+    json_file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2017-UL-NanoAODv15/2025-12-05/electron.json.gz
+    correction: UL-Electron-ID-SF
+    reco_below20: RecoBelow20
+    reco_above20: RecoAbove20
+    id: # SF working point per selection ID (electron_id_v9 / electron_id_v12 value); null = no ID SF
+      mvaIso_WP90: wp90iso
+      mvaFall17V2Iso_WP90: wp90iso
+      mvaIso_WP80: wp80iso
+      mvaFall17V2Iso_WP80: wp80iso
+      mvaNoIso_WP90: wp90noiso
+      mvaFall17V2noIso_WP90: wp90noiso
+      mvaNoIso_WP80: wp80noiso
+      mvaFall17V2noIso_WP80: wp80noiso
   '2018':
-    file: /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2018_UL/electron.json.gz
+    json_file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2018-UL-NanoAODv15/2025-12-05/electron.json.gz
+    correction: UL-Electron-ID-SF
+    reco_below20: RecoBelow20
+    reco_above20: RecoAbove20
+    id: # SF working point per selection ID (electron_id_v9 / electron_id_v12 value); null = no ID SF
+      mvaIso_WP90: wp90iso
+      mvaFall17V2Iso_WP90: wp90iso
+      mvaIso_WP80: wp80iso
+      mvaFall17V2Iso_WP80: wp80iso
+      mvaNoIso_WP90: wp90noiso
+      mvaFall17V2noIso_WP90: wp90noiso
+      mvaNoIso_WP80: wp80noiso
+      mvaFall17V2noIso_WP80: wp80noiso
+  2022preEE: null
+  2022postEE: null
+  "2023": null
+  "2023BPix": null
+  "2024": null
+xzz_electron_ss: # EGM scale (data) / smearing (MC), used when switches.do_xzz_electron_ss is true. NanoAODv15 only: v9 electrons are already corrected
+  2016preVFP:
+    file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2016preVFP-UL-NanoAODv15/2025-12-05/electronSS_EtDependent.json.gz
+  2016postVFP:
+    file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2016postVFP-UL-NanoAODv15/2025-12-05/electronSS_EtDependent.json.gz
+  '2017':
+    file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2017-UL-NanoAODv15/2025-12-05/electronSS_EtDependent.json.gz
+  '2018':
+    file: /cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2018-UL-NanoAODv15/2025-12-05/electronSS_EtDependent.json.gz
   2022preEE: null
   2022postEE: null
   "2023": null
