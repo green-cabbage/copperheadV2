@@ -162,7 +162,21 @@ WITH_VARIATIONS=1 eval $P -m 3 -o <postfix>
 ```
 
 `--enforce-min-per-year` makes every year's bins meet the background floor. Without it, edges scanned on the years
-summed can leave per-year top bins with no background MC. Check the datacards for that:
+summed can leave per-year top bins with no background MC.
+
+The cut-based baseline's 20 bins (adopted 2026-10-01) were scanned on stage-1 compacted scores with VBF-only signal,
+a DY/EWK/tt/ZZ background and at least 5 raw events per bin. The same settings on a stage-2 dump:
+
+```bash
+python MVA_training/VBF_run3/scan_bins_for_dnn.py --stage2-scores <dump> --output-dir <scan dir> \
+    --signal vbf --background dy,ewk,ttjets,zz --min-total-events-per-bin 5 \
+    --enforce-min-per-year --min-background-per-bin 0.01 --frac-tol 0.005 [--write-config]
+```
+
+With the legacy input (`--stage1-path .../Run2_NanoV15_BtagZptFix_sept29_2026 --compacted-tag
+Oct01_2026_dnnCompact_noFixMass --year '*'` and the last four options) it reproduces the baseline edges exactly.
+
+Check the datacards for sparse bins:
 
 ```bash
 python scripts/audit_vbf_datacard_bins.py <save_root>/<label>/stage3_datacards_<postfix>/score_<label>

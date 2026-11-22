@@ -28,6 +28,7 @@ import json
 import os
 import pickle
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from typing import Iterator
@@ -40,7 +41,7 @@ import pyarrow.parquet as pq
 import yaml
 from modules.dask_utils import close_dask_client, get_dask_client
 from modules.git_utils import get_git_commit, get_git_state
-from modules.selection import applyRegionCatCuts, applyRegionCatCutsByScore, transformer_score_field
+from modules.selection import applyRegionCatCuts, applyRegionCatCutsByScore, transformer_cutoff, transformer_score_field
 from modules.systematics import (
     VARIATION_COL_SEP,
     VARIATION_SETS,
@@ -109,6 +110,7 @@ class PreprocessConfig:
 
     # VBF/ggH category from the binary transformer score (--use-transformer-vbf-channel)
     use_transformer_vbf_channel: bool = False
+    transformer_cutoff: float | None = None  # --transformer-cutoff; None = the yaml cutoff of each year
 
 # --------------------------------------------------------------------------------------
 # YAML + sample resolution helpers
@@ -461,7 +463,11 @@ def events_to_dataframe(
     """
     Apply selection, convert to pandas, attach label + group + process (+ year if requested).
     """
-    apply_category_cuts = applyRegionCatCutsByScore if cfg.use_transformer_vbf_channel else applyRegionCatCuts
+    apply_category_cuts = (
+        partial(applyRegionCatCutsByScore, cutoff=cfg.transformer_cutoff)
+        if cfg.use_transformer_vbf_channel
+        else applyRegionCatCuts
+    )
     events = apply_category_cuts(
         events,
         category=cfg.category,
@@ -1137,6 +1143,11 @@ def preprocess(
         "use_transformer_vbf_channel": cfg.use_transformer_vbf_channel,
         # absent-jet fill used in training, applied again by run_stage2_vbf.py ("none": always two jets)
         "missing_jet_rule": "training" if cfg.use_transformer_vbf_channel else "none",
+        # VBF = score < cutoff per year; run_stage2_vbf.py refuses a different cutoff
+        "transformer_cutoff": (
+            {y: transformer_cutoff(y) if cfg.transformer_cutoff is None else cfg.transformer_cutoff for y in years_list}
+            if cfg.use_transformer_vbf_channel else None
+        ),
         "region": cfg.region,
         "jj_eta_region": cfg.jj_eta_region,
         "years": years_list,
@@ -1303,6 +1314,15 @@ def build_argparser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--transformer-cutoff",
+        type=float,
+        default=None,
+        help=(
+            "With --use-transformer-vbf-channel: VBF = score < this cutoff, for every year. "
+            "Default: the cutoff of each year's run period in configs/MVA/transformer_categorizer.yaml."
+        ),
+    )
+    p.add_argument(
         "--force",
         action="store_true",
         help=(
@@ -1332,6 +1352,10 @@ def main() -> None:
         )  # pylint: disable=protected-access
     if args.use_transformer_vbf_channel:
         object.__setattr__(cfg, "use_transformer_vbf_channel", True)  # pylint: disable=protected-access
+    if args.transformer_cutoff is not None:
+        if not cfg.use_transformer_vbf_channel:
+            raise SystemExit("--transformer-cutoff needs --use-transformer-vbf-channel")
+        object.__setattr__(cfg, "transformer_cutoff", args.transformer_cutoff)  # pylint: disable=protected-access
 
     out_dir = make_output_dir(
         out_root=args.out_root,

@@ -919,3 +919,973 @@ models:
         region: h-peak
         signal: vbf,ggh
         report: validation/dnn_binning_scan/score_Run3_nanoAODv15_FilterEvents_Oct08_tightPassLepVeto_OfficialRecomendation_IPAdditionalLepVeto_Systematics_LumiSplit_Oct12_2026_ScoreDump_NoSyst/binning_comparison.txt
+  Run2_NanoV15_forVBFChannel_July06_2026_jetUncRedo:
+    all:
+      n_bins: 20
+      edges: [0.0, 0.139507, 0.279013, 0.418519, 0.558026, 0.697532, 0.837038, 0.976544, 1.116051, 1.255557, 1.395063, 1.53457,
+        1.674076, 1.813582, 1.953089, 2.092595, 2.232101, 2.371608, 2.65062, 3.208645, 7.304329]
+      metadata: {note: 'Run-2 VBF DNN binning adopted 2026-10-01 (sideHustle2 refine-dnn-binning-run2, postfix 20bin_noFixMass),
+          copied for the mva-categorizer-18 baseline rerun', stage1_path: /work/projects/hmm/yun79/hmm_ntuples/copperheadV1clean/Run2_NanoV15_BtagZptFix_sept29_2026,
+        compacted_tag: Oct01_2026_dnnCompact_noFixMass}
+  Run2_Sept29_transformerVBF_roughXudongSep08:
+    all:
+      n_bins: 16
+      edges: [0.0, 0.120905, 0.241811, 0.362716, 0.483622, 0.604527, 0.725433, 0.846338, 0.967244, 1.088149, 1.450866, 1.692677,
+        1.934488, 2.055393, 2.176299, 2.297204, 7.304329]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-02T05:59:56'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 7.254329
+        best_nbins_from_scan: 60
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.7836
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 0.0
+        score_max: 7.254329
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfRoughV2Dump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_transformer_rough_v2/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_trainingFill:
+    all:
+      n_bins: 24
+      edges: [0.000184, 0.065474, 0.130764, 0.196054, 0.261344, 0.326634, 0.391924, 0.457213, 0.587793, 0.653083, 0.783663,
+        0.914243, 1.044823, 1.175402, 1.501852, 1.567142, 1.632432, 1.697722, 1.763012, 1.828302, 1.893591, 1.958881, 2.024171,
+        2.154751, 3.24939]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-02T06:21:07'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 3.19939
+        best_nbins_from_scan: 49
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.1427
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 0.000184
+        score_max: 3.19939
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfRoughV3Dump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_transformer_rough_v3/binning_comparison.txt
+  Run2_NanoV15_forVBFChannel_July06_2026_jetUncRedo_onTransformerVBF:
+    all:
+      n_bins: 22
+      edges: [0.0, 0.103633, 0.207267, 0.3109, 0.414533, 0.518166, 0.6218, 0.725433, 0.829066, 1.036333, 1.243599, 1.347232,
+        1.450866, 1.761766, 1.969032, 2.072665, 2.176299, 2.279932, 2.383565, 2.487198, 2.694465, 3.212631, 7.304329]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-02T15:24:58'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 7.254329
+        best_nbins_from_scan: 70
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.5257
+        frac_tol: 0.005
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 7.254329
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfJuly06DNNRun2Dump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_transformer_july06dnn_run2_peryearbins/binning_comparison.txt
+  Run2_NanoV15_forVBFChannel_July06_2026_jetUncRedo_onTransformerVBF_trainingFill:
+    all:
+      n_bins: 25
+      edges: [0.0, 0.086344, 0.172688, 0.345376, 0.43172, 0.604407, 0.777095, 1.122471, 1.295159, 1.467846, 1.55419, 1.640534,
+        1.813222, 1.899566, 1.98591, 2.072254, 2.331286, 2.503973, 2.590317, 2.676661, 2.763005, 2.849349, 2.935693, 3.022037,
+        3.367412, 5.57601]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-02T12:52:52'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 5.52601
+        best_nbins_from_scan: 64
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.9168
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 0.0
+        score_max: 5.52601
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfJuly06DNNTrainFillDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_transformer_july06dnn_trainingfill/binning_comparison.txt
+  Run2_NanoV15_forVBFChannel_July06_2026_jetUncRedo_onTransformerVBF_2017bins:
+    all:
+      n_bins: 22
+      edges: [0.0, 0.109914, 0.219828, 0.439656, 0.54957, 0.659484, 0.879313, 1.099141, 1.318969, 1.648711, 1.758625, 1.978453,
+        2.198281, 2.308195, 2.528024, 2.637938, 2.747852, 2.857766, 3.077594, 3.297422, 3.51725, 3.737078, 7.304329]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-02T16:08:20'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 7.254329
+        best_nbins_from_scan: 66
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.934
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 0.0
+        score_max: 7.254329
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfJuly06DNNDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_transformer_july06dnn/binning_comparison.txt
+        note: 'mva-categorizer-18: edges copied from the 2017-only scan (2026-11-02T12:52, entry ..._onTransformerVBF before
+          the Run-2 rescan) and applied to all Run-2 years, for per-year bin occupancy'
+  Run2_Sept29_transformerVBF_roughXudongSep08_asimovZ:
+    all:
+      n_bins: 22
+      edges: [0.0, 0.089373, 0.178745, 0.268118, 0.35749, 0.446863, 0.536235, 0.625608, 0.71498, 0.893726, 0.983098, 1.161843,
+        1.251216, 1.340588, 1.698079, 1.876824, 1.966196, 2.055569, 2.234314, 2.323687, 2.502432, 2.859922, 4.608001]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-04T02:26:19'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.558001
+        best_nbins_from_scan: 51
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4228
+        frac_tol: 0.005
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.558001
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAsimovZDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_asimovZ_peryearbins/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_asimovZ_2017bins:
+    all:
+      n_bins: 30
+      edges: [0.0, 0.066058, 0.132116, 0.198174, 0.264232, 0.396348, 0.462406, 0.594522, 0.66058, 0.858754, 1.189044, 1.255102,
+        1.32116, 1.387218, 1.453276, 1.585392, 1.783565, 1.849623, 1.915681, 2.113855, 2.179913, 2.312029, 2.378087, 2.444145,
+        2.510203, 2.642319, 2.708377, 2.774435, 2.840493, 2.972609, 4.608001]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-04T02:26:32'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.558001
+        best_nbins_from_scan: 69
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.9411
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 0.0
+        score_max: 4.558001
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAsimovZDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        note: edges scanned on the 2017 scores only (default scan settings), used for all Run-2 years
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/phase5_binscan_asimovZ_2017only/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_asimovZ_v15samples:
+    all:
+      n_bins: 22
+      edges: [0.0, 0.089373, 0.178745, 0.268118, 0.35749, 0.446863, 0.536235, 0.625608, 0.71498, 0.804353, 0.893726, 0.983098,
+        1.251216, 1.340588, 1.698079, 1.876824, 1.966196, 2.055569, 2.234314, 2.323687, 2.502432, 2.859922, 4.608001]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-05T22:08:38'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.558001
+        best_nbins_from_scan: 51
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4119
+        frac_tol: 0.005
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.558001
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAsimovZv15sDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAsimovZv15s/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned:
+    all:
+      n_bins: 23
+      edges: [0.0, 0.095228, 0.190455, 0.285682, 0.38091, 0.476137, 0.571365, 0.666592, 0.761819, 0.857047, 0.952274, 1.142729,
+        1.237956, 1.333184, 1.618866, 1.714093, 1.809321, 1.999775, 2.095003, 2.285458, 2.380685, 2.57114, 2.761594, 4.620915]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-05T23:48:10'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.570915
+        best_nbins_from_scan: 48
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.3898
+        frac_tol: 0.005
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.570915
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAmsSigned/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017bins:
+    all:
+      n_bins: 24
+      edges: [4.0e-06, 0.091422, 0.18284, 0.274258, 0.365677, 0.457095, 0.548513, 0.731349, 0.822768, 1.097022, 1.279859,
+        1.371277, 1.462695, 1.73695, 1.828368, 1.919786, 2.194041, 2.285459, 2.376877, 2.468296, 2.559714, 2.651132, 2.74255,
+        2.833969, 4.620915]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T02:02:24'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.570915
+        best_nbins_from_scan: 50
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.926
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 4.0e-06
+        score_max: 4.570915
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        note: edges scanned on the 2017 scores only (default scan settings), used for all Run-2 years
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_amsSigned_2017only/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_baselineBins:
+    all:
+      n_bins: 23
+      edges: [0.0, 0.095228, 0.190455, 0.285682, 0.38091, 0.476137, 0.571365, 0.666592, 0.761819, 0.857047, 0.952274, 1.142729,
+        1.237956, 1.333184, 1.618866, 1.714093, 1.809321, 1.999775, 2.095003, 2.285458, 2.380685, 2.57114, 2.761594, 4.620915]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T14:49:54'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.570915
+        best_nbins_from_scan: 48
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.1919
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.570915
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        note: baseline (July06 DNN) binning recipe on the signed-AMS score dump
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_amsSigned_baselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017binsDrop2p468:
+    all:
+      n_bins: 23
+      edges: [4.0e-06, 0.091422, 0.18284, 0.274258, 0.365677, 0.457095, 0.548513, 0.731349, 0.822768, 1.097022, 1.279859,
+        1.371277, 1.462695, 1.73695, 1.828368, 1.919786, 2.194041, 2.285459, 2.376877, 2.559714, 2.651132, 2.74255, 2.833969,
+        4.620915]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T16:07:50'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.570915
+        best_nbins_from_scan: 50
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.926
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 4.0e-06
+        score_max: 4.570915
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        note: Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017bins edges with 2.468296 removed (bins 18+19 merged),
+          used for all Run-2 years
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_amsSigned_2017only/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017binsMergeTop2:
+    all:
+      n_bins: 23
+      edges: [4.0e-06, 0.091422, 0.18284, 0.274258, 0.365677, 0.457095, 0.548513, 0.731349, 0.822768, 1.097022, 1.279859,
+        1.371277, 1.462695, 1.73695, 1.828368, 1.919786, 2.194041, 2.285459, 2.376877, 2.468296, 2.559714, 2.651132, 2.74255,
+        4.620915]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T16:43:40'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.570915
+        best_nbins_from_scan: 50
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.926
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 4.0e-06
+        score_max: 4.570915
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        note: Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017bins edges with 2.833969 removed (two top bins merged),
+          used for all Run-2 years
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_amsSigned_2017only/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017binsDrop2p468MergeTop2:
+    all:
+      n_bins: 22
+      edges: [4.0e-06, 0.091422, 0.18284, 0.274258, 0.365677, 0.457095, 0.548513, 0.731349, 0.822768, 1.097022, 1.279859,
+        1.371277, 1.462695, 1.73695, 1.828368, 1.919786, 2.194041, 2.285459, 2.376877, 2.559714, 2.651132, 2.74255, 4.620915]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T16:45:01'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.570915
+        best_nbins_from_scan: 50
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.926
+        frac_tol: 0.01
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.05
+        enforce_min_per_year: false
+        score_min: 4.0e-06
+        score_max: 4.570915
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedDump_NoSyst
+        years: ['2017']
+        region: h-peak
+        signal: vbf,ggh
+        note: Run2_Sept29_transformerVBF_roughXudongSep08_amsSigned_2017bins edges with 2.468296 and 2.833969 removed (bins
+          18+19 and the two top bins merged), used for all Run-2 years
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_amsSigned_2017only/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_classBal:
+    all:
+      n_bins: 29
+      edges: [1.0e-06, 0.063991, 0.127981, 0.191972, 0.255962, 0.319952, 0.447933, 0.511923, 0.639904, 0.703894, 0.767885,
+        0.895865, 1.087836, 1.151827, 1.215817, 1.279807, 1.343798, 1.407788, 1.471778, 1.599759, 1.85572, 1.983701, 2.111681,
+        2.175672, 2.303652, 2.367643, 2.431633, 2.495623, 2.815575, 4.209372]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T21:48:43'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.159372
+        best_nbins_from_scan: 65
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.6386
+        frac_tol: 0.005
+        min_total_events_per_bin: 15
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 1.0e-06
+        score_max: 4.159372
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfClassBalDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf,ggh
+        background: all non-data, non-signal
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfClassBal/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_classBal_baselineBins:
+    all:
+      n_bins: 26
+      edges: [1.0e-06, 0.127981, 0.255962, 0.383943, 0.511923, 0.639904, 0.703894, 0.767885, 0.895865, 1.023846, 1.087836,
+        1.151827, 1.215817, 1.279807, 1.343798, 1.407788, 1.471778, 1.599759, 1.85572, 1.983701, 2.111681, 2.175672, 2.303652,
+        2.367643, 2.495623, 2.815575, 4.209372]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-06T22:29:10'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.159372
+        best_nbins_from_scan: 65
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4181
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 1.0e-06
+        score_max: 4.159372
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfClassBalDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        note: baseline (July06 DNN) binning recipe on the class-balanced DNN score dump
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfClassBal_baseline/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_aucDNN_run2BinsBaselineRecipe:
+    all:
+      n_bins: 21
+      edges: [0.000184, 0.145603, 0.218312, 0.291021, 0.36373, 0.436439, 0.509149, 0.581858, 0.654567, 0.799985, 0.872695,
+        0.945404, 1.018113, 1.090822, 1.163532, 1.236241, 1.381659, 1.527078, 1.672496, 1.817915, 1.890624, 3.24939]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-09T17:38:57'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 3.19939
+        best_nbins_from_scan: 44
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.8941
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.000184
+        score_max: 3.19939
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAucDNNRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        note: baseline (July06 DNN) binning recipe on the AUC-HPO transformer-selection DNN (trained_best_optuna_100Trials),
+          training-style fill
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAucDNNRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_aucwManualNov09:
+    all:
+      n_bins: 24
+      edges: [0.0, 0.091544, 0.183088, 0.274632, 0.366175, 0.457719, 0.549263, 0.640807, 0.732351, 0.823894, 0.915438, 1.098526,
+        1.19007, 1.373157, 1.647789, 1.739332, 1.92242, 2.013964, 2.105508, 2.197051, 2.288595, 2.380139, 2.563227, 2.746314,
+        4.535647]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-09T22:17:10'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.485647
+        best_nbins_from_scan: 49
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.0534
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.485647
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAucwManualNov09Run2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/mva18_transformer_binary/binscan_mva18transfAucwManualNov09Run2BinsBaselineRecipe/binning_comparison.txt
+  Run2_NanoV15_forVBFChannel_July06_2026_jetUncRedo_amsSigned:
+    all:
+      n_bins: 18
+      edges: [0.0, 0.139506, 0.279013, 0.418519, 0.558025, 0.697532, 0.837038, 0.976544, 1.116051, 1.255557, 1.395063, 1.53457,
+        1.813582, 1.953088, 2.232101, 2.371607, 2.511114, 2.65062, 7.304329]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-10T03:05:40'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 7.254329
+        best_nbins_from_scan: 52
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4738
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 7.254329
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_NanoV15_BtagZptFix_sept29_2026/stage2_histograms/score_Run2_NanoV15_BtagZptFix_sept29_2026_mva18baselineAmsSignedRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18baselineAmsSignedRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSignedLossWgt:
+    all:
+      n_bins: 19
+      edges: [0.0, 0.132473, 0.264946, 0.397419, 0.529892, 0.662365, 0.794838, 0.927311, 1.059784, 1.32473, 1.457203, 1.589676,
+        1.854622, 1.987095, 2.119568, 2.252041, 2.384514, 2.64946, 2.914406, 4.686555]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-10T21:31:42'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.636555
+        best_nbins_from_scan: 35
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4075
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.636555
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAmsSignedLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSignedNoLossWgt:
+    all:
+      n_bins: 26
+      edges: [0.0, 0.124587, 0.249173, 0.311467, 0.37376, 0.436054, 0.498347, 0.56064, 0.622934, 0.74752, 0.872107, 0.996694,
+        1.058987, 1.183574, 1.245867, 1.432747, 1.49504, 1.619627, 1.68192, 1.744214, 1.931094, 1.993387, 2.05568, 2.117974,
+        2.24256, 2.616321, 4.036774]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-11T01:35:39'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 3.986774
+        best_nbins_from_scan: 64
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.0375
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 3.986774
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedNoLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAmsSignedNoLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_NanoV15_forVBFChannel_July06_2026_jetUncRedo_amsSignedLossWgt:
+    all:
+      n_bins: 30
+      edges: [0.0, 0.064371, 0.193114, 0.321857, 0.4506, 0.579343, 0.708086, 0.836829, 0.9012, 0.965572, 1.029943, 1.158686,
+        1.223058, 1.287429, 1.416172, 1.480544, 1.544915, 1.673658, 1.738029, 1.802401, 1.866772, 1.995515, 2.059887, 2.124258,
+        2.253001, 2.317373, 2.381744, 2.446116, 2.510487, 2.63923, 3.13983]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-11T03:13:05'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 3.08983
+        best_nbins_from_scan: 48
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.473
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 3.08983
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_NanoV15_BtagZptFix_sept29_2026/stage2_histograms/score_Run2_NanoV15_BtagZptFix_sept29_2026_mva18baselineAmsSignedLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18baselineAmsSignedLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsAbsWgtLossWgt:
+    all:
+      n_bins: 23
+      edges: [0.0, 0.165555, 0.248333, 0.33111, 0.413888, 0.496666, 0.579443, 0.662221, 0.744998, 0.910553, 1.076108, 1.241664,
+        1.407219, 1.489996, 1.655551, 1.738329, 1.986662, 2.069439, 2.152217, 2.234994, 2.317772, 2.483327, 2.648882, 4.437211]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-11T05:20:04'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.387211
+        best_nbins_from_scan: 53
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.39
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.387211
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsAbsWgtLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAmsAbsWgtLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_amsSignedLossWgtRep2:
+    all:
+      n_bins: 22
+      edges: [0.0, 0.113765, 0.22753, 0.341295, 0.45506, 0.568825, 0.68259, 0.796355, 0.91012, 1.023885, 1.13765, 1.36518,
+        1.478944, 1.706474, 1.820239, 1.934004, 2.047769, 2.161534, 2.275299, 2.502829, 2.616594, 2.844124, 4.373068]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-11T19:09:23'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.323068
+        best_nbins_from_scan: 38
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4273
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.323068
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAmsSignedLossWgtRep2Run2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAmsSignedLossWgtRep2Run2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_aucwLossWgt:
+    all:
+      n_bins: 26
+      edges: [0.0, 0.089629, 0.179259, 0.268888, 0.358518, 0.448147, 0.537777, 0.627406, 0.717036, 0.806665, 0.985924, 1.075554,
+        1.165183, 1.254813, 1.434072, 1.613331, 1.79259, 1.971849, 2.061478, 2.151108, 2.240737, 2.419996, 2.509626, 2.688885,
+        2.868144, 3.137032, 5.607028]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-12T07:18:27'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 5.557028
+        best_nbins_from_scan: 62
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4266
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 5.557028
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfAucwLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfAucwLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p05_amsAbsWgtLossWgt:
+    all:
+      n_bins: 24
+      edges: [0.0, 0.143699, 0.287399, 0.431098, 0.574797, 0.718496, 0.862196, 1.005895, 1.077745, 1.221444, 1.293293, 1.508842,
+        1.724391, 1.796241, 1.93994, 2.01179, 2.083639, 2.155489, 2.227339, 2.299188, 2.371038, 2.514737, 2.658437, 2.873985,
+        4.648377]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-13T19:43:06'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.598377
+        best_nbins_from_scan: 64
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.3073
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.598377
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p05AmsAbsWgtLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p05AmsAbsWgtLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p05_aucwLossWgt:
+    all:
+      n_bins: 21
+      edges: [1.0e-06, 0.075648, 0.22694, 0.378233, 0.529526, 0.680819, 0.832112, 0.907758, 0.983405, 1.210344, 1.28599, 1.437283,
+        1.588576, 1.815515, 1.891162, 2.193747, 2.269394, 2.34504, 2.420687, 2.496333, 2.723272, 5.345251]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-14T02:02:02'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 5.295251
+        best_nbins_from_scan: 70
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.414
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 1.0e-06
+        score_max: 5.295251
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p05AucwLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p05AucwLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p25_aucwLossWgt:
+    all:
+      n_bins: 27
+      edges: [0.0, 0.114646, 0.229292, 0.343938, 0.458584, 0.573229, 0.687875, 0.802521, 0.917167, 1.031813, 1.146459, 1.261105,
+        1.375751, 1.490397, 1.605043, 1.719688, 1.834334, 1.94898, 2.063626, 2.292918, 2.407564, 2.52221, 2.636856, 2.751502,
+        2.866147, 2.980793, 3.210085, 5.896941]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-14T10:49:15'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 5.846941
+        best_nbins_from_scan: 51
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4013
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 5.846941
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p25AucwLossWgtRun2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p25AucwLossWgtRun2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p15_aucwLossWgtMem15:
+    all:
+      n_bins: 25
+      edges: [0.0, 0.100645, 0.20129, 0.301935, 0.40258, 0.503226, 0.603871, 0.704516, 0.805161, 0.905806, 1.006451, 1.107096,
+        1.207741, 1.308386, 1.509676, 1.710966, 1.811611, 1.912256, 2.012901, 2.214191, 2.314836, 2.415482, 2.516127, 2.616772,
+        2.717417, 4.880963]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-14T19:42:43'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.830963
+        best_nbins_from_scan: 48
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4202
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.830963
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipe/binning_comparison.txt
+    # NOTE: scanned with 0/1-jet events included in CC (uncommitted selection.py change: jj_both_central |= njets < 2)
+    jj_both_central:
+      n_bins: 15
+      edges: [0.0, 0.056269, 0.225076, 0.393883, 0.506421, 0.618959, 0.787766, 1.012841, 1.237917, 1.462993, 1.688069, 1.800607,
+        1.913144, 2.025682, 2.194489, 3.763751]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-15T22:07:37'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 3.713751
+        best_nbins_from_scan: 66
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.4917
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 3.713751
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipeDump_jj_both_central_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipe_jj_both_central/binning_comparison.txt
+    jj_one_fwd25_one_central:
+      n_bins: 17
+      edges: [7.5e-05, 0.086341, 0.258872, 0.431404, 0.603936, 0.776468, 0.948999, 1.121531, 1.294063, 1.380329, 1.466594,
+        1.55286, 1.811658, 2.070455, 2.242987, 2.415519, 2.674316, 4.880963]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-15T22:08:02'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.830963
+        best_nbins_from_scan: 56
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.076
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 7.5e-05
+        score_max: 4.830963
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipeDump_jj_one_fwd25_one_central_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipe_jj_one_fwd25_one_central/binning_comparison.txt
+    jj_both_fwd25:
+      n_bins: 9
+      edges: [0.001125, 0.789187, 1.219039, 1.577249, 1.792175, 2.0071, 2.222026, 2.436952, 2.72352, 4.492928]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-15T22:08:16'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.442928
+        best_nbins_from_scan: 62
+        max_nbins_scanned: 70
+        total_asimov_Z: 0.9077
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.001125
+        score_max: 4.442928
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipeDump_jj_both_fwd25_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p15AucwLossWgtMem15Run2BinsBaselineRecipe_jj_both_fwd25/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p25_aucwLossWgtMem15:
+    all:
+      n_bins: 31
+      edges: [0.0, 0.072863, 0.145727, 0.21859, 0.291453, 0.364317, 0.510043, 0.582907, 0.65577, 0.728633, 0.87436, 0.947223,
+        1.020087, 1.165813, 1.238677, 1.31154, 1.53013, 1.675857, 1.74872, 1.821583, 1.894447, 2.113037, 2.1859, 2.258763,
+        2.331627, 2.477353, 2.550217, 2.62308, 2.768807, 2.914533, 3.06026, 4.85898]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-15T04:45:17'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.80898
+        best_nbins_from_scan: 66
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4691
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.80898
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p25AucwLossWgtMem15Run2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p25AucwLossWgtMem15Run2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p20_aucwLossWgtMem15:
+    all:
+      n_bins: 36
+      edges: [3.0e-06, 0.062898, 0.125792, 0.188687, 0.251582, 0.314476, 0.377371, 0.440265, 0.50316, 0.566054, 0.628949,
+        0.691844, 0.754738, 0.817633, 0.880527, 1.006317, 1.069211, 1.195, 1.257895, 1.446579, 1.572368, 1.635262, 1.698157,
+        1.761051, 1.823946, 1.886841, 2.01263, 2.138419, 2.201313, 2.264208, 2.327103, 2.389997, 2.452892, 2.515786, 2.578681,
+        2.70447, 3.509205]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-15T18:27:02'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 3.459205
+        best_nbins_from_scan: 55
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4734
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 3.0e-06
+        score_max: 3.459205
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p20AucwLossWgtMem15Run2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p20AucwLossWgtMem15Run2BinsBaselineRecipe/binning_comparison.txt
+  Run2_Sept29_transformerVBF_roughXudongSep08_cut0p30_aucwLossWgtMem15:
+    all:
+      n_bins: 32
+      edges: [0.0, 0.082456, 0.164911, 0.247367, 0.329823, 0.412279, 0.494734, 0.57719, 0.742102, 0.824557, 0.907013, 0.989469,
+        1.071925, 1.15438, 1.319292, 1.401748, 1.484203, 1.566659, 1.649115, 1.731571, 1.814026, 1.896482, 2.061394, 2.143849,
+        2.226305, 2.308761, 2.391217, 2.556128, 2.72104, 2.803495, 2.885951, 3.050863, 4.420154]
+      metadata:
+        generated_by: MVA_training/VBF_run3/scan_bins_for_dnn.py
+        generated_at: '2026-11-16T02:33:09'
+        score: dnn_vbf_score_atanh
+        last_edge_overhead: 0.05
+        last_edge_before_overhead: 4.370154
+        best_nbins_from_scan: 53
+        max_nbins_scanned: 70
+        total_asimov_Z: 1.4509
+        frac_tol: 0.005
+        min_total_events_per_bin: 5.0
+        min_signal_per_bin: 0.05
+        min_background_per_bin: 0.01
+        enforce_min_per_year: true
+        score_min: 0.0
+        score_max: 4.370154
+        stage2_scores: /work/users/yun79/mva18_transformer_binary/runs/Run2_Sept29_transformerVBF_roughXudongSep08/stage2_histograms/score_Run2_Sept29_transformerVBF_roughXudongSep08_mva18transfCut0p30AucwLossWgtMem15Run2BinsBaselineRecipeDump_NoSyst
+        years: [2016postVFP, 2016preVFP, '2017', '2018']
+        region: h-peak
+        signal: vbf
+        background: dy,ewk,ttjets,zz
+        report: /work/users/yun79/sideHustle2/copperheadV2/.agent-system/tasks/mva-categorizer-18-binary-transformer-integration-run2-run3/outputs/binscan_mva18transfCut0p30AucwLossWgtMem15Run2BinsBaselineRecipe/binning_comparison.txt

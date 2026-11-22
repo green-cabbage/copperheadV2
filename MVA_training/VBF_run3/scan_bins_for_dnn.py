@@ -930,12 +930,15 @@ def collect_bkg(process_globs, selection, category="vbf", region_name="h-peak"):
 SIGNAL_SAMPLE_PREFIXES = ("vbf", "ggh")
 
 
-def collect_stage2_scores(hist_dir, years=None, region="h-peak", signal_prefixes=SIGNAL_SAMPLE_PREFIXES):
+def collect_stage2_scores(hist_dir, years=None, region="h-peak", signal_prefixes=SIGNAL_SAMPLE_PREFIXES,
+                          background_prefixes=()):
     """
     Read <hist_dir>/<year>/scores/<sample>_scores.parquet written by run_stage2_vbf.py
     --dump_scores. Returns ((sig_score, sig_w, sig_year), (bkg_score, bkg_w, bkg_year),
     years_used); the year arrays hold the index of the year in years_used, for BinGuard.
-    Data samples are skipped; samples starting with signal_prefixes are signal.
+    Data samples are skipped; samples starting with signal_prefixes are signal, 
+    If background samples are specified, then only those are taken in to binning algorithm.
+    If not specified, then all background samples wiht background_prefixes are included.
     """
     import pandas as pd
 
@@ -954,6 +957,9 @@ def collect_stage2_scores(hist_dir, years=None, region="h-peak", signal_prefixes
             df = pd.read_parquet(path)
             df = df[df["region"] == region]
             kind = "sig" if sample.lower().startswith(tuple(signal_prefixes)) else "bkg"
+            if kind == "bkg" and background_prefixes and not sample.lower().startswith(tuple(background_prefixes)):
+                logger.info(f"{year} {sample}: not in --background, skipped")
+                continue
             logger.info(f"{year} {sample}: {len(df)} events in {region} -> {kind}")
             parts[kind][0].append(df["score"].to_numpy(float))
             parts[kind][1].append(df["weight"].to_numpy(float))
@@ -1129,6 +1135,9 @@ def parse_args(argv=None):
     parser.add_argument("--region", default="h-peak", help="mass region the scan uses")
     parser.add_argument("--signal", default="vbf,ggh",
                         help="comma-separated sample-name prefixes counted as signal (--stage2-scores)")
+    parser.add_argument("--background", default="",
+                        help="comma-separated sample-name prefixes counted as background (--stage2-scores); "
+                             "default: every non-data, non-signal sample")
     parser.add_argument("--stage1-path", default=DEFAULT_STAGE1_PATH,
                         help="legacy input: base stage1 ntuple directory (holds stage1_output/<year>/...).")
     parser.add_argument("--compacted-tag", default=DEFAULT_COMPACTED_TAG,
@@ -1183,9 +1192,10 @@ if __name__ == "__main__":
         (sig_score, sig_w, sig_years), (bkg_score, bkg_w, bkg_years), years_used = collect_stage2_scores(
             args.stage2_scores, years, region=args.region,
             signal_prefixes=tuple(x.lower() for x in args.signal.split(",") if x),
+            background_prefixes=tuple(x.lower() for x in args.background.split(",") if x),
         )
         input_desc = {"stage2_scores": args.stage2_scores, "years": years_used, "region": args.region,
-                      "signal": args.signal}
+                      "signal": args.signal, "background": args.background or "all non-data, non-signal"}
     else:
         from modules import selection
         from distributed import Client

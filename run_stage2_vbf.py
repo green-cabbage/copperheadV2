@@ -24,6 +24,7 @@ import logging
 import os
 import pickle
 import time
+from functools import partial
 from pathlib import Path
 
 import awkward as ak
@@ -407,6 +408,25 @@ def resolve_missing_jet_rule(model_dir: Path, requested: str | None) -> str:
     return recorded
 
 
+def resolve_transformer_cutoffs(model_dir: Path, years, requested: float | None) -> dict:
+    """
+    Transformer cutoff per year: `requested` (--transformer_cutoff) or the yaml cutoff. If the model's
+    preprocess_manifest.json records the cutoff its training events were selected with, a different one is an error.
+    """
+    cutoffs = {year: selection.transformer_cutoff(year) if requested is None else float(requested) for year in years}
+    manifest_path = model_dir / "preprocess_manifest.json"
+    if manifest_path.is_file():
+        with open(manifest_path) as stream:
+            recorded = json.load(stream).get("transformer_cutoff") or {}
+        wrong = {y: (c, recorded[y]) for y, c in cutoffs.items() if y in recorded and recorded[y] != c}
+        if wrong:
+            raise SystemExit(
+                f"transformer cutoff (stage2, model) {wrong} differs from the one the model's training events were "
+                f"selected with ({manifest_path}); pass --transformer_cutoff with the recorded value."
+            )
+    return cutoffs
+
+
 def load_torchscript_model(model_path):
     """Load each TorchScript model once per worker process."""
     if model_path not in _MODEL_CACHE:
@@ -437,6 +457,7 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         dump_scores=False,
         dnn_missing_jet_rule="flat",
         binning=None,
+        transformer_cutoffs=None,
     ):
         NO_SCALE_FEATURES = {
             "year",
@@ -462,6 +483,8 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         self.allow_nominal_feature_fallback = allow_nominal_feature_fallback
         self.use_nominal_dnn_features_for_systs = use_nominal_dnn_features_for_systs
         self.use_transformer_vbf_channel = use_transformer_vbf_channel
+        # {year: cutoff}, resolved on the driver (--transformer_cutoff or the yaml)
+        self.transformer_cutoffs = transformer_cutoffs or {}
         # One-hot year features (e.g. "year_2022preEE") don't exist as event
         # fields; they're synthesized in evaluate_scores() from the dataset's
         # metadata year string, so they're excluded from scaler lookup like
@@ -790,7 +813,7 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
             #     raise ValueError(f"Needed columns for {variation}: {needed_cols4print} \n fields for {variation}: {fields}")
             # transformer channel: region and b-tag veto, then score < cutoff instead of the jj/jet1 cuts
             apply_category_cuts = (
-                selection.applyRegionCatCutsByScore
+                partial(selection.applyRegionCatCutsByScore, cutoff=self.transformer_cutoffs.get(year))
                 if self.use_transformer_vbf_channel
                 else selection.applyRegionCatCuts
             )
@@ -1109,6 +1132,17 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
+        "--transformer_cutoff",
+        dest="transformer_cutoff",
+        default=None,
+        type=float,
+        help=(
+            "With --use_transformer_vbf_channel: VBF = score < this cutoff, for every year. Default: the "
+            "yaml cutoff of each year's run period. Must match the cutoff in the model's "
+            "preprocess_manifest.json (transformer_cutoff) when it records one."
+        ),
+    )
+    parser.add_argument(
         "--stage1_subdir",
         dest="stage1_subdir",
         default=None,
@@ -1264,9 +1298,10 @@ if __name__ == "__main__":
 
     args.dnn_missing_jet_rule = resolve_missing_jet_rule(model_trained_path, args.dnn_missing_jet_rule)
     logger.info(f"DNN missing-jet rule: {args.dnn_missing_jet_rule}")
-    if args.use_transformer_vbf_channel:
-        for year in years:  # if cutoff is missing for any year, ValueError is raised
-            selection.transformer_cutoff(year)
+    transformer_cutoffs = None
+    if args.use_transformer_vbf_channel:  # if a cutoff is missing for any year, ValueError is raised
+        transformer_cutoffs = resolve_transformer_cutoffs(model_trained_path, years, args.transformer_cutoff)
+        logger.info(f"transformer cutoff: {transformer_cutoffs}")
 
     with open(feature_dir / "training_features.pkl", "rb") as feature_file:
         training_features = pickle.load(feature_file)
@@ -1355,6 +1390,7 @@ if __name__ == "__main__":
                 dump_scores=args.dump_scores,
                 dnn_missing_jet_rule=args.dnn_missing_jet_rule,
                 binning=dnn_edges,
+                transformer_cutoffs=transformer_cutoffs,
             ),
         )
         t5 = time.perf_counter()

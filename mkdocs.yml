@@ -130,6 +130,7 @@ nav:
           - VBF:
                 - DNN: DNN_VBF.md
                 - Transformer VBF Channel: TransformerVBF.md
+                - Transformer Training: TransformerBinaryTraining.md
                 - Statistics Pipeline: Statistics.md
           - ggH:
                 - Steps After Stage-1: ggH_steps_after_stage1_v2.md
