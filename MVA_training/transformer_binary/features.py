@@ -69,6 +69,9 @@ def build_inputs(columns, year):
     returns  global_features (N, 7) float32, year_idx (N,) int64, objects (N, 5, 10) float32
     """
     f32 = {name: np.asarray(columns[name], dtype=np.float32) for name in MODEL_INPUTS}
+    bad = {name: int((~np.isfinite(values)).sum()) for name, values in f32.items() if not np.isfinite(values).all()}
+    if bad:  # absent objects are nulls -> 0 (read_columns); NaN/inf here means an upstream problem
+        raise ValueError(f"{year}: non-finite stage1 inputs (column: events): {bad}")
     n_events = len(f32["mu1_pt"])
 
     tokens = []

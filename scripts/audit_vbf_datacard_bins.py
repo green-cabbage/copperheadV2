@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-Background-MC sparsity audit of the VBF stage-3 SR bins: per year, empty-B and thin bins (B < --bmin or MC rel.
-error > --relmax) with their share of the counting Z^2, and the counting Z after merging bins from the top until
-none is thin. Counting Z has no systematics or MC-stat uncertainty: a sparsity check, not a combine result.
+Sanity check of produced VBF datacards, run after stage 3: does every SR bin have enough background MC behind it?
+Read-only; it changes no datacard or result.
+
+Per year it reports:
+  * empty-B bins (no background MC) and thin bins (B < --bmin, default 1, or background MC rel. error > --relmax,
+    default 0.3), with their share of the counting Z^2;
+  * the counting Z after merging bins from the top until none is thin.
+
 
 Usage:
   python scripts/audit_vbf_datacard_bins.py <save_path>/stage3_datacards_<postfix>/score_<label> [--bmin 1 --relmax 0.3]

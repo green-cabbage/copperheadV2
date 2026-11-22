@@ -5,6 +5,4 @@ vbf:
 - Jet1PtCut
 ggh:
 - InvVbfCut
-# binary-transformer ggH channel: only the baseline b-tag veto here; run_stage2.py adds
-# score >= cutoff (modules.selection.transformer_vbf_mask) instead of InvVbfCut
-ggh_transformer: []
+ggh_transformer: [] # empty list since ggH transformer category doesn't apply any additional cuts beyond "baseline".

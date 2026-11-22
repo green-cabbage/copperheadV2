@@ -15,7 +15,6 @@ Usage, from the repo root with the AF global environment's python:
 """
 
 import argparse
-import math
 import os
 import shlex
 import subprocess
@@ -42,9 +41,10 @@ def hpo_commands(args):
         common += ["--objective", args.objective]
     if args.label_smoothing_range:
         common += ["--label-smoothing-range", args.label_smoothing_range]
-    per_worker = math.ceil(args.n_trials / args.workers)
-    workers = [common + ["--n-trials", str(per_worker), "--sampler-seed", str(args.seed + 1000 * (i + 1))]
-               for i in range(args.workers)]
+    # split exactly: the first n_trials % workers workers take one extra trial; workers with none are left out
+    base, extra = divmod(args.n_trials, args.workers)
+    workers = [common + ["--n-trials", str(base + (i < extra)), "--sampler-seed", str(args.seed + 1000 * (i + 1))]
+               for i in range(args.workers) if base + (i < extra) > 0]
     return workers, common + ["--n-trials", "0"]
 
 

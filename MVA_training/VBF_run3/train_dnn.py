@@ -157,7 +157,8 @@ def binned_ams(
             merged.append([s, b, ss, bs])
     if signed:
         merged = [m[2:] for m in merged]
-    z2 = sum(2.0 * ((sm + bm) * np.log1p(sm / bm) - sm) for sm, bm, *_ in merged if bm > 0)
+    # signed weights: skip bins with b <= 0 or s <= -b (log1p(s/b) undefined there)
+    z2 = sum(2.0 * ((sm + bm) * np.log1p(sm / bm) - sm) for sm, bm, *_ in merged if bm > 0 and sm > -bm)
     return float(np.sqrt(z2))
 
 
