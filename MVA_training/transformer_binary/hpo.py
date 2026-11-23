@@ -120,6 +120,10 @@ def main():
     parser.add_argument("--ram-gb", type=int, default=32)
     args = parser.parse_args()
     args.out = os.path.abspath(args.out)
+    # one run period per study, as train.build_cfg (trial() sizes the year embedding from years[0])
+    periods = {run_period(year) for year in args.years}
+    if len(periods) != 1:
+        parser.error(f"--years mixes run periods {sorted(periods)}; tune one run period at a time")
 
     if args.command == "run":
         run(args)

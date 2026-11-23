@@ -52,8 +52,7 @@ from modules.systematics import (
     stage2_shape_variations,
     variation_column_name,
 )
-from modules.utils import logger
-from MVA_training.VBF_run3.utils.pre_scale_cleaning import pre_scaling_clean
+from modules.utils import clean_and_fill_missing, logger, pre_scaling_clean
 
 # Optional: keep your existing diagnostic plots (safe to disable from CLI)
 try:
@@ -826,13 +825,9 @@ def preprocess(
             f"Weight column '{cfg.weight_col}' not found in merged dataframe."
         )
 
-    if cfg.use_transformer_vbf_channel:
-        # transformer channel admits 0/1-jet events: pre_scaling_clean sentinels, else phi -10 / 0
-        # (missing_jet_rule "training" in the manifest)
-        df_total = pre_scaling_clean(df_total)
-        for f in cfg.training_features:
-            if f in df_total.columns:
-                df_total[f] = pd.to_numeric(df_total[f]).fillna(-10.0 if "phi" in f else 0.0)
+    # missing/undefined inputs (absent jets of 0/1-jet transformer-channel events, rare non-finite values):
+    # the convention run_stage2_vbf.py applies again at inference
+    df_total = clean_and_fill_missing(df_total, cfg.training_features)
 
     # numeric coercion check (training features only)
     # print("df_total[year].head():")
@@ -1141,8 +1136,8 @@ def preprocess(
         "base_path": str(base_path),
         "category": cfg.category,
         "use_transformer_vbf_channel": cfg.use_transformer_vbf_channel,
-        # absent-jet fill used in training, applied again by run_stage2_vbf.py ("none": always two jets)
-        "missing_jet_rule": "training" if cfg.use_transformer_vbf_channel else "none",
+        # missing-value convention of the inputs (modules.utils), applied again by run_stage2_vbf.py
+        "missing_jet_rule": "clean_and_fill_missing",
         # VBF = score < cutoff per year; run_stage2_vbf.py refuses a different cutoff
         "transformer_cutoff": (
             {y: transformer_cutoff(y) if cfg.transformer_cutoff is None else cfg.transformer_cutoff for y in years_list}

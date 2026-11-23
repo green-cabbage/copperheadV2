@@ -40,8 +40,7 @@ from coffea.ml_tools.torch_wrapper import torch_wrapper
 from coffea.nanoevents import BaseSchema
 from modules import selection
 from modules.dask_utils import get_dask_client
-from modules.utils import get_compacted_path, logger, fillEventNans
-from MVA_training.VBF_run3.utils.pre_scale_cleaning import pre_scaling_clean
+from modules.utils import clean_and_fill_missing, get_compacted_path, logger, fillEventNans
 from modules.sample_config import get_bkg_sig_dicts
 from modules.systematics import (  # noqa: F401
     discover_shape_systs,
@@ -383,31 +382,6 @@ def parse_years_option(year, years):
 _MODEL_CACHE = {}
 
 
-def resolve_missing_jet_rule(model_dir: Path, requested: str | None) -> str:
-    """
-    Missing-jet rule from <model_dir>/preprocess_manifest.json (older manifests: 'training' if
-    use_transformer_vbf_channel); else `requested` or 'flat'. A contradicting `requested` is an error.
-    """
-    recorded = None
-    manifest_path = model_dir / "preprocess_manifest.json"
-    if manifest_path.is_file():
-        with open(manifest_path) as stream:
-            manifest = json.load(stream)
-        recorded = manifest.get("missing_jet_rule")
-        if recorded is None and manifest.get("use_transformer_vbf_channel"):
-            recorded = "training"
-        if recorded == "none":
-            recorded = None
-    if recorded is None:
-        return requested or "flat"
-    if requested is not None and requested != recorded:
-        raise SystemExit(
-            f"--dnn_missing_jet_rule {requested} contradicts the rule the model was trained with "
-            f"({recorded}, {manifest_path}); drop the flag to use the recorded rule."
-        )
-    return recorded
-
-
 def resolve_transformer_cutoffs(model_dir: Path, years, requested: float | None) -> dict:
     """
     Transformer cutoff per year: `requested` (--transformer_cutoff) or the yaml cutoff. If the model's
@@ -455,7 +429,6 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         use_transformer_vbf_channel=False,
         jj_eta_region="all",
         dump_scores=False,
-        dnn_missing_jet_rule="flat",
         binning=None,
         transformer_cutoffs=None,
     ):
@@ -475,7 +448,6 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
         self.divide_dy_by_year = divide_dy_by_year
         self.dy_matched_jets = dy_matched_jets
         self.jj_eta_region = jj_eta_region
-        self.dnn_missing_jet_rule = dnn_missing_jet_rule
         # also return the nominal per-event (score, weight), for DNN bin scans
         self.dump_scores = dump_scores
         # resolved on the driver (selection.resolve_dnn_binning); workers only see the default
@@ -530,22 +502,22 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
                 feature,
                 source,
             )
-            values = ak.materialize(events[source])
-            fill_value = -10.0 if "phi" in feature else 0.0
-            values = ak.to_numpy(ak.fill_none(values, fill_value))
-            # BaseSchema gives absent jets as NaN, not None, so fill_none alone leaves them NaN
-            columns[feature] = np.where(np.isfinite(values), values, fill_value)
+            # raw values, absent/undefined left as NaN (BaseSchema gives absent jets as NaN), so the
+            # convention below decides them exactly as in training
+            columns[feature] = ak.to_numpy(ak.fill_none(ak.materialize(events[source]), np.nan)).astype(np.float64)
 
-        if self.dnn_missing_jet_rule == "training":
-            # training sentinels for absent jets (pre_scaling_clean, keyed on this variation's njets)
-            njets_source = feature_name_for_variation(
-                "njets_nominal", variation, fields, allow_nominal_fallback=self.allow_nominal_feature_fallback,
-            )
-            frame = pd.DataFrame({f: columns[f] for f in self.training_features if f not in self.year_onehot_features})
-            frame["njets_nominal"] = ak.to_numpy(ak.fill_none(ak.materialize(events[njets_source]), 0))
-            frame = pre_scaling_clean(frame)
-            for feature in frame.columns.drop("njets_nominal"):
-                columns[feature] = frame[feature].to_numpy(dtype=np.float64)
+        # training's missing-value convention (modules.utils.clean_and_fill_missing), keyed on this variation's njets
+        njets_source = feature_name_for_variation(
+            "njets_nominal", variation, fields, allow_nominal_fallback=self.allow_nominal_feature_fallback,
+        )
+        physical = [f for f in self.training_features if f not in self.year_onehot_features]
+        frame = pd.DataFrame({f: columns[f] for f in physical})
+        frame["njets_nominal"] = ak.to_numpy(ak.fill_none(ak.materialize(events[njets_source]), 0))
+        frame = clean_and_fill_missing(frame, physical)
+        for feature in physical:
+            values = frame[feature].to_numpy(dtype=np.float64)
+            # safety net, a no-op unless an input is still non-finite after the convention
+            columns[feature] = np.where(np.isfinite(values), values, -10.0 if "phi" in feature else 0.0)
 
         if logger.isEnabledFor(logging.DEBUG):
             n_preview = min(5, n_events)
@@ -782,11 +754,10 @@ class CoffeaStage2VBFProcessor(processor.ProcessorABC):
                 )
                 needed_cols.add(source)
                 feature_sources.append(source)
-            if self.dnn_missing_jet_rule == "training":
-                needed_cols.add(feature_name_for_variation(
-                    "njets_nominal", feature_variation, events.fields,
-                    allow_nominal_fallback=self.allow_nominal_feature_fallback,
-                ))
+            needed_cols.add(feature_name_for_variation(  # njets: the missing-value convention keys on it
+                "njets_nominal", feature_variation, events.fields,
+                allow_nominal_fallback=self.allow_nominal_feature_fallback,
+            ))
 
             needed_cols4print = sorted(needed_cols)
             needed_cols = needed_cols & set(events.fields) # merge with existing fields
@@ -1166,19 +1137,6 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "--dnn_missing_jet_rule",
-        dest="dnn_missing_jet_rule",
-        default=None,
-        choices=["flat", "training"],
-        help=(
-            "DNN inputs of absent jets: 'flat' fills phi -10 and everything else 0 (mva-categorizer-13 "
-            "convention); 'training' applies the sentinels preprocess_dnn trained with (pre_scaling_clean). "
-            "Only matters where 0/1-jet events are selected (--use_transformer_vbf_channel). Default: the "
-            "rule in the model's preprocess_manifest.json (missing_jet_rule), else 'flat'; a value that "
-            "contradicts the manifest is an error."
-        ),
-    )
-    parser.add_argument(
         "--jj_eta_region",
         dest="jj_eta_region",
         default="all",
@@ -1296,8 +1254,6 @@ if __name__ == "__main__":
     if missing:
         raise FileNotFoundError("\n".join(missing))
 
-    args.dnn_missing_jet_rule = resolve_missing_jet_rule(model_trained_path, args.dnn_missing_jet_rule)
-    logger.info(f"DNN missing-jet rule: {args.dnn_missing_jet_rule}")
     transformer_cutoffs = None
     if args.use_transformer_vbf_channel:  # if a cutoff is missing for any year, ValueError is raised
         transformer_cutoffs = resolve_transformer_cutoffs(model_trained_path, years, args.transformer_cutoff)
@@ -1388,7 +1344,6 @@ if __name__ == "__main__":
                 use_transformer_vbf_channel=args.use_transformer_vbf_channel,
                 jj_eta_region=args.jj_eta_region,
                 dump_scores=args.dump_scores,
-                dnn_missing_jet_rule=args.dnn_missing_jet_rule,
                 binning=dnn_edges,
                 transformer_cutoffs=transformer_cutoffs,
             ),

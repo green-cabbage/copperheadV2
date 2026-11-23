@@ -90,8 +90,9 @@ DNN_CONFIG=configs/dnn_run2_vbf.yaml bash run_analysis_pipeline.sh -c configs/da
 # -> dnn/trained_models/<label>/2018-2017-2016postVFP-2016preVFP_h-peak_vbf_all   (D below)
 ```
 
-0/1-jet events, which the transformer channel admits, get the training missing-jet sentinels. The rule is
-recorded in `D/preprocess_manifest.json` (`missing_jet_rule`), and stage 2 applies the same rule automatically.
+Absent or undefined inputs (the absent jets of the 0/1-jet events the transformer channel admits, rare non-finite
+values) follow one convention, `modules.utils.clean_and_fill_missing`: the `pre_scaling_clean` sentinels, then -10
+for phi features and 0 otherwise. DNN preprocessing and stage 2 both call it, for every model.
 
 **HPO and training** on Ray GPUs:
 
