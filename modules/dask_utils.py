@@ -18,11 +18,7 @@ def get_dask_client(
 
         from dask_gateway import Gateway
         logger.info("Creating new Dask Gateway client")
-        gateway = Gateway(
-            os.environ.get("DASK_GATEWAY__ADDRESS", "http://dask-gateway.geddes.rcac.purdue.edu"),
-            proxy_address=os.environ.get("DASK_GATEWAY__PROXY_ADDRESS",
-                                         "traefik-dask-gateway.cms.geddes.rcac.purdue.edu:8786"),
-        )
+        gateway = Gateway()
         clusters = gateway.list_clusters()
         if not clusters:
             raise RuntimeError("No Dask Gateway clusters available")

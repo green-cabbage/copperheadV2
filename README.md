@@ -282,11 +282,7 @@ Example:
 bash run_stats_pipeline_VBF.sh -m 9 -y Run3 -l label_for_ntuple
 ```
 
-Legacy note:
 
-```bash
-bash stage1_loop_Improved.sh -m 9 -y Run3 -l label_for_ntuple
-```
 
 
 ## Step - 1:
